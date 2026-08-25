@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Get Bee Seen — Social Media Marketing That Makes Brands Impossible to Ignore</title>
+<meta name="description" content="Get Bee Seen is a social-first marketing studio. Content, ads and strategy that turn scrolls into sales. Book a free brand audit.">
+<meta name="theme-color" content="#14110c">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Get Bee Seen — Social Media Marketing Studio">
+<meta property="og:description" content="Content, ads and strategy that turn scrolls into sales.">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 2l42 24v48L50 98 8 74V26z' fill='%23f5b301'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' font-family='sans-serif' font-weight='bold' fill='%2314110c'%3EB%3C/text%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="is-loading">
+
+<!-- ============ LOADING SCREEN ============ -->
+<div class="loader" id="loader" role="status" aria-live="polite" aria-label="Loading Get Bee Seen">
+  <div class="loader__comb" aria-hidden="true"></div>
+
+  <div class="loader__inner">
+    <div class="hex" aria-hidden="true">
+      <div class="hex__fill" id="hexFill"></div>
+      <div class="hex__bee">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="22" cy="20" rx="15" ry="9" fill="#fdf8ec" fill-opacity=".55" transform="rotate(-22 22 20)"/>
+          <ellipse cx="42" cy="20" rx="15" ry="9" fill="#fdf8ec" fill-opacity=".55" transform="rotate(22 42 20)"/>
+          <rect x="18" y="26" width="30" height="26" rx="13" fill="#14110c"/>
+          <path d="M20 34h26M19 42h28" stroke="#f5b301" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="26" cy="24" r="2.4" fill="#fdf8ec"/>
+          <path d="M22 14c-2-4-6-5-9-4M42 14c2-4 6-5 9-4" stroke="#14110c" stroke-width="2.4" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+
+    <p class="loader__word">GET <span>BEE</span> SEEN</p>
+    <p class="loader__status" id="loaderStatus">Warming up the hive</p>
+
+    <div class="loader__bar"><i id="loaderBar"></i></div>
+    <div class="loader__pct" id="loaderPct">0%</div>
+  </div>
+</div>
+
+<!-- ============ HEADER ============ -->
+<header class="header" id="header">
+  <div class="wrap header__row">
+    <a href="#top" class="brand">
+      <span class="brand__mark">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="22" cy="20" rx="14" ry="8" fill="#14110c" fill-opacity=".3" transform="rotate(-22 22 20)"/>
+          <ellipse cx="42" cy="20" rx="14" ry="8" fill="#14110c" fill-opacity=".3" transform="rotate(22 42 20)"/>
+          <rect x="18" y="26" width="30" height="26" rx="13" fill="#14110c"/>
+          <path d="M20 34h26M19 42h28" stroke="#f5b301" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+      </span>
+      Get Bee Seen
+    </a>
+
+    <nav class="nav" id="nav">
+      <a href="#services">Services</a>
+      <a href="#process">Process</a>
+      <a href="#work">Work</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact">Contact</a>
+    </nav>
+
+    <a href="#contact" class="btn btn--primary">Free brand audit</a>
+
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M3 6h18M3 12h18M3 18h18"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="wrap hero__grid">
+    <div>
+      <span class="eyebrow"><i></i> Now booking Q4 partnerships</span>
+
+      <h1>We make small brands <em>impossible</em> to scroll past.</h1>
+
+      <p class="lede">
+        Get Bee Seen is a social-first marketing studio. We build the content,
+        campaigns and creative systems that turn quiet feeds into busy inboxes —
+        without the agency bloat or the six-month lock-in.
+      </p>
+
+      <div class="hero__cta">
+        <a href="#contact" class="btn btn--primary">
+          Get your free audit
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a href="#work" class="btn btn--ghost">See the work</a>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><b data-count="140">0</b><span>Brands buzzing</span></div>
+        <div class="stat"><b data-count="38" data-suffix="M">0</b><span>Organic views</span></div>
+        <div class="stat"><b data-count="4.2" data-suffix="x">0</b><span>Avg. ad ROAS</span></div>
+      </div>
+    </div>
+
+    <div class="hero__visual" aria-hidden="true">
+      <div class="card-float card-float--a">
+        <h4>Reach this month</h4>
+        <div class="metric">1.4M</div>
+        <p>+212% vs. last month</p>
+        <div class="spark"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="card-float card-float--b">
+        <h4>New followers</h4>
+        <div class="metric">+8,940</div>
+        <p>Across IG, TikTok &amp; LinkedIn</p>
+      </div>
+
+      <div class="card-float card-float--c">
+        <h4>Booked calls</h4>
+        <div class="metric">63</div>
+        <p>From paid social in 30 days</p>
+        <div class="spark"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MARQUEE ============ -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee__track">
+    <span>Content Strategy</span><span>Paid Social</span><span>Short-Form Video</span>
+    <span>Brand Identity</span><span>Influencer Seeding</span><span>Email &amp; SMS</span>
+    <span>Web Design</span>
+  </div>
+  <div class="marquee__track">
+    <span>Content Strategy</span><span>Paid Social</span><span>Short-Form Video</span>
+    <span>Brand Identity</span><span>Influencer Seeding</span><span>Email &amp; SMS</span>
+    <span>Web Design</span>
+  </div>
+</div>
+
+<!-- ============ SERVICES ============ -->
+<section class="section" id="services">
+  <div class="wrap">
+    <div class="section__head reveal">
+      <span class="kicker">What we do</span>
+      <h2>Everything your feed needs. Nothing it doesn't.</h2>
+      <p>Pick one service or the whole hive — each one is built to feed the next.</p>
+    </div>
+
+    <div class="grid-3">
+      <article class="svc reveal">
+        <div class="svc__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>
+        </div>
+        <h3>Content Strategy</h3>
+        <p>A 90-day plan built from your data, not from a template pack.</p>
+        <ul>
+          <li>Audience &amp; competitor teardown</li>
+          <li>Pillar and hook library</li>
+          <li>Monthly content calendar</li>
+        </ul>
+      </article>
+
+      <article class="svc reveal">
+        <div class="svc__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
+        </div>
+        <h3>Short-Form Video</h3>
+        <p>Reels, TikToks and Shorts shot, cut and captioned end to end.</p>
+        <ul>
+          <li>12–20 edits per month</li>
+          <li>Hook testing built in</li>
+          <li>Vertical-native subtitles</li>
+        </ul>
+      </article>
+
+      <article class="svc reveal">
+        <div class="svc__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-4 4"/></svg>
+        </div>
+        <h3>Paid Social</h3>
+        <p>Meta and TikTok campaigns managed against revenue, not vanity metrics.</p>
+        <ul>
+          <li>Creative testing sprints</li>
+          <li>Pixel &amp; conversion setup</li>
+          <li>Weekly spend reporting</li>
+        </ul>
+      </article>
+
+      <article class="svc reveal">
+        <div class="svc__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="13" r="2.5"/><circle cx="6" cy="12" r="3"/><path d="M12 21a9 9 0 1 1 9-9"/></svg>
+        </div>
+        <h3>Brand Identity</h3>
+        <p>Logo, palette, type and a kit your team can actually use.</p>
+        <ul>
+          <li>Visual identity system</li>
+          <li>Tone-of-voice guide</li>
+          <li>Editable Canva templates</li>
+        </ul>
+      </article>
+
+      <article class="svc reveal">
+        <div class="svc__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+        </div>
+        <h3>Email &amp; SMS</h3>
+        <p>Flows that quietly earn 30% of revenue while you sleep.</p>
+        <ul>
+          <li>Welcome &amp; win-back flows</li>
+          <li>Campaign calendar</li>
+          <li>List growth pop-ups</li>
+        </ul>
+      </article>
+
+      <article class="svc reveal">
+        <div class="svc__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <h3>Web Design</h3>
+        <p>Fast, mobile-first pages that convert the traffic we send you.</p>
+        <ul>
+          <li>Landing &amp; sales pages</li>
+          <li>Shopify &amp; Webflow builds</li>
+          <li>Speed and SEO pass</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROCESS ============ -->
+<section class="section section--tint" id="process">
+  <div class="wrap">
+    <div class="section__head section__head--center reveal">
+      <span class="kicker">How it works</span>
+      <h2>Four steps from invisible to unmissable</h2>
+      <p>No 40-page decks. No mystery. You'll know exactly what's happening every week.</p>
+    </div>
+
+    <div class="steps">
+      <article class="step reveal"><b>01</b><h3>Audit</h3><p>We tear down your feed, funnel and competitors, then show you the gaps on a 30-minute call.</p></article>
+      <article class="step reveal"><b>02</b><h3>Plan</h3><p>You get a 90-day roadmap with pillars, hooks, budgets and the numbers we're chasing.</p></article>
+      <article class="step reveal"><b>03</b><h3>Make</h3><p>Our team shoots, edits, writes and ships. You approve in one shared board — that's it.</p></article>
+      <article class="step reveal"><b>04</b><h3>Scale</h3><p>We double down on what performs, cut what doesn't, and report on it every Friday.</p></article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WORK ============ -->
+<section class="section" id="work">
+  <div class="wrap">
+    <div class="section__head reveal">
+      <span class="kicker">Selected work</span>
+      <h2>Results with receipts</h2>
+      <p>A few of the brands we've helped get seen over the last twelve months.</p>
+    </div>
+
+    <div class="work-grid">
+      <article class="work work--1 reveal">
+        <div class="work__thumb"><b>HG</b></div>
+        <div class="work__body">
+          <h3>Honeygrove Café</h3>
+          <p>0 → 62k followers in seven months and a queue out the door on weekends.</p>
+          <div class="tags"><span class="tag">Content</span><span class="tag">Video</span></div>
+        </div>
+      </article>
+
+      <article class="work work--2 reveal">
+        <div class="work__thumb"><b>NV</b></div>
+        <div class="work__body">
+          <h3>Nova Active</h3>
+          <p>5.1x ROAS on Meta after a full creative rebuild and testing sprint.</p>
+          <div class="tags"><span class="tag">Paid Social</span><span class="tag">Email</span></div>
+        </div>
+      </article>
+
+      <article class="work work--3 reveal">
+        <div class="work__thumb"><b>TL</b></div>
+        <div class="work__body">
+          <h3>Tidal Law</h3>
+          <p>Rebrand plus LinkedIn programme that booked 40 consults a month.</p>
+          <div class="tags"><span class="tag">Branding</span><span class="tag">Web</span></div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TESTIMONIALS ============ -->
+<section class="section section--tint">
+  <div class="wrap">
+    <div class="section__head section__head--center reveal">
+      <span class="kicker">Kind words</span>
+      <h2>Clients who stopped shouting into the void</h2>
+    </div>
+
+    <div class="quotes">
+      <article class="quote reveal">
+        <div class="quote__stars">★★★★★</div>
+        <p>"We'd burned through two agencies before this. Get Bee Seen had our first viral reel inside three weeks and actually explained why it worked."</p>
+        <div class="quote__who"><span class="avatar">MR</span><div><b>Maya Rowe</b><span>Founder, Honeygrove Café</span></div></div>
+      </article>
+
+      <article class="quote reveal">
+        <div class="quote__stars">★★★★★</div>
+        <p>"They treat our ad budget like it's their own money. Spend is down 18% and revenue is up. That's the whole review, really."</p>
+        <div class="quote__who"><span class="avatar">DC</span><div><b>Dan Cheng</b><span>Head of Growth, Nova Active</span></div></div>
+      </article>
+
+      <article class="quote reveal">
+        <div class="quote__stars">★★★★★</div>
+        <p>"I'm a lawyer, not a content creator. They made it painless — one filming day a month and my calendar stays full."</p>
+        <div class="quote__who"><span class="avatar">PT</span><div><b>Priya Tan</b><span>Partner, Tidal Law</span></div></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRICING ============ -->
+<section class="section" id="pricing">
+  <div class="wrap">
+    <div class="section__head section__head--center reveal">
+      <span class="kicker">Pricing</span>
+      <h2>Simple monthly plans</h2>
+      <p>Rolling contracts after the first 90 days. Cancel with 30 days' notice.</p>
+    </div>
+
+    <div class="plans">
+      <article class="plan reveal">
+        <h3>Worker</h3>
+        <p>For solo founders finding their voice.</p>
+        <div class="plan__price">$1,450 <small>/ month</small></div>
+        <ul>
+          <li>12 posts &amp; 4 short-form videos</li>
+          <li>One platform of your choice</li>
+          <li>Monthly strategy call</li>
+          <li>Performance dashboard</li>
+        </ul>
+        <a href="#contact" class="btn btn--ghost">Start here</a>
+      </article>
+
+      <article class="plan plan--featured reveal">
+        <span class="plan__badge">Most popular</span>
+        <h3>Hive</h3>
+        <p>For growing brands ready to scale.</p>
+        <div class="plan__price">$2,900 <small>/ month</small></div>
+        <ul>
+          <li>20 posts &amp; 12 short-form videos</li>
+          <li>Three platforms</li>
+          <li>Paid social up to $10k spend</li>
+          <li>Email flow management</li>
+          <li>Fortnightly strategy calls</li>
+        </ul>
+        <a href="#contact" class="btn btn--primary">Book a call</a>
+      </article>
+
+      <article class="plan reveal">
+        <h3>Queen</h3>
+        <p>Full-service partnership, no ceiling.</p>
+        <div class="plan__price">From $5,400 <small>/ month</small></div>
+        <ul>
+          <li>Unlimited content pipeline</li>
+          <li>All platforms + influencer seeding</li>
+          <li>Unlimited managed ad spend</li>
+          <li>Landing pages included</li>
+          <li>Dedicated strategist &amp; Slack channel</li>
+        </ul>
+        <a href="#contact" class="btn btn--ghost">Talk to us</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="section section--tint" id="faq">
+  <div class="wrap">
+    <div class="section__head section__head--center reveal">
+      <span class="kicker">FAQ</span>
+      <h2>Questions we get a lot</h2>
+    </div>
+
+    <div class="faq reveal">
+      <div class="faq__item">
+        <button class="faq__q" aria-expanded="false">How quickly will I see results?</button>
+        <div class="faq__a"><p>Paid social usually shows signal in 2–3 weeks. Organic growth is slower and more durable — most clients see a clear lift by month three, which is why our first commitment is 90 days.</p></div>
+      </div>
+      <div class="faq__item">
+        <button class="faq__q" aria-expanded="false">Do I need to be on camera?</button>
+        <div class="faq__a"><p>It helps, but no. Roughly half our clients run faceless accounts using product, UGC and motion graphics. We'll recommend whichever fits your brand and your comfort level.</p></div>
+      </div>
+      <div class="faq__item">
+        <button class="faq__q" aria-expanded="false">Who owns the content you make?</button>
+        <div class="faq__a"><p>You do — outright, including raw files and project files. If we ever part ways, everything gets handed over within five business days.</p></div>
+      </div>
+      <div class="faq__item">
+        <button class="faq__q" aria-expanded="false">Is ad spend included in the price?</button>
+        <div class="faq__a"><p>No. Plan fees cover strategy, creative and management. Ad spend is billed directly to your own account so you keep full ownership of the data and audiences.</p></div>
+      </div>
+      <div class="faq__item">
+        <button class="faq__q" aria-expanded="false">What industries do you work with?</button>
+        <div class="faq__a"><p>Mostly hospitality, e-commerce, fitness and professional services. If you sell something people can see, we can probably make it look good.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACT ============ -->
+<section class="section" id="contact">
+  <div class="wrap contact-grid">
+    <div class="reveal">
+      <span class="kicker">Get in touch</span>
+      <h2>Let's get you seen</h2>
+      <p style="color:var(--cream-dim)">
+        Tell us a little about your brand and we'll send back a free audit
+        within two working days — no pitch deck, no pressure.
+      </p>
+
+      <ul class="contact-list">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+          <div><b>hello@getbeeseen.com</b><span>We reply within one business day</span></div>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/></svg>
+          <div><b>+1 (555) 018-2244</b><span>Mon–Fri, 9am–6pm</span></div>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <div><b>Remote-first</b><span>Working with brands worldwide</span></div>
+        </li>
+      </ul>
+    </div>
+
+    <form class="form reveal" id="contactForm" novalidate>
+      <div class="form__row">
+        <div class="field">
+          <label for="name">Your name</label>
+          <input type="text" id="name" name="name" placeholder="Alex Kim" required>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="alex@brand.com" required>
+        </div>
+      </div>
+
+      <div class="form__row">
+        <div class="field">
+          <label for="brand">Brand / company</label>
+          <input type="text" id="brand" name="brand" placeholder="Nova Active">
+        </div>
+        <div class="field">
+          <label for="budget">Monthly budget</label>
+          <select id="budget" name="budget">
+            <option>Under $1,500</option>
+            <option selected>$1,500 – $3,000</option>
+            <option>$3,000 – $6,000</option>
+            <option>$6,000+</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="message">What are you trying to grow?</label>
+        <textarea id="message" name="message" placeholder="We're a café in Portland and our Instagram has been flat for a year…"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn--primary">
+        Send it over
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+
+      <p class="form__note">This demo form doesn't send anywhere yet — connect it to your form service or inbox before going live.</p>
+      <div class="form__ok" id="formOk">Thanks! That's landed with us — we'll be in touch within one business day. 🐝</div>
+    </form>
+  </div>
+</section>
+
+<!-- ============ CTA BAND ============ -->
+<section class="wrap" style="padding-bottom:96px">
+  <div class="cta-band reveal">
+    <div>
+      <h2>Your competitors post daily. You could post better.</h2>
+      <p>Grab a free 30-minute audit and we'll show you exactly where the attention is leaking.</p>
+    </div>
+    <a href="#contact" class="btn">Claim your audit</a>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__grid">
+      <div>
+        <a href="#top" class="brand" style="margin-bottom:16px">
+          <span class="brand__mark">
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="18" y="26" width="30" height="26" rx="13" fill="#14110c"/>
+              <path d="M20 34h26M19 42h28" stroke="#f5b301" stroke-width="5" stroke-linecap="round"/>
+            </svg>
+          </span>
+          Get Bee Seen
+        </a>
+        <p>A social-first marketing studio for brands that are tired of being the best-kept secret in their category.</p>
+      </div>
+
+      <div>
+        <h4>Services</h4>
+        <ul>
+          <li><a href="#services">Content strategy</a></li>
+          <li><a href="#services">Short-form video</a></li>
+          <li><a href="#services">Paid social</a></li>
+          <li><a href="#services">Web design</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#work">Our work</a></li>
+          <li><a href="#process">Process</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Get started</h4>
+        <ul>
+          <li><a href="#contact">Free brand audit</a></li>
+          <li><a href="mailto:hello@getbeeseen.com">hello@getbeeseen.com</a></li>
+          <li><a href="tel:+15550182244">+1 (555) 018-2244</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <span>© <span id="year">2026</span> Get Bee Seen. All rights reserved.</span>
+      <div class="socials">
+        <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg></a>
+        <a href="#" aria-label="TikTok"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 3a5.6 5.6 0 0 0 5 4.7v3a8.6 8.6 0 0 1-5-1.7v6.4A6.4 6.4 0 1 1 9.6 9v3.1a3.4 3.4 0 1 0 3.4 3.4V3z"/></svg></a>
+        <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3zM10 9h3.8v1.7h.05A4.2 4.2 0 0 1 17.6 8.7c4 0 4.7 2.6 4.7 6V21h-4v-5.5c0-1.3 0-3-1.9-3s-2.1 1.4-2.1 2.9V21h-4z"/></svg></a>
+        <a href="#" aria-label="YouTube"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 12s0-3.6-.5-5.3a2.8 2.8 0 0 0-2-2C18.8 4.2 12 4.2 12 4.2s-6.8 0-8.6.5a2.8 2.8 0 0 0-2 2C1 8.4 1 12 1 12s0 3.6.5 5.3a2.8 2.8 0 0 0 2 2c1.8.5 8.6.5 8.6.5s6.8 0 8.6-.5a2.8 2.8 0 0 0 2-2C23 15.6 23 12 23 12zM9.8 15.3V8.7l5.7 3.3z"/></svg></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
