@@ -15,12 +15,20 @@ python3 -m http.server 8000
 | `styles.css` | Theme tokens, layout, animations, responsive rules |
 | `script.js` | Loading screen, nav, scroll reveal, counters, FAQ, form |
 
+## Design
+
+Bold and loud: honey yellow ground, ink-black type, hard offset shadows,
+3px borders, and accent pops (coral, mint, lilac, sky). Display type is
+Archivo Black in all caps; body is Space Grotesk. Sections alternate between
+yellow, cream, ink and mint so the page changes gear as you scroll.
+
 ## The loading screen
 
-A honeycomb-patterned overlay with a hexagon that fills with honey as the page
-loads. Progress creeps to 90% while assets download, then snaps to 100% on
-`window.load` and fades out. Two safety timers (4s and 7s) guarantee the overlay
-always clears, even if an asset stalls — a visitor is never trapped behind it.
+A full black curtain with the wordmark stacking in line by line, a bee looping
+across the screen, and a progress bar pinned to the bottom. Progress creeps to
+90% while assets download, then completes on `window.load` and the curtain
+wipes upward off the page. Two safety timers (4s and 7s) guarantee it always
+clears, even if an asset stalls — a visitor is never trapped behind it.
 
 To change the rotating status lines, edit the `messages` array in `script.js`.
 
