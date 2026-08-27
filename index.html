@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Get Bee Seen — Social Marketing That Refuses to Be Ignored</title>
 <meta name="description" content="Get Bee Seen is a social-first marketing studio. Content, ads and strategy that turn scrolls into sales. Book a free brand audit.">
-<meta name="theme-color" content="#ffc91c">
+<meta name="theme-color" content="#fff2dc">
 
 <meta property="og:type" content="website">
 <meta property="og:title" content="Get Bee Seen — Social Marketing Studio">
 <meta property="og:description" content="Content, ads and strategy that turn scrolls into sales.">
 
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%230e0e0e'/%3E%3Crect x='24' y='34' width='52' height='34' rx='17' fill='%23ffc91c'/%3E%3Cpath d='M30 46h40M28 58h44' stroke='%230e0e0e' stroke-width='7' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" href="assets/badge.svg">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -23,40 +23,24 @@
 
 <!-- ================= LOADING SCREEN ================= -->
 <div class="loader" id="loader" role="status" aria-live="polite" aria-label="Loading Get Bee Seen">
-  <svg class="loader__bee" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <ellipse cx="22" cy="19" rx="15" ry="8" fill="#fff8e7" fill-opacity=".5" transform="rotate(-22 22 19)"/>
-    <ellipse cx="42" cy="19" rx="15" ry="8" fill="#fff8e7" fill-opacity=".5" transform="rotate(22 42 19)"/>
-    <rect x="17" y="26" width="32" height="26" rx="13" fill="#ffc91c"/>
-    <path d="M21 34h24M20 42h28" stroke="#0e0e0e" stroke-width="5" stroke-linecap="round"/>
-  </svg>
-
   <div class="loader__inner">
-    <h1 class="loader__word">
-      <span><b>Get</b></span>
-      <span><b>Bee</b></span>
-      <span><b>Seen</b></span>
-    </h1>
-
-    <div class="loader__meta">
-      <span id="loaderStatus">Loading</span>
-      <span id="loaderPct">0%</span>
+    <div class="loader__disc">
+      <img class="loader__bee" src="assets/bee.svg" alt="" aria-hidden="true">
     </div>
-  </div>
 
-  <div class="loader__bar"><i id="loaderBar"></i></div>
+    <img class="loader__wordmark" src="assets/wordmark-cream.svg" alt="Get Bee Seen">
+    <p class="loader__status" id="loaderStatus">Loading</p>
+
+    <div class="loader__bar"><i id="loaderBar"></i></div>
+    <div class="loader__pct" id="loaderPct">0%</div>
+  </div>
 </div>
 
 <!-- ================= HEADER ================= -->
 <header class="header" id="header">
   <div class="wrap header__row">
-    <a href="#top" class="brand">
-      <span class="brand__mark">
-        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="17" y="24" width="32" height="26" rx="13" fill="#ffc91c"/>
-          <path d="M21 32h24M20 40h28" stroke="#0e0e0e" stroke-width="5" stroke-linecap="round"/>
-        </svg>
-      </span>
-      Get Bee Seen
+    <a href="#top" class="brand" aria-label="Get Bee Seen — home">
+      <img src="assets/wordmark-green.svg" alt="Get Bee Seen">
     </a>
 
     <nav class="nav" id="nav">
@@ -68,7 +52,7 @@
       <a href="#contact">Contact</a>
     </nav>
 
-    <a href="#contact" class="btn btn--ink btn--sm">Free audit</a>
+    <a href="#contact" class="btn btn--yellow btn--sm">Free audit</a>
 
     <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
@@ -83,21 +67,17 @@
   <div class="wrap hero__inner">
     <span class="pill"><i></i> Booking Q4 partnerships</span>
 
-    <h1>
-      <span class="line"><span>Stop</span></span>
-      <span class="line"><span class="stroke">Whispering</span></span>
-      <span class="line"><span>Into The <span class="tilt">Void</span></span></span>
-    </h1>
+    <h1>Stop whispering<br>into the <span class="hl">void</span></h1>
 
     <div class="hero__foot">
       <div>
-        <p>
+        <p class="lede">
           We're a social-first marketing studio for brands that are tired of being
           the best-kept secret in their category. Content, ads and strategy that
           turn scrolls into sales — no agency bloat, no six-month lock-in.
         </p>
         <div class="hero__cta">
-          <a href="#contact" class="btn btn--ink">
+          <a href="#contact" class="btn btn--green">
             Get a free audit
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </a>
@@ -105,10 +85,11 @@
         </div>
       </div>
 
-      <div class="stickers" aria-hidden="true">
-        <div class="sticker sticker--1"><b>1.4M</b><span>Reach last month</span></div>
-        <div class="sticker sticker--2"><b>4.2x</b><span>Average ad ROAS</span></div>
-        <div class="sticker sticker--3"><b>+8,940</b><span>New followers</span></div>
+      <div class="hero__art">
+        <img class="hero__bee" src="assets/bee.svg" alt="The Get Bee Seen bee">
+        <div class="chip chip--1"><b>1.4M</b><span>Reach last month</span></div>
+        <div class="chip chip--2"><b>4.2x</b><span>Average ad ROAS</span></div>
+        <div class="chip chip--3"><b>+8,940</b><span>New followers</span></div>
       </div>
     </div>
   </div>
@@ -127,7 +108,7 @@
 </div>
 
 <!-- ================= SERVICES ================= -->
-<section class="section section--paper" id="services">
+<section class="section section--white" id="services">
   <div class="wrap">
     <div class="section__head reveal">
       <span class="kicker">What we do</span>
@@ -182,7 +163,7 @@
 </section>
 
 <!-- ================= NUMBERS ================= -->
-<section class="section section--ink">
+<section class="section section--green">
   <div class="wrap">
     <div class="section__head section__head--center reveal">
       <span class="kicker">The receipts</span>
@@ -233,7 +214,7 @@
 </section>
 
 <!-- ================= WORK ================= -->
-<section class="section section--paper" id="work">
+<section class="section section--white" id="work">
   <div class="wrap">
     <div class="section__head reveal">
       <span class="kicker">Selected work</span>
@@ -276,7 +257,7 @@
 </section>
 
 <!-- ================= TESTIMONIALS ================= -->
-<section class="section section--mint">
+<section class="section section--yellow">
   <div class="wrap">
     <div class="section__head section__head--center reveal">
       <span class="kicker">Kind words</span>
@@ -285,16 +266,19 @@
 
     <div class="quotes">
       <article class="quote reveal">
+        <span class="quote__mark" aria-hidden="true">“</span>
         <p>We'd burned through two agencies before this. Get Bee Seen had our first viral reel inside three weeks — and actually explained why it worked.</p>
         <div class="quote__who"><span class="avatar">MR</span><div><b>Maya Rowe</b><span>Founder, Honeygrove Café</span></div></div>
       </article>
 
       <article class="quote reveal">
+        <span class="quote__mark" aria-hidden="true">“</span>
         <p>They treat our ad budget like it's their own money. Spend is down 18% and revenue is up. That's the whole review, really.</p>
         <div class="quote__who"><span class="avatar">DC</span><div><b>Dan Cheng</b><span>Head of Growth, Nova Active</span></div></div>
       </article>
 
       <article class="quote reveal">
+        <span class="quote__mark" aria-hidden="true">“</span>
         <p>I'm a lawyer, not a content creator. They made it painless — one filming day a month and my calendar stays full.</p>
         <div class="quote__who"><span class="avatar">PT</span><div><b>Priya Tan</b><span>Partner, Tidal Law</span></div></div>
       </article>
@@ -337,7 +321,7 @@
           <li>Email flow management</li>
           <li>Fortnightly strategy calls</li>
         </ul>
-        <a href="#contact" class="btn btn--coral">Book a call</a>
+        <a href="#contact" class="btn btn--yellow">Book a call</a>
       </article>
 
       <article class="plan reveal">
@@ -358,7 +342,7 @@
 </section>
 
 <!-- ================= FAQ ================= -->
-<section class="section section--paper" id="faq">
+<section class="section section--white" id="faq">
   <div class="wrap">
     <div class="section__head section__head--center reveal">
       <span class="kicker">FAQ</span>
@@ -391,7 +375,7 @@
 </section>
 
 <!-- ================= CONTACT ================= -->
-<section class="section section--ink" id="contact">
+<section class="section section--green" id="contact">
   <div class="wrap contact-grid">
     <div class="reveal">
       <span class="kicker">Get in touch</span>
@@ -450,7 +434,7 @@
         <textarea id="message" name="message" placeholder="We're a café in Portland and our Instagram has been flat for a year…"></textarea>
       </div>
 
-      <button type="submit" class="btn btn--ink">
+      <button type="submit" class="btn btn--green">
         Send it over
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
       </button>
@@ -463,10 +447,11 @@
 
 <!-- ================= BIG CTA ================= -->
 <section class="cta">
-  <div class="wrap reveal">
+  <div class="wrap cta__inner reveal">
+    <img class="cta__badge" src="assets/badge.svg" alt="" aria-hidden="true">
     <h2>Your competitors post daily.<br>You could post better.</h2>
     <p>Grab a free 30-minute audit and we'll show you exactly where the attention is leaking.</p>
-    <a href="#contact" class="btn btn--ink">Claim your audit</a>
+    <a href="#contact" class="btn btn--green">Claim your audit</a>
   </div>
 </section>
 
@@ -477,14 +462,8 @@
   <div class="wrap">
     <div class="footer__grid">
       <div>
-        <a href="#top" class="brand" style="color:var(--paper);margin-bottom:16px">
-          <span class="brand__mark" style="background:var(--yellow)">
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="17" y="24" width="32" height="26" rx="13" fill="#0e0e0e"/>
-              <path d="M21 32h24M20 40h28" stroke="#ffc91c" stroke-width="5" stroke-linecap="round"/>
-            </svg>
-          </span>
-          Get Bee Seen
+        <a href="#top" class="brand" aria-label="Get Bee Seen — home">
+          <img class="footer__logo" src="assets/wordmark-cream.svg" alt="Get Bee Seen">
         </a>
         <p>A social-first marketing studio for brands tired of being the best-kept secret in their category.</p>
       </div>
@@ -518,8 +497,6 @@
         </ul>
       </div>
     </div>
-
-    <div class="footer__mark" aria-hidden="true">Get Bee Seen</div>
 
     <div class="footer__bottom">
       <span>© <span id="year">2026</span> Get Bee Seen. All rights reserved.</span>
