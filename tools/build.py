@@ -17,10 +17,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 NAV = [
     ("index.html",    "Home"),
-    ("services.html", "Services"),
-    ("work.html",     "Work"),
-    ("process.html",  "Process"),
     ("about.html",    "About"),
+    ("work.html",     "Our Work"),
+    ("services.html", "Services"),
+    ("process.html",  "Process"),
     ("contact.html",  "Contact"),
 ]
 
@@ -125,9 +125,10 @@ FOOTER = '''<footer class="footer">
       <div>
         <h4>Company</h4>
         <ul>
-          <li><a href="about.html">About us</a></li>
-          <li><a href="work.html">Our work</a></li>
-          <li><a href="process.html">How we work</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="work.html">Our Work</a></li>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="process.html">Process</a></li>
           <li><a href="contact.html">Contact</a></li>
         </ul>
       </div>
