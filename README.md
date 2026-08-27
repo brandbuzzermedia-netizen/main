@@ -1,26 +1,42 @@
 # Get Bee Seen
 
-Marketing website for **Get Bee Seen**, a social-first marketing studio. Static
-site — no build step, no dependencies. Open `index.html` or serve the folder.
+Website for **Get Bee Seen** — a branding, web and performance marketing agency
+in Bengaluru. Six static pages, no build step required to run, no dependencies.
 
 ```bash
 python3 -m http.server 8000
 ```
 
-## Files
+## Pages
 
-| File | Purpose |
+| File | Page |
 | --- | --- |
-| `index.html` | All page content and markup |
-| `styles.css` | Brand tokens, layout, animations, responsive rules |
-| `script.js` | Loading screen, nav, scroll reveal, counters, FAQ, form |
-| `assets/` | Logo artwork extracted from the brand kit (SVG) |
+| `index.html` | Home |
+| `services.html` | Services — all twelve, split into Brand & Creative and Digital & Growth |
+| `work.html` | Selected work — website case studies, brand identity, Meta Ads results |
+| `process.html` | How we work — six stages, plus the paid-media loop |
+| `about.html` | Who we are, philosophy, what sets us apart, industries |
+| `contact.html` | Enquiry form and contact details |
+
+Shared across every page: `styles.css`, `script.js`, `assets/`.
+
+## Editing
+
+The pages are generated from one shared shell so the header, footer and `<head>`
+can't drift apart. **Edit `tools/build.py`, then run it** — don't hand-edit the
+HTML files, or your changes will be overwritten on the next build:
+
+```bash
+python3 tools/build.py
+```
+
+That writes the six pages plus `preview.html` — a single self-contained file with
+all six pages bundled and every asset inlined, handy for sharing a preview link.
+`preview.html` is a preview convenience only; the real site is the six pages.
 
 ## Brand
 
-Everything follows the Get Bee Seen brand kit.
-
-**Colour**
+Colour, type and logo all follow the Get Bee Seen brand kit.
 
 | Token | Hex | Use |
 | --- | --- | --- |
@@ -33,43 +49,50 @@ Everything follows the Get Bee Seen brand kit.
 | `--ink` | `#191816` | Body text |
 | `--grey` | `#999999` | Muted text |
 
-**Type** — Headings are **Bunga**, body is **Neue Leiden**. Neither is on
-Google Fonts, so the site ships with the closest free matches (Alfa Slab One
-and Archivo) and lists the real names first in the stack. To use the licensed
-files: put `Bunga.woff2` and `NeueLeiden.woff2` in `assets/fonts/` and
-uncomment the `@font-face` block at the top of `styles.css`.
+**Type** — headings are **Bunga**, body is **Neue Leiden**. Neither is on Google
+Fonts, so the site ships with the closest free matches (Alfa Slab One and
+Archivo) and lists the real names first in the stack. To use the licensed files:
+put `Bunga.woff2` and `NeueLeiden.woff2` in `assets/fonts/` and uncomment the
+`@font-face` block at the top of `styles.css`.
 
-**Logo** — `assets/` holds vector artwork pulled from the kit:
+**Logo** — vector artwork extracted from the brand kit PDF:
 
 | File | Where it's used |
 | --- | --- |
-| `wordmark-green.svg` | Header |
-| `wordmark-cream.svg` | Loading screen, footer |
-| `bee.svg` | Loading screen, hero |
-| `badge.svg` | Favicon, spinning badge above the closing CTA |
+| `assets/badge.svg` | Header, favicon, spinning mark above the closing CTA |
+| `assets/wordmark-yellow.svg` | Footer |
+| `assets/wordmark-cream.svg` | Loading screen |
+| `assets/wordmark-green.svg` | Spare, for light backgrounds |
+| `assets/bee.svg` | Loading screen, hero, about page |
+
+`assets/work/` holds the client screenshots and brand identity boards from the
+portfolio, converted to WebP (1.1 MB of PNG → 172 KB).
 
 ## The loading screen
 
 Deep green ground with the brand bee flying inside a cream disc, the wordmark
 beneath it, and a yellow progress bar. Progress creeps to 90% while assets
-download, then completes on `window.load` and fades out. Two safety timers
-(4s and 7s) guarantee it always clears, even if an asset stalls — a visitor is
-never trapped behind it.
+download, completes on `window.load`, then fades out.
+
+It runs **once per session** — `sessionStorage` remembers it, so moving between
+pages doesn't re-gate the site. Two safety timers (4s and 7s) guarantee it always
+clears even if an asset stalls.
 
 To change the rotating status lines, edit the `messages` array in `script.js`.
 
 ## Before going live
 
-- **The contact form is front-end only.** It validates and shows a success
-  message but sends nothing. Point it at Formspree, Netlify Forms, or your own
-  endpoint before launch.
-- Replace the placeholder contact details (`hello@getbeeseen.com`, the phone
-  number) and the `#` social links in the footer.
-- Case studies, testimonials and stats are sample content — swap in real figures.
+- **The enquiry form doesn't send anywhere yet.** It validates and shows a
+  success message but posts nothing. Connect it to your inbox or a form service
+  (Formspree, Netlify Forms, or your own endpoint) before launch.
+- The Instagram and LinkedIn links point at `instagram.com/getbeeseen` and
+  `linkedin.com/company/getbeeseen` — check those are the right handles.
 - Add a real Open Graph image (`og:image`) for link previews.
+- The portfolio says "eight brands, eight builds" but includes five written case
+  studies. Three more can be added to `CASES` in `tools/build.py`.
 
 ## Notes
 
-- Respects `prefers-reduced-motion`: animations and reveals are disabled, and
-  the loader advances immediately.
-- Layout is responsive at 1000px and 640px breakpoints.
+- Content, figures and client work all come from the 2026 agency portfolio.
+- Respects `prefers-reduced-motion`.
+- Responsive at 1000px and 640px. Wide tables scroll inside their own container.

@@ -74,6 +74,11 @@ h1, h2, h3 {
   text-wrap: balance;
 }
 
+/* base sizes for headings outside a .section__head */
+h1 { font-size: clamp(2.3rem, 5.6vw, 3.6rem); }
+h2 { font-size: clamp(1.8rem, 3.6vw, 2.5rem); }
+h3 { font-size: 1.24rem; }
+
 a { color: inherit; text-decoration: none; }
 img, svg { max-width: 100%; display: block; }
 
@@ -222,11 +227,11 @@ img, svg { max-width: 100%; display: block; }
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  height: 84px;
+  height: 104px;
 }
 
 .brand { display: block; }
-.brand img { height: 42px; width: auto; }
+.brand img { height: 68px; width: auto; }
 
 .nav { display: flex; align-items: center; gap: 2px; }
 
@@ -240,6 +245,11 @@ img, svg { max-width: 100%; display: block; }
 }
 
 .nav a:hover { background: var(--yellow); color: var(--green); }
+
+.nav a.is-active {
+  background: var(--green);
+  color: var(--cream);
+}
 
 /* buttons */
 .btn {
@@ -291,7 +301,7 @@ img, svg { max-width: 100%; display: block; }
 
 .hero {
   position: relative;
-  padding: 142px 0 76px;
+  padding: 156px 0 76px;
   overflow: hidden;
 }
 
@@ -449,6 +459,10 @@ img, svg { max-width: 100%; display: block; }
 .section__head h2 { font-size: clamp(2.1rem, 5.4vw, 3.5rem); }
 .section__head p { margin: 0; font-size: 1.06rem; color: var(--char); }
 
+/* must follow .section__head p — same specificity, so order decides */
+.section--green .section__head p,
+.section--green .lede { color: rgba(255, 242, 220, .86); }
+
 .kicker {
   display: inline-block;
   background: var(--green);
@@ -482,13 +496,37 @@ img, svg { max-width: 100%; display: block; }
 
 .card:hover { transform: translate(-3px, -4px); box-shadow: var(--shadow-lg); }
 
+.card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.card__num {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--green);
+  opacity: .28;
+}
+
+.card__tags {
+  display: block;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 2px solid rgba(25, 97, 68, .16);
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--green);
+}
+
 .card__ico {
   width: 56px; height: 56px;
   display: grid;
   place-items: center;
   border: var(--border);
   border-radius: 50%;
-  margin-bottom: 20px;
   background: var(--yellow);
   color: var(--green);
 }
@@ -1008,20 +1046,410 @@ img, svg { max-width: 100%; display: block; }
 .reveal { opacity: 0; transform: translateY(22px); transition: opacity .6s var(--ease), transform .6s var(--ease); }
 .reveal.is-in { opacity: 1; transform: none; }
 
+
+/* ============================================================
+   19. Inner-page hero
+   ============================================================ */
+
+.page-hero {
+  position: relative;
+  padding: 166px 0 68px;
+  overflow: hidden;
+  border-bottom: var(--border);
+}
+
+.page-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(25, 97, 68, .18) 2px, transparent 2px);
+  background-size: 32px 32px;
+  pointer-events: none;
+}
+
+.page-hero__inner { position: relative; z-index: 2; max-width: 760px; }
+.page-hero h1 { font-size: clamp(2.4rem, 6.4vw, 4.4rem); margin-bottom: 18px; }
+.page-hero .lede { font-size: 1.14rem; color: var(--char); margin: 0; max-width: 60ch; }
+.page-hero .hero__cta { margin-top: 30px; }
+
+/* "see all" link under a section */
+.section__more { margin-top: 40px; display: flex; justify-content: center; }
+
+/* ============================================================
+   20. Split (image + text)
+   ============================================================ */
+
+.split {
+  display: grid;
+  grid-template-columns: .8fr 1.2fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.split__art {
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--yellow);
+  box-shadow: var(--shadow);
+  padding: 36px;
+  display: grid;
+  place-items: center;
+}
+
+.split__art img { width: min(240px, 100%); animation: beeFly 5.5s ease-in-out infinite; }
+.split p { color: var(--char); }
+.split p + p { margin-top: 1em; }
+
+/* ============================================================
+   21. Team
+   ============================================================ */
+
+.team { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+
+.member {
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--cream);
+  box-shadow: var(--shadow);
+  padding: 28px 22px;
+  text-align: center;
+}
+
+.member b { display: block; margin-top: 14px; font-size: 1rem; color: var(--green); }
+.member > span:last-child { font-size: .86rem; color: var(--char); }
+
+.avatar--lg {
+  width: 74px;
+  height: 74px;
+  margin: 0 auto;
+  font-size: 1.4rem;
+}
+
+.member:nth-child(even) .avatar--lg { background: var(--green); color: var(--yellow); }
+
+/* ============================================================
+   22. Comparison table
+   ============================================================ */
+
+.table-wrap {
+  overflow-x: auto;
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--cream-lift);
+  box-shadow: var(--shadow);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+  font-size: .95rem;
+}
+
+.table th,
+.table td {
+  padding: 15px 20px;
+  text-align: left;
+  border-bottom: 1px solid rgba(25, 97, 68, .18);
+}
+
+.table thead th {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.02rem;
+  color: var(--cream);
+  background: var(--green);
+  border-bottom: var(--border);
+}
+
+.table tbody th {
+  font-weight: 600;
+  color: var(--green);
+}
+
+.table td {
+  color: var(--char);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.table thead th:not(:first-child) { text-align: center; }
+.table tbody tr:last-child th,
+.table tbody tr:last-child td { border-bottom: 0; }
+.table tbody tr:nth-child(even) { background: rgba(255, 185, 51, .16); }
+
+/* the bolt-on grid reuses .num but holds words, not figures */
+.num b:not([data-count]) { font-size: 1.16rem; line-height: 1.3; margin-bottom: 6px; }
+
+
+/* ============================================================
+   23. Website case studies
+   ============================================================ */
+
+.cases { display: grid; gap: 26px; }
+
+.case {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 40px;
+  align-items: center;
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--cream-lift);
+  box-shadow: var(--shadow);
+  padding: 30px;
+}
+
+.case:nth-child(even) .case__art { order: 2; }
+
+.case__art {
+  border: var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--yellow);
+  line-height: 0;
+}
+
+/* screenshots keep their own aspect ratio — no cropping */
+.case__art img { width: 100%; height: auto; }
+
+.case__n {
+  display: block;
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--yellow-deep);
+  margin-bottom: 8px;
+}
+
+.case__body h3 { font-size: clamp(1.6rem, 2.6vw, 2.1rem); margin-bottom: 2px; }
+.case__sector { margin: 0 0 20px; font-size: .93rem; color: var(--grey); }
+
+.case__meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 18px;
+  margin: 0 0 20px;
+  font-size: .9rem;
+}
+
+.case__meta dt {
+  font-weight: 700;
+  color: var(--green);
+  white-space: nowrap;
+}
+
+.case__meta dd { margin: 0; color: var(--char); }
+
+.case__features {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.case__features li {
+  font-size: .8rem;
+  font-weight: 600;
+  padding: 6px 13px;
+  border: 2px solid var(--green);
+  border-radius: 99px;
+  color: var(--green);
+}
+
+.case__quote {
+  margin: 0 0 22px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: var(--yellow);
+  border: 2.5px solid var(--green);
+  font-size: .93rem;
+  color: var(--green);
+}
+
+.case__quote cite {
+  display: block;
+  margin-top: 10px;
+  font-style: normal;
+  font-weight: 700;
+  font-size: .84rem;
+}
+
+/* ============================================================
+   24. Brand identity gallery
+   ============================================================ */
+
+.gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+
+.gallery__item {
+  margin: 0;
+  border: var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  line-height: 0;
+  transition: transform .22s var(--ease), box-shadow .22s var(--ease);
+}
+
+.gallery__item:hover { transform: translate(-3px, -4px); box-shadow: var(--shadow-lg); }
+.gallery__item img { width: 100%; height: auto; }
+
+/* ============================================================
+   25. Meta Ads case studies
+   ============================================================ */
+
+.ads-list { display: grid; gap: 26px; }
+
+/* grid children default to min-width:auto, which lets the wide campaign
+   table push the whole page sideways — pin them back to the track */
+.ads, .case { min-width: 0; }
+.table-wrap { max-width: 100%; }
+
+.ads {
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--cream-lift);
+  box-shadow: var(--shadow);
+  padding: 30px;
+}
+
+.ads__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.ads__head h3 { font-size: clamp(1.5rem, 2.4vw, 2rem); margin: 0; }
+.ads__sector { margin: 0; font-size: .9rem; color: var(--grey); }
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 26px;
+}
+
+.tile {
+  border: var(--border);
+  border-radius: 18px;
+  background: var(--cream);
+  padding: 20px;
+}
+
+.tile b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  line-height: 1.1;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+}
+
+.tile span { font-size: .82rem; color: var(--char); }
+
+/* the lead tile inverts — must come after the base rules above */
+.tile--hot { background: var(--green); }
+.tile--hot b { color: var(--yellow); }
+.tile--hot span { color: rgba(255, 242, 220, .82); }
+
+/* ============================================================
+   26. Industry pills
+   ============================================================ */
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+
+.pill-tag {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  padding: 12px 26px;
+  border: var(--border);
+  border-radius: 99px;
+  background: var(--cream-lift);
+  color: var(--green);
+  box-shadow: 4px 5px 0 rgba(25, 97, 68, .9);
+}
+
+.pill-tag:nth-child(3n+2) { background: var(--green); color: var(--yellow); }
+.pill-tag:nth-child(4n+3) { background: var(--yellow); }
+
+/* ============================================================
+   27. Campaign flow
+   ============================================================ */
+
+.flow {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  counter-reset: flow;
+}
+
+.flow li {
+  border: 2.5px solid var(--cream);
+  border-radius: 18px;
+  padding: 22px 16px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  color: var(--cream);
+}
+
+.flow li span {
+  display: block;
+  font-size: .78rem;
+  letter-spacing: .14em;
+  color: var(--yellow);
+  margin-bottom: 8px;
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+/* eight-up figure grid */
+.numbers--8 { grid-template-columns: repeat(4, 1fr); }
+
+.footer__addr { font-size: .93rem; color: rgba(255, 242, 220, .78); }
+.contact-list a { text-decoration: none; }
+.contact-list a:hover { color: var(--yellow); }
+
+/* work preview cards now carry a screenshot */
+.work__thumb { aspect-ratio: auto; padding: 0; }
+.work__thumb img { width: 100%; height: auto; display: block; }
+.work__thumb::before { display: none; }
+.work__sector { font-size: .84rem; color: var(--grey); margin: 0 0 8px; }
+
 /* ============================================================
    17. Responsive
    ============================================================ */
 
 @media (max-width: 1000px) {
   .cards, .work-grid, .quotes, .plans { grid-template-columns: repeat(2, 1fr); }
-  .numbers { grid-template-columns: repeat(2, 1fr); }
+  .numbers, .team, .numbers--8 { grid-template-columns: repeat(2, 1fr); }
+  .case { grid-template-columns: 1fr; gap: 26px; }
+  .case:nth-child(even) .case__art { order: 0; }
+  .tiles { grid-template-columns: repeat(2, 1fr); }
+  .flow { grid-template-columns: repeat(3, 1fr); }
+  .split { grid-template-columns: 1fr; gap: 34px; }
+  .page-hero { padding: 138px 0 56px; }
   .hero__foot, .contact-grid { grid-template-columns: 1fr; }
   .hero__art { margin-top: 26px; }
   .footer__grid { grid-template-columns: 1fr 1fr; }
 
   .nav {
     position: fixed;
-    inset: 84px 0 auto;
+    inset: 104px 0 auto;
     flex-direction: column;
     align-items: stretch;
     gap: 0;
@@ -1049,11 +1477,17 @@ img, svg { max-width: 100%; display: block; }
 @media (max-width: 640px) {
   body { font-size: 16px; }
   .section { padding: 68px 0; }
-  .cards, .work-grid, .quotes, .plans, .numbers { grid-template-columns: 1fr; }
+  .cards, .work-grid, .quotes, .plans, .numbers, .team, .numbers--8, .gallery { grid-template-columns: 1fr; }
+  .flow { grid-template-columns: repeat(2, 1fr); }
+  .case, .ads { padding: 20px; }
+  .case__meta { grid-template-columns: 1fr; gap: 2px; }
+  .case__meta dd { margin-bottom: 10px; }
+  .pill-tag { font-size: .96rem; padding: 10px 20px; }
   .footer__grid { grid-template-columns: 1fr; }
+  .brand img { height: 54px; }
   .form__row { grid-template-columns: 1fr; }
   .form { padding: 26px 22px; }
-  .hero { padding-top: 118px; }
+  .hero { padding-top: 128px; }
   .hero__art { min-height: 280px; }
   .hero__bee { width: 62%; }
   .chip { padding: 8px 15px; }
