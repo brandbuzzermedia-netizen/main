@@ -74,7 +74,7 @@ def header(active):
     links = "\n      ".join(items)
     return f'''<header class="header" id="header">
   <div class="wrap header__row">
-    <a href="index.html" class="brand" aria-label="Get Bee Seen — home">
+    <a href="index.html" class="brand" aria-label="Get Bee Seen home">
       <img src="assets/badge.svg" alt="Get Bee Seen">
     </a>
 
@@ -105,7 +105,7 @@ FOOTER = '''<footer class="footer">
   <div class="wrap">
     <div class="footer__grid">
       <div>
-        <a href="index.html" class="brand" aria-label="Get Bee Seen — home">
+        <a href="index.html" class="brand" aria-label="Get Bee Seen home">
           <img class="footer__logo" src="assets/wordmark-yellow.svg" alt="Get Bee Seen">
         </a>
         <p>A branding, web and performance marketing agency in Bengaluru, buzzing brands into the spotlight.</p>
@@ -177,7 +177,7 @@ def page_hero(kicker, title, lede, extra=""):
 
 
 # ----------------------------------------------------------------------
-# content — all copy, figures and client work come from the
+# content: all copy, figures and client work come from the
 # Get Bee Seen agency portfolio (2026).
 # ----------------------------------------------------------------------
 
@@ -186,7 +186,7 @@ TAGLINE = "Buzzing brands into the spotlight"
 STAGES = [
     ("01", "Attention",
      "In a feed that never stops scrolling, invisible brands lose by default. We design "
-     "the first three seconds — the ones that decide whether someone stops or swipes past."),
+     "the first three seconds, the ones that decide whether someone stops or swipes past."),
     ("02", "Trust",
      "Attention without credibility fades fast. Consistent identity, clear messaging and a "
      "website that looks as good as your service turn a first glance into belief."),
@@ -194,8 +194,8 @@ STAGES = [
      "Trust means nothing if it doesn't lead anywhere. Every page, ad and funnel we build is "
      "engineered around one question: does this move someone to act?"),
     ("04", "Growth",
-     "Visibility that doesn't compound is a campaign, not a business. We build the systems — "
-     "SEO, retention, data — that keep the momentum after the launch buzz fades."),
+     "Visibility that doesn't compound is a campaign, not a business. We build the systems "
+     "that keep the momentum after the launch buzz fades: SEO, retention and data."),
 ]
 
 PHILOSOPHY = '''<section class="section" id="philosophy">
@@ -347,12 +347,12 @@ APART = '''<section class="section section--white">
       <article class="card reveal">
         <div class="card__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
         <h3>Full-service digital partner</h3>
-        <p>Branding, websites, SEO, performance marketing and social — under one roof, on one plan.</p>
+        <p>Branding, websites, SEO, performance marketing and social, under one roof and on one plan.</p>
       </article>
       <article class="card reveal">
         <div class="card__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-4 4"/></svg></div>
         <h3>Results-first approach</h3>
-        <p>Every campaign is measured by leads, revenue and ROI — not vanity metrics.</p>
+        <p>Every campaign is measured by leads, revenue and ROI, not vanity metrics.</p>
       </article>
       <article class="card reveal">
         <div class="card__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
@@ -362,7 +362,7 @@ APART = '''<section class="section section--white">
       <article class="card reveal">
         <div class="card__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-7h6v7"/></svg></div>
         <h3>Industries we know</h3>
-        <p>Real estate, manufacturing, healthcare, luxury, interiors and retail — we've shipped in all of them.</p>
+        <p>Real estate, manufacturing, healthcare, luxury, interiors and retail. We've shipped in all of them.</p>
       </article>
     </div>
   </div>
@@ -377,7 +377,7 @@ INDUSTRIES_BLOCK = '''<section class="section">
     <div class="section__head section__head--center reveal">
       <span class="kicker">Industries we know</span>
       <h2>Where we've already done the learning</h2>
-      <p>We've shipped brands, sites and campaigns across all of these — so you're not paying
+      <p>We've shipped brands, sites and campaigns across all of these, so you're not paying
         for us to work out how your market behaves.</p>
     </div>
 
@@ -519,7 +519,7 @@ ADS = [
         "cols": ["Campaign", "Results", "Cost / result", "Spend"],
         "rows": [("THR | Dealer Acquisition | Leads | Aug", "332 conversations", "₹22.74", "₹7,548.87"),
                  ("WhatsApp Leads", "1,078 conversations", "₹8.05", "₹8,679.13"),
-                 ("C2 | Door | Warm | Leads | KA | Jan 2026 — Copy", "11 leads", "₹862.56", "₹9,488.12"),
+                 ("C2 | Door | Warm | Leads | KA | Jan 2026 (Copy)", "11 leads", "₹862.56", "₹9,488.12"),
                  ("C2 | Door | Warm | Leads | KA | Jan 2026", "1 lead", "₹2,118.28", "₹2,118.28"),
                  ("C1 | Door Brand Awareness | Cold | KA | Jan 2026", "352 profile visits", "₹2.56", "₹900.87")],
         "note": "",
@@ -532,8 +532,8 @@ ADS = [
                   ("₹1,007.22", "Highest lead-volume campaign")],
         "cols": ["Campaign", "Results", "Cost / result", "Spend"],
         "rows": [("Lykes | B2B Leads | CBO | 14 Jul 2026", "40 leads", "₹55.12", "₹2,204.69"),
-                 ("Lykes — Lead Gen — Jupiter HB", "—", "—", "₹1,000.00"),
-                 ("Lykes | B2B Leads | CBO | Jun 2026 — Copy", "27 leads", "₹37.30", "₹1,007.22"),
+                 ("Lykes | Lead Gen | Jupiter HB", "n/a", "n/a", "₹1,000.00"),
+                 ("Lykes | B2B Leads | CBO | Jun 2026 (Copy)", "27 leads", "₹37.30", "₹1,007.22"),
                  ("Lykes | B2B Leads | CBO | Jun 2026", "28 leads", "₹36.62", "₹1,025.37")],
         "note": "Results from 4 campaigns.",
     },
@@ -546,8 +546,8 @@ ADS = [
                   ("79", "Messaging conversations")],
         "cols": ["Campaign", "Results", "Cost / result", "Spend", "Impressions", "Reach"],
         "rows": [("BWI B2B | LeadGen | NorthBLR | 20 Jul 26", "79 conversations", "₹30.16", "₹2,382.46", "25,096", "25,096"),
-                 ("BWI B2B | LeadGen | NorthBLR | 22 Jun 26 — Copy", "2 leads", "₹927.42", "₹1,854.84", "6,091", "6,091"),
-                 ("BWI B2B | LeadGen | NorthBLR | 22 Jun 26 — Copy", "2 leads", "₹767.87", "₹1,535.73", "24,879", "24,879"),
+                 ("BWI B2B | LeadGen | NorthBLR | 22 Jun 26 (Copy)", "2 leads", "₹927.42", "₹1,854.84", "6,091", "6,091"),
+                 ("BWI B2B | LeadGen | NorthBLR | 22 Jun 26 (Copy)", "2 leads", "₹767.87", "₹1,535.73", "24,879", "24,879"),
                  ("BWI B2B | LeadGen | NorthBLR | 22 Jun 26", "3 leads", "₹900.19", "₹2,700.57", "11,726", "11,726")],
         "note": "Results from 4 campaigns.",
     },
@@ -596,10 +596,10 @@ def ads_blocks():
 CAMPAIGN_FLOW = ["Challenge", "Research", "Strategy", "Execution", "Results", "Impact"]
 
 PROCESS_STAGES = [
-    ("01", "Discovery", "We learn the business before the brand — who buys, what they weigh up, and where the enquiries currently leak away."),
+    ("01", "Discovery", "We learn the business before the brand: who buys, what they weigh up, and where the enquiries currently leak away."),
     ("02", "Strategy", "Positioning, messaging and the plan for how attention becomes revenue. This is where we agree what success is measured in."),
     ("03", "Design", "Identity, interface and campaign creative, designed around how your customer actually decides."),
-    ("04", "Development", "Fast, reliable builds on the stack that fits — Webflow, Shopify, or a custom CMS."),
+    ("04", "Development", "Fast, reliable builds on the stack that fits: Webflow, Shopify, or a custom CMS."),
     ("05", "Launch", "Tracking, pixels and analytics live from day one, so the first week of data is usable."),
     ("06", "Scale", "SEO, retention and paid media compound the launch instead of letting it fade."),
 ]
@@ -647,7 +647,7 @@ HOME_BODY = f'''<section class="hero">
       <div>
         <p class="lede">
           We build brands that people remember, design digital experiences that convert,
-          and run campaigns that generate revenue — not just impressions. Get Bee Seen is
+          and run campaigns that generate revenue, not just impressions. Get Bee Seen is
           a full-service digital partner for brands that refuse to blend in.
         </p>
         <div class="hero__cta">
@@ -684,7 +684,7 @@ HOME_BODY = f'''<section class="hero">
     <div class="section__head reveal">
       <span class="kicker">What we do</span>
       <h2>Twelve services, one partner</h2>
-      <p>Six that build the brand, six that grow it. Take the parts you need — they're
+      <p>Six that build the brand, six that grow it. Take the parts you need. They're
         designed to compound when you stack them.</p>
     </div>
 
@@ -705,7 +705,7 @@ HOME_BODY = f'''<section class="hero">
     <div class="section__head reveal">
       <span class="kicker">Selected work</span>
       <h2>Recent builds</h2>
-      <p>Websites we've designed and shipped this year — more added every quarter.</p>
+      <p>Websites we've designed and shipped this year, with more added every quarter.</p>
     </div>
 
     <div class="work-grid">
@@ -729,7 +729,7 @@ SERVICES_BODY = f'''{page_hero(
     "What we do",
     "Everything a brand needs to stop blending in",
     "Twelve services across brand and growth. Most clients start with one and add the rest "
-    "as the results come in — every engagement begins with a conversation, not a contract.",
+    "as the results come in. Every engagement begins with a conversation, not a contract.",
     '<div class="hero__cta"><a href="contact.html" class="btn btn--yellow">Start a project ' + ARROW + '</a>'
     '<a href="work.html" class="btn">See our work</a></div>')}
 
@@ -744,14 +744,14 @@ WORK_BODY = f'''{page_hero(
     "Selected work",
     "Real builds, real campaigns, real numbers",
     "Websites we've designed and shipped, identities we've built, and Meta Ads accounts we "
-    "manage — with the spend and cost per lead made legible.")}
+    "manage, with the spend and cost per lead made legible.")}
 
 <section class="section">
   <div class="wrap">
     <div class="section__head reveal">
       <span class="kicker">Websites</span>
       <h2>Designed, built and shipped</h2>
-      <p>Selected builds — more added every quarter.</p>
+      <p>Selected builds, with more added every quarter.</p>
     </div>
 
     <div class="cases">
@@ -767,7 +767,7 @@ WORK_BODY = f'''{page_hero(
     <div class="section__head reveal">
       <span class="kicker">Performance marketing</span>
       <h2>Meta Ads accounts we manage</h2>
-      <p>Leads, reach and cost — straight from the ad accounts, not rounded up for a deck.</p>
+      <p>Leads, reach and cost, straight from the ad accounts and not rounded up for a deck.</p>
     </div>
 
     <div class="ads-list">
@@ -786,7 +786,7 @@ ABOUT_BODY = f'''{page_hero(
     "A digital partner for brands that refuse to blend in",
     "Get Bee Seen is a branding, web and performance marketing agency in Bengaluru. We build "
     "brands that people remember, design digital experiences that convert, and run campaigns "
-    "that generate revenue — not just impressions.")}
+    "that generate revenue, not just impressions.")}
 
 <section class="section section--white">
   <div class="wrap split">
@@ -798,8 +798,8 @@ ABOUT_BODY = f'''{page_hero(
       <h2>Visibility, with the eyes to prove it</h2>
       <p>
         Our logo draws on the brand's core idea: visibility. The playful bee with exaggerated,
-        popping eyes captures attention instantly — echoing what we do for the businesses we
-        work with, helping them stand out in crowded digital spaces.
+        popping eyes captures attention instantly, echoing what we do for the businesses we
+        work with and helping them stand out in crowded digital spaces.
       </p>
       <p>
         Paired with bold, approachable typography and vibrant colour, the identity balances fun
@@ -840,7 +840,7 @@ CONTACT_BODY = f'''{page_hero(
         </li>
         <li>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/></svg>
-          <div><b><a href="tel:+918147452427">+91 81474 52427</a></b><span>Mon–Sat, 10am–7pm IST</span></div>
+          <div><b><a href="tel:+918147452427">+91 81474 52427</a></b><span>Mon to Sat, 10am to 7pm IST</span></div>
         </li>
         <li>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -897,8 +897,8 @@ CONTACT_BODY = f'''{page_hero(
 
       <button type="submit" class="btn btn--yellow">Send enquiry {ARROW}</button>
 
-      <p class="form__note">This form doesn't send anywhere yet — connect it to your inbox or a form service before going live.</p>
-      <div class="form__ok" id="formOk">Thanks! That's landed with us — we'll be in touch within one business day. 🐝</div>
+      <p class="form__note">This form doesn't send anywhere yet. Connect it to your inbox or a form service before going live.</p>
+      <div class="form__ok" id="formOk">Thanks! That's landed with us. We'll be in touch within one business day. 🐝</div>
     </form>
   </div>
 </section>
@@ -908,23 +908,23 @@ CONTACT_BODY = f'''{page_hero(
 
 PAGES = [
     {"file": "index.html", "active": "index.html",
-     "title": "Get Bee Seen — Branding, Websites &amp; Performance Marketing",
+     "title": "Get Bee Seen | Branding, Websites &amp; Performance Marketing",
      "desc": "Get Bee Seen is a branding, web and performance marketing agency in Bengaluru. We build brands people remember and campaigns that generate revenue.",
      "body": HOME_BODY},
     {"file": "services.html", "active": "services.html",
-     "title": "Services — Get Bee Seen",
+     "title": "Services | Get Bee Seen",
      "desc": "Brand strategy, identity, creative production, photography, video, influencer marketing, websites, SEO, performance marketing, social and AI automation.",
      "body": SERVICES_BODY},
     {"file": "work.html", "active": "work.html",
-     "title": "Our Work — Get Bee Seen",
+     "title": "Our Work | Get Bee Seen",
      "desc": "Website case studies, brand identity work and Meta Ads performance for Bharatwood, Ashvee Diagnostics and Thrishank Doors &amp; Ply.",
      "body": WORK_BODY},
     {"file": "about.html", "active": "about.html",
-     "title": "About — Get Bee Seen",
+     "title": "About | Get Bee Seen",
      "desc": "A branding, web and performance marketing agency in Bengaluru, working across real estate, manufacturing, healthcare, luxury, interiors and retail.",
      "body": ABOUT_BODY},
     {"file": "contact.html", "active": "contact.html",
-     "title": "Contact — Get Bee Seen",
+     "title": "Contact | Get Bee Seen",
      "desc": "Talk to Get Bee Seen in Bengaluru: info@getbeeseen.com, +91 81474 52427, JP Nagar 7th Phase.",
      "body": CONTACT_BODY},
 ]
