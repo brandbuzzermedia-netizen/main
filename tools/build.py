@@ -20,7 +20,6 @@ NAV = [
     ("about.html",    "About"),
     ("work.html",     "Our Work"),
     ("services.html", "Services"),
-    ("process.html",  "Process"),
     ("contact.html",  "Contact"),
 ]
 
@@ -128,7 +127,6 @@ FOOTER = '''<footer class="footer">
           <li><a href="about.html">About</a></li>
           <li><a href="work.html">Our Work</a></li>
           <li><a href="services.html">Services</a></li>
-          <li><a href="process.html">Process</a></li>
           <li><a href="contact.html">Contact</a></li>
         </ul>
       </div>
@@ -345,7 +343,7 @@ APART = '''<section class="section section--white">
       <h2>What sets us apart</h2>
     </div>
 
-    <div class="cards">
+    <div class="cards cards--2up">
       <article class="card reveal">
         <div class="card__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
         <h3>Full-service digital partner</h3>
@@ -653,13 +651,13 @@ HOME_BODY = f'''<section class="hero">
           a full-service digital partner for brands that refuse to blend in.
         </p>
         <div class="hero__cta">
-          <a href="contact.html" class="btn btn--green">Start a project {ARROW}</a>
+          <a href="contact.html" class="btn btn--yellow">Start a project {ARROW}</a>
           <a href="work.html" class="btn">See our work</a>
         </div>
       </div>
 
       <div class="hero__art">
-        <img class="hero__bee" src="assets/bee.svg" alt="The Get Bee Seen bee">
+        <img class="hero__bee" src="assets/bee-yellow.svg" alt="The Get Bee Seen bee">
         <div class="chip chip--1"><b>₹100K+</b><span>Ad spend managed</span></div>
         <div class="chip chip--2"><b>50+</b><span>Websites built</span></div>
         <div class="chip chip--3"><b>5,000+</b><span>Leads generated</span></div>
@@ -732,8 +730,8 @@ SERVICES_BODY = f'''{page_hero(
     "Everything a brand needs to stop blending in",
     "Twelve services across brand and growth. Most clients start with one and add the rest "
     "as the results come in — every engagement begins with a conversation, not a contract.",
-    '<div class="hero__cta"><a href="contact.html" class="btn btn--green">Start a project ' + ARROW + '</a>'
-    '<a href="process.html" class="btn">How we work</a></div>')}
+    '<div class="hero__cta"><a href="contact.html" class="btn btn--yellow">Start a project ' + ARROW + '</a>'
+    '<a href="work.html" class="btn">See our work</a></div>')}
 
 {SERVICE_GROUPS}
 
@@ -779,43 +777,6 @@ WORK_BODY = f'''{page_hero(
 </section>
 
 {TESTIMONIALS}
-
-{CTA}'''
-
-
-PROCESS_BODY = f'''{page_hero(
-    "How we work",
-    "Six stages, one outcome",
-    "The same path every project takes, from first conversation to compounding growth. "
-    "You'll always know which stage you're in and what comes next.")}
-
-<section class="section section--white">
-  <div class="wrap">
-    <div class="steps">
-''' + "\n".join(f'''      <article class="step reveal">
-        <b>{n}</b>
-        <div><h3>{name}</h3><p>{body}</p></div>
-      </article>''' for n, name, body in PROCESS_STAGES) + f'''
-    </div>
-  </div>
-</section>
-
-<section class="section section--green">
-  <div class="wrap">
-    <div class="section__head section__head--center reveal">
-      <span class="kicker">Paid media</span>
-      <h2>How every campaign runs</h2>
-      <p>The loop we repeat on every ad account we manage.</p>
-    </div>
-
-    <ol class="flow reveal">
-''' + "\n".join(f'      <li><span>{i:02d}</span>{name}</li>'
-                for i, name in enumerate(CAMPAIGN_FLOW, 1)) + f'''
-    </ol>
-  </div>
-</section>
-
-{PHILOSOPHY}
 
 {CTA}'''
 
@@ -870,7 +831,7 @@ CONTACT_BODY = f'''{page_hero(
   <div class="wrap contact-grid">
     <div class="reveal">
       <span class="kicker">Talk to us</span>
-      <h2>Four ways to reach the hive</h2>
+      <h2>Five ways to reach the hive</h2>
 
       <ul class="contact-list">
         <li>
@@ -888,6 +849,13 @@ CONTACT_BODY = f'''{page_hero(
         <li>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/></svg>
           <div><b>@getbeeseen</b><span>Instagram &amp; LinkedIn</span></div>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 6.5V9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0V6.5z"/><path d="M4.5 12v9h15v-9"/><path d="M9.5 21v-5.5h5V21"/></svg>
+          <div>
+            <b><a href="https://share.google/qTSYNJ13wxa1XtfW7" target="_blank" rel="noopener">Find us on Google</a></b>
+            <span>Reviews, directions and opening hours</span>
+          </div>
         </li>
       </ul>
     </div>
@@ -951,10 +919,6 @@ PAGES = [
      "title": "Our Work — Get Bee Seen",
      "desc": "Website case studies, brand identity work and Meta Ads performance for Bharatwood, Ashvee Diagnostics and Thrishank Doors &amp; Ply.",
      "body": WORK_BODY},
-    {"file": "process.html", "active": "process.html",
-     "title": "How We Work — Get Bee Seen",
-     "desc": "Six stages from discovery to scale, and the loop we repeat on every paid media account we manage.",
-     "body": PROCESS_BODY},
     {"file": "about.html", "active": "about.html",
      "title": "About — Get Bee Seen",
      "desc": "A branding, web and performance marketing agency in Bengaluru, working across real estate, manufacturing, healthcare, luxury, interiors and retail.",
@@ -1019,7 +983,7 @@ def write_preview():
     body = (LOADER + "\n\n" + header("index.html") + "\n\n" + "\n\n".join(sections))
 
     # inline the logo artwork as data URIs
-    for name in ("bee", "badge", "wordmark-green", "wordmark-cream", "wordmark-yellow"):
+    for name in ("bee", "bee-yellow", "badge", "wordmark-green", "wordmark-cream", "wordmark-yellow"):
         raw = open(os.path.join(ROOT, "assets", f"{name}.svg"), "rb").read()
         uri = "data:image/svg+xml;base64," + base64.b64encode(raw).decode()
         body = body.replace(f'src="assets/{name}.svg"', f'src="{uri}"')

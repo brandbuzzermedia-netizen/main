@@ -284,13 +284,18 @@
       </div>
       <div class="sg-logo">
         <div class="sg-logo__stage"><img src="assets/bee.svg" alt="The bee mark"></div>
-        <div class="sg-logo__meta"><b>bee.svg</b><span>Loading screen, hero, about page</span></div>
+        <div class="sg-logo__meta"><b>bee.svg</b><span>Loading screen, about page — for cream and yellow grounds</span></div>
+      </div>
+      <div class="sg-logo">
+        <div class="sg-logo__stage sg-logo__stage--green"><img src="assets/bee-yellow.svg" alt="The yellow bee mark"></div>
+        <div class="sg-logo__meta"><b>bee-yellow.svg</b><span>Hero — the same bee in yellow and white, for green grounds</span></div>
       </div>
     </div>
 
     <div class="sg-note" style="margin-top:28px">
-      <b>The bee's outlines are green.</b> On a green background it disappears, so it always
-      sits on a cream or yellow surface — that's why the loading screen puts it inside a cream disc.
+      <b>Two bees, one shape.</b> <code>bee.svg</code> has green linework, so it needs a cream or
+      yellow ground — that's why the loading screen puts it inside a cream disc.
+      <code>bee-yellow.svg</code> is the same artwork in yellow and white, for the green hero.
     </div>
   </div>
 </section>
@@ -335,6 +340,21 @@
 &lt;section class="section section--white"&gt;   &lt;!-- cream-lift --&gt;
 &lt;section class="section section--yellow"&gt;  &lt;!-- yellow --&gt;
 &lt;section class="section section--green"&gt;   &lt;!-- green, inverts text to cream --&gt;</pre>
+
+    <div class="sg-block">
+      <h3>Hero</h3>
+      <p class="sg-lede">
+        Both hero types — <code>.hero</code> on the home page and <code>.page-hero</code> on inner
+        pages — sit on green with a drifting honeycomb lattice, white headings and cream body copy.
+        The kicker flips to yellow-on-green, and hero buttons use <code>.btn--yellow</code>
+        (a green button would disappear).
+      </p>
+      <div class="sg-demo" style="background:var(--green);position:relative;overflow:hidden">
+        <span class="kicker" style="background:var(--yellow);color:var(--green)">Kicker</span>
+        <h2 style="color:#fff;margin:14px 0 8px">Heading in white</h2>
+        <p style="color:rgba(255,255,255,.88);margin:0">Body copy sits at 88% white on the green ground.</p>
+      </div>
+    </div>
 
     <div class="sg-note">
       <b>Green sections invert automatically.</b> Headings go cream and body copy drops to 86%
@@ -404,7 +424,12 @@
           </article>
         </div>
       </div>
-      <pre class="sg-code">&lt;div class="cards"&gt;
+      <div class="sg-note">
+        Add <code>.cards--2up</code> for a two-per-row grid (used by "What sets us apart").
+        Cards there enlarge the icon and invert it on hover.
+      </div>
+      <pre class="sg-code">&lt;div class="cards"&gt;             &lt;!-- three per row --&gt;
+&lt;div class="cards cards--2up"&gt;  &lt;!-- two per row --&gt;
   &lt;article class="card"&gt;
     &lt;div class="card__top"&gt;
       &lt;div class="card__ico"&gt;&lt;svg&gt;…&lt;/svg&gt;&lt;/div&gt;

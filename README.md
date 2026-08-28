@@ -14,7 +14,6 @@ python3 -m http.server 8000
 | `index.html` | Home |
 | `services.html` | Services — all twelve, split into Brand & Creative and Digital & Growth |
 | `work.html` | Selected work — website case studies, brand identity, Meta Ads results |
-| `process.html` | How we work — six stages, plus the paid-media loop |
 | `about.html` | Who we are, philosophy, what sets us apart, industries |
 | `contact.html` | Enquiry form and contact details |
 
@@ -68,7 +67,8 @@ put `Bunga.woff2` and `NeueLeiden.woff2` in `assets/fonts/` and uncomment the
 | `assets/wordmark-yellow.svg` | Footer |
 | `assets/wordmark-cream.svg` | Loading screen |
 | `assets/wordmark-green.svg` | Spare, for light backgrounds |
-| `assets/bee.svg` | Loading screen, hero, about page |
+| `assets/bee.svg` | Loading screen, about page (cream/yellow grounds) |
+| `assets/bee-yellow.svg` | Hero — same bee in yellow and white, for the green ground |
 
 `assets/work/` holds the client screenshots and brand identity boards from the
 portfolio, converted to WebP (1.1 MB of PNG → 172 KB).
