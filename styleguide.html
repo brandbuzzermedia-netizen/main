@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design System — Get Bee Seen</title>
+<meta name="description" content="Colour, type, logo and component reference for the Get Bee Seen website.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#fff2dc">
+<link rel="icon" href="assets/badge.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- The guide renders with the real site stylesheet, so every example
+     below is the live component, not a picture of one. -->
+<link rel="stylesheet" href="styles.css">
+
+<style>
+  /* Guide chrome only — nothing here is part of the design system. */
+  body { padding-bottom: 80px; }
+
+  .sg-head {
+    background: var(--green);
+    color: var(--cream);
+    padding: 56px 0 48px;
+    border-bottom: var(--border);
+  }
+  .sg-head h1 { color: var(--cream); margin-bottom: 14px; }
+  .sg-head p { max-width: 62ch; color: rgba(255, 242, 220, .86); margin: 0; }
+  .sg-head img { width: 210px; margin-bottom: 26px; }
+
+  .sg-section { padding: 56px 0; border-bottom: 2px dashed rgba(25, 97, 68, .3); }
+  .sg-section > .wrap > h2 { margin-bottom: 6px; }
+  .sg-lede { color: var(--char); max-width: 68ch; margin: 0 0 32px; }
+
+  .sg-block { margin-bottom: 40px; }
+  .sg-block > h3 { margin-bottom: 14px; }
+
+  .sg-demo {
+    border: 2px dashed rgba(25, 97, 68, .4);
+    border-radius: 18px;
+    padding: 28px;
+    background: var(--cream-lift);
+    margin-bottom: 12px;
+  }
+  .sg-demo--green { background: var(--green); }
+  .sg-demo--yellow { background: var(--yellow); }
+  .sg-demo--flow { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+
+  .sg-code {
+    margin: 0 0 26px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: var(--ink);
+    color: #ffe6b0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .82rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .sg-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px; }
+  .sg-swatch { border: var(--border); border-radius: 18px; overflow: hidden; background: var(--cream-lift); }
+  .sg-swatch__chip { height: 92px; border-bottom: var(--border); }
+  .sg-swatch__meta { padding: 14px 16px; }
+  .sg-swatch__meta b { display: block; font-family: ui-monospace, Menlo, monospace; font-size: .86rem; color: var(--green); }
+  .sg-swatch__meta code { font-size: .8rem; color: var(--char); text-transform: uppercase; }
+  .sg-swatch__meta span { display: block; font-size: .82rem; color: var(--grey); margin-top: 6px; }
+
+  .sg-type-row {
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    gap: 24px;
+    align-items: baseline;
+    padding: 18px 0;
+    border-bottom: 1px solid rgba(25, 97, 68, .18);
+  }
+  .sg-type-row:last-child { border-bottom: 0; }
+  .sg-type-row > span:first-child {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: .78rem;
+    color: var(--grey);
+    line-height: 1.6;
+  }
+
+  .sg-logos { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+  .sg-logo { border: var(--border); border-radius: 18px; overflow: hidden; background: var(--cream-lift); }
+  .sg-logo__stage { display: grid; place-items: center; padding: 28px; min-height: 130px; }
+  .sg-logo__stage img { max-width: 170px; max-height: 78px; width: auto; }
+  .sg-logo__stage--green { background: var(--green); }
+  .sg-logo__stage--yellow { background: var(--yellow); }
+  .sg-logo__meta { padding: 14px 16px; border-top: var(--border); }
+  .sg-logo__meta b { display: block; font-family: ui-monospace, Menlo, monospace; font-size: .8rem; color: var(--green); }
+  .sg-logo__meta span { font-size: .82rem; color: var(--char); }
+
+  .sg-note {
+    border-left: 5px solid var(--yellow-deep);
+    background: rgba(255, 185, 51, .2);
+    padding: 16px 20px;
+    border-radius: 0 14px 14px 0;
+    margin: 0 0 26px;
+    font-size: .95rem;
+  }
+  .sg-note b { color: var(--green); }
+
+  .sg-toc { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
+  .sg-toc a {
+    border: 2px solid var(--yellow);
+    color: var(--cream);
+    border-radius: 99px;
+    padding: 7px 16px;
+    font-size: .88rem;
+    font-weight: 600;
+    transition: background .2s var(--ease), color .2s var(--ease);
+  }
+  .sg-toc a:hover { background: var(--yellow); color: var(--green); }
+
+  @media (max-width: 640px) {
+    .sg-type-row { grid-template-columns: 1fr; gap: 8px; }
+  }
+</style>
+</head>
+
+<body>
+
+<header class="sg-head">
+  <div class="wrap">
+    <img src="assets/wordmark-cream.svg" alt="Get Bee Seen">
+    <h1>Design system</h1>
+    <p>
+      Colour, type, logo and component reference for the Get Bee Seen website.
+      Everything on this page is rendered with the site's real stylesheet, so what
+      you see here is exactly what ships.
+    </p>
+    <nav class="sg-toc">
+      <a href="#colour">Colour</a>
+      <a href="#type">Typography</a>
+      <a href="#logo">Logo</a>
+      <a href="#shape">Surfaces</a>
+      <a href="#sections">Sections</a>
+      <a href="#components">Components</a>
+      <a href="#motion">Motion &amp; access</a>
+      <a href="#editing">Editing</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ COLOUR ============ -->
+<section class="sg-section" id="colour">
+  <div class="wrap">
+    <h2>Colour</h2>
+    <p class="sg-lede">
+      Ten tokens, defined once in <code>:root</code> in <code>styles.css</code>. Always
+      reference the variable, never a raw hex — that's what keeps a colour change to one line.
+    </p>
+
+    <div class="sg-swatches">
+      <div class="sg-swatch">
+        <div class="sg-swatch__chip" style="background:var(--cream)"></div>
+        <div class="sg-swatch__meta"><b>--cream</b><code>#fff2dc</code><span>Default page background</span></div>
+      </div>
+      <div class="sg-swatch">
+        <div class="sg-swatch__chip" style="background:var(--cream-lift)"></div>
+        <div class="sg-swatch__meta"><b>--cream-lift</b><code>#fffaf0</code><span>Cards and raised surfaces</span></div>
+      </div>
+      <div class="sg-swatch">
+        <div class="sg-swatch__chip" style="background:var(--yellow)"></div>
+        <div class="sg-swatch__meta"><b>--yellow</b><code>#ffb933</code><span>Primary accent, highlights, buttons</span></div>
+      </div>
+      <div class="sg-swatch">
+        <div class="sg-swatch__chip" style="background:var(--yellow-deep)"></div>
+        <div class="sg-swatch__meta"><b>--yellow-deep</b><code>#ff9600</code><span>Accent shade, small emphasis marks</span></div>
+      </div>
+      <div class="sg-swatch">
+        <div class="sg-swatch__chip" style="background:var(--green)"></div>
+        <div class="sg-swatch__meta"><b>--green</b><code>#196144</code><span>Headings, borders, dark sections</span></div>
+      </div>
+      <div class="sg-swatch">
+        <div class="sg-swatch__chip" style="background:var(--green-2)"></div>
+        <div class="sg-swatch__meta"><b>--green-2</b><code>#3e5d48</code><span>Secondary green, muted copy on yellow</span></div>
+      </div>
+      <div class="sg-swatch">
+        <div class="sg-swatch__chip" style="background:var(--white); box-shadow: inset 0 0 0 1px rgba(0,0,0,.08)"></div>
+        <div class="sg-swatch__meta"><b>--white</b><code>#ffffff</code><span>Form inputs only</span></div>
+      </div>
+      <div class="sg-swatch">
+        <div class="sg-swatch__chip" style="background:var(--grey)"></div>
+        <div class="sg-swatch__meta"><b>--grey</b><code>#999999</code><span>Muted labels, sector lines</span></div>
+      </div>
+      <div class="sg-swatch">
+        <div class="sg-swatch__chip" style="background:var(--char)"></div>
+        <div class="sg-swatch__meta"><b>--char</b><code>#262626</code><span>Body copy inside components</span></div>
+      </div>
+      <div class="sg-swatch">
+        <div class="sg-swatch__chip" style="background:var(--ink)"></div>
+        <div class="sg-swatch__meta"><b>--ink</b><code>#191816</code><span>Default body text</span></div>
+      </div>
+    </div>
+
+    <div class="sg-note" style="margin-top:28px">
+      <b>Pairing rule.</b> Green and cream are the only pair used at full strength in both
+      directions. Yellow is an accent, never a text colour on cream — it fails contrast.
+      On green backgrounds, body copy is cream at 86% opacity.
+    </div>
+  </div>
+</section>
+
+<!-- ============ TYPE ============ -->
+<section class="sg-section" id="type">
+  <div class="wrap">
+    <h2>Typography</h2>
+    <p class="sg-lede">
+      Two families. Headings carry the brand's character; body text stays out of the way.
+    </p>
+
+    <div class="sg-block">
+      <h3>Families</h3>
+      <pre class="sg-code">--font-display: "Bunga", "Alfa Slab One", "Cooper Black", Georgia, serif;
+--font-body:    "Neue Leiden", "Archivo", "Segoe UI", system-ui, sans-serif;</pre>
+      <div class="sg-note">
+        <b>Bunga and Neue Leiden aren't loaded yet.</b> Neither is on Google Fonts, so the
+        site ships with the closest free matches — Alfa Slab One and Archivo — with the real
+        names first in the stack. Drop <code>Bunga.woff2</code> and <code>NeueLeiden.woff2</code>
+        into <code>assets/fonts/</code> and uncomment the <code>@font-face</code> block at the
+        top of <code>styles.css</code> to switch over.
+      </div>
+    </div>
+
+    <div class="sg-block">
+      <h3>Scale</h3>
+      <div class="sg-demo">
+        <div class="sg-type-row"><span>h1<br>clamp(2.3rem, 5.6vw, 3.6rem)</span><h1 style="margin:0">Buzzing brands</h1></div>
+        <div class="sg-type-row"><span>h2<br>clamp(1.8rem, 3.6vw, 2.5rem)</span><h2 style="margin:0">Section heading</h2></div>
+        <div class="sg-type-row"><span>h3<br>1.24rem</span><h3 style="margin:0">Card heading</h3></div>
+        <div class="sg-type-row"><span>.lede<br>1.14rem</span><p class="lede" style="margin:0">Intro paragraph — one step up from body copy, used under a page heading.</p></div>
+        <div class="sg-type-row"><span>body<br>17px / 1.65</span><p style="margin:0">Default body copy. Line length is capped near 60 characters so it stays readable.</p></div>
+        <div class="sg-type-row"><span>.kicker</span><span class="kicker">Eyebrow label</span></div>
+      </div>
+      <div class="sg-note">
+        Headings sit in <b>title case, not caps</b> — the display face has too much
+        character for all-caps at size. Page headings on inner pages use
+        <code>.page-hero h1</code>, which runs a larger clamp.
+      </div>
+    </div>
+
+    <div class="sg-block">
+      <h3>Numerals</h3>
+      <p class="sg-lede">Anything in a column or a stat tile uses <code>font-variant-numeric: tabular-nums</code> so digits line up. Counters format with thousands separators.</p>
+      <div class="sg-demo sg-demo--flow">
+        <div class="tile"><b>₹28,392</b><span>Ad spend managed</span></div>
+        <div class="tile tile--hot"><b>5,000+</b><span>Leads generated</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LOGO ============ -->
+<section class="sg-section" id="logo">
+  <div class="wrap">
+    <h2>Logo</h2>
+    <p class="sg-lede">
+      Five vector files, all extracted from the brand kit. Each viewBox is fitted to the
+      artwork's own bounds, so they can't clip at any size — set a height and let the width follow.
+    </p>
+
+    <div class="sg-logos">
+      <div class="sg-logo">
+        <div class="sg-logo__stage sg-logo__stage--yellow"><img src="assets/badge.svg" alt="Circular badge logo"></div>
+        <div class="sg-logo__meta"><b>badge.svg</b><span>Header, favicon, spinning mark above the closing CTA</span></div>
+      </div>
+      <div class="sg-logo">
+        <div class="sg-logo__stage sg-logo__stage--green"><img src="assets/wordmark-yellow.svg" alt="Yellow wordmark"></div>
+        <div class="sg-logo__meta"><b>wordmark-yellow.svg</b><span>Footer</span></div>
+      </div>
+      <div class="sg-logo">
+        <div class="sg-logo__stage sg-logo__stage--green"><img src="assets/wordmark-cream.svg" alt="Cream wordmark"></div>
+        <div class="sg-logo__meta"><b>wordmark-cream.svg</b><span>Loading screen</span></div>
+      </div>
+      <div class="sg-logo">
+        <div class="sg-logo__stage"><img src="assets/wordmark-green.svg" alt="Green wordmark"></div>
+        <div class="sg-logo__meta"><b>wordmark-green.svg</b><span>Spare, for light backgrounds</span></div>
+      </div>
+      <div class="sg-logo">
+        <div class="sg-logo__stage"><img src="assets/bee.svg" alt="The bee mark"></div>
+        <div class="sg-logo__meta"><b>bee.svg</b><span>Loading screen, hero, about page</span></div>
+      </div>
+    </div>
+
+    <div class="sg-note" style="margin-top:28px">
+      <b>The bee's outlines are green.</b> On a green background it disappears, so it always
+      sits on a cream or yellow surface — that's why the loading screen puts it inside a cream disc.
+    </div>
+  </div>
+</section>
+
+<!-- ============ SURFACES ============ -->
+<section class="sg-section" id="shape">
+  <div class="wrap">
+    <h2>Surfaces &amp; shape</h2>
+    <p class="sg-lede">
+      One border, one shadow, one radius. The hard offset shadow is what gives the site its
+      sticker-like feel — it's a solid colour, never a blur.
+    </p>
+
+    <pre class="sg-code">--border:    2.5px solid var(--green);
+--shadow:    5px 6px 0 rgba(25, 97, 68, .9);
+--shadow-lg: 9px 10px 0 rgba(25, 97, 68, .9);   /* hover / featured */
+--radius:    26px;
+--maxw:      1180px;                            /* .wrap max width */
+--ease:      cubic-bezier(.22, .68, .3, 1);</pre>
+
+    <div class="sg-demo sg-demo--flow">
+      <div style="border:var(--border);border-radius:var(--radius);background:var(--cream-lift);padding:24px 30px">Default: <code>--shadow</code></div>
+      <div style="border:var(--border);border-radius:var(--radius);background:var(--cream-lift);padding:24px 30px;box-shadow:var(--shadow-lg)">Raised: <code>--shadow-lg</code></div>
+    </div>
+    <div class="sg-note">
+      Cards lift on hover by translating <code>-3px, -4px</code> and swapping to the larger
+      shadow. Buttons do the reverse on <code>:active</code> — they press into the page.
+    </div>
+  </div>
+</section>
+
+<!-- ============ SECTIONS ============ -->
+<section class="sg-section" id="sections">
+  <div class="wrap">
+    <h2>Section backgrounds</h2>
+    <p class="sg-lede">
+      Four variants, alternated down a page so it changes gear as you scroll. Every section
+      carries a bottom border in green.
+    </p>
+
+    <pre class="sg-code">&lt;section class="section"&gt;              &lt;!-- cream, the default --&gt;
+&lt;section class="section section--white"&gt;   &lt;!-- cream-lift --&gt;
+&lt;section class="section section--yellow"&gt;  &lt;!-- yellow --&gt;
+&lt;section class="section section--green"&gt;   &lt;!-- green, inverts text to cream --&gt;</pre>
+
+    <div class="sg-note">
+      <b>Green sections invert automatically.</b> Headings go cream and body copy drops to 86%
+      opacity — you don't set colours by hand. The <code>.kicker</code> flips to yellow-on-green,
+      and on yellow sections it flips to green-on-yellow.
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMPONENTS ============ -->
+<section class="sg-section" id="components">
+  <div class="wrap">
+    <h2>Components</h2>
+    <p class="sg-lede">Live examples. Copy the markup as-is — every class below exists in <code>styles.css</code>.</p>
+
+    <div class="sg-block">
+      <h3>Buttons</h3>
+      <div class="sg-demo sg-demo--flow">
+        <a href="#components" class="btn btn--green">Primary</a>
+        <a href="#components" class="btn">Secondary</a>
+        <a href="#components" class="btn btn--yellow">Yellow</a>
+        <a href="#components" class="btn btn--sm">Small</a>
+      </div>
+      <pre class="sg-code">&lt;a class="btn btn--green"&gt;Primary&lt;/a&gt;      &lt;!-- green fill, cream text --&gt;
+&lt;a class="btn"&gt;Secondary&lt;/a&gt;               &lt;!-- cream fill, green text --&gt;
+&lt;a class="btn btn--yellow"&gt;Yellow&lt;/a&gt;      &lt;!-- on green backgrounds --&gt;
+&lt;a class="btn btn--sm"&gt;Small&lt;/a&gt;           &lt;!-- header and inline use --&gt;</pre>
+    </div>
+
+    <div class="sg-block">
+      <h3>Labels</h3>
+      <div class="sg-demo sg-demo--flow">
+        <span class="kicker">Kicker</span>
+        <span class="pill"><i></i> Status pill</span>
+        <span class="tag">Tag</span>
+        <span class="pill-tag">Industry</span>
+        <span class="step__tag">Stage</span>
+      </div>
+      <pre class="sg-code">&lt;span class="kicker"&gt;Section eyebrow&lt;/span&gt;
+&lt;span class="pill"&gt;&lt;i&gt;&lt;/i&gt; Status, with a pulsing dot&lt;/span&gt;
+&lt;span class="tag"&gt;Small outlined tag&lt;/span&gt;
+&lt;span class="pill-tag"&gt;Large display pill&lt;/span&gt;
+&lt;span class="step__tag"&gt;Process stage marker&lt;/span&gt;</pre>
+    </div>
+
+    <div class="sg-block">
+      <h3>Service card</h3>
+      <div class="sg-demo">
+        <div class="cards" style="grid-template-columns:repeat(2,1fr)">
+          <article class="card">
+            <div class="card__top">
+              <div class="card__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-4 4"/></svg></div>
+              <span class="card__num">01</span>
+            </div>
+            <h3>Card heading</h3>
+            <p>One or two lines describing what this is.</p>
+            <span class="card__tags">Keyword · Keyword · Keyword</span>
+          </article>
+          <article class="card">
+            <div class="card__top">
+              <div class="card__ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+              <span class="card__num">02</span>
+            </div>
+            <h3>Alternating icon</h3>
+            <p>Even-numbered cards invert the icon chip to green on yellow.</p>
+            <span class="card__tags">Keyword · Keyword</span>
+          </article>
+        </div>
+      </div>
+      <pre class="sg-code">&lt;div class="cards"&gt;
+  &lt;article class="card"&gt;
+    &lt;div class="card__top"&gt;
+      &lt;div class="card__ico"&gt;&lt;svg&gt;…&lt;/svg&gt;&lt;/div&gt;
+      &lt;span class="card__num"&gt;01&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;h3&gt;Card heading&lt;/h3&gt;
+    &lt;p&gt;Description.&lt;/p&gt;
+    &lt;span class="card__tags"&gt;Keyword · Keyword&lt;/span&gt;
+  &lt;/article&gt;
+&lt;/div&gt;</pre>
+    </div>
+
+    <div class="sg-block">
+      <h3>Process step</h3>
+      <div class="sg-demo">
+        <div class="steps">
+          <article class="step">
+            <b>01</b>
+            <div><h3>Discovery</h3><p>Numbered rows. Even rows pick up a yellow background automatically.</p></div>
+            <span class="step__tag">Week 1</span>
+          </article>
+          <article class="step">
+            <b>02</b>
+            <div><h3>Strategy</h3><p>The stage tag on the right is optional.</p></div>
+          </article>
+        </div>
+      </div>
+      <pre class="sg-code">&lt;div class="steps"&gt;
+  &lt;article class="step"&gt;
+    &lt;b&gt;01&lt;/b&gt;
+    &lt;div&gt;&lt;h3&gt;Stage&lt;/h3&gt;&lt;p&gt;What happens here.&lt;/p&gt;&lt;/div&gt;
+    &lt;span class="step__tag"&gt;Week 1&lt;/span&gt;  &lt;!-- optional --&gt;
+  &lt;/article&gt;
+&lt;/div&gt;</pre>
+    </div>
+
+    <div class="sg-block">
+      <h3>Stat tiles &amp; figures</h3>
+      <div class="sg-demo">
+        <div class="tiles">
+          <div class="tile tile--hot"><b>₹28,392</b><span>Lead tile, inverted</span></div>
+          <div class="tile"><b>779+</b><span>Qualified leads</span></div>
+          <div class="tile"><b>₹21.38</b><span>Best cost per lead</span></div>
+          <div class="tile"><b>816K+</b><span>Accounts reached</span></div>
+        </div>
+      </div>
+      <div class="sg-demo sg-demo--green">
+        <div class="numbers" style="grid-template-columns:repeat(4,1fr)">
+          <div class="num"><b>100%</b><span>Client retention</span></div>
+          <div class="num"><b>50+</b><span>Websites built</span></div>
+          <div class="num"><b>100+</b><span>Campaigns executed</span></div>
+          <div class="num"><b>20+</b><span>Brands served</span></div>
+        </div>
+      </div>
+      <pre class="sg-code">&lt;!-- tiles: on cream, inside a case study --&gt;
+&lt;div class="tiles"&gt;
+  &lt;div class="tile tile--hot"&gt;&lt;b&gt;₹28,392&lt;/b&gt;&lt;span&gt;Label&lt;/span&gt;&lt;/div&gt;
+  &lt;div class="tile"&gt;&lt;b&gt;779+&lt;/b&gt;&lt;span&gt;Label&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;!-- numbers: outlined, only on .section--green --&gt;
+&lt;div class="numbers"&gt;                    &lt;!-- add .numbers--8 for eight --&gt;
+  &lt;div class="num"&gt;&lt;b data-count="100" data-suffix="%"&gt;0&lt;/b&gt;&lt;span&gt;Label&lt;/span&gt;&lt;/div&gt;
+&lt;/div&gt;</pre>
+      <div class="sg-note">
+        Add <code>data-count</code> and <code>data-suffix</code> to animate a figure from zero
+        when it scrolls into view. <code>script.js</code> handles the formatting, including
+        thousands separators.
+      </div>
+    </div>
+
+    <div class="sg-block">
+      <h3>Quote</h3>
+      <div class="sg-demo">
+        <div class="quotes" style="grid-template-columns:1fr">
+          <article class="quote">
+            <span class="quote__mark" aria-hidden="true">“</span>
+            <p>A client quote runs here, in sentence case, without the surrounding quote marks — the mark above supplies them.</p>
+            <div class="quote__who"><span class="avatar">MP</span><div><b>Name</b><span>Role, Company</span></div></div>
+          </article>
+        </div>
+      </div>
+      <pre class="sg-code">&lt;article class="quote"&gt;
+  &lt;span class="quote__mark" aria-hidden="true"&gt;“&lt;/span&gt;
+  &lt;p&gt;The quote.&lt;/p&gt;
+  &lt;div class="quote__who"&gt;
+    &lt;span class="avatar"&gt;MP&lt;/span&gt;
+    &lt;div&gt;&lt;b&gt;Name&lt;/b&gt;&lt;span&gt;Role, Company&lt;/span&gt;&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/article&gt;</pre>
+    </div>
+
+    <div class="sg-block">
+      <h3>Table</h3>
+      <div class="sg-demo">
+        <div class="table-wrap">
+          <table class="table">
+            <thead><tr><th scope="col">Campaign</th><th scope="col">Results</th><th scope="col">Spend</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Row label</th><td>439 leads</td><td>₹9,383.91</td></tr>
+              <tr><th scope="row">Alternating row</th><td>136 leads</td><td>₹4,328.06</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="sg-note">
+        <b>Always wrap a table in <code>.table-wrap</code>.</b> It scrolls the table sideways on
+        narrow screens instead of stretching the page. Grid parents also need
+        <code>min-width: 0</code> or the table will push the whole layout wide.
+      </div>
+    </div>
+
+    <div class="sg-block">
+      <h3>Form field</h3>
+      <div class="sg-demo">
+        <div class="form" style="box-shadow:var(--shadow)">
+          <div class="form__row">
+            <div class="field"><label for="sg-a">Text input</label><input type="text" id="sg-a" placeholder="Placeholder"></div>
+            <div class="field"><label for="sg-b">Select</label><select id="sg-b"><option>Option one</option></select></div>
+          </div>
+          <div class="field"><label for="sg-c">Textarea</label><textarea id="sg-c" placeholder="Placeholder" style="min-height:80px"></textarea></div>
+        </div>
+      </div>
+      <div class="sg-note">
+        Focus states show a yellow offset shadow rather than an outline. Every input needs a
+        real <code>&lt;label for&gt;</code> — placeholders are not labels.
+      </div>
+    </div>
+
+    <div class="sg-block">
+      <h3>Accordion</h3>
+      <div class="sg-demo">
+        <div class="faq">
+          <div class="faq__item">
+            <button class="faq__q" aria-expanded="false">A question, in the display face</button>
+            <div class="faq__a"><p>The answer. Panels open one at a time; the plus rotates to a cross.</p></div>
+          </div>
+        </div>
+      </div>
+      <pre class="sg-code">&lt;div class="faq"&gt;
+  &lt;div class="faq__item"&gt;
+    &lt;button class="faq__q" aria-expanded="false"&gt;Question&lt;/button&gt;
+    &lt;div class="faq__a"&gt;&lt;p&gt;Answer.&lt;/p&gt;&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MOTION ============ -->
+<section class="sg-section" id="motion">
+  <div class="wrap">
+    <h2>Motion &amp; accessibility</h2>
+
+    <div class="sg-block">
+      <h3>Reveal on scroll</h3>
+      <p class="sg-lede">Add <code>class="reveal"</code> to any block. It fades up when it enters the viewport, staggered 70ms apart within a group.</p>
+    </div>
+
+    <div class="sg-block">
+      <h3>Rules that aren't optional</h3>
+      <ul style="color:var(--char); max-width:70ch">
+        <li><b>Reduced motion.</b> Every animation is disabled under <code>prefers-reduced-motion</code>, and the loading screen advances immediately. Anything new must respect it.</li>
+        <li><b>Focus is visible.</b> A 3px yellow-deep outline with 3px offset, set globally on <code>:focus-visible</code>. Never remove it.</li>
+        <li><b>Contrast.</b> Yellow is a background or a large-display colour, never small text on cream.</li>
+        <li><b>Icons carry labels.</b> Icon-only links need <code>aria-label</code>; decorative SVG gets <code>aria-hidden="true"</code>.</li>
+        <li><b>Images need dimensions.</b> Set <code>width</code>/<code>height</code> so the page doesn't jump while loading.</li>
+        <li><b>The loading screen must always clear.</b> Two fallback timers (4s and 7s) guarantee it, plus a session flag so it only runs once per visit.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EDITING ============ -->
+<section class="sg-section" id="editing" style="border-bottom:0">
+  <div class="wrap">
+    <h2>Editing the site</h2>
+    <div class="sg-note">
+      <b>Don't hand-edit the HTML pages.</b> The six pages are generated from one shared
+      template so the header, footer and <code>&lt;head&gt;</code> can't drift apart. Edit
+      <code>tools/build.py</code>, then run <code>python3 tools/build.py</code>. Editing
+      <code>index.html</code> directly gets overwritten on the next build.
+    </div>
+    <pre class="sg-code">styles.css        design tokens + every component style
+script.js         loader, nav, reveals, counters, accordion, form
+tools/build.py    page content and the shared shell — edit here
+assets/           logo artwork (SVG)
+assets/work/      client screenshots and identity boards (WebP)
+styleguide.html   this page — standalone, not regenerated by the build</pre>
+  </div>
+</section>
+
+</body>
+</html>
