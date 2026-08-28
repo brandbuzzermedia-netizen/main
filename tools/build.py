@@ -394,63 +394,45 @@ INDUSTRIES_BLOCK = '''<section class="section">
 
 CASES = [
     {
-        "n": "01", "name": "Wudgres", "slug": "wudgres",
-        "sector": "Premium Door Manufacturer",
-        "url": "wudgres.com",
-        "scope": "Website design &amp; development, product catalog, UI &amp; UX",
-        "tech": "Webflow · Custom CMS · SEO · Automation",
-        "goal": "Convert showroom footfall into online enquiries.",
-        "features": ["Interactive product configuration", "Dealer locator map", "Catalog-style product grid"],
-        "quote": "The new website experience perfectly represents our brand and has significantly "
-                 "improved how customers interact with our products online.",
-        "who": "Mahendra Patel, CEO",
+        "n": "01", "name": "Bharatwood", "slug": "bharatwood",
+        "sector": "Wood, Plywood &amp; Interior Solutions",
+        "url": "bharatwood.co",
+        "scope": "Product discovery platform &amp; e-commerce experience",
+        "tech": "Custom Website · Product Catalogue · UI/UX · SEO",
+        "goal": "Turn online product discovery into qualified showroom visits and high-intent enquiries.",
+        "features": ["Improved discoverability across a large catalogue",
+                     "Simplified navigation across product categories",
+                     "Stronger digital presence for the brand"],
+        "quote": "The new digital experience has made it much easier for customers to discover "
+                 "our products online and connect with us for the right solutions.",
+        "who": "Girish Patel, CEO",
     },
     {
-        "n": "02", "name": "VMake WPC", "slug": "vmake",
-        "sector": "Building Materials — WPC Boards",
-        "url": "vmakewpc.com",
-        "scope": "Brand website &amp; product specification hub",
-        "tech": "Custom CMS · Custom Theme · SEO",
-        "goal": "Generate qualified B2B trade enquiries.",
-        "features": ["Downloadable spec sheets", "Application-based product finder", "Dealer network page"],
-        "quote": "The new platform has made it easier for our customers to understand our products "
-                 "and has significantly improved the quality of enquiries we receive.",
-        "who": "Vishal Patel, CEO",
+        "n": "02", "name": "Ashvee Diagnostics", "slug": "ashvee",
+        "sector": "Diagnostics &amp; Healthcare",
+        "url": "ashveediagnostic.com",
+        "scope": "Healthcare website design &amp; development",
+        "tech": "Custom Website · Responsive UI/UX · Appointment Booking · SEO",
+        "goal": "Turn online visitors into qualified appointments and diagnostic enquiries.",
+        "features": ["Diagnostic service discovery", "Specialist consultation booking",
+                     "Home sample collection", "Patient-focused information architecture"],
+        "quote": "The new website has made it much easier for patients to understand our "
+                 "services and connect with us for appointments. It reflects the quality and "
+                 "care we strive to provide.",
+        "who": "Shiva Kumar, Owner",
     },
     {
-        "n": "03", "name": "Healthy Master", "slug": "healthy-master",
-        "sector": "Health &amp; Nutrition",
-        "url": "healthymaster.in",
-        "scope": "D2C storefront design &amp; build",
-        "tech": "Shopify · Custom Storefront · Klaviyo",
-        "goal": "Lift D2C repeat purchase rate.",
-        "features": ["Subscription checkout flow", "Ingredient storytelling pages", "Verified reviews integration"],
-        "quote": "The new storefront has elevated our brand experience and significantly improved "
-                 "both conversions and repeat customer engagement.",
-        "who": "",
-    },
-    {
-        "n": "04", "name": "Crystaline", "slug": "crystaline",
-        "sector": "Laminates &amp; Acrylic Brand",
-        "url": "crystaline.in",
-        "scope": "Corporate website &amp; dealer portal",
-        "tech": "Custom CMS · HTML",
-        "goal": "Route service leads to the nearest dealer.",
-        "features": ["Product comparison tool", "Warranty registration", "Service request form"],
-        "quote": "The new platform has simplified how we manage customers, dealers, and service "
-                 "requests, making our entire process more efficient.",
-        "who": "Ritik Patel, CEO",
-    },
-    {
-        "n": "05", "name": "Pixel Smile Labs", "slug": "pixel-smile",
-        "sector": "Dental Technology",
-        "url": "pixelsmilelabs.com",
-        "scope": "Website design &amp; booking funnel",
-        "tech": "Webflow · CRM Integration",
-        "goal": "Grow dental-clinic partner sign-ups.",
-        "features": ["Case submission portal", "Before / after gallery", "Doctor onboarding flow"],
-        "quote": "",
-        "who": "Hiten Patel, CEO",
+        "n": "03", "name": "Thrishank Doors &amp; Ply", "slug": "thrishank",
+        "sector": "Doors, Plywood &amp; Interior Solutions",
+        "url": "thrishankdoorsandply.com",
+        "scope": "Brand website &amp; product catalogue",
+        "tech": "Custom Website · Product Catalogue · UI/UX · SEO",
+        "goal": "Turn digital product discovery into qualified enquiries and dealer opportunities.",
+        "features": ["Product catalogue &amp; discovery", "Detailed product pages",
+                     "Pre-hung door showcase"],
+        "quote": "The new website gives our customers a much better way to explore our products "
+                 "and understand the quality and solutions we offer.",
+        "who": "Harshad Patel, Owner",
     },
 ]
 
@@ -530,29 +512,46 @@ BRAND_WORK = '''<section class="section section--white" id="identity">
 
 ADS = [
     {
-        "n": "01", "name": "Wudgres", "sector": "Premium Door Manufacturer · Lead Generation",
-        "tiles": [("₹28,392", "Ad spend managed"), ("779+", "Qualified leads"),
-                  ("₹21.38", "Best cost per lead"), ("816K+", "Accounts reached")],
-        "rows": [("IndiaWood 2026 · Studio Visit Leads", "439 leads", "₹21.38", "₹9,383.91"),
-                 ("New Dealer Leads · Pan-India", "136 leads", "₹31.82", "₹4,328.06"),
-                 ("Direct Customer Leads · Dealer Pincodes", "106 leads", "₹86.36", "₹9,153.81"),
-                 ("Door Brand Awareness · Pan-India", "674,661 reach", "₹2.19 / 1K", "₹1,480.46")],
+        "n": "01", "name": "Thrishank Doors &amp; Ply",
+        "sector": "Premium Door Manufacturer · Lead Generation",
+        "tiles": [("₹28,735", "Ad spend managed"),
+                  ("1,422+", "Lead actions (conversations + leads)"),
+                  ("₹8.05", "Best cost / result"),
+                  ("352+", "Instagram profile visits")],
+        "cols": ["Campaign", "Results", "Cost / result", "Spend"],
+        "rows": [("THR | Dealer Acquisition | Leads | Aug", "332 conversations", "₹22.74", "₹7,548.87"),
+                 ("WhatsApp Leads", "1,078 conversations", "₹8.05", "₹8,679.13"),
+                 ("C2 | Door | Warm | Leads | KA | Jan 2026 — Copy", "11 leads", "₹862.56", "₹9,488.12"),
+                 ("C2 | Door | Warm | Leads | KA | Jan 2026", "1 lead", "₹2,118.28", "₹2,118.28"),
+                 ("C1 | Door Brand Awareness | Cold | KA | Jan 2026", "352 profile visits", "₹2.56", "₹900.87")],
+        "note": "",
     },
     {
-        "n": "02", "name": "VMake WPC", "sector": "Building Materials · Lead Generation",
-        "tiles": [("₹14,956", "Ad spend managed"), ("319+", "Qualified leads"),
-                  ("₹18.83", "Best cost per lead"), ("289K+", "Impressions")],
-        "rows": [("WPC Lead Gen · Bengaluru 25–54", "147 leads", "₹18.83", "₹2,768.48"),
-                 ("WPC Lead Gen · Bengaluru 25–54", "172 leads", "₹54.21", "₹9,323.90"),
-                 ("New Traffic Campaign", "2,645 clicks", "₹1.08", "₹2,863.75")],
+        "n": "02", "name": "Lykes", "sector": "B2B Lead Generation",
+        "tiles": [("₹4,237.28", "Ad spend managed"),
+                  ("95+", "Lead form submissions"),
+                  ("₹36.62", "Best cost per lead"),
+                  ("₹1,007.22", "Highest lead-volume campaign")],
+        "cols": ["Campaign", "Results", "Cost / result", "Spend"],
+        "rows": [("Lykes | B2B Leads | CBO | 14 Jul 2026", "40 leads", "₹55.12", "₹2,204.69"),
+                 ("Lykes — Lead Gen — Jupiter HB", "—", "—", "₹1,000.00"),
+                 ("Lykes | B2B Leads | CBO | Jun 2026 — Copy", "27 leads", "₹37.30", "₹1,007.22"),
+                 ("Lykes | B2B Leads | CBO | Jun 2026", "28 leads", "₹36.62", "₹1,025.37")],
+        "note": "Results from 4 campaigns.",
     },
     {
-        "n": "03", "name": "Thrishank Doors &amp; Ply", "sector": "Home Improvement · Multi-Channel",
-        "tiles": [("₹21,186", "Ad spend managed"), ("1,078+", "WhatsApp conversations"),
-                  ("₹8.05", "Cost per conversation"), ("352", "Instagram profile visits")],
-        "rows": [("WhatsApp Leads", "1,078 chats", "₹8.05", "₹8,679.13"),
-                 ("Door · Warm Leads · Karnataka", "11 leads", "₹862.56", "₹9,488.12"),
-                 ("Door Brand Awareness · Cold", "352 visits", "₹2.56", "₹900.87")],
+        "n": "03", "name": "Bharatwood",
+        "sector": "Premium Interior &amp; Plywood Brand · Lead Generation",
+        "tiles": [("₹6,473.60", "Ad spend managed"),
+                  ("86+", "Lead form submissions"),
+                  ("₹30.16", "Best cost per lead"),
+                  ("79", "Messaging conversations")],
+        "cols": ["Campaign", "Results", "Cost / result", "Spend", "Impressions", "Reach"],
+        "rows": [("BWI B2B | LeadGen | NorthBLR | 20 Jul 26", "79 conversations", "₹30.16", "₹2,382.46", "25,096", "25,096"),
+                 ("BWI B2B | LeadGen | NorthBLR | 22 Jun 26 — Copy", "2 leads", "₹927.42", "₹1,854.84", "6,091", "6,091"),
+                 ("BWI B2B | LeadGen | NorthBLR | 22 Jun 26 — Copy", "2 leads", "₹767.87", "₹1,535.73", "24,879", "24,879"),
+                 ("BWI B2B | LeadGen | NorthBLR | 22 Jun 26", "3 leads", "₹900.19", "₹2,700.57", "11,726", "11,726")],
+        "note": "Results from 4 campaigns.",
     },
 ]
 
@@ -563,9 +562,12 @@ def ads_blocks():
         tiles = "\n".join(
             f'          <div class="tile{" tile--hot" if i == 0 else ""}"><b>{v}</b><span>{label}</span></div>'
             for i, (v, label) in enumerate(a["tiles"]))
-        rows = "\n".join(
-            f'              <tr><th scope="row">{c}</th><td>{r}</td><td>{cost}</td><td>{spend}</td></tr>'
-            for c, r, cost, spend in a["rows"])
+        head = "".join(f'<th scope="col">{c}</th>' for c in a["cols"])
+        rows = []
+        for row in a["rows"]:
+            cells = "".join(f"<td>{c}</td>" for c in row[1:])
+            rows.append(f'              <tr><th scope="row">{row[0]}</th>{cells}</tr>')
+        note = f'\n      <p class="ads__note">{a["note"]}</p>' if a["note"] else ""
         out.append(f'''    <article class="ads reveal">
       <div class="ads__head">
         <div>
@@ -582,13 +584,13 @@ def ads_blocks():
       <div class="table-wrap">
         <table class="table">
           <thead>
-            <tr><th scope="col">Campaign</th><th scope="col">Results</th><th scope="col">Cost / result</th><th scope="col">Spend</th></tr>
+            <tr>{head}</tr>
           </thead>
           <tbody>
-{rows}
+{chr(10).join(rows)}
           </tbody>
         </table>
-      </div>
+      </div>{note}
     </article>''')
     return "\n\n".join(out)
 
@@ -620,17 +622,17 @@ TESTIMONIALS = f'''<section class="section section--yellow">
       <article class="quote reveal">
         <span class="quote__mark" aria-hidden="true">“</span>
         <p>{CASES[0]["quote"]}</p>
-        <div class="quote__who"><span class="avatar">MP</span><div><b>Mahendra Patel</b><span>CEO, Wudgres</span></div></div>
+        <div class="quote__who"><span class="avatar">GP</span><div><b>Girish Patel</b><span>CEO, Bharatwood</span></div></div>
       </article>
       <article class="quote reveal">
         <span class="quote__mark" aria-hidden="true">“</span>
         <p>{CASES[1]["quote"]}</p>
-        <div class="quote__who"><span class="avatar">VP</span><div><b>Vishal Patel</b><span>CEO, VMake WPC</span></div></div>
+        <div class="quote__who"><span class="avatar">SK</span><div><b>Shiva Kumar</b><span>Owner, Ashvee Diagnostics</span></div></div>
       </article>
       <article class="quote reveal">
         <span class="quote__mark" aria-hidden="true">“</span>
-        <p>{CASES[3]["quote"]}</p>
-        <div class="quote__who"><span class="avatar">RP</span><div><b>Ritik Patel</b><span>CEO, Crystaline</span></div></div>
+        <p>{CASES[2]["quote"]}</p>
+        <div class="quote__who"><span class="avatar">HP</span><div><b>Harshad Patel</b><span>Owner, Thrishank Doors &amp; Ply</span></div></div>
       </article>
     </div>
   </div>
@@ -704,8 +706,8 @@ HOME_BODY = f'''<section class="hero">
   <div class="wrap">
     <div class="section__head reveal">
       <span class="kicker">Selected work</span>
-      <h2>Eight brands, eight builds</h2>
-      <p>A few of the websites we've designed and shipped — with more added every quarter.</p>
+      <h2>Recent builds</h2>
+      <p>Websites we've designed and shipped this year — more added every quarter.</p>
     </div>
 
     <div class="work-grid">
@@ -751,7 +753,7 @@ WORK_BODY = f'''{page_hero(
     <div class="section__head reveal">
       <span class="kicker">Websites</span>
       <h2>Designed, built and shipped</h2>
-      <p>Eight brands, eight builds — more added every quarter.</p>
+      <p>Selected builds — more added every quarter.</p>
     </div>
 
     <div class="cases">
@@ -947,7 +949,7 @@ PAGES = [
      "body": SERVICES_BODY},
     {"file": "work.html", "active": "work.html",
      "title": "Our Work — Get Bee Seen",
-     "desc": "Website case studies, brand identity work and Meta Ads performance for Wudgres, VMake WPC, Healthy Master, Crystaline and Pixel Smile Labs.",
+     "desc": "Website case studies, brand identity work and Meta Ads performance for Bharatwood, Ashvee Diagnostics and Thrishank Doors &amp; Ply.",
      "body": WORK_BODY},
     {"file": "process.html", "active": "process.html",
      "title": "How We Work — Get Bee Seen",
