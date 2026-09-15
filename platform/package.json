@@ -1,0 +1,19 @@
+{
+  "name": "@getbeeseen/social-os",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Multi-tenant AI Social Media Operating System for marketing agencies",
+  "type": "module",
+  "engines": { "node": ">=22.5.0" },
+  "scripts": {
+    "migrate": "node --no-warnings src/cli.js migrate",
+    "seed": "node --no-warnings src/cli.js seed",
+    "start": "node --no-warnings src/server.js",
+    "worker": "node --no-warnings src/worker.js",
+    "dev": "node --no-warnings --watch src/server.js",
+    "test": "node --no-warnings --test test/*.test.js",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
