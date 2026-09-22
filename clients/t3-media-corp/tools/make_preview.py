@@ -46,12 +46,12 @@ for page in SRC.rglob('index.html'):
     route = '/' if route == '/' else route + '/'
     routes[route] = flat_name(route)
 
-for asset_dir, target in (('_next', 'next-static'), ('plates', 'plates')):
+for asset_dir, target in (('_next', 'next-static'), ('plates', 'plates'), ('brand', 'brand')):
     src = SRC / asset_dir
     if src.exists():
         shutil.copytree(src, DST / target)
 
-for extra in ('icon.svg', 'robots.txt', 'sitemap.xml', '404.html'):
+for extra in ('icon.png', 'apple-icon.png', 'robots.txt', 'sitemap.xml', '404.html'):
     if (SRC / extra).exists():
         shutil.copy2(SRC / extra, DST / extra)
 
@@ -92,8 +92,9 @@ def rewrite(html: str) -> str:
     # Assets: absolute -> relative (every page sits at the same depth now).
     html = html.replace('"/_next/', '"next-static/').replace("'/_next/", "'next-static/")
     html = html.replace('"/plates/', '"plates/').replace("'/plates/", "'plates/")
-    # The favicon carries a cache-busting query string, so match it loosely.
-    html = re.sub(r'(?<=["\\])/icon\.svg', 'icon.svg', html)
+    html = html.replace('"/brand/', '"brand/').replace("'/brand/", "'brand/")
+    # The icons carry a cache-busting query string, so match them loosely.
+    html = re.sub(r'(?<=["\\])/(apple-)?icon\.png', lambda m: m.group(0).lstrip('/'), html)
 
     # Internal route links -> flat filenames, longest route first so
     # '/products/acp/' is not eaten by '/products/'.
