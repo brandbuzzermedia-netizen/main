@@ -49,7 +49,7 @@ export function ProductCatalogue() {
 
       <div className="mt-12 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
         {visible.map((product, i) => (
-          <ProductCard key={product.slug} product={product} priority={i < 3} />
+          <ProductCard key={product.slug} product={product} priority={i < 3} index={i + 1} />
         ))}
       </div>
     </>

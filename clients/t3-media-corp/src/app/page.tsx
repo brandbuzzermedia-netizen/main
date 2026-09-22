@@ -32,7 +32,7 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-ink/80 to-ink/35" />
 
         <div className="shell w-full pb-16 pt-28 lg:pb-24 lg:pt-36">
-          <p className="eyebrow animate-rise text-brand">{site.tagline}</p>
+          <p className="eyebrow animate-rise text-bronze-light">{site.tagline}</p>
 
           <h1 className="display-1 mt-7 max-w-[15ch] animate-rise text-paper [animation-delay:90ms]">
             Materials that make living better.
@@ -61,18 +61,25 @@ export default function HomePage() {
             </a>
           </div>
 
-          <dl className="mt-16 grid max-w-3xl animate-rise grid-cols-2 gap-x-8 gap-y-6 border-t border-white/15 pt-8 sm:grid-cols-4 [animation-delay:340ms]">
+          <dl className="mt-16 grid max-w-3xl animate-rise grid-cols-2 border-t border-bronze-light/30 sm:grid-cols-4 [animation-delay:340ms]">
             {[
               ['11', 'Material categories'],
               ['100+', 'Alabaster designs'],
               ['100+', 'Digital glass designs'],
               ['Mon–Sat', 'Showroom open'],
-            ].map(([value, label]) => (
-              <div key={label}>
+            ].map(([value, label], i) => (
+              <div
+                key={label}
+                className={`py-8 ${i > 0 ? 'sm:border-l sm:border-white/10 sm:pl-8' : ''} ${
+                  i % 2 === 1 ? 'border-l border-white/10 pl-8 sm:pl-8' : ''
+                }`}
+              >
                 <dt className="sr-only">{label}</dt>
                 <dd>
-                  <span className="block font-display text-3xl text-paper lg:text-4xl">{value}</span>
-                  <span className="mt-1.5 block text-[0.75rem] uppercase tracking-eyebrow text-stone">
+                  <span className="block font-display text-4xl text-paper lg:text-[2.75rem]">
+                    {value}
+                  </span>
+                  <span className="mt-2 block text-[0.75rem] uppercase tracking-eyebrow text-stone">
                     {label}
                   </span>
                 </dd>
@@ -202,7 +209,7 @@ export default function HomePage() {
         <div className="shell">
           <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
             <Reveal>
-              <p className="eyebrow text-brand">Why T3 Media Corp</p>
+              <p className="eyebrow text-bronze-light">Why T3 Media Corp</p>
               <h2 id="why-heading" className="display-2 mt-5 text-paper">
                 Six reasons specifications come back to us.
               </h2>
@@ -220,7 +227,7 @@ export default function HomePage() {
             {strengths.map((s, i) => (
               <Reveal key={s.title} as="li" delay={i * 60}>
                 <div className="group grid gap-3 border-b border-white/15 py-8 transition-colors duration-500 ease-editorial hover:bg-white/[0.04] sm:grid-cols-[4rem_1fr] lg:grid-cols-[6rem_0.9fr_1.1fr] lg:gap-10 lg:py-10">
-                  <span className="font-display text-xl text-stone transition-colors duration-500 group-hover:text-brand">
+                  <span className="font-display text-xl text-stone transition-colors duration-500 group-hover:text-bronze-light">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <h3 className="display-3 text-paper">{s.title}</h3>
@@ -277,7 +284,7 @@ export default function HomePage() {
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-charcoal via-charcoal/90 to-charcoal/60" />
         <div className="shell section">
           <Reveal>
-            <p className="eyebrow text-brand">The Material Experience</p>
+            <p className="eyebrow text-bronze-light">The Material Experience</p>
             <blockquote className="display-2 mt-7 max-w-4xl text-paper">
               A material has to do five things at once: look right, work hard, last, bend to the
               design, and go up without a fight on site.
@@ -322,7 +329,7 @@ export default function HomePage() {
             <dl className="mt-10 space-y-5 border-t border-mist pt-8">
               <div className="flex gap-4">
                 <dt className="sr-only">Address</dt>
-                <PinIcon className="mt-1 h-4 w-4 shrink-0 text-brand-deep" />
+                <PinIcon className="mt-1 h-4 w-4 shrink-0 text-bronze" />
                 <dd className="text-[0.9375rem] leading-relaxed text-graphite">
                   Begur Road, Bommanahalli
                   <br />
@@ -331,9 +338,9 @@ export default function HomePage() {
               </div>
               <div className="flex gap-4">
                 <dt className="sr-only">Phone</dt>
-                <PhoneIcon className="mt-1 h-4 w-4 shrink-0 text-brand-deep" />
+                <PhoneIcon className="mt-1 h-4 w-4 shrink-0 text-bronze" />
                 <dd>
-                  <a href={telLink} className="text-[0.9375rem] text-graphite hover:text-brand-deep">
+                  <a href={telLink} className="text-[0.9375rem] text-graphite hover:text-bronze">
                     {site.phoneDisplay}
                   </a>
                 </dd>

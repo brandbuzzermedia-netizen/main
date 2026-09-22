@@ -77,7 +77,7 @@ export default function ProductPage({ params }: Params) {
             <Breadcrumbs trail={trail} />
           </div>
 
-          <p className="eyebrow mt-12 text-brand">{product.category}</p>
+          <p className="eyebrow mt-12 text-bronze-light">{product.category}</p>
           <h1 className="display-1 mt-6 max-w-[16ch] text-paper">{product.name}</h1>
           <p className="lede mt-7 max-w-xl text-mist">{product.positioning}</p>
 
@@ -138,7 +138,7 @@ export default function ProductPage({ params }: Params) {
             {product.features.map((f, i) => (
               <Reveal key={f.title} delay={i * 60}>
                 <div className="group grid gap-2 border-b border-mist py-7 transition-colors duration-500 ease-editorial hover:bg-bone sm:grid-cols-[3.5rem_1fr] lg:grid-cols-[5rem_0.85fr_1.15fr] lg:gap-10">
-                  <span className="font-display text-lg text-muted transition-colors duration-500 group-hover:text-brand-deep">
+                  <span className="font-display text-lg text-muted transition-colors duration-500 group-hover:text-bronze">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <dt className="display-3 text-ink">{f.title}</dt>
@@ -208,7 +208,7 @@ export default function ProductPage({ params }: Params) {
             ) : null}
 
             {product.specNote && (
-              <p className="mt-6 max-w-prose border-l-2 border-brand bg-bone p-5 text-[0.875rem] leading-relaxed text-slate">
+              <p className="mt-6 max-w-prose border-l-2 border-bronze bg-bone p-5 text-[0.875rem] leading-relaxed text-slate">
                 {product.specNote}
               </p>
             )}

@@ -107,7 +107,7 @@ export function Header() {
                                   <li key={p.slug}>
                                     <Link
                                       href={`/products/${p.slug}/`}
-                                      className="text-[0.9375rem] text-graphite transition-colors duration-200 hover:text-brand-deep"
+                                      className="text-[0.9375rem] text-graphite transition-colors duration-200 hover:text-bronze"
                                     >
                                       {p.name}
                                     </Link>
@@ -137,7 +137,7 @@ export function Header() {
         <div className="hidden items-center gap-3 lg:flex">
           <a
             href={telLink}
-            className="flex min-h-[44px] items-center gap-2 px-1 text-[0.8125rem] font-medium text-graphite transition-colors hover:text-brand-deep"
+            className="flex min-h-[44px] items-center gap-2 px-1 text-[0.8125rem] font-medium text-graphite transition-colors hover:text-bronze"
           >
             <PhoneIcon />
             {site.phoneDisplay}

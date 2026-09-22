@@ -75,8 +75,34 @@ def veins(pid: str, freq=0.012, scale=110, seed=3) -> str:
 BASE = f'<rect width="{W}" height="{H}"/>'
 
 
+# Shared finishing pass. A flat gradient reads as a placeholder; a directional
+# sheen, a vignette and a lit top edge read as a material sample under a light.
+# Applying it to every plate is also what keeps the set feeling like one system.
+FINISH_DEFS = (
+    # Depth comes from shadow, not from adding white: a broad white wash just
+    # fogs the lighter materials. A narrow highlight plus a weighted falloff
+    # into the lower-right reads as a sample lit from one side.
+    '<linearGradient id="fsheen" x1="0%" y1="0%" x2="62%" y2="100%">'
+    '<stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.07"/>'
+    '<stop offset="30%" stop-color="#FFFFFF" stop-opacity="0"/>'
+    '<stop offset="100%" stop-color="#000000" stop-opacity="0.15"/>'
+    "</linearGradient>"
+    '<radialGradient id="fvig" cx="40%" cy="32%" r="80%">'
+    '<stop offset="62%" stop-color="#000000" stop-opacity="0"/>'
+    '<stop offset="100%" stop-color="#000000" stop-opacity="0.13"/>'
+    "</radialGradient>"
+)
+
+FINISH = (
+    f'<rect width="{W}" height="{H}" fill="url(#fsheen)"/>'
+    f'<rect width="{W}" height="{H}" fill="url(#fvig)"/>'
+)
+
+
 def plate(name: str, defs: str, body: str) -> None:
-    (OUT / f"{name}.svg").write_text(head(name, defs, body), encoding="utf-8")
+    (OUT / f"{name}.svg").write_text(
+        head(name, defs + FINISH_DEFS, body + FINISH), encoding="utf-8"
+    )
 
 
 # ---------------------------------------------------------------- alabaster --

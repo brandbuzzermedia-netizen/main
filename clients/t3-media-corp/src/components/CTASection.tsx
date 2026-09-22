@@ -26,7 +26,7 @@ export function CTASection({
 
       <div className="shell section">
         <div className="max-w-2xl">
-          <p className="eyebrow text-brand">Get in touch</p>
+          <p className="eyebrow text-bronze-light">Get in touch</p>
           <h2 className="display-2 mt-6 text-paper">{title}</h2>
           <p className="lede mt-6 text-mist">{body}</p>
 

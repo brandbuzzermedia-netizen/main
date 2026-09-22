@@ -86,7 +86,7 @@ export default function ContactPage() {
               <p className="eyebrow text-muted">T3 Media Corp</p>
               <address className="mt-7 space-y-6 not-italic">
                 <div className="flex gap-4">
-                  <PinIcon className="mt-1 h-4 w-4 shrink-0 text-brand-deep" />
+                  <PinIcon className="mt-1 h-4 w-4 shrink-0 text-bronze" />
                   <div>
                     <p className="text-[0.75rem] uppercase tracking-eyebrow text-muted">Showroom</p>
                     <p className="mt-1.5 text-[1.0625rem] leading-relaxed text-ink">
@@ -100,12 +100,12 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex gap-4">
-                  <PhoneIcon className="mt-1 h-4 w-4 shrink-0 text-brand-deep" />
+                  <PhoneIcon className="mt-1 h-4 w-4 shrink-0 text-bronze" />
                   <div>
                     <p className="text-[0.75rem] uppercase tracking-eyebrow text-muted">Phone</p>
                     <a
                       href={telLink}
-                      className="mt-1.5 inline-flex min-h-[40px] items-center text-[1.0625rem] text-ink transition-colors hover:text-brand-deep"
+                      className="mt-1.5 inline-flex min-h-[40px] items-center text-[1.0625rem] text-ink transition-colors hover:text-bronze"
                     >
                       {site.phoneDisplay}
                     </a>
@@ -113,12 +113,12 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex gap-4">
-                  <MailIcon className="mt-1 h-4 w-4 shrink-0 text-brand-deep" />
+                  <MailIcon className="mt-1 h-4 w-4 shrink-0 text-bronze" />
                   <div>
                     <p className="text-[0.75rem] uppercase tracking-eyebrow text-muted">Email</p>
                     <a
                       href={mailLink}
-                      className="mt-1.5 inline-flex min-h-[40px] items-center break-all text-[1.0625rem] text-ink transition-colors hover:text-brand-deep"
+                      className="mt-1.5 inline-flex min-h-[40px] items-center break-all text-[1.0625rem] text-ink transition-colors hover:text-bronze"
                     >
                       {site.email}
                     </a>
@@ -126,7 +126,7 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex gap-4">
-                  <ClockIcon className="mt-1 h-4 w-4 shrink-0 text-brand-deep" />
+                  <ClockIcon className="mt-1 h-4 w-4 shrink-0 text-bronze" />
                   <div>
                     <p className="text-[0.75rem] uppercase tracking-eyebrow text-muted">Hours</p>
                     <p className="mt-1.5 text-[1.0625rem] leading-relaxed text-ink">

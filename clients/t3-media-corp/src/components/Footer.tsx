@@ -27,7 +27,7 @@ export function Footer() {
                 <li key={p.slug}>
                   <Link
                     href={`/products/${p.slug}/`}
-                    className="text-[0.9375rem] text-mist transition-colors duration-200 hover:text-brand"
+                    className="text-[0.9375rem] text-mist transition-colors duration-200 hover:text-bronze-light"
                   >
                     {p.name}
                   </Link>
@@ -43,7 +43,7 @@ export function Footer() {
                 <li key={a.slug}>
                   <Link
                     href={`/applications/#${a.slug}`}
-                    className="text-[0.9375rem] text-mist transition-colors duration-200 hover:text-brand"
+                    className="text-[0.9375rem] text-mist transition-colors duration-200 hover:text-bronze-light"
                   >
                     {a.name}
                   </Link>
@@ -58,7 +58,7 @@ export function Footer() {
                   <li key={n.href}>
                     <Link
                       href={n.href}
-                      className="text-[0.9375rem] text-mist transition-colors duration-200 hover:text-brand"
+                      className="text-[0.9375rem] text-mist transition-colors duration-200 hover:text-bronze-light"
                     >
                       {n.label}
                     </Link>
@@ -71,7 +71,7 @@ export function Footer() {
             <p className="eyebrow mb-5 text-stone">Visit or Call</p>
             <address className="space-y-4 not-italic">
               <p className="flex gap-3 text-[0.9375rem] leading-relaxed text-mist">
-                <PinIcon className="mt-1 h-4 w-4 shrink-0 text-brand" />
+                <PinIcon className="mt-1 h-4 w-4 shrink-0 text-bronze-light" />
                 <span>
                   Begur Road, Bommanahalli
                   <br />
@@ -81,25 +81,25 @@ export function Footer() {
                 </span>
               </p>
               <p className="flex gap-3">
-                <PhoneIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+                <PhoneIcon className="mt-0.5 h-4 w-4 shrink-0 text-bronze-light" />
                 <a
                   href={telLink}
-                  className="text-[0.9375rem] text-mist transition-colors hover:text-brand"
+                  className="text-[0.9375rem] text-mist transition-colors hover:text-bronze-light"
                 >
                   {site.phoneDisplay}
                 </a>
               </p>
               <p className="flex gap-3">
-                <MailIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+                <MailIcon className="mt-0.5 h-4 w-4 shrink-0 text-bronze-light" />
                 <a
                   href={mailLink}
-                  className="break-all text-[0.9375rem] text-mist transition-colors hover:text-brand"
+                  className="break-all text-[0.9375rem] text-mist transition-colors hover:text-bronze-light"
                 >
                   {site.email}
                 </a>
               </p>
               <p className="flex gap-3 text-[0.9375rem] text-mist">
-                <ClockIcon className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+                <ClockIcon className="mt-0.5 h-4 w-4 shrink-0 text-bronze-light" />
                 <span>
                   {site.hours.days}
                   <br />

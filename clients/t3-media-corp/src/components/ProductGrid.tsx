@@ -17,7 +17,7 @@ export function ProductGrid({
     >
       {items.map((product, i) => (
         <Reveal key={product.slug} delay={(i % 3) * 90}>
-          <ProductCard product={product} priority={i < 3} />
+          <ProductCard product={product} priority={i < 3} index={i + 1} />
         </Reveal>
       ))}
     </div>

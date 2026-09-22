@@ -14,10 +14,18 @@ const config: Config = {
         mist: '#D6D3CD',
         bone: '#EAE7E1',
         paper: '#F6F4F0',
+        // The cyan is the client's logo mark and is used for the mark alone.
         brand: {
           DEFAULT: '#009FE3',
           deep: '#006A9B',
-          wash: '#E6F5FD',
+        },
+        // Editorial accent. Warm metal reads as architectural materials where
+        // the cyan read as software. Two tones because no single value clears
+        // 4.5:1 on both paper and ink.
+        bronze: {
+          DEFAULT: '#8A530B', // on paper / bone
+          light: '#C99A3E', // on ink / charcoal
+          wash: '#F2EAD9',
         },
         clay: '#B9A78F',
       },

@@ -111,7 +111,7 @@ export default function AboutPage() {
       <section className="section bg-ink text-paper" aria-labelledby="serve-heading">
         <div className="shell grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
           <Reveal>
-            <p className="eyebrow text-brand">Who we serve</p>
+            <p className="eyebrow text-bronze-light">Who we serve</p>
             <h2 id="serve-heading" className="display-2 mt-5 text-paper">
               Mostly professionals. Often on a deadline.
             </h2>
@@ -148,7 +148,7 @@ export default function AboutPage() {
             {strengths.map((s, i) => (
               <Reveal key={s.title} delay={i * 60}>
                 <div className="group grid gap-2 border-b border-mist py-8 transition-colors duration-500 ease-editorial hover:bg-bone sm:grid-cols-[3.5rem_1fr] lg:grid-cols-[5rem_0.85fr_1.15fr] lg:gap-10">
-                  <span className="font-display text-lg text-muted transition-colors duration-500 group-hover:text-brand-deep">
+                  <span className="font-display text-lg text-muted transition-colors duration-500 group-hover:text-bronze">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <dt className="display-3 text-ink">{s.title}</dt>

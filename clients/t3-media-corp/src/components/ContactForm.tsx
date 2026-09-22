@@ -105,7 +105,7 @@ export function ContactForm({ defaultProduct }: { defaultProduct?: string }) {
       <div className="grid gap-6 sm:grid-cols-2">
         <div>
           <label htmlFor="name" className="eyebrow mb-2.5 block text-muted">
-            Name <span className="text-brand-deep">*</span>
+            Name <span className="text-bronze">*</span>
           </label>
           <input
             id="name"
@@ -127,7 +127,7 @@ export function ContactForm({ defaultProduct }: { defaultProduct?: string }) {
 
         <div>
           <label htmlFor="phone" className="eyebrow mb-2.5 block text-muted">
-            Phone <span className="text-brand-deep">*</span>
+            Phone <span className="text-bronze">*</span>
           </label>
           <input
             id="phone"
@@ -232,7 +232,7 @@ export function ContactForm({ defaultProduct }: { defaultProduct?: string }) {
 
       <div>
         <label htmlFor="message" className="eyebrow mb-2.5 block text-muted">
-          Message <span className="text-brand-deep">*</span>
+          Message <span className="text-bronze">*</span>
         </label>
         <textarea
           id="message"
