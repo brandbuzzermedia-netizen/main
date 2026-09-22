@@ -1,4 +1,5 @@
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { WordReveal } from '@/components/WordReveal';
 import { CTASection } from '@/components/CTASection';
 import { ProductCatalogue } from '@/components/ProductCatalogue';
 import { StickyActions } from '@/components/StickyActions';
@@ -41,7 +42,12 @@ export default function ProductsPage() {
         <div className="shell">
           <Breadcrumbs trail={trail} />
           <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
-            <h1 className="display-1 text-ink">The catalogue.</h1>
+            <WordReveal
+              as="h1"
+              text="The catalogue."
+              immediate
+              className="display-1 block text-ink"
+            />
             <p className="lede self-end">
               Eleven categories covering surfaces, panels, doors, glass and acrylic — plus CNC
               cutting to turn any of them into finished components. Filter by category, or send us

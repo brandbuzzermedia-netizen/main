@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { audiences, site, strengths } from '@/data/site';
 import { products } from '@/data/products';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { WordReveal } from '@/components/WordReveal';
+import { Parallax } from '@/components/Parallax';
 import { CTASection } from '@/components/CTASection';
 import { MaterialPlate } from '@/components/MaterialPlate';
 import { Reveal } from '@/components/Reveal';
@@ -31,9 +33,13 @@ export default function AboutPage() {
         <div className="shell">
           <Breadcrumbs trail={trail} />
           <p className="eyebrow mt-10 text-muted">{site.tagline}</p>
-          <h1 className="display-1 mt-6 max-w-[18ch] text-ink">
-            A material supplier that answers the hard questions.
-          </h1>
+          <WordReveal
+            as="h1"
+            text="A material supplier that answers the hard questions."
+            immediate
+            delay={80}
+            className="display-1 mt-6 block max-w-[18ch] text-ink"
+          />
           <p className="lede mt-8 max-w-2xl">
             T3 Media Corp supplies interior and architectural materials from Begur Road in
             Bommanahalli, Bengaluru. Surfaces, panels, doors, glass and acrylic — plus the CNC
@@ -43,13 +49,15 @@ export default function AboutPage() {
       </section>
 
       <section className="relative isolate overflow-hidden">
-        <div className="aspect-[21/9] w-full">
-          <MaterialPlate
-            plate="showroom"
-            alt="Material samples on display at the T3 Media Corp showroom in Bommanahalli"
-            priority
-            className="h-full w-full object-cover"
-          />
+        <div className="aspect-[21/9] w-full overflow-hidden">
+          <Parallax speed={8} className="h-[115%] w-full">
+            <MaterialPlate
+              plate="showroom"
+              alt="Material samples on display at the T3 Media Corp showroom in Bommanahalli"
+              priority
+              className="h-full w-full object-cover"
+            />
+          </Parallax>
         </div>
       </section>
 

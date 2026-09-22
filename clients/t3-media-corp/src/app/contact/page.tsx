@@ -1,5 +1,6 @@
 import { site } from '@/data/site';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { WordReveal } from '@/components/WordReveal';
 import { ContactForm } from '@/components/ContactForm';
 import { StickyActions } from '@/components/StickyActions';
 import { JsonLd } from '@/components/JsonLd';
@@ -37,7 +38,12 @@ export default function ContactPage() {
         <div className="shell">
           <Breadcrumbs trail={trail} />
           <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
-            <h1 className="display-1 text-ink">Let&rsquo;s talk materials.</h1>
+            <WordReveal
+              as="h1"
+              text="Let’s talk materials."
+              immediate
+              className="display-1 block text-ink"
+            />
             <p className="lede self-end">
               Tell us the room, the quantity or the drawing. You will get an answer on
               suitability, availability and price — not a brochure.

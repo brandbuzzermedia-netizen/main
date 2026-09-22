@@ -5,6 +5,8 @@ import { getProduct, products } from '@/data/products';
 import { site } from '@/data/site';
 import { MaterialPlate } from '@/components/MaterialPlate';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { WordReveal } from '@/components/WordReveal';
+import { Parallax } from '@/components/Parallax';
 import { Gallery } from '@/components/Gallery';
 import { FAQ } from '@/components/FAQ';
 import { CTASection } from '@/components/CTASection';
@@ -61,12 +63,14 @@ export default function ProductPage({ params }: Params) {
 
       {/* ------------------------------------------------------------ hero -- */}
       <section className="relative isolate overflow-hidden bg-ink text-paper">
-        <MaterialPlate
-          plate={product.plate}
-          alt={`${product.name} — ${product.shortDescription}`}
-          priority
-          className="absolute inset-0 -z-10 h-full w-full object-cover"
-        />
+        <Parallax speed={7} className="absolute inset-0 -z-10 h-[116%] w-full">
+          <MaterialPlate
+            plate={product.plate}
+            alt={`${product.name} — ${product.shortDescription}`}
+            priority
+            className="h-full w-full object-cover"
+          />
+        </Parallax>
         {/* Horizontal wash so the copy stays legible while the material itself
             is still visible on the right — a full veil hid light materials. */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ink via-ink/92 to-ink/25" />
@@ -78,7 +82,13 @@ export default function ProductPage({ params }: Params) {
           </div>
 
           <p className="eyebrow mt-12 text-bronze-light">{product.category}</p>
-          <h1 className="display-1 mt-6 max-w-[16ch] text-paper">{product.name}</h1>
+          <WordReveal
+            as="h1"
+            text={product.name}
+            immediate
+            delay={80}
+            className="display-1 mt-6 block max-w-[16ch] text-paper"
+          />
           <p className="lede mt-7 max-w-xl text-mist">{product.positioning}</p>
 
           <div className="mt-11 flex flex-wrap gap-3">

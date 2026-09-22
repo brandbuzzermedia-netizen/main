@@ -1,23 +1,36 @@
 import type { Metadata, Viewport } from 'next';
-import { Instrument_Serif, Inter_Tight } from 'next/font/google';
+import { Bodoni_Moda, JetBrains_Mono, Manrope } from 'next/font/google';
 import './globals.css';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { JsonLd } from '@/components/JsonLd';
 import { localBusinessSchema } from '@/lib/seo';
 import { site } from '@/data/site';
+import { SiteLoader } from '@/components/SiteLoader';
+import { PageTransition } from '@/components/PageTransition';
 
-const display = Instrument_Serif({
+// Bodoni Moda carries the optical-size axis, so the same family holds a 100px
+// hero and a 24px sub-head without the thin strokes disappearing. Manrope is
+// the working face. JetBrains Mono is reserved for labels, specs and counters.
+const display = Bodoni_Moda({
   subsets: ['latin'],
-  weight: '400',
+  weight: ['400', '500'],
+  style: ['normal', 'italic'],
   display: 'swap',
   variable: '--font-display',
 });
 
-const sans = Inter_Tight({
+const sans = Manrope({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-sans',
+});
+
+const mono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  display: 'swap',
+  variable: '--font-mono',
 });
 
 export const metadata: Metadata = {
@@ -55,11 +68,27 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-IN" className={`${display.variable} ${sans.variable}`}>
+    <html
+      lang="en-IN"
+      className={`${display.variable} ${sans.variable} ${mono.variable}`}
+    >
+      <head>
+        {/* Marks the document as scripted before first paint, so the reveal
+            animations may safely start from a hidden state. Without JS the
+            rules never apply and every word stays visible. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.documentElement.classList.add('js')",
+          }}
+        />
+      </head>
       <body>
         <JsonLd data={localBusinessSchema()} />
+        <SiteLoader />
         <Header />
-        <main id="main">{children}</main>
+        <PageTransition>
+          <main id="main">{children}</main>
+        </PageTransition>
         <Footer />
       </body>
     </html>

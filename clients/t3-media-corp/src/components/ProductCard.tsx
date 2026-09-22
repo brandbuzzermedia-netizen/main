@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Product } from '@/data/products';
 import { MaterialPlate } from './MaterialPlate';
+import { Reveal } from './Reveal';
 import { ArrowIcon } from './Icons';
 
 export function ProductCard({
@@ -25,19 +26,21 @@ export function ProductCard({
           size === 'wide' ? 'aspect-[16/10]' : 'aspect-[4/5]'
         }`}
       >
-        <MaterialPlate
-          plate={product.plate}
-          alt={`${product.name} — material study, ${product.shortDescription.toLowerCase()}`}
-          priority={priority}
-          className="zoom-plate h-full w-full object-cover"
-        />
+        <Reveal variant="plate" className="h-full w-full">
+          <MaterialPlate
+            plate={product.plate}
+            alt={`${product.name} — material study, ${product.shortDescription.toLowerCase()}`}
+            priority={priority}
+            className="zoom-plate h-full w-full object-cover"
+          />
+        </Reveal>
 
         {/* Inner hairline keeps the sample reading as a framed swatch. */}
         <span className="pointer-events-none absolute inset-0 border border-ink/10" />
         {/* Weight the lower edge so the caption below has something to sit against. */}
         <span className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-ink/25 to-transparent opacity-70 transition-opacity duration-700 ease-editorial group-hover:opacity-100" />
 
-        <span className="absolute left-4 top-4 bg-paper/92 px-3 py-1.5 text-[0.625rem] font-medium uppercase tracking-eyebrow text-bronze backdrop-blur-sm">
+        <span className="absolute left-4 top-4 bg-paper/92 px-3 py-1.5 font-mono text-[0.625rem] font-medium uppercase tracking-eyebrow text-bronze backdrop-blur-sm">
           {product.category}
         </span>
 
@@ -53,7 +56,7 @@ export function ProductCard({
             <span className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-bronze transition-transform duration-500 ease-editorial group-hover:scale-x-100" />
           </h3>
           {index !== undefined && (
-            <span className="shrink-0 font-display text-base leading-none text-muted">
+            <span className="shrink-0 font-mono text-[0.75rem] leading-none text-muted">
               {String(index).padStart(2, '0')}
             </span>
           )}

@@ -5,6 +5,8 @@ import { audiences, site, strengths } from '@/data/site';
 import { MaterialPlate } from '@/components/MaterialPlate';
 import { ProductGrid } from '@/components/ProductGrid';
 import { Reveal } from '@/components/Reveal';
+import { WordReveal } from '@/components/WordReveal';
+import { Parallax } from '@/components/Parallax';
 import { CTASection } from '@/components/CTASection';
 import { StickyActions } from '@/components/StickyActions';
 import { ArrowIcon, PhoneIcon, PinIcon, WhatsAppIcon } from '@/components/Icons';
@@ -23,20 +25,27 @@ export default function HomePage() {
     <>
       {/* ------------------------------------------------------------ hero -- */}
       <section className="relative isolate flex min-h-[calc(100svh-72px)] items-end overflow-hidden bg-ink text-paper lg:min-h-[calc(100svh-88px)]">
-        <MaterialPlate
-          plate="hero"
-          alt="Layered interior and architectural materials"
-          priority
-          className="absolute inset-0 -z-10 h-full w-full object-cover"
-        />
+        <Parallax speed={9} className="absolute inset-0 -z-10 h-[118%] w-full">
+          <MaterialPlate
+            plate="hero"
+            alt="Layered interior and architectural materials"
+            priority
+            className="h-full w-full object-cover"
+          />
+        </Parallax>
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-ink/80 to-ink/35" />
 
         <div className="shell w-full pb-16 pt-28 lg:pb-24 lg:pt-36">
           <p className="eyebrow animate-rise text-bronze-light">{site.tagline}</p>
 
-          <h1 className="display-1 mt-7 max-w-[15ch] animate-rise text-paper [animation-delay:90ms]">
-            Materials that make living better.
-          </h1>
+          <WordReveal
+            as="h1"
+            text="Materials that make living better."
+            immediate
+            delay={120}
+            step={70}
+            className="display-1 mt-7 block max-w-[15ch] text-paper"
+          />
 
           <p className="lede mt-8 max-w-xl animate-rise text-mist [animation-delay:180ms]">
             Premium interior and architectural materials for designers, architects, furniture
@@ -76,10 +85,10 @@ export default function HomePage() {
               >
                 <dt className="sr-only">{label}</dt>
                 <dd>
-                  <span className="block font-display text-4xl text-paper lg:text-[2.75rem]">
+                  <span className="block whitespace-nowrap font-display text-4xl text-paper lg:text-[2.75rem]">
                     {value}
                   </span>
-                  <span className="mt-2 block text-[0.75rem] uppercase tracking-eyebrow text-stone">
+                  <span className="mt-2 block font-mono text-[0.6875rem] uppercase tracking-eyebrow text-stone">
                     {label}
                   </span>
                 </dd>
@@ -119,6 +128,28 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ------------------------------------------------- range marquee --- */}
+      <div className="marquee-mask overflow-hidden border-b border-mist bg-bone py-4">
+        <div className="marquee-track" aria-hidden="true">
+          {[0, 1].map((copy) => (
+            <ul key={copy} className="flex shrink-0 items-center">
+              {products.map((p) => (
+                <li
+                  key={`${copy}-${p.slug}`}
+                  className="flex items-center whitespace-nowrap font-mono text-[0.6875rem] uppercase tracking-eyebrow text-muted"
+                >
+                  <span className="px-6">{p.name}</span>
+                  <span className="h-1 w-1 rounded-full bg-clay" />
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+        <span className="sr-only">
+          Product range: {products.map((p) => p.name).join(', ')}.
+        </span>
+      </div>
+
       {/* ------------------------------------------------ product categories */}
       <section className="section" aria-labelledby="products-heading">
         <div className="shell">
@@ -157,11 +188,13 @@ export default function HomePage() {
                   }`}
                 >
                   <figure className="group aspect-[4/3] overflow-hidden bg-mist">
-                    <MaterialPlate
-                      plate={product.gallery[1]?.plate ?? product.plate}
-                      alt={`${product.name} — ${product.gallery[1]?.caption ?? 'material study'}`}
-                      className="zoom-plate h-full w-full object-cover"
-                    />
+                    <Reveal variant="plate" className="h-full w-full">
+                      <MaterialPlate
+                        plate={product.gallery[1]?.plate ?? product.plate}
+                        alt={`${product.name} — ${product.gallery[1]?.caption ?? 'material study'}`}
+                        className="zoom-plate h-full w-full object-cover"
+                      />
+                    </Reveal>
                   </figure>
 
                   <div>
@@ -227,7 +260,7 @@ export default function HomePage() {
             {strengths.map((s, i) => (
               <Reveal key={s.title} as="li" delay={i * 60}>
                 <div className="group grid gap-3 border-b border-white/15 py-8 transition-colors duration-500 ease-editorial hover:bg-white/[0.04] sm:grid-cols-[4rem_1fr] lg:grid-cols-[6rem_0.9fr_1.1fr] lg:gap-10 lg:py-10">
-                  <span className="font-display text-xl text-stone transition-colors duration-500 group-hover:text-bronze-light">
+                  <span className="font-mono text-[0.8125rem] text-stone transition-colors duration-500 group-hover:text-bronze-light">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <h3 className="display-3 text-paper">{s.title}</h3>

@@ -12,11 +12,14 @@ export function Reveal({
   as: Tag = 'div',
   delay = 0,
   className = '',
+  variant = 'rise',
 }: {
   children: ReactNode;
   as?: ElementType;
   delay?: number;
   className?: string;
+  /** `rise` fades and lifts; `plate` uncovers an image from its bottom edge. */
+  variant?: 'rise' | 'plate';
 }) {
   const ref = useRef<HTMLElement>(null);
 
@@ -46,7 +49,7 @@ export function Reveal({
   return (
     <Tag
       ref={ref}
-      className={`reveal ${className}`}
+      className={`${variant === 'plate' ? 'plate-reveal' : 'reveal'} ${className}`}
       style={delay ? ({ '--reveal-delay': `${delay}ms` } as React.CSSProperties) : undefined}
     >
       {children}

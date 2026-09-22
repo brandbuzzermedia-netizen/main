@@ -51,6 +51,68 @@ sitemap and the Product JSON-LD all pick it up — there is nothing else to wire
 Company facts — address, phone, WhatsApp number, email, hours, map — live in
 `src/data/site.ts` and are used everywhere. Change them in one place.
 
+## Brand mark
+
+`public/brand/t3-mark.png` is the client's own logo — the cyan disc with the T3
+monogram. It is the only place the cyan appears; everything else is the neutral
+palette, so the mark stays the brightest thing on the page. The same file is
+the favicon (`src/app/icon.png`) and the Apple touch icon. Replacing those three
+files is the whole of a logo change.
+
+## Type
+
+| Role | Face | Where |
+| --- | --- | --- |
+| Display | **Bodoni Moda** | Headlines, product names, pull quotes |
+| Text | **Manrope** | Body copy, navigation, form fields |
+| Label | **JetBrains Mono** | Eyebrows, buttons, specs, counters, indices |
+
+All three are loaded through `next/font/google`, so they are self-hosted,
+preloaded and subset at build time — no network call to Google at runtime.
+Bodoni Moda carries the optical-size axis, which is why a 92px hero and a 24px
+sub-head can share one family without the hairlines disappearing.
+
+## The loading screen
+
+Ink ground, the brand mark inside a breathing ring, a hairline progress rule and
+a mono counter; on completion the curtain splits and lifts off the page.
+
+- Runs **once per session** — `sessionStorage` remembers it, so moving between
+  pages never re-gates the site.
+- Two safety timers (3.6s and 6s) guarantee it clears even if an asset stalls.
+- Skipped entirely under `prefers-reduced-motion`, and it is client-only, so the
+  HTML a crawler receives is the page itself.
+
+It lives in `src/components/SiteLoader.tsx`.
+
+## Motion
+
+No animation library — every effect below is CSS plus a small observer, which
+keeps the shared JS bundle at ~87 kB.
+
+| Effect | Component | Notes |
+| --- | --- | --- |
+| Word-by-word headline reveal | `WordReveal` | Words stay real text nodes; a crawler reads the sentence as written |
+| Scroll reveal / stagger | `Reveal` | One `IntersectionObserver` per element, disconnected after firing |
+| Image curtain | `Reveal variant="plate"` | Clip-path uncovers the plate as it arrives |
+| Parallax drift | `Parallax` | rAF-throttled, only while on screen, decorative layers only |
+| Route fade | `PageTransition` | Opacity only — see the note below |
+| Range marquee | `.marquee-track` | Duplicated list, pauses on hover, `sr-only` text for readers |
+
+Two things worth keeping in mind before extending any of it:
+
+- **Never put a transform on `PageTransition`.** A transform — even one that
+  resolves to the identity matrix under `animation-fill-mode: both` — makes the
+  wrapper the containing block for every `position: fixed` descendant, which
+  strands the sticky mobile CTA bar thousands of pixels down the page.
+- **Never clip the element an observer is watching.** A `clip-path` on the
+  observed element zeroes its intersection rect, so the reveal never fires. The
+  clip belongs on the image inside the wrapper.
+
+Every hidden-by-default state is gated on `html.js` (set by a one-line inline
+script in the layout), so with JavaScript off nothing is invisible. The whole
+system is neutralised by the `prefers-reduced-motion` block in `globals.css`.
+
 ## Content rule
 
 Factual claims trace back to T3 Media Corp's existing website (product range,

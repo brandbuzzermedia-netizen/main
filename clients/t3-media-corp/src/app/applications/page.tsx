@@ -3,6 +3,7 @@ import { applications } from '@/data/applications';
 import { audiences } from '@/data/site';
 import { ApplicationCard } from '@/components/ApplicationCard';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { WordReveal } from '@/components/WordReveal';
 import { CTASection } from '@/components/CTASection';
 import { Reveal } from '@/components/Reveal';
 import { StickyActions } from '@/components/StickyActions';
@@ -31,7 +32,12 @@ export default function ApplicationsPage() {
         <div className="shell">
           <Breadcrumbs trail={trail} />
           <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
-            <h1 className="display-1 text-ink">Where these materials go.</h1>
+            <WordReveal
+              as="h1"
+              text="Where these materials go."
+              immediate
+              className="display-1 block text-ink"
+            />
             <p className="lede self-end">
               Most enquiries do not start with a material — they start with a room, an elevation or
               a piece of furniture. This is the range read the other way round: by application, with
