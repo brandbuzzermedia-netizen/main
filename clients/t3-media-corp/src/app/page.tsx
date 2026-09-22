@@ -3,10 +3,12 @@ import { products, featuredProducts } from '@/data/products';
 import { applications } from '@/data/applications';
 import { audiences, site, strengths } from '@/data/site';
 import { MaterialPlate } from '@/components/MaterialPlate';
-import { ProductGrid } from '@/components/ProductGrid';
+import { ProductCard } from '@/components/ProductCard';
 import { Reveal } from '@/components/Reveal';
 import { WordReveal } from '@/components/WordReveal';
 import { Parallax } from '@/components/Parallax';
+import { HorizontalRail } from '@/components/HorizontalRail';
+import { MaterialExplorer } from '@/components/MaterialExplorer';
 import { CTASection } from '@/components/CTASection';
 import { StickyActions } from '@/components/StickyActions';
 import { ArrowIcon, PhoneIcon, PinIcon, WhatsAppIcon } from '@/components/Icons';
@@ -24,7 +26,7 @@ export default function HomePage() {
   return (
     <>
       {/* ------------------------------------------------------------ hero -- */}
-      <section className="relative isolate flex min-h-[calc(100svh-72px)] items-end overflow-hidden bg-ink text-paper lg:min-h-[calc(100svh-88px)]">
+      <section className="relative isolate flex min-h-[calc(100svh-72px)] items-end overflow-hidden bg-charcoal text-paper lg:min-h-[calc(100svh-88px)]">
         <Parallax speed={9} className="absolute inset-0 -z-10 h-[118%] w-full">
           <MaterialPlate
             plate="hero"
@@ -33,7 +35,10 @@ export default function HomePage() {
             className="h-full w-full object-cover"
           />
         </Parallax>
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink via-ink/80 to-ink/35" />
+        {/* A scrim on the reading side only. A full veil over the plate put
+            the room's light out, which is the one thing the hero is for. */}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ink via-ink/75 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 -z-10 h-2/5 bg-gradient-to-t from-ink to-transparent" />
 
         <div className="shell w-full pb-16 pt-28 lg:pb-24 lg:pt-36">
           <p className="eyebrow animate-rise text-bronze-light">{site.tagline}</p>
@@ -99,11 +104,11 @@ export default function HomePage() {
       </section>
 
       {/* --------------------------------------------------- what T3 does -- */}
-      <section className="section-tight border-b border-mist" aria-labelledby="intro-heading">
+      <section className="section-tight border-b border-line" aria-labelledby="intro-heading">
         <div className="shell grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
           <Reveal>
-            <p className="eyebrow text-muted">T3 Media Corp · Bengaluru</p>
-            <h2 id="intro-heading" className="display-2 mt-5 text-ink">
+            <p className="eyebrow text-stone">T3 Media Corp · Bengaluru</p>
+            <h2 id="intro-heading" className="display-2 mt-5 text-paper">
               One supplier for the whole material schedule.
             </h2>
           </Reveal>
@@ -118,7 +123,7 @@ export default function HomePage() {
               {audiences.map((a) => (
                 <li
                   key={a}
-                  className="border border-mist px-3.5 py-2 text-[0.6875rem] uppercase tracking-eyebrow text-graphite"
+                  className="border border-line px-3.5 py-2 text-[0.6875rem] uppercase tracking-eyebrow text-mist"
                 >
                   {a}
                 </li>
@@ -129,14 +134,14 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------------------------- range marquee --- */}
-      <div className="marquee-mask overflow-hidden border-b border-mist bg-bone py-4">
+      <div className="marquee-mask overflow-hidden border-y border-line bg-charcoal py-4">
         <div className="marquee-track" aria-hidden="true">
           {[0, 1].map((copy) => (
             <ul key={copy} className="flex shrink-0 items-center">
               {products.map((p) => (
                 <li
                   key={`${copy}-${p.slug}`}
-                  className="flex items-center whitespace-nowrap font-mono text-[0.6875rem] uppercase tracking-eyebrow text-muted"
+                  className="flex items-center whitespace-nowrap font-mono text-[0.6875rem] uppercase tracking-eyebrow text-stone"
                 >
                   <span className="px-6">{p.name}</span>
                   <span className="h-1 w-1 rounded-full bg-clay" />
@@ -151,12 +156,12 @@ export default function HomePage() {
       </div>
 
       {/* ------------------------------------------------ product categories */}
-      <section className="section" aria-labelledby="products-heading">
-        <div className="shell">
-          <div className="flex flex-wrap items-end justify-between gap-6 border-b border-mist pb-8">
+      <section aria-labelledby="products-heading">
+        <div className="shell pt-[clamp(4.5rem,9vw,9rem)]">
+          <div className="flex flex-wrap items-end justify-between gap-6 border-b border-line pb-8">
             <div>
-              <p className="eyebrow text-muted">The Range</p>
-              <h2 id="products-heading" className="display-2 mt-5 max-w-xl text-ink">
+              <p className="eyebrow text-bronze-light">The Range</p>
+              <h2 id="products-heading" className="display-2 mt-5 max-w-xl text-paper">
                 Eleven categories, one counter.
               </h2>
             </div>
@@ -164,18 +169,57 @@ export default function HomePage() {
               Full catalogue <ArrowIcon />
             </Link>
           </div>
+        </div>
 
+        {/* The range is read sideways: the page holds still while the
+            catalogue passes through it. Touch devices get a swipe strip. */}
+        <HorizontalRail className="mt-2">
+          {products.map((product, i) => (
+            <article
+              key={product.slug}
+              data-cursor="View"
+              className="w-[78vw] shrink-0 snap-center sm:w-[56vw] lg:w-[30vw] xl:w-[26vw]"
+            >
+              <ProductCard product={product} index={i + 1} priority={i < 3} />
+            </article>
+          ))}
+          <div className="flex w-[78vw] shrink-0 snap-center flex-col justify-center sm:w-[42vw] lg:w-[24vw]">
+            <p className="display-3 text-paper">Not sure which one?</p>
+            <p className="mt-4 text-[0.9375rem] leading-relaxed text-mist">
+              Send the drawing or the area schedule. We will tell you what fits, what is in
+              stock, and what it costs.
+            </p>
+            <Link href="/contact/" className="btn-primary mt-7 self-start">
+              Get a Quote
+            </Link>
+          </div>
+        </HorizontalRail>
+      </section>
+
+      {/* ------------------------------------------------ material explorer  */}
+      <section className="section border-t border-line bg-charcoal" aria-labelledby="explorer-heading">
+        <div className="shell">
+          <div className="max-w-2xl">
+            <p className="eyebrow text-bronze-light">The Swatch Wall</p>
+            <h2 id="explorer-heading" className="display-2 mt-5 text-paper">
+              Pick a material. See what it does.
+            </h2>
+            <p className="lede mt-6">
+              Every finish here is one we stock, shown at the size you would judge it at. Step
+              through them, then take the ones that work to the enquiry.
+            </p>
+          </div>
           <div className="mt-14">
-            <ProductGrid items={products} />
+            <MaterialExplorer />
           </div>
         </div>
       </section>
 
       {/* ------------------------------------------------ featured materials */}
-      <section className="bg-bone" aria-labelledby="featured-heading">
+      <section className="light-break" aria-labelledby="featured-heading">
         <div className="shell section">
-          <p className="eyebrow text-muted">Featured Materials</p>
-          <h2 id="featured-heading" className="display-2 mt-5 max-w-2xl text-ink">
+          <p className="eyebrow text-stone">Featured Materials</p>
+          <h2 id="featured-heading" className="display-2 mt-5 max-w-2xl text-paper">
             Three materials that decide how a space is remembered.
           </h2>
 
@@ -187,7 +231,7 @@ export default function HomePage() {
                     i % 2 === 1 ? 'lg:[&>figure]:order-2' : ''
                   }`}
                 >
-                  <figure className="group aspect-[4/3] overflow-hidden bg-mist">
+                  <figure className="group aspect-[4/3] overflow-hidden bg-graphite">
                     <Reveal variant="plate" className="h-full w-full">
                       <MaterialPlate
                         plate={product.gallery[1]?.plate ?? product.plate}
@@ -198,18 +242,18 @@ export default function HomePage() {
                   </figure>
 
                   <div>
-                    <p className="eyebrow text-muted">
+                    <p className="eyebrow text-stone">
                       {String(i + 1).padStart(2, '0')} · {product.category}
                     </p>
-                    <h3 className="display-2 mt-5 text-ink">{product.name}</h3>
+                    <h3 className="display-2 mt-5 text-paper">{product.name}</h3>
                     <p className="lede mt-5">{product.positioning}</p>
-                    <p className="mt-5 max-w-prose text-[0.9375rem] leading-relaxed text-slate">
+                    <p className="mt-5 max-w-prose text-[0.9375rem] leading-relaxed text-mist">
                       {product.overview[0]}
                     </p>
 
-                    <ul className="mt-8 grid gap-x-8 gap-y-3 border-t border-mist pt-6 sm:grid-cols-2">
+                    <ul className="mt-8 grid gap-x-8 gap-y-3 border-t border-line pt-6 sm:grid-cols-2">
                       {product.applications.slice(0, 6).map((a) => (
-                        <li key={a} className="text-[0.875rem] text-graphite">
+                        <li key={a} className="text-[0.875rem] text-mist">
                           {a}
                         </li>
                       ))}
@@ -238,7 +282,7 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------------------------------- why T3 ----- */}
-      <section className="section bg-ink text-paper" aria-labelledby="why-heading">
+      <section className="section bg-charcoal text-paper" aria-labelledby="why-heading">
         <div className="shell">
           <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
             <Reveal>
@@ -259,7 +303,7 @@ export default function HomePage() {
           <ol className="mt-16 border-t border-white/15">
             {strengths.map((s, i) => (
               <Reveal key={s.title} as="li" delay={i * 60}>
-                <div className="group grid gap-3 border-b border-white/15 py-8 transition-colors duration-500 ease-editorial hover:bg-white/[0.04] sm:grid-cols-[4rem_1fr] lg:grid-cols-[6rem_0.9fr_1.1fr] lg:gap-10 lg:py-10">
+                <div className="group grid gap-3 border-b border-white/15 py-8 transition-colors duration-500 ease-editorial hover:bg-graphite/[0.04] sm:grid-cols-[4rem_1fr] lg:grid-cols-[6rem_0.9fr_1.1fr] lg:gap-10 lg:py-10">
                   <span className="font-mono text-[0.8125rem] text-stone transition-colors duration-500 group-hover:text-bronze-light">
                     {String(i + 1).padStart(2, '0')}
                   </span>
@@ -275,12 +319,15 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------------------------- applications ----- */}
-      <section className="section" aria-labelledby="applications-heading">
+      <section className="section overflow-hidden" aria-labelledby="applications-heading">
         <div className="shell">
-          <div className="flex flex-wrap items-end justify-between gap-6 border-b border-mist pb-8">
+          <p className="display-poster select-none text-paper/[0.07]" aria-hidden="true">
+            Applied
+          </p>
+          <div className="flex flex-wrap items-end justify-between gap-6 border-b border-line pb-8">
             <div>
-              <p className="eyebrow text-muted">Where It Goes</p>
-              <h2 id="applications-heading" className="display-2 mt-5 max-w-xl text-ink">
+              <p className="eyebrow text-stone">Where It Goes</p>
+              <h2 id="applications-heading" className="display-2 mt-5 max-w-xl text-paper">
                 From a pooja room ceiling to a weather-facing facade.
               </h2>
             </div>
@@ -294,12 +341,12 @@ export default function HomePage() {
               <Reveal key={a.slug} as="li" delay={(i % 3) * 70}>
                 <Link
                   href={`/applications/#${a.slug}`}
-                  className="group flex items-baseline justify-between gap-4 border-b border-mist py-5 transition-colors duration-300 hover:border-ink"
+                  className="group flex items-baseline justify-between gap-4 border-b border-line py-5 transition-colors duration-300 hover:border-paper"
                 >
-                  <span className="font-display text-[1.375rem] tracking-tight text-ink">
+                  <span className="font-display text-[1.375rem] tracking-tight text-paper">
                     {a.name}
                   </span>
-                  <ArrowIcon className="h-3.5 w-3.5 shrink-0 translate-x-0 text-muted transition-all duration-500 ease-editorial group-hover:translate-x-1 group-hover:text-ink" />
+                  <ArrowIcon className="h-3.5 w-3.5 shrink-0 translate-x-0 text-stone transition-all duration-500 ease-editorial group-hover:translate-x-1 group-hover:text-paper" />
                 </Link>
               </Reveal>
             ))}
@@ -308,7 +355,7 @@ export default function HomePage() {
       </section>
 
       {/* ------------------------------------------ material experience ----- */}
-      <section className="relative isolate overflow-hidden bg-charcoal text-paper">
+      <section className="relative isolate overflow-hidden bg-ink text-paper">
         <MaterialPlate
           plate="showroom"
           alt=""
@@ -349,8 +396,8 @@ export default function HomePage() {
       <section className="section" aria-labelledby="location-heading">
         <div className="shell grid gap-12 lg:grid-cols-2 lg:gap-20">
           <Reveal>
-            <p className="eyebrow text-muted">Bengaluru</p>
-            <h2 id="location-heading" className="display-2 mt-5 text-ink">
+            <p className="eyebrow text-stone">Bengaluru</p>
+            <h2 id="location-heading" className="display-2 mt-5 text-paper">
               On Begur Road, in Bommanahalli.
             </h2>
             <p className="lede mt-6">
@@ -359,11 +406,11 @@ export default function HomePage() {
               settles most specification arguments.
             </p>
 
-            <dl className="mt-10 space-y-5 border-t border-mist pt-8">
+            <dl className="mt-10 space-y-5 border-t border-line pt-8">
               <div className="flex gap-4">
                 <dt className="sr-only">Address</dt>
-                <PinIcon className="mt-1 h-4 w-4 shrink-0 text-bronze" />
-                <dd className="text-[0.9375rem] leading-relaxed text-graphite">
+                <PinIcon className="mt-1 h-4 w-4 shrink-0 text-bronze-light" />
+                <dd className="text-[0.9375rem] leading-relaxed text-mist">
                   Begur Road, Bommanahalli
                   <br />
                   Bangalore – 560068, Karnataka
@@ -371,9 +418,9 @@ export default function HomePage() {
               </div>
               <div className="flex gap-4">
                 <dt className="sr-only">Phone</dt>
-                <PhoneIcon className="mt-1 h-4 w-4 shrink-0 text-bronze" />
+                <PhoneIcon className="mt-1 h-4 w-4 shrink-0 text-bronze-light" />
                 <dd>
-                  <a href={telLink} className="text-[0.9375rem] text-graphite hover:text-bronze">
+                  <a href={telLink} className="text-[0.9375rem] text-mist hover:text-bronze-light">
                     {site.phoneDisplay}
                   </a>
                 </dd>
@@ -396,7 +443,7 @@ export default function HomePage() {
           </Reveal>
 
           <Reveal delay={120}>
-            <div className="aspect-[4/3] w-full border border-mist bg-bone lg:aspect-auto lg:h-full lg:min-h-[420px]">
+            <div className="aspect-[4/3] w-full border border-line bg-charcoal lg:aspect-auto lg:h-full lg:min-h-[420px]">
               <iframe
                 src={site.mapsEmbed}
                 title="T3 Media Corp location — Begur Road, Bommanahalli, Bengaluru"

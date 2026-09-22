@@ -44,20 +44,20 @@ export function StickyActions({ productName }: { productName?: string }) {
 
       <nav
         aria-label="Quick contact"
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-ink/10 bg-paper/95 backdrop-blur-md md:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-paper/10 bg-ink/85 backdrop-blur-md md:hidden"
       >
         <a
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-h-[60px] flex-col items-center justify-center gap-1 border-r border-ink/10 text-[0.6875rem] font-medium uppercase tracking-eyebrow text-[#0B6B2E]"
+          className="flex min-h-[60px] flex-col items-center justify-center gap-1 border-r border-paper/10 text-[0.6875rem] font-medium uppercase tracking-eyebrow text-[#0B6B2E]"
         >
           <WhatsAppIcon className="h-5 w-5" />
           WhatsApp
         </a>
         <a
           href={telLink}
-          className="flex min-h-[60px] flex-col items-center justify-center gap-1 border-r border-ink/10 text-[0.6875rem] font-medium uppercase tracking-eyebrow text-graphite"
+          className="flex min-h-[60px] flex-col items-center justify-center gap-1 border-r border-paper/10 text-[0.6875rem] font-medium uppercase tracking-eyebrow text-mist"
         >
           <PhoneIcon className="h-5 w-5" />
           Call

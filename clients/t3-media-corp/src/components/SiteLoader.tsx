@@ -139,7 +139,7 @@ export function SiteLoader() {
         </span>
 
         <span className="mt-10 flex w-56 items-center gap-4">
-          <span className="relative h-px flex-1 bg-white/15">
+          <span className="relative h-px flex-1 bg-white/12">
             <span
               className="absolute inset-y-0 left-0 bg-brand transition-[width] duration-300 ease-out"
               style={{ width: `${shown}%` }}

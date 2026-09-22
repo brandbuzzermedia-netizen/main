@@ -29,16 +29,16 @@ export default function AboutPage() {
     <>
       <JsonLd data={breadcrumbSchema(trail)} />
 
-      <section className="border-b border-mist pb-14 pt-10 lg:pb-20 lg:pt-14">
+      <section className="border-b border-line pb-14 pt-10 lg:pb-20 lg:pt-14">
         <div className="shell">
           <Breadcrumbs trail={trail} />
-          <p className="eyebrow mt-10 text-muted">{site.tagline}</p>
+          <p className="eyebrow mt-10 text-stone">{site.tagline}</p>
           <WordReveal
             as="h1"
             text="A material supplier that answers the hard questions."
             immediate
             delay={80}
-            className="display-1 mt-6 block max-w-[18ch] text-ink"
+            className="display-1 mt-6 block max-w-[18ch] text-paper"
           />
           <p className="lede mt-8 max-w-2xl">
             T3 Media Corp supplies interior and architectural materials from Begur Road in
@@ -64,25 +64,25 @@ export default function AboutPage() {
       <section className="section" aria-labelledby="who-heading">
         <div className="shell grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
           <Reveal>
-            <p className="eyebrow text-muted">Who we are</p>
-            <h2 id="who-heading" className="display-2 mt-5 text-ink">
+            <p className="eyebrow text-stone">Who we are</p>
+            <h2 id="who-heading" className="display-2 mt-5 text-paper">
               One counter, eleven categories.
             </h2>
           </Reveal>
           <Reveal delay={120}>
             <div className="space-y-6">
-              <p className="lede text-graphite">
+              <p className="lede text-mist">
                 Sourcing interior materials in Bengaluru usually means four suppliers, four lead
                 times and four people to chase when something does not arrive. T3 Media Corp exists
                 to collapse that into one conversation.
               </p>
-              <p className="max-w-prose text-[0.9375rem] leading-relaxed text-slate">
+              <p className="max-w-prose text-[0.9375rem] leading-relaxed text-mist">
                 The range spans acrylic laminates and alabaster sheets, WPC doors and vascal frames,
                 acrylic and mirror sheets, digital glass, wallpapers, PVC ply and ACP — exterior and
                 interior grade. CNC cutting sits alongside all of it, so a sheet can leave as a
                 finished panel rather than a job for someone else.
               </p>
-              <p className="max-w-prose text-[0.9375rem] leading-relaxed text-slate">
+              <p className="max-w-prose text-[0.9375rem] leading-relaxed text-mist">
                 What holds it together is a bias towards straight answers. If a material is wrong
                 for your application, we would rather say so at the counter than sell it and deal
                 with it at handover.
@@ -92,10 +92,10 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="section-tight border-t border-mist" aria-labelledby="offer-heading">
+      <section className="section-tight border-t border-line" aria-labelledby="offer-heading">
         <div className="shell">
-          <p className="eyebrow text-muted">What we offer</p>
-          <h2 id="offer-heading" className="display-2 mt-5 max-w-xl text-ink">
+          <p className="eyebrow text-stone">What we offer</p>
+          <h2 id="offer-heading" className="display-2 mt-5 max-w-xl text-paper">
             The full material schedule, in stock.
           </h2>
           <ul className="mt-12 grid gap-x-10 sm:grid-cols-2 lg:grid-cols-3">
@@ -103,12 +103,12 @@ export default function AboutPage() {
               <li key={p.slug}>
                 <Link
                   href={`/products/${p.slug}/`}
-                  className="group flex items-baseline justify-between gap-4 border-b border-mist py-5 transition-colors duration-300 hover:border-ink"
+                  className="group flex items-baseline justify-between gap-4 border-b border-line py-5 transition-colors duration-300 hover:border-paper"
                 >
-                  <span className="font-display text-[1.375rem] tracking-tight text-ink">
+                  <span className="font-display text-[1.375rem] tracking-tight text-paper">
                     {p.name}
                   </span>
-                  <ArrowIcon className="h-3.5 w-3.5 shrink-0 text-muted transition-all duration-500 ease-editorial group-hover:translate-x-1 group-hover:text-ink" />
+                  <ArrowIcon className="h-3.5 w-3.5 shrink-0 text-stone transition-all duration-500 ease-editorial group-hover:translate-x-1 group-hover:text-paper" />
                 </Link>
               </li>
             ))}
@@ -116,7 +116,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="section bg-ink text-paper" aria-labelledby="serve-heading">
+      <section className="section bg-charcoal text-paper" aria-labelledby="serve-heading">
         <div className="shell grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
           <Reveal>
             <p className="eyebrow text-bronze-light">Who we serve</p>
@@ -147,20 +147,20 @@ export default function AboutPage() {
 
       <section className="section" aria-labelledby="why-heading">
         <div className="shell">
-          <p className="eyebrow text-muted">Why professionals work with us</p>
-          <h2 id="why-heading" className="display-2 mt-5 max-w-xl text-ink">
+          <p className="eyebrow text-stone">Why professionals work with us</p>
+          <h2 id="why-heading" className="display-2 mt-5 max-w-xl text-paper">
             Six things that keep the specifications coming back.
           </h2>
 
-          <dl className="mt-12 border-t border-mist">
+          <dl className="mt-12 border-t border-line">
             {strengths.map((s, i) => (
               <Reveal key={s.title} delay={i * 60}>
-                <div className="group grid gap-2 border-b border-mist py-8 transition-colors duration-500 ease-editorial hover:bg-bone sm:grid-cols-[3.5rem_1fr] lg:grid-cols-[5rem_0.85fr_1.15fr] lg:gap-10">
-                  <span className="font-display text-lg text-muted transition-colors duration-500 group-hover:text-bronze">
+                <div className="group grid gap-2 border-b border-line py-8 transition-colors duration-500 ease-editorial hover:bg-charcoal sm:grid-cols-[3.5rem_1fr] lg:grid-cols-[5rem_0.85fr_1.15fr] lg:gap-10">
+                  <span className="font-display text-lg text-stone transition-colors duration-500 group-hover:text-bronze-light">
                     {String(i + 1).padStart(2, '0')}
                   </span>
-                  <dt className="display-3 text-ink">{s.title}</dt>
-                  <dd className="max-w-prose text-[0.9375rem] leading-relaxed text-slate sm:col-span-2 lg:col-span-1">
+                  <dt className="display-3 text-paper">{s.title}</dt>
+                  <dd className="max-w-prose text-[0.9375rem] leading-relaxed text-mist sm:col-span-2 lg:col-span-1">
                     {s.body}
                   </dd>
                 </div>
@@ -170,17 +170,17 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="section-tight bg-bone" aria-labelledby="where-heading">
+      <section className="section-tight bg-charcoal" aria-labelledby="where-heading">
         <div className="shell grid gap-10 lg:grid-cols-2 lg:gap-20">
           <Reveal>
-            <p className="eyebrow text-muted">Where to find us</p>
-            <h2 id="where-heading" className="display-2 mt-5 text-ink">
+            <p className="eyebrow text-stone">Where to find us</p>
+            <h2 id="where-heading" className="display-2 mt-5 text-paper">
               Begur Road, Bommanahalli.
             </h2>
             <p className="lede mt-6">
               {site.address.full}
               <br />
-              <span className="text-graphite">
+              <span className="text-mist">
                 {site.hours.days}, {site.hours.time}
               </span>
             </p>
@@ -199,7 +199,7 @@ export default function AboutPage() {
             </div>
           </Reveal>
           <Reveal delay={120}>
-            <div className="aspect-[4/3] w-full border border-mist bg-paper">
+            <div className="aspect-[4/3] w-full border border-line bg-graphite">
               <iframe
                 src={site.mapsEmbed}
                 title="T3 Media Corp location — Begur Road, Bommanahalli, Bengaluru"

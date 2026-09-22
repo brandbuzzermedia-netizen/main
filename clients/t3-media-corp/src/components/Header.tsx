@@ -51,13 +51,13 @@ export function Header() {
     <header
       className={`sticky top-0 z-50 transition-colors duration-300 ease-editorial ${
         scrolled || megaOpen
-          ? 'border-b border-mist bg-paper/95 backdrop-blur-md'
-          : 'border-b border-transparent bg-paper'
+          ? 'border-b border-line bg-ink/85 backdrop-blur-md'
+          : 'border-b border-transparent bg-ink'
       }`}
     >
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-ink focus:px-4 focus:py-2 focus:text-paper"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-bronze-light focus:px-4 focus:py-2 focus:text-ink"
       >
         Skip to content
       </a>
@@ -82,12 +82,12 @@ export function Header() {
                   aria-current={isActive(item.href) ? 'page' : undefined}
                   aria-expanded={hasMega ? megaOpen : undefined}
                   className={`relative py-2 text-[0.8125rem] font-medium uppercase tracking-eyebrow transition-colors duration-200 ${
-                    isActive(item.href) ? 'text-ink' : 'text-slate hover:text-ink'
+                    isActive(item.href) ? 'text-paper' : 'text-mist hover:text-paper'
                   }`}
                 >
                   {item.label}
                   <span
-                    className={`absolute -bottom-0.5 left-0 h-px w-full origin-left bg-ink transition-transform duration-500 ease-editorial ${
+                    className={`absolute -bottom-0.5 left-0 h-px w-full origin-left bg-bronze-light transition-transform duration-500 ease-editorial ${
                       isActive(item.href) ? 'scale-x-100' : 'scale-x-0'
                     }`}
                   />
@@ -95,11 +95,11 @@ export function Header() {
 
                 {hasMega && megaOpen && (
                   <div className="absolute left-1/2 top-full z-50 w-screen max-w-[76rem] -translate-x-1/2 pt-5">
-                    <div className="animate-rise border border-mist bg-paper shadow-[0_28px_60px_-28px_rgba(11,11,12,0.35)]">
+                    <div className="animate-rise border border-line bg-charcoal shadow-[0_28px_60px_-28px_rgba(0,0,0,0.75)]">
                       <div className="grid gap-x-10 gap-y-8 p-10 md:grid-cols-4 lg:grid-cols-5">
                         {productCategories.map((cat) => (
                           <div key={cat}>
-                            <p className="eyebrow mb-4 text-muted">{cat}</p>
+                            <p className="eyebrow mb-4 text-stone">{cat}</p>
                             <ul className="space-y-2.5">
                               {products
                                 .filter((p) => p.category === cat)
@@ -107,7 +107,7 @@ export function Header() {
                                   <li key={p.slug}>
                                     <Link
                                       href={`/products/${p.slug}/`}
-                                      className="text-[0.9375rem] text-graphite transition-colors duration-200 hover:text-bronze"
+                                      className="text-[0.9375rem] text-mist transition-colors duration-200 hover:text-bronze-light"
                                     >
                                       {p.name}
                                     </Link>
@@ -117,8 +117,8 @@ export function Header() {
                           </div>
                         ))}
                       </div>
-                      <div className="flex items-center justify-between border-t border-mist bg-bone px-10 py-5">
-                        <p className="max-w-md text-sm text-slate">
+                      <div className="flex items-center justify-between border-t border-line bg-charcoal px-10 py-5">
+                        <p className="max-w-md text-sm text-mist">
                           Not sure which material fits the brief? Send us the drawing and we will
                           tell you what works.
                         </p>
@@ -137,7 +137,7 @@ export function Header() {
         <div className="hidden items-center gap-3 lg:flex">
           <a
             href={telLink}
-            className="flex min-h-[44px] items-center gap-2 px-1 text-[0.8125rem] font-medium text-graphite transition-colors hover:text-bronze"
+            className="flex min-h-[44px] items-center gap-2 px-1 text-[0.8125rem] font-medium text-mist transition-colors hover:text-bronze-light"
           >
             <PhoneIcon />
             {site.phoneDisplay}
@@ -157,17 +157,17 @@ export function Header() {
         >
           <span className="relative block h-3.5 w-6">
             <span
-              className={`absolute left-0 block h-px w-full bg-ink transition-all duration-300 ease-editorial ${
+              className={`absolute left-0 block h-px w-full bg-paper transition-all duration-300 ease-editorial ${
                 menuOpen ? 'top-1.5 rotate-45' : 'top-0'
               }`}
             />
             <span
-              className={`absolute left-0 top-1.5 block h-px w-full bg-ink transition-opacity duration-200 ${
+              className={`absolute left-0 top-1.5 block h-px w-full bg-paper transition-opacity duration-200 ${
                 menuOpen ? 'opacity-0' : 'opacity-100'
               }`}
             />
             <span
-              className={`absolute left-0 block h-px w-full bg-ink transition-all duration-300 ease-editorial ${
+              className={`absolute left-0 block h-px w-full bg-paper transition-all duration-300 ease-editorial ${
                 menuOpen ? 'top-1.5 -rotate-45' : 'top-3'
               }`}
             />
@@ -179,7 +179,7 @@ export function Header() {
       <div
         id="mobile-nav"
         hidden={!menuOpen}
-        className="fixed inset-x-0 bottom-0 top-[72px] z-40 overflow-y-auto overscroll-contain border-t border-mist bg-paper pb-32 lg:hidden"
+        className="fixed inset-x-0 bottom-0 top-[72px] z-40 overflow-y-auto overscroll-contain border-t border-line bg-ink pb-32 lg:hidden"
       >
         <nav aria-label="Mobile" className="shell py-8">
           <ul className="space-y-1">
@@ -187,7 +187,7 @@ export function Header() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="block border-b border-mist py-4 font-display text-[1.75rem] tracking-tight text-ink"
+                  className="block border-b border-line py-4 font-display text-[1.75rem] tracking-tight text-paper"
                 >
                   {item.label}
                 </Link>
@@ -195,13 +195,13 @@ export function Header() {
             ))}
           </ul>
 
-          <p className="eyebrow mt-10 text-muted">Product Categories</p>
+          <p className="eyebrow mt-10 text-stone">Product Categories</p>
           <ul className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3">
             {products.map((p) => (
               <li key={p.slug}>
                 <Link
                   href={`/products/${p.slug}/`}
-                  className="block py-1 text-[0.9375rem] text-graphite"
+                  className="block py-1 text-[0.9375rem] text-mist"
                 >
                   {p.name}
                 </Link>

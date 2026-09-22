@@ -62,7 +62,7 @@ export default function ProductPage({ params }: Params) {
       <JsonLd data={faqSchema(product.faq)} />
 
       {/* ------------------------------------------------------------ hero -- */}
-      <section className="relative isolate overflow-hidden bg-ink text-paper">
+      <section className="relative isolate overflow-hidden bg-charcoal text-paper">
         <Parallax speed={7} className="absolute inset-0 -z-10 h-[116%] w-full">
           <MaterialPlate
             plate={product.plate}
@@ -116,8 +116,8 @@ export default function ProductPage({ params }: Params) {
       <section className="section" aria-labelledby="overview-heading">
         <div className="shell grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
           <Reveal>
-            <p className="eyebrow text-muted">Overview</p>
-            <h2 id="overview-heading" className="display-2 mt-5 text-ink">
+            <p className="eyebrow text-stone">Overview</p>
+            <h2 id="overview-heading" className="display-2 mt-5 text-paper">
               What it is, and why it gets specified.
             </h2>
           </Reveal>
@@ -126,7 +126,7 @@ export default function ProductPage({ params }: Params) {
               {product.overview.map((para, i) => (
                 <p
                   key={i}
-                  className={i === 0 ? 'lede text-graphite' : 'max-w-prose text-[0.9375rem] leading-relaxed text-slate'}
+                  className={i === 0 ? 'lede text-mist' : 'max-w-prose text-[0.9375rem] leading-relaxed text-mist'}
                 >
                   {para}
                 </p>
@@ -137,22 +137,22 @@ export default function ProductPage({ params }: Params) {
       </section>
 
       {/* -------------------------------------------------------- benefits -- */}
-      <section className="section-tight border-t border-mist" aria-labelledby="benefits-heading">
+      <section className="section-tight border-t border-line" aria-labelledby="benefits-heading">
         <div className="shell">
-          <p className="eyebrow text-muted">Key Benefits</p>
-          <h2 id="benefits-heading" className="display-2 mt-5 max-w-xl text-ink">
+          <p className="eyebrow text-stone">Key Benefits</p>
+          <h2 id="benefits-heading" className="display-2 mt-5 max-w-xl text-paper">
             What you get for specifying it.
           </h2>
 
-          <dl className="mt-12 border-t border-mist">
+          <dl className="mt-12 border-t border-line">
             {product.features.map((f, i) => (
               <Reveal key={f.title} delay={i * 60}>
-                <div className="group grid gap-2 border-b border-mist py-7 transition-colors duration-500 ease-editorial hover:bg-bone sm:grid-cols-[3.5rem_1fr] lg:grid-cols-[5rem_0.85fr_1.15fr] lg:gap-10">
-                  <span className="font-display text-lg text-muted transition-colors duration-500 group-hover:text-bronze">
+                <div className="group grid gap-2 border-b border-line py-7 transition-colors duration-500 ease-editorial hover:bg-charcoal sm:grid-cols-[3.5rem_1fr] lg:grid-cols-[5rem_0.85fr_1.15fr] lg:gap-10">
+                  <span className="font-display text-lg text-stone transition-colors duration-500 group-hover:text-bronze-light">
                     {String(i + 1).padStart(2, '0')}
                   </span>
-                  <dt className="display-3 text-ink">{f.title}</dt>
-                  <dd className="max-w-prose text-[0.9375rem] leading-relaxed text-slate sm:col-span-2 lg:col-span-1">
+                  <dt className="display-3 text-paper">{f.title}</dt>
+                  <dd className="max-w-prose text-[0.9375rem] leading-relaxed text-mist sm:col-span-2 lg:col-span-1">
                     {f.body}
                   </dd>
                 </div>
@@ -166,8 +166,8 @@ export default function ProductPage({ params }: Params) {
       <section className="section-tight" aria-labelledby="apps-heading">
         <div className="shell grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
           <Reveal>
-            <p className="eyebrow text-muted">Applications</p>
-            <h2 id="apps-heading" className="display-2 mt-5 text-ink">
+            <p className="eyebrow text-stone">Applications</p>
+            <h2 id="apps-heading" className="display-2 mt-5 text-paper">
               Where it goes.
             </h2>
           </Reveal>
@@ -176,7 +176,7 @@ export default function ProductPage({ params }: Params) {
               {product.applications.map((a) => (
                 <li
                   key={a}
-                  className="border-b border-mist py-4 text-[1.0625rem] text-graphite"
+                  className="border-b border-line py-4 text-[1.0625rem] text-mist"
                 >
                   {a}
                 </li>
@@ -195,30 +195,30 @@ export default function ProductPage({ params }: Params) {
       <section className="section-tight" aria-labelledby="specs-heading">
         <div className="shell grid gap-10 lg:grid-cols-[0.75fr_1.25fr] lg:gap-20">
           <Reveal>
-            <p className="eyebrow text-muted">Specifications</p>
-            <h2 id="specs-heading" className="display-2 mt-5 text-ink">
+            <p className="eyebrow text-stone">Specifications</p>
+            <h2 id="specs-heading" className="display-2 mt-5 text-paper">
               The published detail.
             </h2>
           </Reveal>
           <Reveal delay={120}>
             {product.specifications.length > 0 ? (
-              <dl className="border-t border-mist">
+              <dl className="border-t border-line">
                 {product.specifications.map((s) => (
                   <div
                     key={s.label}
-                    className="grid gap-1 border-b border-mist py-5 sm:grid-cols-[14rem_1fr] sm:gap-8"
+                    className="grid gap-1 border-b border-line py-5 sm:grid-cols-[14rem_1fr] sm:gap-8"
                   >
-                    <dt className="text-[0.75rem] uppercase tracking-eyebrow text-muted">
+                    <dt className="text-[0.75rem] uppercase tracking-eyebrow text-stone">
                       {s.label}
                     </dt>
-                    <dd className="text-[1.0625rem] text-ink">{s.value}</dd>
+                    <dd className="text-[1.0625rem] text-paper">{s.value}</dd>
                   </div>
                 ))}
               </dl>
             ) : null}
 
             {product.specNote && (
-              <p className="mt-6 max-w-prose border-l-2 border-bronze bg-bone p-5 text-[0.875rem] leading-relaxed text-slate">
+              <p className="mt-6 max-w-prose border-l-2 border-bronze bg-charcoal p-5 text-[0.875rem] leading-relaxed text-mist">
                 {product.specNote}
               </p>
             )}
@@ -241,10 +241,10 @@ export default function ProductPage({ params }: Params) {
       <FAQ items={product.faq} title={`${product.name} — questions we get`} />
 
       {/* ------------------------------------------------------- related ---- */}
-      <section className="section-tight bg-bone" aria-labelledby="related-heading">
+      <section className="section-tight bg-charcoal" aria-labelledby="related-heading">
         <div className="shell">
-          <div className="flex flex-wrap items-end justify-between gap-6 border-b border-mist pb-8">
-            <h2 id="related-heading" className="display-2 text-ink">
+          <div className="flex flex-wrap items-end justify-between gap-6 border-b border-line pb-8">
+            <h2 id="related-heading" className="display-2 text-paper">
               Also in the range
             </h2>
             <Link href="/products/" className="link-line pb-1">

@@ -1,18 +1,18 @@
 export function FAQ({ items, title = 'Frequently asked' }: { items: { q: string; a: string }[]; title?: string }) {
   if (!items.length) return null;
   return (
-    <section className="section-tight border-t border-mist" aria-labelledby="faq-heading">
+    <section className="section-tight border-t border-line" aria-labelledby="faq-heading">
       <div className="shell grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
-          <p className="eyebrow text-muted">FAQ</p>
-          <h2 id="faq-heading" className="display-2 mt-5 text-ink">
+          <p className="eyebrow text-stone">FAQ</p>
+          <h2 id="faq-heading" className="display-2 mt-5 text-paper">
             {title}
           </h2>
         </div>
-        <div className="divide-y divide-mist border-t border-mist">
+        <div className="divide-y divide-line border-t border-line">
           {items.map((item) => (
             <details key={item.q} className="group py-6">
-              <summary className="flex cursor-pointer list-none items-start justify-between gap-6 text-[1.0625rem] font-medium text-ink marker:hidden">
+              <summary className="flex cursor-pointer list-none items-start justify-between gap-6 text-[1.0625rem] font-medium text-paper marker:hidden">
                 {item.q}
                 <span
                   aria-hidden="true"
@@ -22,7 +22,7 @@ export function FAQ({ items, title = 'Frequently asked' }: { items: { q: string;
                   <span className="absolute left-1/2 top-0 h-full w-px bg-graphite" />
                 </span>
               </summary>
-              <p className="mt-4 max-w-prose text-[0.9375rem] leading-relaxed text-slate">
+              <p className="mt-4 max-w-prose text-[0.9375rem] leading-relaxed text-mist">
                 {item.a}
               </p>
             </details>

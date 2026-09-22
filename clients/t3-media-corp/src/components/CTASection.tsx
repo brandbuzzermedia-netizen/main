@@ -16,7 +16,7 @@ export function CTASection({
   plate?: string;
 }) {
   return (
-    <section className="relative isolate overflow-hidden bg-ink text-paper">
+    <section className="relative isolate overflow-hidden bg-charcoal text-paper">
       <MaterialPlate
         plate={plate}
         alt=""

@@ -34,7 +34,7 @@ export default function ContactPage() {
         }}
       />
 
-      <section className="border-b border-mist pb-14 pt-10 lg:pb-20 lg:pt-14">
+      <section className="border-b border-line pb-14 pt-10 lg:pb-20 lg:pt-14">
         <div className="shell">
           <Breadcrumbs trail={trail} />
           <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
@@ -42,7 +42,7 @@ export default function ContactPage() {
               as="h1"
               text="Let’s talk materials."
               immediate
-              className="display-1 block text-ink"
+              className="display-1 block text-paper"
             />
             <p className="lede self-end">
               Tell us the room, the quantity or the drawing. You will get an answer on
@@ -80,22 +80,22 @@ export default function ContactPage() {
       <section className="section">
         <div className="shell grid gap-14 lg:grid-cols-[1.15fr_0.85fr] lg:gap-20">
           <div>
-            <p className="eyebrow text-muted">Request a Quote</p>
-            <h2 className="display-2 mt-5 text-ink">Send us the requirement.</h2>
+            <p className="eyebrow text-stone">Request a Quote</p>
+            <h2 className="display-2 mt-5 text-paper">Send us the requirement.</h2>
             <div className="mt-10">
               <ContactForm />
             </div>
           </div>
 
           <aside className="lg:pt-16">
-            <div className="border border-mist bg-bone p-8 lg:p-10">
-              <p className="eyebrow text-muted">T3 Media Corp</p>
+            <div className="border border-line bg-charcoal p-8 lg:p-10">
+              <p className="eyebrow text-stone">T3 Media Corp</p>
               <address className="mt-7 space-y-6 not-italic">
                 <div className="flex gap-4">
-                  <PinIcon className="mt-1 h-4 w-4 shrink-0 text-bronze" />
+                  <PinIcon className="mt-1 h-4 w-4 shrink-0 text-bronze-light" />
                   <div>
-                    <p className="text-[0.75rem] uppercase tracking-eyebrow text-muted">Showroom</p>
-                    <p className="mt-1.5 text-[1.0625rem] leading-relaxed text-ink">
+                    <p className="text-[0.75rem] uppercase tracking-eyebrow text-stone">Showroom</p>
+                    <p className="mt-1.5 text-[1.0625rem] leading-relaxed text-paper">
                       Begur Road, Bommanahalli
                       <br />
                       Bangalore – 560068
@@ -106,12 +106,12 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex gap-4">
-                  <PhoneIcon className="mt-1 h-4 w-4 shrink-0 text-bronze" />
+                  <PhoneIcon className="mt-1 h-4 w-4 shrink-0 text-bronze-light" />
                   <div>
-                    <p className="text-[0.75rem] uppercase tracking-eyebrow text-muted">Phone</p>
+                    <p className="text-[0.75rem] uppercase tracking-eyebrow text-stone">Phone</p>
                     <a
                       href={telLink}
-                      className="mt-1.5 inline-flex min-h-[40px] items-center text-[1.0625rem] text-ink transition-colors hover:text-bronze"
+                      className="mt-1.5 inline-flex min-h-[40px] items-center text-[1.0625rem] text-paper transition-colors hover:text-bronze-light"
                     >
                       {site.phoneDisplay}
                     </a>
@@ -119,12 +119,12 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex gap-4">
-                  <MailIcon className="mt-1 h-4 w-4 shrink-0 text-bronze" />
+                  <MailIcon className="mt-1 h-4 w-4 shrink-0 text-bronze-light" />
                   <div>
-                    <p className="text-[0.75rem] uppercase tracking-eyebrow text-muted">Email</p>
+                    <p className="text-[0.75rem] uppercase tracking-eyebrow text-stone">Email</p>
                     <a
                       href={mailLink}
-                      className="mt-1.5 inline-flex min-h-[40px] items-center break-all text-[1.0625rem] text-ink transition-colors hover:text-bronze"
+                      className="mt-1.5 inline-flex min-h-[40px] items-center break-all text-[1.0625rem] text-paper transition-colors hover:text-bronze-light"
                     >
                       {site.email}
                     </a>
@@ -132,10 +132,10 @@ export default function ContactPage() {
                 </div>
 
                 <div className="flex gap-4">
-                  <ClockIcon className="mt-1 h-4 w-4 shrink-0 text-bronze" />
+                  <ClockIcon className="mt-1 h-4 w-4 shrink-0 text-bronze-light" />
                   <div>
-                    <p className="text-[0.75rem] uppercase tracking-eyebrow text-muted">Hours</p>
-                    <p className="mt-1.5 text-[1.0625rem] leading-relaxed text-ink">
+                    <p className="text-[0.75rem] uppercase tracking-eyebrow text-stone">Hours</p>
+                    <p className="mt-1.5 text-[1.0625rem] leading-relaxed text-paper">
                       {site.hours.days}
                       <br />
                       {site.hours.time}
@@ -145,7 +145,7 @@ export default function ContactPage() {
               </address>
             </div>
 
-            <p className="mt-8 text-[0.875rem] leading-relaxed text-slate">
+            <p className="mt-8 text-[0.875rem] leading-relaxed text-mist">
               Translucent and high-gloss materials really do need to be seen lit. If the project
               allows it, visiting the showroom will save a round of samples.
             </p>
@@ -155,7 +155,7 @@ export default function ContactPage() {
 
       <section className="pb-20">
         <div className="shell">
-          <div className="aspect-[16/10] w-full border border-mist bg-bone sm:aspect-[21/9]">
+          <div className="aspect-[16/10] w-full border border-line bg-charcoal sm:aspect-[21/9]">
             <iframe
               src={site.mapsEmbed}
               title="Map showing T3 Media Corp at Begur Road, Bommanahalli, Bengaluru 560068"

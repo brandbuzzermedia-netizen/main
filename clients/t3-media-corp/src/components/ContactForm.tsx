@@ -96,16 +96,16 @@ export function ContactForm({ defaultProduct }: { defaultProduct?: string }) {
   const err = (key: keyof Fields) => (touched ? errors[key] : undefined);
 
   const fieldClass = (key: keyof Fields) =>
-    `w-full border bg-transparent px-4 py-3.5 text-[0.9375rem] text-ink transition-colors duration-200 placeholder:text-muted focus:border-ink focus:outline-none ${
-      err(key) ? 'border-red-600' : 'border-mist'
+    `w-full border bg-transparent px-4 py-3.5 text-[0.9375rem] text-paper transition-colors duration-200 placeholder:text-stone focus:border-bronze-light focus:outline-none ${
+      err(key) ? 'border-red-600' : 'border-line'
     }`;
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
       <div className="grid gap-6 sm:grid-cols-2">
         <div>
-          <label htmlFor="name" className="eyebrow mb-2.5 block text-muted">
-            Name <span className="text-bronze">*</span>
+          <label htmlFor="name" className="eyebrow mb-2.5 block text-stone">
+            Name <span className="text-bronze-light">*</span>
           </label>
           <input
             id="name"
@@ -126,8 +126,8 @@ export function ContactForm({ defaultProduct }: { defaultProduct?: string }) {
         </div>
 
         <div>
-          <label htmlFor="phone" className="eyebrow mb-2.5 block text-muted">
-            Phone <span className="text-bronze">*</span>
+          <label htmlFor="phone" className="eyebrow mb-2.5 block text-stone">
+            Phone <span className="text-bronze-light">*</span>
           </label>
           <input
             id="phone"
@@ -150,7 +150,7 @@ export function ContactForm({ defaultProduct }: { defaultProduct?: string }) {
         </div>
 
         <div>
-          <label htmlFor="email" className="eyebrow mb-2.5 block text-muted">
+          <label htmlFor="email" className="eyebrow mb-2.5 block text-stone">
             Email
           </label>
           <input
@@ -174,7 +174,7 @@ export function ContactForm({ defaultProduct }: { defaultProduct?: string }) {
         </div>
 
         <div>
-          <label htmlFor="company" className="eyebrow mb-2.5 block text-muted">
+          <label htmlFor="company" className="eyebrow mb-2.5 block text-stone">
             Company / Studio
           </label>
           <input
@@ -189,7 +189,7 @@ export function ContactForm({ defaultProduct }: { defaultProduct?: string }) {
         </div>
 
         <div>
-          <label htmlFor="projectType" className="eyebrow mb-2.5 block text-muted">
+          <label htmlFor="projectType" className="eyebrow mb-2.5 block text-stone">
             Project type
           </label>
           <select
@@ -209,7 +209,7 @@ export function ContactForm({ defaultProduct }: { defaultProduct?: string }) {
         </div>
 
         <div>
-          <label htmlFor="product" className="eyebrow mb-2.5 block text-muted">
+          <label htmlFor="product" className="eyebrow mb-2.5 block text-stone">
             Product of interest
           </label>
           <select
@@ -231,8 +231,8 @@ export function ContactForm({ defaultProduct }: { defaultProduct?: string }) {
       </div>
 
       <div>
-        <label htmlFor="message" className="eyebrow mb-2.5 block text-muted">
-          Message <span className="text-bronze">*</span>
+        <label htmlFor="message" className="eyebrow mb-2.5 block text-stone">
+          Message <span className="text-bronze-light">*</span>
         </label>
         <textarea
           id="message"
@@ -263,7 +263,7 @@ export function ContactForm({ defaultProduct }: { defaultProduct?: string }) {
         </a>
       </div>
 
-      <p className="text-[0.8125rem] leading-relaxed text-muted">
+      <p className="text-[0.8125rem] leading-relaxed text-stone">
         Your enquiry opens in WhatsApp with the details already filled in, so nothing gets lost in
         a form queue. Prefer email? Use the second button — it does the same thing in your mail app.
       </p>

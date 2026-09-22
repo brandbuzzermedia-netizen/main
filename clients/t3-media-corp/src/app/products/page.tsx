@@ -38,7 +38,7 @@ export default function ProductsPage() {
         }}
       />
 
-      <section className="border-b border-mist pb-14 pt-10 lg:pb-20 lg:pt-14">
+      <section className="border-b border-line pb-14 pt-10 lg:pb-20 lg:pt-14">
         <div className="shell">
           <Breadcrumbs trail={trail} />
           <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
@@ -46,7 +46,7 @@ export default function ProductsPage() {
               as="h1"
               text="The catalogue."
               immediate
-              className="display-1 block text-ink"
+              className="display-1 block text-paper"
             />
             <p className="lede self-end">
               Eleven categories covering surfaces, panels, doors, glass and acrylic — plus CNC

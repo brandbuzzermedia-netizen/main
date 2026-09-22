@@ -5,26 +5,29 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: '#0B0B0C',
-        charcoal: '#16171A',
-        graphite: '#33353A',
-        slate: '#5C5F66',
-        stone: '#8C8F96',
-        muted: '#62656C',
-        mist: '#D6D3CD',
-        bone: '#EAE7E1',
-        paper: '#F6F4F0',
+        // Dark, gallery-like ground. The site is lit like a showroom after
+        // hours: deep surfaces, one warm key light, and the materials doing
+        // all the talking.
+        ink: '#08090A', // page ground
+        charcoal: '#101216', // second ground, for banded sections
+        graphite: '#171A1F', // raised surfaces: cards, fields, panels
+        line: '#24272D', // hairlines on dark
+        stone: '#8A8F98', // tertiary text, labels
+        mist: '#C6C4BF', // secondary text, body copy on dark
+        paper: '#F5F2EC', // primary text on dark, and the light-break ground
+        bone: '#E6E1D8', // light-break surface, one shade down from paper
+        slate: '#4A4D54', // secondary text on a light break
+        muted: '#5E626A', // tertiary text on a light break
         // The cyan is the client's logo mark and is used for the mark alone.
         brand: {
           DEFAULT: '#009FE3',
           deep: '#006A9B',
         },
-        // Editorial accent. Warm metal reads as architectural materials where
-        // the cyan read as software. Two tones because no single value clears
-        // 4.5:1 on both paper and ink.
+        // The warm key light. `light` clears 4.5:1 on ink and charcoal;
+        // DEFAULT is the darker tone for the light-break sections.
         bronze: {
-          DEFAULT: '#8A530B', // on paper / bone
-          light: '#C99A3E', // on ink / charcoal
+          DEFAULT: '#8A530B',
+          light: '#D8A64A',
           wash: '#F2EAD9',
         },
         clay: '#B9A78F',

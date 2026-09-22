@@ -59,6 +59,23 @@ palette, so the mark stays the brightest thing on the page. The same file is
 the favicon (`src/app/icon.png`) and the Apple touch icon. Replacing those three
 files is the whole of a logo change.
 
+## The dark system
+
+The site is lit like a showroom after hours: deep grounds, one warm key light
+(`bronze.light`), and the materials carrying the colour. `ink` is the page,
+`charcoal` bands a section, `graphite` raises a card or a field, and `line` is
+every hairline.
+
+A section that needs contrast takes the `light-break` class, which inverts the
+ground for itself and everything inside it — the featured-materials block on
+the home page is the one on show. The overrides in `globals.css` key off
+component classes and element types only: naming a utility class in one of
+those selectors (`.light-break .text-mist`) makes every `@apply text-mist`
+elsewhere circular, and Tailwind refuses to build.
+
+`bronze.DEFAULT` is the dark tone, for light breaks only. On the dark ground
+it is `bronze.light` everywhere — the darker tone disappears into it.
+
 ## Type
 
 | Role | Face | Where |
@@ -84,6 +101,19 @@ a mono counter; on completion the curtain splits and lifts off the page.
   HTML a crawler receives is the page itself.
 
 It lives in `src/components/SiteLoader.tsx`.
+
+## Interaction
+
+| Piece | Component | Notes |
+| --- | --- | --- |
+| Swatch wall | `MaterialExplorer` | Pick a material, step its finishes, read its published specs. All of it comes from `products.ts`; the Backlit badge shows only for finishes that are actually lit studies |
+| Sideways catalogue | `HorizontalRail` | The page holds while the range passes through it. Below `lg`, and under reduced motion, it collapses to a swipe strip with scroll snapping |
+| Pointer ring | `Cursor` | Trails the pointer, swells over anything with `data-cursor="<label>"`. Fine pointers only, never under reduced motion, and the native cursor is left alone |
+
+The explorer drops repeated plates before rendering its swatches. Most products
+list their card plate again as the first gallery entry; left in, two swatches
+share a React key, and a duplicate key breaks reconciliation badly enough to
+strand a swatch from the previously selected material in the strip.
 
 ## Motion
 

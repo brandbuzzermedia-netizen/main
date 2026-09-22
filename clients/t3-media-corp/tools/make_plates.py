@@ -87,14 +87,29 @@ FINISH_DEFS = (
     '<stop offset="30%" stop-color="#FFFFFF" stop-opacity="0"/>'
     '<stop offset="100%" stop-color="#000000" stop-opacity="0.15"/>'
     "</linearGradient>"
-    '<radialGradient id="fvig" cx="40%" cy="32%" r="80%">'
-    '<stop offset="62%" stop-color="#000000" stop-opacity="0"/>'
-    '<stop offset="100%" stop-color="#000000" stop-opacity="0.13"/>'
+    # The site is a dark room, so every sample is graded for one: a warm key
+    # from the upper left, a deep falloff everywhere else. Without this the
+    # plates read as bright paper cut-outs floating on the page.
+    '<radialGradient id="fkey" cx="30%" cy="18%" r="82%">'
+    '<stop offset="0%" stop-color="#FFE4B4" stop-opacity="0.20"/>'
+    '<stop offset="45%" stop-color="#FFD9A0" stop-opacity="0.05"/>'
+    '<stop offset="100%" stop-color="#FFD9A0" stop-opacity="0"/>'
     "</radialGradient>"
+    '<radialGradient id="fvig" cx="34%" cy="26%" r="86%">'
+    '<stop offset="34%" stop-color="#05060A" stop-opacity="0"/>'
+    '<stop offset="76%" stop-color="#05060A" stop-opacity="0.30"/>'
+    '<stop offset="100%" stop-color="#05060A" stop-opacity="0.62"/>'
+    "</radialGradient>"
+    '<linearGradient id="ffoot" x1="0%" y1="52%" x2="0%" y2="100%">'
+    '<stop offset="0%" stop-color="#05060A" stop-opacity="0"/>'
+    '<stop offset="100%" stop-color="#05060A" stop-opacity="0.42"/>'
+    "</linearGradient>"
 )
 
 FINISH = (
     f'<rect width="{W}" height="{H}" fill="url(#fsheen)"/>'
+    f'<rect width="{W}" height="{H}" fill="url(#fkey)"/>'
+    f'<rect width="{W}" height="{H}" fill="url(#ffoot)"/>'
     f'<rect width="{W}" height="{H}" fill="url(#fvig)"/>'
 )
 
@@ -394,40 +409,104 @@ cnc("cnc-detail", "#D6DCE1", "#6E7780", "#111316", "detail")
 cnc("cnc-screen", "#E7E0D3", "#9C927F", "#2B2D32", "screen")
 
 # ------------------------------------------------------------ editorial ------
-def editorial(name, c1, c2, accent, mode="hero"):
+def hero_scene(name: str) -> None:
+    """A lit room in one-point perspective: the closest thing to architectural
+    photography that can be drawn rather than shot. The ceiling plane is the
+    light source, which is exactly what alabaster is sold to do."""
+    vx, vy = W * 0.5, H * 0.52  # vanishing point
+    defs = (
+        '<linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">'
+        '<stop offset="0%" stop-color="#0D0F13"/>'
+        '<stop offset="100%" stop-color="#06070A"/></linearGradient>'
+        '<linearGradient id="ceil" x1="50%" y1="0%" x2="50%" y2="100%">'
+        '<stop offset="0%" stop-color="#F6E3C0" stop-opacity="0.16"/>'
+        '<stop offset="62%" stop-color="#FFD9A3" stop-opacity="0.62"/>'
+        '<stop offset="100%" stop-color="#FFE9C8" stop-opacity="0.92"/></linearGradient>'
+        '<linearGradient id="wallL" x1="0%" y1="0%" x2="100%" y2="0%">'
+        '<stop offset="0%" stop-color="#0A0B0E"/>'
+        '<stop offset="100%" stop-color="#1C1E23"/></linearGradient>'
+        '<linearGradient id="wallR" x1="0%" y1="0%" x2="100%" y2="0%">'
+        '<stop offset="0%" stop-color="#22242A"/>'
+        '<stop offset="100%" stop-color="#0A0B0E"/></linearGradient>'
+        '<linearGradient id="floor" x1="50%" y1="0%" x2="50%" y2="100%">'
+        '<stop offset="0%" stop-color="#15171C"/>'
+        '<stop offset="100%" stop-color="#07080B"/></linearGradient>'
+        '<linearGradient id="pool" x1="50%" y1="0%" x2="50%" y2="100%">'
+        '<stop offset="0%" stop-color="#FFD9A3" stop-opacity="0.30"/>'
+        '<stop offset="100%" stop-color="#FFD9A3" stop-opacity="0"/></linearGradient>'
+        + bloom("glow", "#FFD9A3", "50%", "44%", "52%", 0.42)
+        + grain("n", 0.85, 0.10)
+    )
+
+    # Ceiling: a trapezoid from the top edge into the vanishing point, split
+    # into lit panels by the joints between sheets.
+    ceiling = (
+        f'<polygon points="0,0 {W},0 {vx + 210:.0f},{vy:.0f} {vx - 210:.0f},{vy:.0f}" fill="url(#ceil)"/>'
+    )
+    joints = "".join(
+        f'<line x1="{W * (i / 6):.0f}" y1="0" x2="{vx - 210 + 420 * (i / 6):.0f}" y2="{vy:.0f}" '
+        f'stroke="#0A0B0E" stroke-opacity="0.35" stroke-width="3"/>'
+        for i in range(1, 6)
+    )
+
+    walls = (
+        f'<polygon points="0,0 {vx - 210:.0f},{vy:.0f} {vx - 210:.0f},{vy + 150:.0f} 0,{H}" fill="url(#wallL)"/>'
+        f'<polygon points="{W},0 {vx + 210:.0f},{vy:.0f} {vx + 210:.0f},{vy + 150:.0f} {W},{H}" fill="url(#wallR)"/>'
+    )
+    # Panel rhythm on each wall, converging with the perspective.
+    ribs = "".join(
+        f'<line x1="{W * 0.5 - (W * 0.5) * (1 - i / 7):.0f}" y1="{vy * (i / 7) * 0.2:.0f}" '
+        f'x2="{W * 0.5 - (W * 0.5) * (1 - i / 7):.0f}" y2="{H - (H - vy) * (i / 7) * 0.25:.0f}" '
+        f'stroke="#FFFFFF" stroke-opacity="{0.05 + (7 - i) * 0.012:.3f}" stroke-width="2"/>'
+        for i in range(1, 7)
+    ) + "".join(
+        f'<line x1="{W * 0.5 + (W * 0.5) * (1 - i / 7):.0f}" y1="{vy * (i / 7) * 0.2:.0f}" '
+        f'x2="{W * 0.5 + (W * 0.5) * (1 - i / 7):.0f}" y2="{H - (H - vy) * (i / 7) * 0.25:.0f}" '
+        f'stroke="#FFFFFF" stroke-opacity="{0.05 + (7 - i) * 0.012:.3f}" stroke-width="2"/>'
+        for i in range(1, 7)
+    )
+
+    floor = (
+        f'<polygon points="0,{H} {vx - 210:.0f},{vy + 150:.0f} {vx + 210:.0f},{vy + 150:.0f} {W},{H}" '
+        f'fill="url(#floor)"/>'
+        # The light the ceiling throws back off a polished floor.
+        f'<polygon points="{vx - 330:.0f},{H} {vx - 190:.0f},{vy + 152:.0f} '
+        f'{vx + 190:.0f},{vy + 152:.0f} {vx + 330:.0f},{H}" fill="url(#pool)"/>'
+    )
+
+    body = (
+        f'<rect width="{W}" height="{H}" fill="url(#sky)"/>'
+        f'{walls}{ribs}{ceiling}{joints}{floor}'
+        f'<rect width="{W}" height="{H}" fill="url(#glow)"/>'
+        f'<rect width="{W}" height="{H}" filter="url(#n)" opacity="0.5"/>'
+    )
+    plate(name, defs, body)
+
+
+def editorial(name, c1, c2, accent, mode="showroom"):
     defs = grad("g", c1, c2, 118) + bloom("b", accent, "62%", "26%", "78%", 0.30) + grain("n", 0.8, 0.14)
-    if mode == "hero":
-        art = (
-            f'<rect x="{W * 0.52:.0f}" y="0" width="{W * 0.48:.0f}" height="{H}" fill="#FFFFFF" opacity="0.06"/>'
-            f'<rect x="0" y="{H * 0.66:.0f}" width="{W}" height="{H * 0.34:.0f}" fill="#0B0B0C" opacity="0.16"/>'
-            + "".join(
-                f'<rect x="{W * 0.56 + i * 92:.0f}" y="{120 + i * 34}" width="60" '
-                f'height="{H - 260 - i * 68}" fill="#FFFFFF" opacity="{0.10 + i * 0.04:.2f}"/>'
-                for i in range(5)
-            )
-            + f'<circle cx="{W * 0.3:.0f}" cy="{H * 0.34:.0f}" r="210" fill="none" '
-            f'stroke="#FFFFFF" stroke-opacity="0.16" stroke-width="2"/>'
-        )
-    elif mode == "showroom":
+    if mode == "showroom":
+        # Sample boards stood against a wall, each catching a different amount
+        # of the one light in the room.
         art = "".join(
             f'<rect x="{i * 150}" y="{60 + (i % 3) * 40}" width="126" height="{H - 160 - (i % 3) * 80}" '
-            f'fill="#FFFFFF" opacity="{0.07 + (i % 4) * 0.045:.2f}" stroke="#FFFFFF" '
-            f'stroke-opacity="0.18" stroke-width="2"/>'
+            f'fill="#FFFFFF" opacity="{0.07 + (i % 4) * 0.045:.2f}" stroke="#FFD9A3" '
+            f'stroke-opacity="0.16" stroke-width="2"/>'
             for i in range(8)
-        ) + f'<rect x="0" y="{H - 120}" width="{W}" height="120" fill="#0B0B0C" opacity="0.22"/>'
+        ) + f'<rect x="0" y="{H - 120}" width="{W}" height="120" fill="#05060A" opacity="0.34"/>'
     else:
         art = "".join(
             f'<rect x="{70 + (i % 4) * 280}" y="{70 + (i // 4) * 280}" width="240" height="240" '
-            f'fill="#FFFFFF" opacity="{0.05 + (i % 5) * 0.04:.2f}" stroke="#FFFFFF" '
-            f'stroke-opacity="0.2" stroke-width="2"/>'
+            f'fill="#FFFFFF" opacity="{0.05 + (i % 5) * 0.04:.2f}" stroke="#FFD9A3" '
+            f'stroke-opacity="0.18" stroke-width="2"/>'
             for i in range(12)
         )
     body = f'<rect width="{W}" height="{H}" fill="url(#g)"/>{art}<rect width="{W}" height="{H}" fill="url(#b)"/><rect width="{W}" height="{H}" filter="url(#n)" opacity="0.6"/>'
     plate(name, defs, body)
 
 
-editorial("hero", "#1A1C20", "#08090A", "#009FE3", "hero")
-editorial("showroom", "#2A2622", "#0C0B0A", "#C9B18A", "showroom")
-editorial("materials-lab", "#26282C", "#0B0C0D", "#009FE3", "grid")
+hero_scene("hero")
+editorial("showroom", "#24211D", "#08090A", "#C9B18A", "showroom")
+editorial("materials-lab", "#1E2126", "#08090A", "#009FE3", "grid")
 
 print(f"{len(list(OUT.glob('*.svg')))} plates written to {OUT}")

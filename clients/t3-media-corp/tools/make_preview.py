@@ -22,6 +22,7 @@ static host needs none of it.
 
 import pathlib
 import re
+import base64
 import shutil
 import sys
 
@@ -88,11 +89,27 @@ window.fetch=function(u){
 })();</script>"""
 
 
+# The brand mark is the one image the page cannot do without — it is the logo
+# in the header, the footer and the loading screen. Artifact hosts do not all
+# resolve a relative path from the page the way a static server does, and a
+# missing logo reads as a broken site, so it travels inside the HTML as a data
+# URI. Everything else stays a file.
+_MARK = SRC / 'brand' / 't3-mark.png'
+MARK_URI = (
+    'data:image/png;base64,' + base64.b64encode(_MARK.read_bytes()).decode()
+    if _MARK.exists() else ''
+)
+
+
 def rewrite(html: str) -> str:
     # Assets: absolute -> relative (every page sits at the same depth now).
     html = html.replace('"/_next/', '"next-static/').replace("'/_next/", "'next-static/")
     html = html.replace('"/plates/', '"plates/').replace("'/plates/", "'plates/")
     html = html.replace('"/brand/', '"brand/').replace("'/brand/", "'brand/")
+    if MARK_URI:
+        # The preload would fetch the file version the markup no longer uses.
+        html = re.sub(r'<link[^>]+href="/?brand/t3-mark\.png"[^>]*/?>', '', html)
+        html = html.replace('"brand/t3-mark.png"', f'"{MARK_URI}"')
     # The icons carry a cache-busting query string, so match them loosely.
     html = re.sub(r'(?<=["\\])/(apple-)?icon\.png', lambda m: m.group(0).lstrip('/'), html)
 

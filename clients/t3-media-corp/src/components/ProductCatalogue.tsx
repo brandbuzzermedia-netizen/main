@@ -32,12 +32,12 @@ export function ProductCatalogue() {
               onClick={() => setFilter(tab)}
               className={`shrink-0 whitespace-nowrap border px-4 py-2.5 text-[0.6875rem] uppercase tracking-eyebrow transition-colors duration-300 ${
                 active
-                  ? 'border-ink bg-ink text-paper'
-                  : 'border-mist text-graphite hover:border-ink hover:text-ink'
+                  ? 'border-bronze-light bg-bronze-light text-ink'
+                  : 'border-line text-mist hover:border-paper hover:text-paper'
               }`}
             >
               {tab}
-              <span className={`ml-2 ${active ? 'text-mist' : 'text-muted'}`}>{count}</span>
+              <span className={`ml-2 ${active ? 'text-mist' : 'text-stone'}`}>{count}</span>
             </button>
           );
         })}

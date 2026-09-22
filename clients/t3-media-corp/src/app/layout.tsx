@@ -8,6 +8,7 @@ import { localBusinessSchema } from '@/lib/seo';
 import { site } from '@/data/site';
 import { SiteLoader } from '@/components/SiteLoader';
 import { PageTransition } from '@/components/PageTransition';
+import { Cursor } from '@/components/Cursor';
 
 // Bodoni Moda carries the optical-size axis, so the same family holds a 100px
 // hero and a 24px sub-head without the thin strokes disappearing. Manrope is
@@ -61,7 +62,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#F6F4F0',
+  themeColor: '#08090A',
   width: 'device-width',
   initialScale: 1,
 };
@@ -85,6 +86,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <JsonLd data={localBusinessSchema()} />
         <SiteLoader />
+        <Cursor />
         <Header />
         <PageTransition>
           <main id="main">{children}</main>

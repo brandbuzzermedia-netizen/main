@@ -28,7 +28,7 @@ export default function ApplicationsPage() {
     <>
       <JsonLd data={breadcrumbSchema(trail)} />
 
-      <section className="border-b border-mist pb-14 pt-10 lg:pb-20 lg:pt-14">
+      <section className="border-b border-line pb-14 pt-10 lg:pb-20 lg:pt-14">
         <div className="shell">
           <Breadcrumbs trail={trail} />
           <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:gap-20">
@@ -36,7 +36,7 @@ export default function ApplicationsPage() {
               as="h1"
               text="Where these materials go."
               immediate
-              className="display-1 block text-ink"
+              className="display-1 block text-paper"
             />
             <p className="lede self-end">
               Most enquiries do not start with a material — they start with a room, an elevation or
@@ -49,7 +49,7 @@ export default function ApplicationsPage() {
             {audiences.map((a) => (
               <li
                 key={a}
-                className="border border-mist px-3.5 py-2 text-[0.6875rem] uppercase tracking-eyebrow text-graphite"
+                className="border border-line px-3.5 py-2 text-[0.6875rem] uppercase tracking-eyebrow text-mist"
               >
                 {a}
               </li>
@@ -71,11 +71,11 @@ export default function ApplicationsPage() {
         </div>
       </section>
 
-      <section className="section-tight bg-bone">
+      <section className="section-tight bg-charcoal">
         <div className="shell flex flex-wrap items-end justify-between gap-6">
           <div>
-            <p className="eyebrow text-muted">Start from the material instead</p>
-            <h2 className="display-2 mt-5 max-w-xl text-ink">
+            <p className="eyebrow text-stone">Start from the material instead</p>
+            <h2 className="display-2 mt-5 max-w-xl text-paper">
               Browse the full catalogue by category.
             </h2>
           </div>

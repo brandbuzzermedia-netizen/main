@@ -26,13 +26,13 @@ export function Logo({
       {!compact && (
         <span className="flex flex-col leading-none">
           <span
-            className={`font-display text-[1.35rem] tracking-tight ${invert ? 'text-paper' : 'text-ink'}`}
+            className={`font-display text-[1.35rem] tracking-tight ${invert ? 'text-paper' : 'text-paper'}`}
           >
             T3 Media Corp
           </span>
           <span
             className={`mt-1.5 hidden font-mono text-[0.5625rem] uppercase tracking-eyebrow min-[420px]:block ${
-              invert ? 'text-mist' : 'text-muted'
+              invert ? 'text-mist' : 'text-stone'
             }`}
           >
             Interior &amp; Architectural Materials

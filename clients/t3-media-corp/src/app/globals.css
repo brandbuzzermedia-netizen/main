@@ -13,17 +13,53 @@
   }
 
   body {
-    @apply bg-paper text-ink font-sans antialiased;
+    @apply bg-ink text-mist font-sans antialiased;
     text-rendering: optimizeLegibility;
   }
 
   ::selection {
-    @apply bg-ink text-paper;
+    @apply bg-bronze-light text-ink;
   }
 
   :focus-visible {
-    outline: 2px solid #8A530B;
+    outline: 2px solid #D8A64A;
     outline-offset: 3px;
+  }
+
+  /* A light break inverts the ground for one section; anything inside it
+     reads dark-on-light without every child needing its own override. */
+  .light-break {
+    @apply bg-paper text-ink;
+  }
+
+  /* Overrides key off component classes and element types only. Naming a
+     utility class in a selector here (.light-break .text-mist) makes every
+     `@apply text-mist` elsewhere circular, and Tailwind refuses to build. */
+  .light-break {
+    color: #4A4D54;
+  }
+
+  .light-break h1,
+  .light-break h2,
+  .light-break h3,
+  .light-break dt,
+  .light-break strong {
+    color: #08090A;
+  }
+
+  .light-break .eyebrow {
+    color: #5E626A;
+  }
+
+  .light-break .lede,
+  .light-break p,
+  .light-break li {
+    color: #4A4D54;
+  }
+
+  .light-break hr,
+  .light-break .rule {
+    border-color: #D8D3CA;
   }
 
   h1, h2, h3 {
@@ -46,12 +82,19 @@
   /* Editorial display type — fluid, tight, large. */
   .display-1 {
     @apply font-display font-normal leading-[0.94] tracking-tightest;
-    font-size: clamp(2.5rem, 6.8vw, 5.75rem);
+    font-size: clamp(2.75rem, 8.2vw, 7.5rem);
   }
 
   .display-2 {
-    @apply font-display font-normal leading-[0.98] tracking-tightest;
-    font-size: clamp(2.25rem, 5vw, 4rem);
+    @apply font-display font-normal leading-[0.96] tracking-tightest;
+    font-size: clamp(2.35rem, 5.6vw, 4.75rem);
+  }
+
+  /* Poster type: section markers set at the size of the page itself. Used
+     sparingly — one per section at most, and never over body copy. */
+  .display-poster {
+    @apply font-display font-normal uppercase leading-[0.82] tracking-tightest;
+    font-size: clamp(3.5rem, 15vw, 13rem);
   }
 
   .display-3 {
@@ -71,11 +114,11 @@
   }
 
   .lede {
-    @apply text-[1.0625rem] leading-relaxed text-slate sm:text-lg;
+    @apply text-[1.0625rem] leading-relaxed text-mist sm:text-lg;
   }
 
   .rule {
-    @apply border-0 border-t border-mist;
+    @apply border-0 border-t border-line;
   }
 
   /* Buttons */
@@ -86,20 +129,35 @@
     min-height: 48px;
   }
 
+  /* On the dark ground the primary action is the warm key light itself. */
   .btn-primary {
-    @apply btn bg-ink text-paper hover:bg-bronze;
+    @apply btn bg-bronze-light text-ink hover:bg-paper;
   }
 
   .btn-outline {
-    @apply btn border border-ink/25 text-ink hover:border-ink hover:bg-ink hover:text-paper;
+    @apply btn border border-paper/25 text-paper
+           hover:border-bronze-light hover:bg-bronze-light hover:text-ink;
   }
 
   .btn-invert {
-    @apply btn bg-paper text-ink hover:bg-bronze hover:text-white;
+    @apply btn bg-paper text-ink hover:bg-bronze-light;
   }
 
   .btn-ghost-invert {
     @apply btn border border-paper/30 text-paper hover:border-paper hover:bg-paper hover:text-ink;
+  }
+
+  /* Inside a light break the same two buttons flip back. */
+  .light-break .btn-primary {
+    @apply bg-ink text-paper hover:bg-bronze;
+  }
+
+  .light-break .btn-outline {
+    @apply border-ink/25 text-ink hover:border-ink hover:bg-ink hover:text-paper;
+  }
+
+  .light-break .btn-invert {
+    @apply bg-ink text-paper hover:bg-bronze;
   }
 
   .btn-whatsapp {
@@ -109,14 +167,14 @@
   /* Underline that grows on hover — used on text links. */
   .link-line {
     @apply relative inline-flex cursor-pointer items-center gap-2 py-3 font-mono text-[0.75rem]
-           font-medium uppercase tracking-eyebrow text-ink;
+           font-medium uppercase tracking-eyebrow text-paper;
     min-height: 44px;
   }
 
   .link-line::after {
     content: '';
     @apply absolute bottom-2 left-0 h-px w-full origin-right scale-x-100
-           bg-ink transition-transform duration-500 ease-editorial;
+           bg-current transition-transform duration-500 ease-editorial;
   }
 
   .group:hover .link-line::after,
@@ -126,7 +184,7 @@
   }
 
   .accent-rule {
-    @apply block h-px w-12 bg-bronze;
+    @apply block h-px w-12 bg-bronze-light;
   }
 
   .section {
@@ -180,6 +238,14 @@
   html.js .plate-reveal.is-visible img {
     clip-path: inset(0 0 0 0);
     transform: none;
+  }
+
+  /* When the rail is not pinned (touch, narrow, reduced motion) the sticky
+     shell must collapse, or it leaves a screen-tall hole above the strip. */
+  [data-pinned='false'] > div {
+    position: static;
+    min-height: 0;
+    padding-block: clamp(2rem, 4vw, 3rem);
   }
 
   /* Continuous category strip. Duplicated content inside, so -50% loops seamlessly. */
