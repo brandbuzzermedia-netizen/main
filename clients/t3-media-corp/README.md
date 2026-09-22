@@ -82,6 +82,28 @@ To switch to real photography, drop files with the same base names into
 `public/plates/` and change `PLATE_EXT` in `src/components/MaterialPlate.tsx`
 (e.g. to `webp`). No other code changes are needed.
 
+## Previewing on a host that is not a domain root
+
+`out/` references its assets absolutely (`/_next/...`, `/plates/...`), which is
+correct for a normal static host but breaks anywhere the site is served under a
+sub-path — every asset resolves above the site root and 404s, leaving unstyled
+HTML. For those hosts:
+
+```bash
+npm run build
+python3 tools/make_preview.py out preview
+```
+
+That writes a flat, fully-relative copy: one file per page at the root, assets
+referenced relatively, `_next/` renamed (some hosts reserve a leading `_`),
+`@font-face` URLs rewritten, and a capture-phase click handler that turns
+navigation into plain page loads — Next's `<Link>` reads its href from the
+hydration payload rather than the DOM, so without it the router pushes the
+original absolute routes back. `out/` is untouched and stays canonical.
+
+Test any such preview from a sub-path, not from `/` — serving it at a domain
+root hides exactly the bug it is meant to fix.
+
 ## Lead capture
 
 WhatsApp is the primary channel. `src/lib/whatsapp.ts` builds `wa.me` links with
