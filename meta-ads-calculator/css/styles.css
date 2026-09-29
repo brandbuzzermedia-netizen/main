@@ -123,7 +123,6 @@ section{scroll-margin-top:76px}
 .model[aria-pressed="true"]{border-color:var(--green);box-shadow:0 0 0 4px var(--gold)}
 .model .badge{width:52px;height:52px;border-radius:50%;background:var(--gold);color:var(--green);display:grid;place-items:center}
 .model h3{font-size:clamp(24px,7.5vw,28px)}
-.nw{white-space:nowrap}
 .model p{color:var(--muted);font-size:14px}
 .model ul{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px}
 .model li{font-size:12px;font-weight:600;padding:3px 12px;border-radius:999px;border:1.5px solid var(--gold);color:var(--head)}

@@ -11,21 +11,21 @@ const cl=x=>Math.min(100,Math.max(0,+x||0));
 const P=x=>cl(x)/100;
 const div=(a,b)=>b>0?a/b:Infinity;
 function inr(n){
-  if(!isFinite(n))return '—';
-  const s=n<0?'-':'',a=Math.abs(n);
+  if(!isFinite(n))return 'n/a';
+  const s=n<0&&Math.abs(n)>=0.5?'-':'',a=Math.abs(n);
   if(a>=1e7)return s+'₹'+(a/1e7).toFixed(2)+' Cr';
   if(a>=1e5)return s+'₹'+(a/1e5).toFixed(2)+' L';
   return s+'₹'+IN.format(Math.round(a));
 }
 function num(n){
-  if(!isFinite(n))return '—';
+  if(!isFinite(n))return 'n/a';
   const a=Math.abs(n);
   if(a>=100)return IN.format(Math.round(n));
   if(a>=10)return n.toFixed(1).replace(/\.0$/,'');
   return n.toFixed(2).replace(/\.?0+$/,'')||'0';
 }
-const pct=n=>isFinite(n)?n.toFixed(1).replace(/\.0$/,'')+'%':'—';
-const xx=n=>isFinite(n)?n.toFixed(2)+'x':'—';
+const pct=n=>isFinite(n)?n.toFixed(1).replace(/\.0$/,'')+'%':'n/a';
+const xx=n=>isFinite(n)?(Math.abs(n)<0.005?0:n).toFixed(2)+'x':'n/a';
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2400)}
 
 /* ---------- assets, motion helpers ---------- */
@@ -76,14 +76,14 @@ service:{
   fields:[
     F('spend','Monthly Meta ad budget','₹',50000,5000,1000000,1000,'Ad delivery','What you plan to spend on Meta Ads each month.'),
     F('cpm','CPM (cost per 1,000 impressions)','₹',180,50,800,5,'Ad delivery','Varies by city, audience and season. Check your last 30 days in Ads Manager.'),
-    F('ctr','Link click-through rate','%',1.2,0.2,4,0.1,'Ad delivery','Clicks on your link divided by impressions.',true),
+    F('ctr','Link click through rate','%',1.2,0.2,4,0.1,'Ad delivery','Clicks on your link divided by impressions.',true),
     F('lpConv','Click → lead','%',10,1,40,0.5,'Lead capture','Of people who click, how many fill the form or start a chat.',true),
     F('contactRate','Leads you actually reach','%',65,10,100,1,'Sales funnel','Leads who pick up or reply after your team follows up.',true),
     F('apptRate','Reached → appointment / visit booked','%',35,5,100,1,'Sales funnel','Of the people you reach, how many book a call, visit or meeting.',true),
-    F('showRate','Appointments that show up','%',70,20,100,1,'Sales funnel','No-shows reduce this. Reminders raise it.',true),
-    F('closeRate','Shown-up → paying customer','%',30,3,100,1,'Sales funnel','Your close rate after a meeting or visit.',true),
-    F('avgRevenue','First-sale value per customer','₹',15000,500,1000000,500,'Business economics','Revenue from a new customer’s first purchase or project.'),
-    F('repeat','Purchases per customer over their lifetime','x',1.5,1,10,0.1,'Business economics','1 = one-off. 3 = an average customer buys three times.'),
+    F('showRate','Appointments that show up','%',70,20,100,1,'Sales funnel','Missed appointments reduce this. Reminders raise it.',true),
+    F('closeRate','Showed up → paying customer','%',30,3,100,1,'Sales funnel','Your close rate after a meeting or visit.',true),
+    F('avgRevenue','First sale value per customer','₹',15000,500,1000000,500,'Business economics','Revenue from a new customer’s first purchase or project.'),
+    F('repeat','Purchases per customer over their lifetime','x',1.5,1,10,0.1,'Business economics','1 = buys once. 3 = an average customer buys three times.'),
     F('margin','Gross margin','%',60,5,100,1,'Business economics','What is left after direct delivery costs (staff time, materials, commissions).'),
     F('fixed','Other monthly campaign costs','₹',10000,0,500000,1000,'Business economics','Agency fee, creatives, tools, telecaller cost for this campaign.'),
     DROP
@@ -108,7 +108,7 @@ service:{
     const roas=div(revenue,v.spend),roi=total>0?net/total*100:0,ltvcac=div(ltv,cac);
     const beRoas=v.margin>0?100/v.margin:Infinity;
     const maxCpl=leads>0?Math.max(0,(gp-v.fixed)/leads):0;
-    return{unit:'customer',unitP:'customers',units,leads,total,spend:v.spend,revenue,net,roas,roasLabel:'ROAS',cac,limit:gpUnit,limitLabel:'Break-even CAC',ltvcac,ltv,roi,
+    return{unit:'customer',unitP:'customers',units,leads,total,spend:v.spend,revenue,net,roas,roasLabel:'ROAS',cac,limit:gpUnit,limitLabel:'Breakeven CAC',ltvcac,ltv,roi,
       funnel:[
         {l:'Impressions',n:impr,c:['CPM',cpm]},
         {l:'Link clicks',n:clicks,r:v.ctr+'% CTR',c:['CPC',div(v.spend,clicks)]},
@@ -121,14 +121,14 @@ service:{
       cards:[
         {k:'Leads',v:num(leads),s:'CPL '+inr(div(v.spend,leads))},
         {k:'Appointments held',v:num(held),s:inr(div(v.spend,held))+' each'},
-        {k:'New customers',v:num(units),s:'All-in CAC '+inr(cac)},
+        {k:'New customers',v:num(units),s:'Total CAC '+inr(cac)},
         {k:'Revenue (first sale)',v:inr(revenue),s:'ROAS '+xx(roas)},
         {k:'Net profit',v:inr(net),s:'ROI '+pct(roi),t:net>=0?'good':'bad'},
         {k:'LTV : CAC',v:xx(ltvcac),s:'Lifetime gross profit '+inr(ltv),t:ltvcac>=3?'good':ltvcac>=1?'warn':'bad'}
       ],
       more:[
         ['Impressions',num(impr)],['Cost per click (CPC)',inr(div(v.spend,clicks))],
-        ['Lead → customer rate',pct(leads>0?units/leads*100:0)],['Break-even ROAS (ads only)',xx(beRoas)],
+        ['Lead → customer rate',pct(leads>0?units/leads*100:0)],['Breakeven ROAS (ads only)',xx(beRoas)],
         ['Max CPL to break even',inr(maxCpl)],['Gross profit per customer',inr(gpUnit)],
         ['Lifetime revenue',inr(units*v.avgRevenue*v.repeat)],['Net profit incl. repeat sales',inr(units*ltv-total)]
       ],
@@ -140,15 +140,15 @@ b2b:{
   key:'b2b',name:'B2B',short:'B2B',color:'var(--b2b)',unit:'deal',unitP:'deals',goal:3,
   fields:[
     F('spend','Monthly Meta ad budget','₹',100000,10000,2000000,5000,'Ad delivery','What you plan to spend on Meta Ads each month.'),
-    F('cpm','CPM (cost per 1,000 impressions)','₹',350,80,1000,10,'Ad delivery','B2B audiences (decision-makers) usually cost more to reach.'),
-    F('ctr','Link click-through rate','%',0.9,0.2,4,0.1,'Ad delivery','Clicks on your link divided by impressions.',true),
+    F('cpm','CPM (cost per 1,000 impressions)','₹',350,80,1000,10,'Ad delivery','B2B audiences (decision makers) usually cost more to reach.'),
+    F('ctr','Link click through rate','%',0.9,0.2,4,0.1,'Ad delivery','Clicks on your link divided by impressions.',true),
     F('lpConv','Click → lead','%',8,1,40,0.5,'Lead capture','Of people who click, how many submit a form or book.',true),
     F('mqlRate','Leads that fit your ideal customer','%',40,5,100,1,'Sales pipeline','Right company size, role and budget. Meta leads often include many poor fits.',true),
     F('sqlRate','Fitting leads → discovery call / demo held','%',30,5,100,1,'Sales pipeline','Of the qualified leads, how many actually get on a call.',true),
     F('oppRate','Calls → proposal / quote sent','%',50,5,100,1,'Sales pipeline','Calls that turn into a real proposal.',true),
     F('closeRate','Proposals → deal won','%',20,3,80,1,'Sales pipeline','Your proposal win rate.',true),
-    F('acv','Average first-year deal value','₹',300000,10000,5000000,10000,'Business economics','Contract value you bill in the first 12 months.'),
-    F('years','Average years a client stays','x',2,1,10,0.5,'Business economics','1 = one-off project. Higher if contracts renew or expand.'),
+    F('acv','Average first year deal value','₹',300000,10000,5000000,10000,'Business economics','Contract value you bill in the first 12 months.'),
+    F('years','Average years a client stays','x',2,1,10,0.5,'Business economics','1 = a single project. Higher if contracts renew or expand.'),
     F('margin','Gross margin','%',50,5,100,1,'Business economics','After the direct cost of delivering the work or product.'),
     F('fixed','Sales team & other monthly costs','₹',60000,0,1000000,5000,'Business economics','SDR / sales salary share, CRM, tools, creatives, agency fee for this campaign.'),
     F('cycle','Sales cycle length','days',45,7,365,1,'Business economics','Revenue from this month’s ads lands roughly this many days later. Plan cash flow accordingly.'),
@@ -170,7 +170,7 @@ b2b:{
     const gpUnit=v.acv*P(v.margin),ltv=gpUnit*v.years,cac=div(total,units);
     const roas=div(revenue,v.spend),roi=total>0?net/total*100:0,ltvcac=div(ltv,cac);
     const monthlyGp=gpUnit/12,payback=isFinite(cac)&&monthlyGp>0?cac/monthlyGp:Infinity;
-    return{unit:'deal',unitP:'deals',units,leads,total,spend:v.spend,revenue,net,roas,roasLabel:'ROAS',cac,limit:gpUnit,limitLabel:'Break-even CAC',ltvcac,ltv,roi,
+    return{unit:'deal',unitP:'deals',units,leads,total,spend:v.spend,revenue,net,roas,roasLabel:'ROAS',cac,limit:gpUnit,limitLabel:'Breakeven CAC',ltvcac,ltv,roi,
       funnel:[
         {l:'Impressions',n:impr,c:['CPM',cpm]},
         {l:'Link clicks',n:clicks,r:v.ctr+'% CTR',c:['CPC',div(v.spend,clicks)]},
@@ -184,27 +184,27 @@ b2b:{
         {k:'Leads',v:num(leads),s:'CPL '+inr(div(v.spend,leads))},
         {k:'Qualified leads',v:num(mql),s:inr(div(v.spend,mql))+' each'},
         {k:'Deals won',v:num(units),s:'Chance of ≥1 deal: '+pct((1-Math.exp(-units))*100)},
-        {k:'First-year revenue',v:inr(revenue),s:'Pipeline '+inr(opp*v.acv)},
+        {k:'First year revenue',v:inr(revenue),s:'Pipeline '+inr(opp*v.acv)},
         {k:'Net profit (year 1)',v:inr(net),s:'ROI '+pct(roi),t:net>=0?'good':'bad'},
-        {k:'LTV : CAC',v:xx(ltvcac),s:'All-in CAC '+inr(cac),t:ltvcac>=3?'good':ltvcac>=1?'warn':'bad'}
+        {k:'LTV : CAC',v:xx(ltvcac),s:'Total CAC '+inr(cac),t:ltvcac>=3?'good':ltvcac>=1?'warn':'bad'}
       ],
       more:[
         ['Cost per proposal',inr(div(v.spend,opp))],['Lead → deal rate',pct(leads>0?units/leads*100:0)],
-        ['ROAS (first-year revenue)',xx(roas)],['Break-even ROAS (ads only)',xx(v.margin>0?100/v.margin:Infinity)],
-        ['CAC payback',isFinite(payback)?num(payback)+' months + '+v.cycle+'-day cycle':'—'],['Gross profit per deal (yr 1)',inr(gpUnit)],
+        ['ROAS (first year revenue)',xx(roas)],['Breakeven ROAS (ads only)',xx(v.margin>0?100/v.margin:Infinity)],
+        ['CAC payback',isFinite(payback)?num(payback)+' months + '+v.cycle+' day sales cycle':'n/a'],['Gross profit per deal (yr 1)',inr(gpUnit)],
         ['Lifetime gross profit per client',inr(ltv)],['Revenue lands after',v.cycle+' days']
       ],
-      pnl:[['First-year revenue from won deals',revenue],['Cost of delivery',-(revenue-gp)],['Meta ad spend',-v.spend],['Sales team & other costs',-v.fixed]],
-      note:units<1?'You expect fewer than one deal a month. B2B results at low volume are lumpy: a month can deliver zero or three. Judge this over a 3–6 month window.':''
+      pnl:[['First year revenue from won deals',revenue],['Cost of delivery',-(revenue-gp)],['Meta ad spend',-v.spend],['Sales team & other costs',-v.fixed]],
+      note:units<1?'You expect fewer than one deal a month. B2B results at low volume are lumpy: a month can deliver zero or three. Judge this over 3 to 6 months.':''
     };
   }
 },
 b2c:{
-  key:'b2c',name:'B2C / E-commerce',short:'B2C',color:'var(--b2c)',unit:'order',unitP:'orders',goal:500,
+  key:'b2c',name:'B2C / Ecommerce',short:'B2C',color:'var(--b2c)',unit:'order',unitP:'orders',goal:500,
   fields:[
     F('spend','Monthly Meta ad budget','₹',100000,10000,3000000,5000,'Ad delivery','What you plan to spend on Meta Ads each month.'),
     F('cpm','CPM (cost per 1,000 impressions)','₹',150,50,600,5,'Ad delivery','Varies by audience, creative and season (festive sales push it up).'),
-    F('ctr','Link click-through rate','%',1.4,0.3,4,0.1,'Ad delivery','Link clicks divided by impressions.',true),
+    F('ctr','Link click through rate','%',1.4,0.3,4,0.1,'Ad delivery','Link clicks divided by impressions.',true),
     F('lpvRate','Clicks that load your page','%',80,40,100,1,'Store funnel','Link clicks → landing page views. Slow pages lose people here.',true),
     F('atcRate','Page views → add to cart','%',8,1,25,0.5,'Store funnel','Visitors who add a product to cart.',true),
     F('icRate','Add to cart → checkout started','%',45,10,90,1,'Store funnel','Carts that reach checkout.',true),
@@ -236,7 +236,7 @@ b2c:{
     const perOrder=units>0?contribution/units:0,ltv=perOrder*v.repeat,cac=div(total,units);
     const roas=div(booked,v.spend),netRoas=div(netRev,v.spend),roi=total>0?net/total*100:0,ltvcac=div(ltv,cac);
     const cm=booked>0?contribution/booked:0,beRoas=cm>0?1/cm:Infinity;
-    return{unit:'order',unitP:'orders',units,total,spend:v.spend,revenue:booked,net,roas,roasLabel:'ROAS (Meta-reported)',cac,limit:perOrder,limitLabel:'Break-even CPA',ltvcac,ltv,roi,
+    return{unit:'order',unitP:'orders',units,total,spend:v.spend,revenue:booked,net,roas,roasLabel:'ROAS (as Meta reports it)',cac,limit:perOrder,limitLabel:'Breakeven CPA',ltvcac,ltv,roi,
       funnel:[
         {l:'Impressions',n:impr,c:['CPM',cpm]},
         {l:'Link clicks',n:clicks,r:v.ctr+'% CTR',c:['CPC',div(v.spend,clicks)]},
@@ -251,11 +251,11 @@ b2c:{
         {k:'Revenue kept after returns',v:inr(netRev),s:'Net ROAS '+xx(netRoas)},
         {k:'Contribution before ads',v:inr(contribution),s:inr(perOrder)+' per order',t:contribution>0?'':'bad'},
         {k:'Net profit',v:inr(net),s:'ROI '+pct(roi),t:net>=0?'good':'bad'},
-        {k:'LTV : CAC',v:xx(ltvcac),s:'All-in CPA '+inr(cac),t:ltvcac>=3?'good':ltvcac>=1?'warn':'bad'}
+        {k:'LTV : CAC',v:xx(ltvcac),s:'Total CPA '+inr(cac),t:ltvcac>=3?'good':ltvcac>=1?'warn':'bad'}
       ],
       more:[
         ['Cost per click (CPC)',inr(div(v.spend,clicks))],['Click → order rate',pct(clicks>0?units/clicks*100:0)],
-        ['Orders delivered',num(delivered)],['Break-even ROAS (ads only)',isFinite(beRoas)?xx(beRoas):'Not reachable'],
+        ['Orders delivered',num(delivered)],['Breakeven ROAS (ads only)',isFinite(beRoas)?xx(beRoas):'Not reachable'],
         ['Contribution per order',inr(perOrder)],['Cost per add to cart',inr(div(v.spend,atc))],
         ['Lifetime contribution per customer',inr(ltv)],['Net profit incl. repeat orders',inr(units*ltv-total)]
       ],
@@ -410,17 +410,17 @@ function update(){
   const pnl=r.pnl.map(x=>`<tr><td>${x[0]}</td><td class="${x[1]<0?'bad':''}">${inr(x[1])}</td></tr>`).join('')+
     `<tr class="tot"><td>Net profit</td><td class="${r.net>=0?'good':'bad'}">${inr(r.net)}</td></tr>`;
   const ratio=r.limit>0&&isFinite(r.cac)?r.cac/r.limit:null;
-  const meter=ratio===null?`<p class="note">${r.limit>0?'No '+r.unitP+' expected, so there is no cost per '+r.unit+' to compare.':'Each '+r.unit+' earns nothing before ad costs, so there is no break-even cost.'}</p>`:
-    `<div class="meter"><div class="track"><div class="fill" data-w="${Math.min(ratio,2)/2*100}" style="width:${oldMeter}%;background:${ratio<=1?'var(--good)':'var(--bad)'}"></div><div class="mark" title="Break-even"></div></div>
-     <div class="lab"><span>Your all-in cost: <b>${inr(r.cac)}</b></span><span>${r.limitLabel}: <b>${inr(r.limit)}</b></span></div></div>
-     <p class="note">${ratio<=1?`You are ${pct((1-ratio)*100)} under break-even on each ${r.unit}.`:`You are ${pct((ratio-1)*100)} over break-even on each ${r.unit}.`} All-in includes the other monthly costs you entered.</p>`;
+  const meter=ratio===null?`<p class="note">${r.limit>0?'No '+r.unitP+' expected, so there is no cost per '+r.unit+' to compare.':'Each '+r.unit+' earns nothing before ad costs, so there is no breakeven cost.'}</p>`:
+    `<div class="meter"><div class="track"><div class="fill" data-w="${Math.min(ratio,2)/2*100}" style="width:${oldMeter}%;background:${ratio<=1?'var(--good)':'var(--bad)'}"></div><div class="mark" title="Breakeven"></div></div>
+     <div class="lab"><span>Your total cost: <b>${inr(r.cac)}</b></span><span>${r.limitLabel}: <b>${inr(r.limit)}</b></span></div></div>
+     <p class="note">${ratio<=1?`You are ${pct((1-ratio)*100)} under breakeven on each ${r.unit}.`:`You are ${pct((ratio-1)*100)} over breakeven on each ${r.unit}.`} Total cost includes the other monthly costs you entered.</p>`;
   const sc={cons:scenario('cons'),exp:scenario('exp'),opt:scenario('opt')};
   const rows=[];
   if(r.leads!==undefined)rows.push(['Leads',x=>num(x.leads)]);
-  rows.push([cap(r.unitP),x=>num(x.units)],['All-in cost per '+r.unit,x=>inr(x.cac)],['Revenue',x=>inr(x.revenue)],['Net profit',x=>inr(x.net),1],[r.roasLabel,x=>xx(x.roas)]);
+  rows.push([cap(r.unitP),x=>num(x.units)],['Total cost per '+r.unit,x=>inr(x.cac)],['Revenue',x=>inr(x.revenue)],['Net profit',x=>inr(x.net),1],[r.roasLabel,x=>xx(x.roas)]);
   const scen=`<div class="tscroll"><table><thead><tr><th></th><th>Conservative</th><th>Expected</th><th>Optimistic</th></tr></thead><tbody>${
     rows.map(rw=>`<tr><td>${rw[0]}</td>${['cons','exp','opt'].map(k=>`<td class="${rw[2]?(sc[k].net>=0?'good':'bad'):''}">${rw[1](sc[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
-    <p class="note">Conservative: CPM +10% and every funnel rate −10%. Optimistic: CPM −8% and every funnel rate +10%. Small changes compound across stages, so the range is wide on purpose.</p>`;
+    <p class="note">Conservative: CPM up 10% and every funnel rate down 10%. Optimistic: CPM down 8% and every funnel rate up 10%. Small changes compound across stages, so the range is wide on purpose.</p>`;
   const scale=`<div class="tscroll"><table><thead><tr><th>Budget</th><th>${cap(r.unitP)}</th><th>Cost each</th><th>Revenue</th><th>Net profit</th></tr></thead><tbody>${
     [0.5,1,2,3,5].map(k=>{const s=scaled(k);return `<tr><td>${inr(v.spend*k)}<small style="color:var(--muted)"> (${k}×)</small></td><td>${num(s.units)}</td><td>${inr(s.cac)}</td><td>${inr(s.revenue)}</td><td class="${s.net>=0?'good':'bad'}">${inr(s.net)}</td></tr>`}).join('')}</tbody></table></div>
     <p class="note">Other monthly costs stay fixed. Each doubling of budget raises CPM by ${v.drop}% (your scaling assumption), which is why cost per ${r.unit} climbs as you spend more.</p>`;
@@ -428,9 +428,9 @@ function update(){
     <div class="verdict ${vd.t}"><span class="vi" aria-hidden="true">${VICON[vd.t]}</span><div><h3>${vd.h}</h3><p>${vd.p}</p></div></div>
     ${r.note?`<p class="note" style="margin:-6px 0 16px;color:var(--muted);font-size:14px">${r.note}</p>`:''}
     <div class="cards">${r.cards.map(c=>`<div class="card ${c.t||''}" data-k="${c.k}"><div class="k">${c.k}</div><div class="v">${c.v}</div><div class="s">${c.s}</div></div>`).join('')}</div>
-    <div class="panel"><h3>Your funnel</h3>${funnel}<p class="note">Bar length is log-scaled so every stage stays visible.</p></div>
+    <div class="panel"><h3>Your funnel</h3>${funnel}<p class="note">Bars use a log scale so every stage stays visible.</p></div>
     <div class="panel"><h3>Profit breakdown (per month)</h3><div class="tscroll"><table><tbody>${pnl}</tbody></table></div></div>
-    <div class="panel"><h3>Break-even check</h3>${meter}</div>
+    <div class="panel"><h3>Breakeven check</h3>${meter}</div>
     <div class="panel"><h3>All the numbers</h3><div class="more">${r.more.map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div></div>
     <div class="panel"><h3>Best case, worst case</h3>${scen}</div>
     <div class="panel"><h3>What happens if you scale</h3>${scale}</div>`;
@@ -461,7 +461,7 @@ function renderGoal(){
     <div><span>Ad budget needed</span><b>${inr(v.spend*mult)} / month</b></div>
     <div><span>Total cost incl. other costs</span><b>${inr(s.total)}</b></div>
     <div><span>Expected ${m.unitP}</span><b>${num(s.units)}</b></div>
-    <div><span>All-in cost per ${m.unit}</span><b>${inr(s.cac)}</b></div>
+    <div><span>Total cost per ${m.unit}</span><b>${inr(s.cac)}</b></div>
     <div><span>Expected revenue</span><b>${inr(s.revenue)}</b></div>
     <div><span>Expected net profit</span><b style="color:var(--${s.net>=0?'good':'bad'})">${inr(s.net)}</b></div></div>
     <p class="note">${mult>1&&v.drop>0?'Includes cost inflation from spending '+xx(mult).replace('x','×')+' your current budget.':'Based on your current efficiency.'}</p>`;
@@ -470,7 +470,7 @@ function renderGoal(){
 /* ---------- copy ---------- */
 function copySummary(){
   const m=MODELS[cur],v=state[cur],r=m.compute(v),vd=verdict(r);
-  const lines=[`Meta Ads Business Calculator – ${m.name}`,`Ad budget: ${inr(v.spend)}/month (total cost ${inr(r.total)})`,'',vd.h,''];
+  const lines=[`Meta Ads Business Calculator: ${m.name}`,`Ad budget: ${inr(v.spend)}/month (total cost ${inr(r.total)})`,'',vd.h,''];
   r.cards.forEach(c=>lines.push(`${c.k}: ${c.v} (${c.s})`));
   lines.push('','Funnel:');r.funnel.forEach(s=>lines.push(`- ${s.l}: ${num(s.n)} (${s.c[0]} ${inr(s.c[1])})`));
   lines.push('','Estimates based on the entered assumptions; actual results will vary.');

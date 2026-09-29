@@ -92,7 +92,7 @@ t('tween: snaps when unit or sign changes', () => {
 t('zeroOf keeps prefix, suffix and decimals', () => {
   assert.strictEqual(api.zeroOf('4.78x'), '0.00x');
   assert.strictEqual(api.zeroOf('₹95,000'), '₹0');
-  assert.strictEqual(api.zeroOf('—'), undefined);
+  assert.strictEqual(api.zeroOf('n/a'), undefined);
 });
 t('render path runs for every model', () => {
   ['service', 'b2b', 'b2c'].forEach((k) => api.open(k));

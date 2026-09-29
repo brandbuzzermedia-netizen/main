@@ -2,7 +2,7 @@
 
 A planning tool for Get Bee Seen (GBS), the digital marketing and website agency Mehul owns. It answers: "If I spend ₹X on Meta Ads, how many leads / sales will I get, what will they cost, and will the campaign be profitable?" It is used with clients and as a lead-gen asset, so it must look on-brand and never show misleading numbers.
 
-Three business models, each with its own funnel, inputs, formulas and results: **Service business**, **B2B**, **B2C / E-commerce**.
+Three business models, each with its own funnel, inputs, formulas and results: **Service business**, **B2B**, **B2C / Ecommerce**.
 
 ## Stack and commands
 
@@ -57,14 +57,14 @@ Scenarios: conservative = CPM +10% and every field flagged `scen:true` × 0.9; o
 - **Add a niche preset**: append `[key, label, {fieldId: value}]` to the model's `presets`.
 - **Add a fourth model**: add an entry to `MODELS` that satisfies the result contract, then add a card in `index.html` (`data-m`, `data-pick`), a tab entry is generated automatically, and add a comparison-table column.
 - **Money**: always `inr()` (₹, en-IN grouping, L / Cr above one lakh / crore). Counts: `num()`. Ratios: `xx()`. Percent: `pct()`.
-- **Division**: use `div(a, b)` (returns Infinity when b ≤ 0) and let formatters print "—". Rates go through `P()` which clamps to 0–100%.
+- **Division**: use `div(a, b)` (returns Infinity when b ≤ 0) and let formatters print "n/a". Rates go through `P()` which clamps to 0–100%.
 
 ## Brand system (Get Bee Seen)
 
 - Colours: cream `#FFF2DC` (page), deep green `#196144` (primary), gold `#FFB933` (accent, CTAs), sage `#3E5D48`, ink `#262626`. Text on gold uses `--on-gold` (`#123F2C`) for contrast. Red/green/amber are kept only for loss/profit/warning states.
 - Fonts (Google Fonts), the same stand-ins the main Get Bee Seen site uses: **Alfa Slab One** for headings (`--display`, stand-in for the real "Bunga"), **Archivo** 400–700 for body (`--body`, stand-in for "Neue Leiden"). Swap in the real font files if Mehul provides them.
 - Alfa Slab One has a single weight. Always set `font-weight:400` on anything in `--display` (including `<b>` and headings), or the browser fakes a bold.
-- Alfa Slab One is wide, so big numbers are protected: grid tracks use `minmax(0,1fr)` so tables can't push the page wider than the screen, `.card .v` sizes itself with container units (`14cqi`), receipt amounts are `nowrap`, and `.nw` keeps a word like "E-commerce" from breaking at its hyphen.
+- Alfa Slab One is wide, so big numbers are protected: grid tracks use `minmax(0,1fr)` so tables can't push the page wider than the screen, `.card .v` sizes itself with container units (`14cqi`), and receipt amounts are `nowrap`.
 - Elements reused from GBS proposals: hex-textured green banners with a gold numbered circle, gold pill kicker, gold ribbon with the rounded bottom-left cut, flush white cards with gold icon circles, outlined gold pills, gold left-bar callouts, green table headers, and the green signature box with the badge.
 - Tone: playful but professional. Rounded shapes, generous space. Do not make it corporate-sterile or cutesy. Use the bee small and sparingly; never stretch it as a logo.
 - Dark mode is supported through `prefers-color-scheme` and `[data-theme]`. The hero, banners and receipt stay green/cream in both themes.
@@ -80,6 +80,7 @@ Scenarios: conservative = CPM +10% and every field flagged `scen:true` × 0.9; o
 ## Copy and content rules
 
 - Sentence case, plain verbs, buttons say exactly what happens.
+- No hyphens or dashes in visible copy (labels, help text, notes, headings, copied summary). Write "breakeven", "Ecommerce", "first year", "total cost"; use words ("up 10%", "3 to 6 months", "n/a") instead of dashes. The one exception is the minus sign on negative money and ROI: it carries meaning, so never drop it. Formatters also suppress a meaningless minus on values that round to zero.
 - Niche presets are illustrative starting points, not verified benchmarks. Keep the footer disclaimer. When Mehul has real GBS client averages, replace the preset numbers.
 - Never invent contact details, URLs or claims about results. There is no contact button yet because no URL or number was provided.
 
