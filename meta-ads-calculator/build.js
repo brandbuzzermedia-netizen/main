@@ -12,10 +12,10 @@ const dataUri = (rel) =>
 
 let html = read('index.html');
 const css = read('css/styles.css');
-const js = read('js/app.js');
 
 html = html.replace('<link rel="stylesheet" href="css/styles.css">', () => `<style>${css}</style>`);
-html = html.replace('<script src="js/app.js"></script>', () => `<script>${js}</script>`);
+// Inline every local script (market data, door module, app).
+html = html.replace(/<script src="(js\/[\w-]+\.js)"><\/script>/g, (_, f) => `<script>${read(f)}</script>`);
 
 // Inline every assets/*.png reference (HTML attributes and JS strings).
 html = html.replace(/assets\/([\w-]+\.png)/g, (_, f) => dataUri('assets/' + f));

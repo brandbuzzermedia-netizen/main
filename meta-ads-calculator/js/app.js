@@ -265,18 +265,26 @@ b2c:{
   }
 }};
 
-/* ---------- state ---------- */
-const state={},presetSel={},goal={};
-let cur=null,raf=0;
+/* ---------- plug in modules (js/door.js) ---------- */
+const clone=x=>Array.isArray(x)?x.slice():(x&&typeof x==='object'?JSON.parse(JSON.stringify(x)):x);
+const ENGINE={F,DROP,inr,num,pct,xx,div,P,cl,$,$$,toast,cap:s=>s.charAt(0).toUpperCase()+s.slice(1),
+  scaled:(m,v,mult)=>scaledOf(m,v,mult),scenario:(m,v,k)=>scenarioOf(m,v,k),
+  get market(){return globalThis.MABC_MARKET||null}};
+if(typeof globalThis.MABC_DOOR==='function')MODELS.door=globalThis.MABC_DOOR(ENGINE);
 
-function defaults(m){const o={};m.fields.forEach(f=>o[f.id]=f.def);return o}
+/* ---------- state ---------- */
+const state={},presetSel={},goal={},openGroups={};
+let cur=null,raf=0,lastHtml='';
+
+function defaults(m){const o={};m.fields.forEach(f=>o[f.id]=clone(f.def));return o}
 function load(key){
   const m=MODELS[key];let vals=defaults(m),pre='custom';
   try{
     const s=JSON.parse(localStorage.getItem('mabc:'+key)||'null');
-    if(s&&s.vals){m.fields.forEach(f=>{if(typeof s.vals[f.id]==='number')vals[f.id]=s.vals[f.id]});pre=s.pre||'custom';if(s.goal)goal[key]=s.goal}
+    if(s&&s.vals){m.fields.forEach(f=>{const a=s.vals[f.id],d=f.def;
+      if(Array.isArray(d)?Array.isArray(a):typeof a===typeof d&&a!==null)vals[f.id]=a});pre=s.pre||'custom';if(s.goal)goal[key]=s.goal}
   }catch(e){}
-  state[key]=vals;presetSel[key]=pre;if(!goal[key])goal[key]=m.goal;
+  state[key]=vals;presetSel[key]=pre;if(!goal[key])goal[key]=clone(m.goal);
 }
 function save(){
   try{localStorage.setItem('mabc:'+cur,JSON.stringify({vals:state[cur],pre:presetSel[cur],goal:goal[cur]}))}catch(e){}
@@ -300,37 +308,72 @@ document.addEventListener('click',e=>{
 });
 
 /* ---------- shell ---------- */
-function shell(){
-  const m=MODELS[cur];
-  const groups=[];m.fields.forEach(f=>{let g=groups.find(x=>x.n===f.group);if(!g){g={n:f.group,f:[]};groups.push(g)}g.f.push(f)});
-  const v=state[cur];
-  const form=groups.map(g=>`<fieldset><legend>${g.n}</legend>${g.f.map(f=>`
-    <div class="field">
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const isOn=(m,f,v)=>(!f.show||f.show(v))&&(!m.modes||v.mode!=='simple'||f.simple);
+function numInput(f,v){
+  return `<div class="inp">${f.unit==='₹'?'<span class="u">₹</span>':''}<input id="f-${f.id}" data-id="${f.id}" type="number" inputmode="decimal" min="0" step="${f.step}" value="${v[f.id]}" ${f.c?`aria-label="${esc(f.label)}"`:''}>${f.unit&&f.unit!=='₹'?`<span class="u">${f.unit}</span>`:''}</div>`;
+}
+function optField(f,v){
+  const val=v[f.id],lab=`<span class="olab" id="l-${f.id}">${f.label}</span>`;
+  if(f.type==='select')return `<div class="field"><label for="o-${f.id}">${f.label}</label><select id="o-${f.id}" data-opt="${f.id}" class="osel">${f.options.map(o=>`<option value="${o[0]}"${o[0]===val?' selected':''}>${o[1]}</option>`).join('')}</select>${f.help?`<small>${f.help}</small>`:''}</div>`;
+  if(f.type==='text')return `<div class="field"><label for="o-${f.id}">${f.label}</label><div class="inp"><input id="o-${f.id}" data-opt="${f.id}" type="text" value="${esc(val)}" maxlength="40"></div></div>`;
+  if(f.type==='chips')return `<div class="field">${lab}<div class="chipset" role="group" aria-labelledby="l-${f.id}">${f.options.map(o=>`<button type="button" class="chip" data-opt="${f.id}" data-val="${o[0]}" aria-pressed="${val.includes(o[0])}">${o[1]}</button>`).join('')}</div>${f.help?`<small>${f.help}</small>`:''}</div>`;
+  if(f.type==='cards')return `<div class="field">${lab}<div class="ocards" role="radiogroup" aria-labelledby="l-${f.id}">${f.options.map(o=>`<button type="button" class="ocard" role="radio" data-opt="${f.id}" data-val="${o[0]}" aria-checked="${o[0]===val}"><b>${o[1]}</b><span>${o[2]||''}</span></button>`).join('')}</div></div>`;
+  return `<div class="field">${lab}<div class="seg" role="radiogroup" aria-labelledby="l-${f.id}">${f.options.map(o=>`<button type="button" role="radio" data-opt="${f.id}" data-val="${o[0]}" aria-checked="${o[0]===val}">${o[1]}</button>`).join('')}</div>${f.help?`<small>${f.help}</small>`:''}</div>`;
+}
+function renderField(f,v){
+  if(f.kind==='opt')return optField(f,v);
+  if(f.c)return `<div class="crow"><label for="f-${f.id}"${f.help?` title="${esc(f.help)}"`:''}>${f.label}</label>${numInput(f,v)}</div>`;
+  return `<div class="field">
       <label for="f-${f.id}">${f.label}</label>
-      <div class="inp">${f.unit==='₹'?'<span class="u">₹</span>':''}<input id="f-${f.id}" data-id="${f.id}" type="number" inputmode="decimal" min="0" step="${f.step}" value="${v[f.id]}">${f.unit&&f.unit!=='₹'?`<span class="u">${f.unit}</span>`:''}</div>
+      ${numInput(f,v)}
       <input type="range" data-id="${f.id}" data-r="1" min="${f.min}" max="${f.max}" step="${f.step}" value="${v[f.id]}" aria-label="${f.label} slider">
       <small>${f.help}</small>
-    </div>`).join('')}</fieldset>`).join('');
+    </div>`;
+}
+function shell(){
+  const m=MODELS[cur],v=state[cur],G=m.groups||{};
+  const groups=[];m.fields.forEach(f=>{let g=groups.find(x=>x.n===f.group);if(!g){g={n:f.group,f:[]};groups.push(g)}if(isOn(m,f,v))g.f.push(f)});
+  const form=groups.filter(g=>g.f.length&&(!G[g.n]||!G[g.n].show||G[g.n].show(v))).map(g=>{
+    const meta=G[g.n]||{};let body;
+    if(meta.matrix){
+      const inM=new Set(meta.matrix.rows.flatMap(r=>r.slice(1)));
+      body=`<div class="mx"><div class="mxh"><span></span>${meta.matrix.cols.map(c=>`<span>${c}</span>`).join('')}</div>${meta.matrix.rows.map(r=>{
+        const fs=r.slice(1).map(id=>m.fields.find(x=>x.id===id));
+        return `<div class="mxr"><span>${r[0]}</span>${fs.map(f=>numInput(Object.assign({},f,{c:1,unit:'',label:r[0]+' '+f.label+' ('+f.unit+')'}),v)).join('')}</div>`}).join('')}</div>`+
+        g.f.filter(f=>!inM.has(f.id)).map(f=>renderField(f,v)).join('');
+    }else body=g.f.map(f=>renderField(f,v)).join('');
+    const extra=(meta.note?`<div class="gnote" data-d="note:${esc(g.n)}"></div>`:'')+(meta.html?meta.html(v):'');
+    if(meta.collapse){
+      const open=openGroups[cur+':'+g.n]!==undefined?openGroups[cur+':'+g.n]:!!meta.open;
+      return `<details class="grp" data-g="${esc(g.n)}"${open?' open':''}><summary><span>${g.n}</span><b data-d="sub:${esc(g.n)}"></b></summary><div class="gbody">${body}${extra}</div></details>`;
+    }
+    return `<fieldset><legend>${g.n}</legend>${body}${extra}</fieldset>`;
+  }).join('');
+  const modeSw=m.modes?`<div class="seg seg-mode" role="radiogroup" aria-label="Detail level">${m.modes.map(o=>`<button type="button" role="radio" data-opt="mode" data-val="${o[0]}" aria-checked="${v.mode===o[0]}">${o[1]}</button>`).join('')}</div>`:'';
+  const goalPanel=m.goalPanel?m.goalPanel(v,goal[cur]):`<div class="panel"><h3>Goal planner: budget for a target</h3>
+          <div class="goal-in"><label for="goal">I want</label>
+            <div class="inp"><input id="goal" type="number" inputmode="decimal" min="0.1" step="any" value="${goal[cur]}"><span class="u">${m.unitP}/month</span></div></div>
+          <div id="goal-out"></div>
+        </div>`;
   $('#calc-root').innerHTML=`
     <div class="calc-head" style="--mc:${m.color}">
       <div class="tabs" role="tablist" aria-label="Business model">
         ${Object.values(MODELS).map(x=>`<button class="tab" role="tab" data-tab="${x.key}" aria-selected="${x.key===cur}" style="--tc:${x.color}">${x.name}</button>`).join('')}
       </div>
       <div class="tools">
+        ${modeSw}
         <label for="preset">Start from</label>
         <select id="preset">${m.presets.map(p=>`<option value="${p[0]}">${p[1]}</option>`).join('')}</select>
         <button class="btn btn-line btn-sm" type="button" id="reset">Reset</button>
       </div>
     </div>
     <div class="calc-grid" style="--mc:${m.color}">
-      <form class="form-col" id="form" onsubmit="return false" autocomplete="off">${form}</form>
+      <form class="form-col" id="form" onsubmit="return false" autocomplete="off">${m.formIntro?m.formIntro(v):''}${form}</form>
       <div class="res-col">
         <div id="res-main" aria-live="polite"></div>
-        <div class="panel"><h3>Goal planner: budget for a target</h3>
-          <div class="goal-in"><label for="goal">I want</label>
-            <div class="inp"><input id="goal" type="number" inputmode="decimal" min="0.1" step="any" value="${goal[cur]}"><span class="u">${m.unitP}/month</span></div></div>
-          <div id="goal-out"></div>
-        </div>
+        ${goalPanel}
+        ${m.renderSims?'<div id="sims"></div>':''}
         <div class="actions">
           <button class="btn btn-green btn-sm" type="button" id="copy">Copy summary</button>
           <button class="btn btn-line btn-sm" type="button" id="print">Print / save as PDF</button>
@@ -343,44 +386,71 @@ function shell(){
 
 /* ---------- events (delegated) ---------- */
 const root=$('#calc-root');
+function markCustom(){presetSel[cur]='custom';const ps=$('#preset');if(ps)ps.value='custom'}
+function setOpt(id,val){
+  const m=MODELS[cur],v=state[cur],f=m.fields.find(x=>x.id===id);
+  if(f&&f.type==='chips'){const a=v[id].slice(),i=a.indexOf(val);if(i>-1){if(a.length>1)a.splice(i,1);else{toast('Keep at least one selected');return}}else a.push(val);v[id]=a}
+  else{if(v[id]===val)return;v[id]=val}
+  const msg=m.onOpt?m.onOpt(id,val,v):'';
+  if(id!=='mode')markCustom();
+  save();shell();update();if(msg)toast(msg);
+}
+function eng(){const m=MODELS[cur];return Object.assign({},ENGINE,{m,v:state[cur],goal:goal[cur],
+  compute:o=>m.compute(o),scaledNow:mult=>scaledOf(m,state[cur],mult),scenNow:k=>scenarioOf(m,state[cur],k),
+  setGoal:g=>{goal[cur]=g;save()},refresh:()=>{save();shell();update()}})}
 root.addEventListener('input',e=>{
-  const t=e.target;
+  const t=e.target,m=MODELS[cur];
+  if(t.dataset&&t.dataset.sim!==undefined){if(m.simInput)m.simInput(t,eng());return}
+  if(t.dataset&&t.dataset.tgt!==undefined){if(m.goalInput)m.goalInput(t,eng());return}
+  if(t.dataset&&t.dataset.opt&&t.type==='text'){state[cur][t.dataset.opt]=t.value;save();schedule();return}
   if(t.id==='goal'){goal[cur]=parseFloat(t.value)||0;save();renderGoal();return}
   const id=t.dataset&&t.dataset.id;if(!id)return;
   const val=parseFloat(t.value);const n=isNaN(val)?0:Math.max(0,val);
   state[cur][id]=n;
   const peer=t.dataset.r?$('#f-'+id):$(`input[data-r][data-id="${id}"]`);
   if(peer&&peer!==t)peer.value=n;
-  presetSel[cur]='custom';const ps=$('#preset');if(ps)ps.value='custom';
+  markCustom();
   save();schedule();
 });
 root.addEventListener('change',e=>{
-  if(e.target.id==='preset'){
-    const m=MODELS[cur],p=m.presets.find(x=>x[0]===e.target.value);
-    if(p){Object.assign(state[cur],p[2]);presetSel[cur]=p[0];save();shell();update()}
+  const t=e.target;
+  if(t.tagName==='SELECT'&&t.dataset.opt){setOpt(t.dataset.opt,t.value);return}
+  if(t.id==='preset'){
+    const m=MODELS[cur],p=m.presets.find(x=>x[0]===t.value);
+    if(p){Object.assign(state[cur],clone(p[2]));presetSel[cur]=p[0];if(m.onPreset)m.onPreset(state[cur]);save();shell();update()}
   }
 });
+root.addEventListener('toggle',e=>{const d=e.target;if(d.dataset&&d.dataset.g)openGroups[cur+':'+d.dataset.g]=d.open},true);
 root.addEventListener('click',e=>{
   const tab=e.target.closest('[data-tab]');
   if(tab){setModel(tab.dataset.tab,false);return}
-  if(e.target.id==='reset'){state[cur]=defaults(MODELS[cur]);presetSel[cur]='custom';goal[cur]=MODELS[cur].goal;save();shell();update();toast('Reset to defaults');return}
+  const o=e.target.closest('button[data-opt]');
+  if(o){setOpt(o.dataset.opt,o.dataset.val);return}
+  const sp=e.target.closest('[data-spend]');
+  if(sp){state[cur].spend=+sp.dataset.spend;markCustom();save();shell();update();return}
+  const act=e.target.closest('[data-act]'),m=MODELS[cur];
+  if(act&&m.actions&&m.actions[act.dataset.act]){const msg=m.actions[act.dataset.act](state[cur],eng(),act);if(msg!==false){markCustom();save();shell();update();if(msg)toast(msg)}return}
+  if(e.target.id==='reset'){state[cur]=defaults(MODELS[cur]);presetSel[cur]='custom';goal[cur]=clone(MODELS[cur].goal);save();shell();update();toast('Reset to defaults');return}
   if(e.target.id==='print'){try{window.print()}catch(err){toast('Printing is blocked here. Use your browser menu.')}return}
   if(e.target.id==='copy')copySummary();
 });
 function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(update)}
 
 /* ---------- scaling / scenarios ---------- */
-function scaled(mult){
-  const m=MODELS[cur],v=state[cur];
+/* Budget × mult. Each doubling of budget inflates cost per result by drop% (CPM, and CPL when a model uses one). */
+function scaledOf(m,v,mult){
   const cm=mult>1?1+v.drop/100*Math.log2(mult):1;
-  return m.compute({...v,spend:v.spend*mult,cpm:v.cpm*cm});
+  const o={...v,spend:v.spend*mult,cpm:v.cpm*cm};if(typeof v.cpl==='number')o.cpl=v.cpl*cm;
+  return m.compute(o);
 }
-function scenario(kind){
-  const m=MODELS[cur],v=state[cur];
+function scenarioOf(m,v,kind){
+  if(m.scenario)return m.compute(m.scenario(kind,v));
   const f={cons:0.9,exp:1,opt:1.1}[kind],c={cons:1.1,exp:1,opt:0.92}[kind];
   const o={...v};m.fields.forEach(fl=>{if(fl.scen)o[fl.id]=Math.min(100,v[fl.id]*f)});o.cpm=v.cpm*c;
   return m.compute(o);
 }
+const scaled=mult=>scaledOf(MODELS[cur],state[cur],mult);
+const scenario=kind=>scenarioOf(MODELS[cur],state[cur],kind);
 
 /* ---------- verdict ---------- */
 function verdict(r){
@@ -397,14 +467,14 @@ function verdict(r){
 /* ---------- render ---------- */
 function update(){
   if(!cur)return;
-  const m=MODELS[cur],v=state[cur],r=m.compute(v),vd=verdict(r);
+  const m=MODELS[cur],v=state[cur],r=m.compute(v),vd=(m.verdict||verdict)(r,v);
   const lg=Math.log10;
   const oldCards={};$$('#res-main .card').forEach(c=>{oldCards[c.dataset.k]=$('.v',c).textContent});
   const oldBars=$$('#res-main .fbar i').map(i=>{const w=i.parentElement.getBoundingClientRect().width;return w?i.getBoundingClientRect().width/w*100:0});
   const mf=$('#res-main .meter .fill');let oldMeter=0;if(mf){const w=mf.parentElement.getBoundingClientRect().width;oldMeter=w?mf.getBoundingClientRect().width/w*100:0}
   const fresh=oldBars.length===0;
-  const maxN=Math.max(...r.funnel.map(s=>s.n),1);
-  const funnel=r.funnel.map((s,i)=>{
+  const maxN=Math.max(...r.funnel.map(s=>s.n).filter(isFinite),1);
+  const funnel=r.funnel.filter(s=>isFinite(s.n)).map((s,i)=>{
     const w=s.n>0?Math.max(2,lg(s.n+1)/lg(maxN+1)*100):0;
     return `<div class="frow"><div class="fl">${s.l}${s.r?`<small>${s.r}</small>`:''}</div><div class="fbar" aria-hidden="true"><i data-w="${w}" style="width:${fresh?0:(oldBars[i]||0)}%;transition-delay:${fresh?i*70+300:0}ms"></i></div><div class="fv"><b>${num(s.n)}</b><small>${s.c[0]} ${inr(s.c[1])}</small></div></div>`}).join('');
   const pnl=r.pnl.map(x=>`<tr><td>${x[0]}</td><td class="${x[1]<0?'bad':''}">${inr(x[1])}</td></tr>`).join('')+
@@ -415,27 +485,38 @@ function update(){
      <div class="lab"><span>Your total cost: <b>${inr(r.cac)}</b></span><span>${r.limitLabel}: <b>${inr(r.limit)}</b></span></div></div>
      <p class="note">${ratio<=1?`You are ${pct((1-ratio)*100)} under breakeven on each ${r.unit}.`:`You are ${pct((ratio-1)*100)} over breakeven on each ${r.unit}.`} Total cost includes the other monthly costs you entered.</p>`;
   const sc={cons:scenario('cons'),exp:scenario('exp'),opt:scenario('opt')};
-  const rows=[];
-  if(r.leads!==undefined)rows.push(['Leads',x=>num(x.leads)]);
-  rows.push([cap(r.unitP),x=>num(x.units)],['Total cost per '+r.unit,x=>inr(x.cac)],['Revenue',x=>inr(x.revenue)],['Net profit',x=>inr(x.net),1],[r.roasLabel,x=>xx(x.roas)]);
-  const scen=`<div class="tscroll"><table><thead><tr><th></th><th>Conservative</th><th>Expected</th><th>Optimistic</th></tr></thead><tbody>${
+  let rows=[];
+  if(m.scenRows)rows=m.scenRows(r,v);
+  else{
+    if(r.leads!==undefined)rows.push(['Leads',x=>num(x.leads)]);
+    rows.push([cap(r.unitP),x=>num(x.units)],['Total cost per '+r.unit,x=>inr(x.cac)],['Revenue',x=>inr(x.revenue)],['Net profit',x=>inr(x.net),1],[r.roasLabel,x=>xx(x.roas)]);
+  }
+  const SN=m.scenNames||['Conservative','Expected','Optimistic'];
+  const scen=`<div class="tscroll"><table><thead><tr><th></th>${SN.map(n=>`<th>${n}</th>`).join('')}</tr></thead><tbody>${
     rows.map(rw=>`<tr><td>${rw[0]}</td>${['cons','exp','opt'].map(k=>`<td class="${rw[2]?(sc[k].net>=0?'good':'bad'):''}">${rw[1](sc[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
-    <p class="note">Conservative: CPM up 10% and every funnel rate down 10%. Optimistic: CPM down 8% and every funnel rate up 10%. Small changes compound across stages, so the range is wide on purpose.</p>`;
+    <p class="note">${m.scenNote||'Conservative: CPM up 10% and every funnel rate down 10%. Optimistic: CPM down 8% and every funnel rate up 10%. Small changes compound across stages, so the range is wide on purpose.'}</p>`;
   const scale=`<div class="tscroll"><table><thead><tr><th>Budget</th><th>${cap(r.unitP)}</th><th>Cost each</th><th>Revenue</th><th>Net profit</th></tr></thead><tbody>${
     [0.5,1,2,3,5].map(k=>{const s=scaled(k);return `<tr><td>${inr(v.spend*k)}<small style="color:var(--muted)"> (${k}×)</small></td><td>${num(s.units)}</td><td>${inr(s.cac)}</td><td>${inr(s.revenue)}</td><td class="${s.net>=0?'good':'bad'}">${inr(s.net)}</td></tr>`}).join('')}</tbody></table></div>
     <p class="note">Other monthly costs stay fixed. Each doubling of budget raises CPM by ${v.drop}% (your scaling assumption), which is why cost per ${r.unit} climbs as you spend more.</p>`;
-  $('#res-main').innerHTML=`
-    <div class="verdict ${vd.t}"><span class="vi" aria-hidden="true">${VICON[vd.t]}</span><div><h3>${vd.h}</h3><p>${vd.p}</p></div></div>
-    ${r.note?`<p class="note" style="margin:-6px 0 16px;color:var(--muted);font-size:14px">${r.note}</p>`:''}
-    <div class="cards">${r.cards.map(c=>`<div class="card ${c.t||''}" data-k="${c.k}"><div class="k">${c.k}</div><div class="v">${c.v}</div><div class="s">${c.s}</div></div>`).join('')}</div>
-    <div class="panel"><h3>Your funnel</h3>${funnel}<p class="note">Bars use a log scale so every stage stays visible.</p></div>
-    <div class="panel"><h3>Profit breakdown (per month)</h3><div class="tscroll"><table><tbody>${pnl}</tbody></table></div></div>
-    <div class="panel"><h3>Breakeven check</h3>${meter}</div>
-    <div class="panel"><h3>All the numbers</h3><div class="more">${r.more.map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div></div>
-    <div class="panel"><h3>Best case, worst case</h3>${scen}</div>
-    <div class="panel"><h3>What happens if you scale</h3>${scale}</div>`;
+  const parts={
+    verdict:`<div class="verdict ${vd.t}"><span class="vi" aria-hidden="true">${VICON[vd.t]}</span><div><h3>${vd.h}</h3><p>${vd.p}</p></div></div>`,
+    note:r.note?`<p class="note" style="margin:-6px 0 16px;color:var(--muted);font-size:14px">${r.note}</p>`:'',
+    cards:`<div class="cards">${r.cards.map(c=>`<div class="card ${c.t||''}" data-k="${c.k}"><div class="k">${c.k}</div><div class="v">${c.v}</div><div class="s">${c.s}</div></div>`).join('')}</div>`,
+    funnel:`<div class="panel"><h3>${m.funnelTitle||'Your funnel'}</h3>${funnel}<p class="note">Bars use a log scale so every stage stays visible.</p></div>`,
+    pnl:`<div class="panel"><h3>Profit breakdown (per month)</h3><div class="tscroll"><table><tbody>${pnl}</tbody></table></div></div>`,
+    meterBody:meter,
+    meter:`<div class="panel"><h3>Breakeven check</h3>${meter}</div>`,
+    more:`<div class="panel"><h3>All the numbers</h3><div class="more">${r.more.map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div></div>`,
+    scen:`<div class="panel"><h3>${m.scenTitle||'Best case, worst case'}</h3>${scen}</div>`,
+    scale:`<div class="panel"><h3>What happens if you scale</h3>${scale}</div>`
+  };
+  lastHtml=m.layout?m.layout(parts,r,v,eng()):
+    ['verdict','note','cards','funnel','pnl','meter','more','scen','scale'].map(k=>parts[k]).join('');
+  $('#res-main').innerHTML=lastHtml;
   animateResults(oldCards,vd,fresh);
   renderGoal();
+  if(m.after)m.after(r,v,eng());
+  if(m.derived){const d=m.derived(v,r);$$('#calc-root [data-d]').forEach(el=>{const t=d[el.dataset.d];if(t!==undefined&&el.innerHTML!==t)el.innerHTML=t})}
 }
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 const lastV={};
@@ -450,6 +531,7 @@ const SV=(p)=>`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" strok
 const VICON={good:SV('<path d="M20 6 9 17l-5-5"/>'),ok:SV('<path d="M20 6 9 17l-5-5"/>'),warn:SV('<path d="M12 8v5M12 17h.01"/><circle cx="12" cy="12" r="9.5"/>'),bad:SV('<path d="M18 6 6 18M6 6l12 12"/>')};
 
 function renderGoal(){
+  if(MODELS[cur].renderGoal){MODELS[cur].renderGoal(eng());return}
   const m=MODELS[cur],v=state[cur],base=m.compute(v),out=$('#goal-out');if(!out)return;
   const T=+goal[cur];
   if(!(T>0)){out.innerHTML='<p class="note">Enter a target above.</p>';return}
@@ -468,13 +550,17 @@ function renderGoal(){
 }
 
 /* ---------- copy ---------- */
-function copySummary(){
-  const m=MODELS[cur],v=state[cur],r=m.compute(v),vd=verdict(r);
+function summaryText(){
+  const m=MODELS[cur],v=state[cur],r=m.compute(v),vd=(m.verdict||verdict)(r,v);
   const lines=[`Meta Ads Business Calculator: ${m.name}`,`Ad budget: ${inr(v.spend)}/month (total cost ${inr(r.total)})`,'',vd.h,''];
   r.cards.forEach(c=>lines.push(`${c.k}: ${c.v} (${c.s})`));
-  lines.push('','Funnel:');r.funnel.forEach(s=>lines.push(`- ${s.l}: ${num(s.n)} (${s.c[0]} ${inr(s.c[1])})`));
+  lines.push('','Funnel:');r.funnel.filter(s=>isFinite(s.n)).forEach(s=>lines.push(`• ${s.l}: ${num(s.n)} (${s.c[0]} ${inr(s.c[1])})`));
+  if(m.summary)lines.push('',...m.summary(r,v,eng()));
   lines.push('','Estimates based on the entered assumptions; actual results will vary.');
-  const text=lines.join('\n');
+  return lines.join('\n');
+}
+function copySummary(){
+  const text=summaryText();
   const fallback=()=>{const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();toast(ok?'Summary copied':'Copy blocked by the browser. Use Print instead.')};
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(()=>toast('Summary copied'),fallback);else fallback();
 }
@@ -482,8 +568,8 @@ function copySummary(){
 
 /* Test hook: only active when a test harness defines globalThis.__MABC_EXPOSE__ */
 if(typeof globalThis!=='undefined'&&typeof globalThis.__MABC_EXPOSE__==='function'){
-  globalThis.__MABC_EXPOSE__({MODELS,state,inr,num,xx,pct,splitNum,fmtNum,zeroOf,tweenText,verdict,
-    open:function(k){cur=k;load(k);update();return state[k]}});
+  globalThis.__MABC_EXPOSE__({MODELS,state,inr,num,xx,pct,splitNum,fmtNum,zeroOf,tweenText,verdict,scaledOf,scenarioOf,ENGINE,
+    open:function(k,vals){cur=k;load(k);if(vals)Object.assign(state[k],vals);shell();update();return{vals:state[k],summary:summaryText(),html:lastHtml}}});
 }
 
 /* ---------- scroll reveals ---------- */

@@ -2,7 +2,7 @@
 
 A planning tool for Get Bee Seen (GBS), the digital marketing and website agency Mehul owns. It answers: "If I spend ₹X on Meta Ads, how many leads / sales will I get, what will they cost, and will the campaign be profitable?" It is used with clients and as a lead-gen asset, so it must look on-brand and never show misleading numbers.
 
-Three business models, each with its own funnel, inputs, formulas and results: **Service business**, **B2B**, **B2C / Ecommerce**.
+Four business models, each with its own funnel, inputs, formulas and results: **Service business**, **B2B**, **B2C / Ecommerce** and **Door manufacturer / retailer**. The door model is a specialised module (Simple and Advanced modes, itemised door costs, dealer campaigns, target calculators, simulators, market reference data) that plugs into the same engine.
 
 ## Stack and commands
 
@@ -20,9 +20,11 @@ Always run `npm test` after touching formulas, and `npm run build` before handin
 
 - `index.html` – all static markup: header, hero (receipt + bee), ribbon, three sections with banners, footer. The calculator itself is rendered by JS into `#calc-root`.
 - `css/styles.css` – brand tokens in `:root`, dark-theme overrides, components, and the MOTION block at the bottom.
+- `js/market.js` – the market reference database for the door module (door prices, materials, laminate, hardware, labour, finishing, packaging, transport, installation; location, quality and finish multipliers; typical CPM by location). Every row has `source` and `updated`. All current rows are unverified GBS planning estimates: replace them with real supplier quotes.
+- `js/door.js` – the door module. Defines `globalThis.MABC_DOOR(E)`, which app.js calls with its engine helpers to register `MODELS.door`.
 - `js/app.js` – everything else, in this order: helpers and formatters, motion helpers (`tweenText`), hero receipt, `MODELS` (fields, presets, `compute`), state and persistence, `setModel` / `shell` / `update`, goal planner, copy summary, scroll reveals.
 - `assets/` – real GBS brand files: `logo-horizontal.png`, `logo-stacked-white.png`, `bee.png`, `badge.png`. `img[data-asset]` tags get their `src` from the `ASSETS` map in app.js.
-- `build.js` – inlines css, js and assets/*.png into one HTML file in `dist/`.
+- `build.js` – inlines css, every `js/*.js` script tag and assets/*.png into one HTML file in `dist/`.
 - `test/smoke.test.js` – dependency-free tests using a small DOM stub and the `__MABC_EXPOSE__` hook at the end of app.js.
 
 ## How the app works
@@ -40,6 +42,11 @@ Every model returns the same shape; the renderer depends on it:
 - `units` = the thing being sold (customers / deals / orders). `cac` is all-in (ad spend + other monthly costs) per unit.
 - `limit` = break-even cost per unit (gross profit or contribution per unit). The break-even meter compares `cac` to `limit`.
 - Optional `leads` makes the scenario table show a Leads row (Service and B2B only).
+- Optional `x` carries model specific extras (the door module keeps its whole calculation there for its own panels).
+
+### Engine hooks (all optional, used by the door module)
+
+Fields: `F(...)` numbers, plus option fields `{kind:'opt', type:'seg'|'cards'|'chips'|'select'|'text', options}`; any field can have `show(v)` (conditional), `simple` (visible in Simple mode) and `c` (compact row). Model keys: `modes` (Simple / Advanced switch, stored as `v.mode`), `groups` (per group `collapse`, `open`, `note`, `matrix`), `derived(v,r)` (fills `data-d` notes and group subtotals after each update), `onOpt`, `onPreset`, `actions` (buttons with `data-act`; return `false` to skip the re-render), `formIntro`, `layout(parts,r,v,E)`, `verdict`, `scenario(kind,v)`, `scenRows`, `scenNames`, `scenNote`, `goalPanel` / `renderGoal` / `goalInput` (replaces the goal planner), `renderSims` / `after` / `simInput`, `summary`. Existing models use none of them.
 
 ### Formulas
 
@@ -47,6 +54,7 @@ Common top of funnel: `impressions = spend / CPM * 1000`, `clicks = impressions 
 
 - **Service**: leads = clicks * click→lead. Then contacted → appointment booked → appointment held → customer, each a % of the previous stage. Revenue = customers * first-sale value. Gross profit = revenue * margin. Net = gross profit − ad spend − other monthly costs. LTV = gross profit per customer * lifetime purchases. LTV:CAC = LTV / all-in CAC.
 - **B2B**: leads → MQL → discovery call held → proposal → deal won. Revenue = deals * first-year contract value. LTV = first-year gross profit * years retained. Payback months = CAC / (gross profit per deal / 12). Shows "chance of at least 1 deal" = 1 − e^(−deals) because B2B volume is lumpy.
+- **Door** (customer campaigns): leads come from CPM, CTR and landing page conversion (automatic) or spend ÷ CPL (manual CPL). Then qualified → quotation → site / showroom visit → order, each a % of the previous stage. Doors sold = orders × doors per order. Selling price = door area (width × height) × price per sq ft, or a price per door. Cost per door is itemised: manufacturer (raw material × quantity × (1 + wastage), laminate, adhesive, labour per door or monthly ÷ production, overhead ÷ production, finishing, hardware, packaging, transport per door or per trip ÷ doors per trip, commissions and provisions as % of price), retailer (purchase price after discount plus landed costs), or both blended by share manufactured. Installation only counts when the business pays. Net = revenue − doors × cost per door − ad spend − campaign costs. ROAS = revenue ÷ ad spend; profit ROAS = net ÷ ad spend; ROI = net ÷ (door cost + ad spend + campaign costs). Breakeven ROAS at this budget = (spend + campaign costs) ÷ (margin × spend); breakeven CPL = gross profit per lead × spend ÷ (spend + campaign costs). Likely ranges come from the conservative (CPL up 15%, qualification down 15%, later rates down 10%) and aggressive (CPL down 10%, qualification and conversion up 10%) scenarios. Dealer and architect objectives switch to the trade funnel: leads → qualified → meetings → sample requests → onboarded → first order, with trade price = selling price × (1 − trade discount) and LTV from first plus repeat orders.
 - **B2C**: clicks → landing page views → add to cart → checkout → order. Booked revenue = orders * AOV. Delivered orders = orders * (1 − RTO%). Kept revenue = delivered * AOV. Contribution = kept revenue − product cost − gateway fees − (shipping per order * ALL orders, because returns still cost shipping). Net = contribution − ad spend − other costs. ROAS shown is Meta-reported (booked); "Net ROAS" uses kept revenue.
 
 Scenarios: conservative = CPM +10% and every field flagged `scen:true` × 0.9; optimistic = CPM −8% and × 1.1. Scaling: each doubling of budget multiplies CPM by `1 + drop%` (`drop` field, default 10). The goal planner solves for the budget that yields a target number of units, including that inflation.
@@ -81,7 +89,7 @@ Scenarios: conservative = CPM +10% and every field flagged `scen:true` × 0.9; o
 
 - Sentence case, plain verbs, buttons say exactly what happens.
 - No hyphens or dashes in visible copy (labels, help text, notes, headings, copied summary). Write "breakeven", "Ecommerce", "first year", "total cost"; use words ("up 10%", "3 to 6 months", "n/a") instead of dashes. The one exception is the minus sign on negative money and ROI: it carries meaning, so never drop it. Formatters also suppress a meaningless minus on values that round to zero.
-- Niche presets are illustrative starting points, not verified benchmarks. Keep the footer disclaimer. When Mehul has real GBS client averages, replace the preset numbers.
+- Niche presets and the door market reference are illustrative starting points, not verified benchmarks. Market reference text must always say it is indicative and that actual prices vary by supplier, quality, size and finish. Door forecasts must show ranges and say they are projections, not guaranteed Meta Ads results. Keep the footer disclaimer. When Mehul has real GBS client averages, replace the preset numbers.
 - Never invent contact details, URLs or claims about results. There is no contact button yet because no URL or number was provided.
 
 ## Publishing
