@@ -457,8 +457,13 @@ table.fc td.good{color:var(--good)} table.fc td.bad{color:var(--bad)}
 .cst>input{border:1.5px solid var(--line);border-radius:12px;background:var(--surface);padding:8px 10px;font:inherit;font-size:14px;min-width:0;color:var(--ink)}
 .cst .inp input{padding:7px 8px;font-size:14px}.cst .inp .u{padding:0 8px;font-size:12px}
 .cdel{border:0;background:transparent;color:var(--bad);font-size:20px;cursor:pointer;width:32px;height:32px;border-radius:50%}
-.rep-ov{position:fixed;inset:0;z-index:100;background:rgba(14,34,25,.6);display:grid;place-items:start center;overflow:auto;padding:24px 12px}
-.rep{background:#fff;color:#191816;border-radius:18px;max-width:880px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.rep-ov{position:fixed;inset:0;z-index:100;background:rgba(14,34,25,.6);display:grid;grid-template-columns:minmax(0,1fr);justify-items:center;align-items:start;overflow:auto;padding:24px 12px}
+.rep{background:#fff;color:#191816;border-radius:18px;max-width:880px;width:100%;min-width:0;box-shadow:0 20px 60px rgba(0,0,0,.35);
+  /* the report is a white document: always use the light palette, even when the site is in dark mode */
+  --bg:#FFF2DC;--surface:#FFFFFF;--surface2:#FFF7EA;--ink:#191816;--head:#196144;--muted:#5F6B63;--line:#EBD9B8;--bar:#196144;--peach:#FFE7B0;
+  --good:#12704B;--good-bg:#DDEFE4;--warn:#8A5A00;--warn-bg:#FFE7B0;--bad:#B8342A;--bad-bg:#FBE3DE;color-scheme:light}
+.rep-doc{min-width:0;overflow-wrap:anywhere}
+.rep-doc table{max-width:100%}
 .rep-bar{position:sticky;top:0;display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;padding:12px 16px;background:#FFF2DC;border-radius:18px 18px 0 0;border-bottom:1px solid #EBD9B8}
 .rep-bar span{display:flex;flex-wrap:wrap;gap:6px}
 .rep-doc{padding:24px;font-size:14px;line-height:1.55}
@@ -575,3 +580,6 @@ table.asm td:first-child{text-align:left;font-weight:600}
 details.blib{margin-top:14px}
 .planner .pplan .more{margin-bottom:10px}
 table.cm th,table.asm th:first-child,.bench th{text-align:left}
+.rep .btn-line{border-color:#196144!important;color:#196144}
+.rep-bar{top:-24px;z-index:2}
+@media (max-width:520px){.rep-ov{padding:12px 8px}.rep-bar{top:-12px;padding:10px 12px}.rep-doc{padding:16px 14px}}
