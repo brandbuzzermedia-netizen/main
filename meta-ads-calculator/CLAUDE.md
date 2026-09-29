@@ -97,7 +97,7 @@ Scaling: each doubling of budget multiplies CPM (and CPL) by `1 + drop%`. Goals 
 
 ## Motion rules
 
-- Hero load sequence, ribbon wipe, bee flight and badge float are CSS-only.
+- Hero load sequence, the permanent ribbon ticker, the looping bee flight (crosses the hero every 10s) and badge float are CSS only; everything stops under reduced motion.
 - Scroll reveals: add class `rv` (and optional `style="--d:n"` for stagger). They are only hidden when JS has added `js-rv` to `<html>`, so content is never lost without JS.
 - Results re-render with `innerHTML` on every keystroke, which would restart CSS animations. So numbers and bars are animated in `animateResults()` instead: cards carry `data-k`, bars and the meter carry `data-w`, and the previous visible values are captured before each re-render. Do not add CSS entrance animations to elements inside `#res-main` except under `.fresh`.
 - Do not use `animation-fill-mode: forwards` on hoverable elements; it overrides hover transforms.
