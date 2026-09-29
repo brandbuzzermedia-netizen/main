@@ -33,6 +33,14 @@ stack, dependencies and README.
 | --- | --- |
 | `clients/t3-media-corp/` | T3 Media Corp — interior and architectural materials, Bengaluru (Next.js) |
 
+## Tools
+
+Standalone tools for GBS, each self-contained with its own README and tests.
+
+| Directory | Tool |
+| --- | --- |
+| `meta-ads-calculator/` | Meta Ads Business Calculator — leads, sales, CAC, ROAS and profit for Service, B2B and B2C (vanilla JS; `npm test`, `npm run build`) |
+
 ## Editing
 
 The pages are generated from one shared shell so the header, footer and `<head>`
