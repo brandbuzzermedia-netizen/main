@@ -39,7 +39,7 @@ Standalone tools for GBS, each self-contained with its own README and tests.
 
 | Directory | Tool |
 | --- | --- |
-| `meta-ads-calculator/` | Meta Ads Business Calculator — leads, sales, CAC, ROAS and profit for Service, B2B and B2C (vanilla JS; `npm test`, `npm run build`) |
+| `meta-ads-calculator/` | Meta Ads Business Calculator — 37 industry calculators plus a custom funnel builder: leads, customers, CAC, ROAS, profit ROAS, ROI and breakeven (vanilla JS; `npm test`, `npm run build`) |
 
 ## Editing
 

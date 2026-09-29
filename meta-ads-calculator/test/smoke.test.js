@@ -26,21 +26,23 @@ globalThis.window = globalThis;
 let api;
 globalThis.__MABC_EXPOSE__ = (x) => { api = x; };
 // eslint-disable-next-line no-eval
-for (const f of ['market.js', 'door.js', 'app.js']) (0, eval)(fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8'));
+for (const f of ['market.js', 'benchmarks.js', 'framework.js', 'industries.js', 'door.js', 'app.js']) (0, eval)(fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8'));
 assert(api, 'test hook did not fire');
 
-const defaults = (m) => Object.fromEntries(m.fields.map((f) => [f.id, Array.isArray(f.def) ? f.def.slice() : f.def]));
+const defaults = (m) => Object.fromEntries(m.fields.map((f) => [f.id, f.def && typeof f.def === 'object' ? JSON.parse(JSON.stringify(f.def)) : f.def]));
 let passed = 0;
 const t = (name, fn) => { fn(); passed++; console.log('ok  ' + name); };
+const near = (a, b, tol = 1e-6) => assert(Math.abs(a - b) <= tol * Math.max(1, Math.abs(b)), `${a} != ${b}`);
 
-for (const key of ['service', 'b2b', 'b2c', 'door']) {
+const KEYS = Object.keys(api.MODELS);
+for (const key of KEYS) {
   const m = api.MODELS[key];
   t(`${key}: defaults compute finite numbers`, () => {
     const r = m.compute(defaults(m));
     for (const k of ['units', 'total', 'revenue', 'net', 'roas', 'cac', 'ltvcac']) {
       assert(Number.isFinite(r[k]), `${k} not finite: ${r[k]}`);
     }
-    assert(r.funnel.length >= 6 && r.cards.length === 6);
+    assert(r.funnel.length >= 4 && r.cards.length >= 6 && r.k, 'funnel, cards and k');
   });
   t(`${key}: zero budget gives zero results, no NaN`, () => {
     const r = m.compute({ ...defaults(m), spend: 0 });
@@ -57,7 +59,7 @@ for (const key of ['service', 'b2b', 'b2c', 'door']) {
     m.presets.forEach(([, , vals]) => Object.keys(vals).forEach((k) => assert(ids.has(k), `${key} preset uses unknown field ${k}`)));
   });
   t(`${key}: verdict returns a tone and message`, () => {
-    const vd = api.verdict(m.compute(defaults(m)));
+    const vd = (m.verdict || api.verdict)(m.compute(defaults(m)), defaults(m));
     assert(['good', 'ok', 'warn', 'bad'].includes(vd.t) && vd.h && vd.p);
   });
 }
@@ -95,12 +97,94 @@ t('zeroOf keeps prefix, suffix and decimals', () => {
   assert.strictEqual(api.zeroOf('n/a'), undefined);
 });
 t('render path runs for every model', () => {
-  ['service', 'b2b', 'b2c', 'door'].forEach((k) => api.open(k));
+  KEYS.forEach((k) => api.open(k));
+});
+
+/* ---------- multi industry platform ---------- */
+t('catalogue covers every industry and every catalogue entry exists', () => {
+  const inCat = new Set(api.CATALOG.flatMap((g) => g.items.map((i) => i.key)));
+  KEYS.forEach((k) => assert(inCat.has(k), 'missing from dashboard: ' + k));
+  assert(KEYS.length >= 37, 'expected at least 37 calculators, got ' + KEYS.length);
+  for (const k of ['service', 'realestate', 'clinic', 'dental', 'education', 'finance', 'travel', 'interior', 'homeservices', 'automotive', 'wedding',
+    'b2b', 'manufacturing', 'timber', 'door', 'buildmat', 'machinery', 'saas', 'wholesale', 'b2c', 'd2c', 'fashion', 'beauty', 'furniture',
+    'electronics', 'jewellery', 'homedecor', 'food', 'fitness', 'agency', 'legal', 'accounting', 'architecture', 'photography', 'salon', 'consulting', 'custom'])
+    assert(api.MODELS[k], 'missing industry ' + k);
+});
+t('each industry has its own funnel and cost structure', () => {
+  const funnels = new Set(), costs = new Set();
+  KEYS.forEach((k) => { const r = api.MODELS[k].compute(defaults(api.MODELS[k]));
+    funnels.add(r.funnel.map((s) => s.l).join('>')); costs.add(r.pnl.map((x) => x[0]).join('|')); });
+  assert(funnels.size >= 25, 'too few distinct funnels: ' + funnels.size);
+  assert(costs.size >= 20, 'too few distinct cost structures: ' + costs.size);
+});
+t('breakeven ROAS comes from each industry\'s own margin', () => {
+  const vals = new Set();
+  KEYS.forEach((k) => { const m = api.MODELS[k], r = m.compute(defaults(m));
+    if (r.x && r.x.mu > 0) { near(r.x.beRoasVar, 1 / r.x.mu); vals.add(r.x.beRoasVar.toFixed(2)); } });
+  assert(vals.size >= 15, 'breakeven ROAS should differ by industry: ' + vals.size);
+});
+t('spec example: ₹5,00,000 revenue on ₹1,00,000 spend is 5.00x ROAS', () => {
+  const m = api.MODELS.custom, v = { ...defaults(m), amode: 'manual', cpl: 1000, spend: 100000, cstages: [{ name: 'Customers', rate: 100 }], price: 5000 };
+  const r = m.compute(v);
+  near(r.k.leads, 100); near(r.k.customers, 100); near(r.revenue, 500000); near(r.roas, 5);
+  near(r.k.profitRoas, r.net / 100000); near(r.roi, r.net / r.x.invest * 100);
+});
+t('validation: rates above 100%, negatives and zero never produce NaN, Infinity or impossible funnels', () => {
+  KEYS.forEach((k) => { const m = api.MODELS[k], d = defaults(m);
+    const bad = { ...d }; m.fields.forEach((f) => { if (typeof d[f.id] === 'number') bad[f.id] = f.unit === '%' ? 250 : -50; });
+    for (const v of [bad, { ...d, spend: 0 }, { ...d, cpm: 0, cpl: 0 }]) {
+      const r = m.compute(v);
+      assert(!Number.isNaN(r.net) && !Number.isNaN(r.revenue) && r.units >= 0, k + ' invalid result');
+      r.funnel.forEach((s, i) => { if (i && isFinite(s.n) && isFinite(r.funnel[i - 1].n) && !/Doors|Repeat|Stays/.test(s.l)) assert(s.n <= r.funnel[i - 1].n + 1e-6, k + ' funnel grows at ' + s.l); });
+    }
+  });
+});
+t('counts are whole numbers, never fractional or negative', () => {
+  assert.strictEqual(api.cnt(5.88), '6'); assert.strictEqual(api.cnt(0.4), 'under 1'); assert.strictEqual(api.cnt(-3), '0'); assert.strictEqual(api.cnt(NaN), 'n/a');
+});
+t('real estate: commission revenue and cost per site visit', () => {
+  const m = api.MODELS.realestate, r = m.compute(defaults(m));
+  near(r.revenue, r.units * 8000000 * 0.02);
+  const dev = m.compute({ ...defaults(m), reMode: 'developer' }); near(dev.revenue, dev.units * 8000000);
+});
+t('timber: landed cost per CFT and CBM conversion', () => {
+  const m = api.MODELS.timber, v = defaults(m), r = m.compute(v), t = r.x.e.timber, CF = 35.3147;
+  const landedCbm = (38000 + 1500 + 4500) * 1.10 + 1200 + 1500 + 800;
+  near(t.landedCbm, landedCbm); near(t.landedCft, landedCbm / CF / 0.88 + 60); near(t.cft, r.units * 150); near(t.cbm, t.cft / CF);
+  const c = m.compute({ ...v, tunit: 'cbm', volCbm: 150 / CF, sellCbm: 2100 * CF }); near(c.revenue, r.revenue);
+});
+t('SaaS: first year revenue follows churn, MRR and ARR shown', () => {
+  const m = api.MODELS.saas, v = { ...defaults(m), churn: 0, annualShare: 0 }, r = m.compute(v);
+  near(r.revenue, r.units * 2500 * 12);
+  assert(r.more.some((x) => x[0] === 'ARR added'));
+});
+t('ecommerce: returns lower profit and are in the breakeven ROAS', () => {
+  const m = api.MODELS.b2c, v = defaults(m), a = m.compute({ ...v, rto: 0 }), b = m.compute({ ...v, rto: 30 });
+  assert(b.net < a.net && b.x.beRoasVar > a.x.beRoasVar);
+});
+t('custom builder: stages multiply through', () => {
+  const m = api.MODELS.custom, v = { ...defaults(m), cstages: [{ name: 'A', rate: 50 }, { name: 'B', rate: 40 }, { name: 'C', rate: 30 }] }, r = m.compute(v);
+  near(r.units, r.leads * 0.5 * 0.4 * 0.3);
+});
+t('manual mode: leads = spend ÷ CPL; ecommerce purchases = spend ÷ CPP', () => {
+  const s = api.MODELS.service, r = s.compute({ ...defaults(s), amode: 'manual', cpl: 250 }); near(r.leads, 50000 / 250);
+  const e = api.MODELS.b2c, q = e.compute({ ...defaults(e), amode: 'manual', cpl: 500 }); near(q.units, 100000 / 500);
+});
+t('every industry: page, summary and report have no NaN, Infinity, dashes or hyphens', () => {
+  KEYS.forEach((k) => {
+    for (const vals of [{}, { mode: 'advanced' }, { spend: 0 }, { mode: 'advanced', amode: 'manual' }]) {
+      const o = api.open(k, vals), rep = api.reportHTML();
+      const text = (o.html + ' ' + o.summary + ' ' + rep).replace(/<[^>]*>/g, ' ');
+      assert(!/NaN|Infinity|undefined/.test(text), k + ' shows NaN/Infinity/undefined: ' + (text.match(/.{20}(NaN|Infinity|undefined).{20}/) || [])[0]);
+      assert(/not guaranteed/.test(o.html + rep), k + ' missing the estimate disclaimer');
+      assert(!/[\u2012-\u2015\u2212]/.test(text), k + ' dash character in visible copy');
+      const h = text.match(/\S*[A-Za-z]-[A-Za-z]\S*/); assert(!h, k + ' hyphenated word: ' + (h && h[0]));
+    }
+  });
 });
 
 /* ---------- door module ---------- */
 const door = api.MODELS.door, dv = (o) => ({ ...defaults(door), ...o });
-const near = (a, b, tol = 1e-6) => assert(Math.abs(a - b) <= tol * Math.max(1, Math.abs(b)), `${a} != ${b}`);
 t('door: spec example, 30 leads to 2 orders, ROAS 4.00x, profit ROAS 0.67x', () => {
   // ₹15,000 ÷ ₹500 CPL = 30 leads → 15 qualified → 8 quotations → 5 visits → 2 orders; 6 doors per order at ₹5,000
   const r = door.compute(dv({ mode: 'simple', fmode: 'cpl', spend: 15000, cpl: 500, qualRate: 50, quoteRate: 800 / 15,

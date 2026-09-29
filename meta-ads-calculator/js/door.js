@@ -5,7 +5,7 @@
 (function(){
 'use strict';
 globalThis.MABC_DOOR=function(E){
-const {F,DROP,inr,num,pct,xx,div,P}=E;
+const {F,DROP,inr,num,pct,xx,div,P}=E,cnt=E.cnt;
 const MK=()=>E.market;
 const O=(id,label,type,options,def,group,help,x)=>Object.assign({kind:'opt',id,label,type,options,def,group,help},x||{});
 const X=(f,x)=>Object.assign(f,x);
@@ -114,10 +114,13 @@ const fields=[
     .map(([id,l,u,d])=>C(id,l,u,d,G.oth,u==='%'?'Of the selling price':'Per door',{show:mfgOn})),
 
   X(F('spend','Monthly Meta Ads budget','₹',25000,5000,1000000,1000,G.bud,'What you plan to spend on Meta Ads each month.'),{simple:1}),
+  X(F('daily','Daily ad budget','₹',822,30,200000,10,G.bud,'Linked to the monthly budget (30.4 days a month).'),{show:adv}),
+  X(F('months','Campaign duration','months',3,1,36,1,G.bud,'Used for campaign totals in the report.'),{show:adv}),
   X(F('fixed','Other monthly campaign costs','₹',0,0,500000,1000,G.bud,'Agency fee, creatives, tools. Leave at 0 if there are none.'),{show:adv}),
 
   O('objective','Campaign objective','select',OBJ,'leads',G.camp,'Changing it loads typical conversion and qualification rates for that objective.',{show:adv}),
   O('tradeTargets','Who are you targeting?','chips',TRADE_T,['dealers','architects'],G.camp,'',{show:v=>adv(v)&&isTrade(v)}),
+  O('audience','Target audience','text',null,'Homeowners and renovators',G.camp,'',{show:adv}),
 
   O('fmode','Forecast method','seg',[['auto','Automatic forecast'],['cpl','Manual CPL']],'auto',G.gen,'Automatic works from CPM, CTR and landing page conversion. Manual uses a CPL you already know.',{show:adv}),
   X(F('cpm','CPM (cost per 1,000 impressions)','₹',180,40,1000,5,G.gen,'Varies by city, audience and season. Check your last 30 days in Ads Manager.'),{show:v=>adv(v)&&v.fmode==='auto'}),
@@ -241,7 +244,8 @@ function compute(v){
   const cac=div(total,orders),gpOrder=ec.gp*v.doorsPerOrder;
   const be=breakeven(revenue,gross,leads,spend,fixed),beCpl=be.cpl,beRoas=be.roas;
   const x={trade:false,price,ec,impr,clicks,leads,cpl,qual,quotes,visits,orders,doors,revenue,doorCost,gross,invest,profitRoas,beCpl,beRoas,gpOrder,spend,fixed,leadLab};
-  return{unit:'order',unitP:'orders',units:orders,leads,total,spend,revenue,net,roas,roasLabel:'Meta Ads ROAS',cac,limit:gpOrder,limitLabel:'Breakeven CAC',
+  const k={spend,impr,reach:NaN,clicks,leads,leadWord:'leads',costWord:'CPL',cpl,customers:orders,cac,revenue,gross,net,roas,profitRoas,roi,beRoas:ec.gp>0?price/ec.gp:Infinity,beRoasBudget:beRoas,beCpl,beCac:gpOrder,invest,ticket:orders>0?revenue/orders:0,unit:'order',unitP:'orders',ltv:gpOrder};
+  return{k,unit:'order',unitP:'orders',units:orders,leads,total,spend,revenue,net,roas,roasLabel:'Meta Ads ROAS',cac,limit:gpOrder,limitLabel:'Breakeven CAC',
     ltv:gpOrder,ltvcac:div(gpOrder,cac),roi,x,
     funnel:[...top,
       {l:'Qualified enquiries',n:qual,r:v.qualRate+'% of leads',c:['Per qualified',div(spend,qual)]},
@@ -250,15 +254,15 @@ function compute(v){
       {l:'Orders',n:orders,r:v.orderRate+'% of visits',c:['CAC (ads only)',div(spend,orders)]},
       {l:'Doors sold',n:doors,r:num(v.doorsPerOrder)+' per order',c:['Ad cost per door',div(spend,doors)]}],
     cards:[
-      {k:'Estimated leads',v:num(leads),s:'CPL '+inr(cpl)},
-      {k:'Orders',v:num(orders),s:'Total CAC '+inr(cac)},
-      {k:'Doors sold',v:num(doors),s:'at '+inr(price)+' per door'},
-      {k:'Revenue',v:inr(revenue),s:'from '+num(doors)+' doors'},
+      {k:'Estimated leads',v:cnt(leads),s:'CPL '+inr(cpl)},
+      {k:'Orders',v:cnt(orders),s:'Total CAC '+inr(cac)},
+      {k:'Doors sold',v:cnt(doors),s:'at '+inr(price)+' per door'},
+      {k:'Revenue',v:inr(revenue),s:'from '+cnt(doors)+' doors'},
       {k:'Meta Ads ROAS',v:xx(roas),s:'Breakeven '+(isFinite(beRoas)?xx(beRoas):'not reachable'),t:roas>=beRoas?'good':'bad'},
       {k:'Net campaign profit',v:inr(net),s:'Profit ROAS '+xx(profitRoas)+' · ROI '+pct(roi),t:net>=0?'good':'bad'}
     ],
     more:[
-      ['Impressions',num(impr)],['Link clicks',num(clicks)],['Cost per click (CPC)',inr(div(spend,clicks))],['Cost per lead (CPL)',inr(cpl)],
+      ['Impressions',cnt(impr)],['Link clicks',cnt(clicks)],['Cost per click (CPC)',inr(div(spend,clicks))],['Cost per lead (CPL)',inr(cpl)],
       ['Cost per qualified enquiry',inr(div(spend,qual))],['Cost per quotation',inr(div(spend,quotes))],['Cost per site visit',inr(div(spend,visits))],
       ['Lead → order rate',pct(leads>0?orders/leads*100:0)],['Gross profit per door',inr(ec.gp)],['Contribution per door',inr(ec.contrib)],
       ['Cost of doors sold',inr(doorCost)],['Total investment',inr(invest)]
@@ -279,9 +283,10 @@ function computeTrade(v,price,ec,leads,cpl,impr,clicks,top){
   const cac=div(total,first),firstVal=v.tFirstDoors*tradePrice,repVal=v.tRepeatDoors*tradePrice;
   const ltvDoors=v.tFirstDoors+v.tRepeat*v.tRepeatDoors*v.tYears,ltv=ltvDoors*gpDoor,ltvRev=ltvDoors*tradePrice;
   const limit=v.tFirstDoors*gpDoor,be=breakeven(firstRev,firstGp,leads,spend,fixed),beCpl=be.cpl,beRoas=be.roas;
+  const k={spend,impr,reach:NaN,clicks,leads,leadWord:'leads',costWord:'CPL',cpl,customers:first,cac,revenue:firstRev,gross:firstGp,net,roas,profitRoas,roi,beRoas:firstGp>0&&firstRev>0?firstRev/firstGp:Infinity,beRoasBudget:beRoas,beCpl,beCac:limit,invest,ticket:first>0?firstRev/first:0,unit,unitP,ltv};
   const x={trade:true,price,ec,impr,clicks,leads,cpl,tq,meet,samp,onb,first,doors:firstDoors,tradePrice,tradeCost,gpDoor,firstRev,repRev,repOrders,roas12,
     revenue:firstRev,doorCost:firstDoors*tradeCost,gross:firstGp,invest,profitRoas,beCpl,beRoas,gpOrder:limit,firstVal,repVal,ltv,ltvRev,spend,fixed,unit,unitP};
-  return{unit,unitP,units:first,leads,total,spend,revenue:firstRev,net,roas,roasLabel:'ROAS (first orders)',cac,limit,limitLabel:'Breakeven CAC (first order)',
+  return{k,unit,unitP,units:first,leads,total,spend,revenue:firstRev,net,roas,roasLabel:'ROAS (first orders)',cac,limit,limitLabel:'Breakeven CAC (first order)',
     ltv,ltvcac:div(ltv,cac),roi,x,
     funnel:[...top,
       {l:'Qualified leads',n:tq,r:v.tQual+'% of leads',c:['Per qualified',div(spend,tq)]},
@@ -291,9 +296,9 @@ function computeTrade(v,price,ec,leads,cpl,impr,clicks,top){
       {l:'First orders',n:first,r:v.tFirst+'% of onboarded',c:['CAC (ads only)',div(spend,first)]},
       {l:'Repeat orders (first year)',n:repOrders,r:v.tRepeat+' per '+unit+' a year',c:['Year one revenue',repRev]}],
     cards:[
-      {k:'Trade leads',v:num(leads),s:cap(unit)+' CPL '+inr(cpl)},
-      {k:'Meetings',v:num(meet),s:inr(div(spend,meet))+' each'},
-      {k:cap(unitP)+' with a first order',v:num(first),s:cap(unit)+' CAC '+inr(cac)},
+      {k:'Trade leads',v:cnt(leads),s:cap(unit)+' CPL '+inr(cpl)},
+      {k:'Meetings',v:cnt(meet),s:inr(div(spend,meet))+' each'},
+      {k:cap(unitP)+' with a first order',v:cnt(first),s:cap(unit)+' CAC '+inr(cac)},
       {k:'First order revenue',v:inr(firstRev),s:'ROAS '+xx(roas)+' · year one '+xx(roas12)},
       {k:'Net profit this month',v:inr(net),s:'Profit ROAS '+xx(profitRoas)+' · ROI '+pct(roi),t:net>=0?'good':'bad'},
       {k:'Lifetime value per '+unit,v:inr(ltv),s:'LTV : CAC '+xx(div(ltv,cac)),t:div(ltv,cac)>=3?'good':div(ltv,cac)>=1?'warn':'bad'}
@@ -329,7 +334,7 @@ function scenario(kind,v){
 }
 const SN=['Conservative','Expected','Aggressive'];
 function band(m,v){return['cons','exp','agg'].map(k=>m.compute(scenario(k,v)))}
-const rnd=n=>!isFinite(n)?'n/a':Math.abs(n)<10?(Math.round(n*10)/10).toString():new Intl.NumberFormat('en-IN').format(Math.round(n));
+const rnd=n=>!isFinite(n)?'n/a':n<=0?'0':n<1?'under 1':new Intl.NumberFormat('en-IN').format(Math.round(n));
 function rng(sc,get,fmt){const a=sc.map(get).filter(isFinite);if(!a.length)return 'n/a';const lo=Math.min(...a),hi=Math.max(...a);const f=fmt||rnd;return f(lo)===f(hi)?f(lo):f(lo)+' to '+f(hi)}
 
 /* ---------- market reference ---------- */
@@ -389,13 +394,13 @@ function forecastPanel(r,v,sc){
   let rows;
   if(!x.trade)rows=[
     row('Monthly ad spend',inr(v.spend),''),
-    row('Estimated leads',num(x.leads),rng(sc,X_('leads'))),
+    row('Estimated leads',cnt(x.leads),rng(sc,X_('leads'))),
     row('Average CPL',inr(x.cpl),rng(sc,X_('cpl'),inr)),
-    row('Qualified leads',num(x.qual),rng(sc,X_('qual'))),
-    row('Quotations',num(x.quotes),rng(sc,X_('quotes'))),
-    row('Site / showroom visits',num(x.visits),rng(sc,X_('visits'))),
-    row('Orders',num(x.orders),rng(sc,X_('orders'))),
-    row('Doors sold',num(x.doors),rng(sc,X_('doors'))),
+    row('Qualified leads',cnt(x.qual),rng(sc,X_('qual'))),
+    row('Quotations',cnt(x.quotes),rng(sc,X_('quotes'))),
+    row('Site / showroom visits',cnt(x.visits),rng(sc,X_('visits'))),
+    row('Orders',cnt(x.orders),rng(sc,X_('orders'))),
+    row('Doors sold',cnt(x.doors),rng(sc,X_('doors'))),
     row('Average selling price',inr(x.price)+' / door',''),
     row('Revenue',inr(x.revenue),rng(sc,s=>s.revenue,inr)),
     row('ROAS',xx(r.roas),rng(sc,s=>s.roas,xx)),
@@ -404,13 +409,13 @@ function forecastPanel(r,v,sc){
     row('ROI',pct(r.roi),rng(sc,s=>s.roi,pct))];
   else rows=[
     row('Monthly ad spend',inr(v.spend),''),
-    row('Trade leads',num(x.leads),rng(sc,X_('leads'))),
+    row('Trade leads',cnt(x.leads),rng(sc,X_('leads'))),
     row('Average CPL',inr(x.cpl),rng(sc,X_('cpl'),inr)),
-    row('Qualified leads',num(x.tq),rng(sc,X_('tq'))),
-    row('Meetings',num(x.meet),rng(sc,X_('meet'))),
-    row('Sample / catalogue requests',num(x.samp),rng(sc,X_('samp'))),
-    row(cap(x.unitP)+' onboarded',num(x.onb),rng(sc,X_('onb'))),
-    row('First orders',num(x.first),rng(sc,X_('first'))),
+    row('Qualified leads',cnt(x.tq),rng(sc,X_('tq'))),
+    row('Meetings',cnt(x.meet),rng(sc,X_('meet'))),
+    row('Sample / catalogue requests',cnt(x.samp),rng(sc,X_('samp'))),
+    row(cap(x.unitP)+' onboarded',cnt(x.onb),rng(sc,X_('onb'))),
+    row('First orders',cnt(x.first),rng(sc,X_('first'))),
     row('First order revenue',inr(x.firstRev),rng(sc,s=>s.revenue,inr)),
     row('ROAS (first orders)',xx(r.roas),rng(sc,s=>s.roas,xx)),
     row(cap(x.unit)+' CAC',inr(r.cac),rng(sc,s=>s.cac,inr)),
@@ -443,8 +448,9 @@ function insights(m,r,v){
   li.push(`At your current assumptions, every ₹1 spent on Meta generates <b>₹${isFinite(r.roas)?r.roas.toFixed(2):'0'}</b> in revenue.`);
   if(!x.trade)li.push(`Each door leaves <b>${inr(x.ec.gp)}</b> gross profit (${pct(x.ec.margin)} margin) before ads.`);
   else li.push(`Each ${x.unit} is worth about <b>${inr(x.ltv)}</b> in lifetime gross profit, against a CAC of ${inr(r.cac)}.`);
-  return `<div class="panel"><h3>Key insights</h3><ul class="ins">${li.map(t=>`<li>${t}</li>`).join('')}</ul></div>`;
+  return li;
 }
+const insightsPanel=(m,r,v)=>`<div class="panel"><h3>Key insights</h3><ul class="ins">${insights(m,r,v).map(t=>`<li>${t}</li>`).join('')}</ul></div>`;
 function econPanel(r,v){
   const x=r.x,ec=x.ec,p=x.price;
   const lines=ec.lines.map(l=>`<tr><td>${l.l}</td><td>${inr(l.val)}</td><td class="sub">${pct(p>0?l.val/p*100:0)}</td></tr>`).join('');
@@ -501,7 +507,7 @@ function marketPanel(v){
 }
 function layout(parts,r,v,E){
   const m=E.m,sc=band(m,v),a=adv(v);
-  return [parts.verdict,parts.note,parts.cards,forecastPanel(r,v,sc),kpiPanel(r),insights(m,r,v),parts.funnel,
+  return [parts.verdict,parts.note,parts.cards,forecastPanel(r,v,sc),kpiPanel(r),insightsPanel(m,r,v),parts.funnel,
     r.x.trade?'':econPanel(r,v),waterfall(r),parts.pnl,breakevenPanel(m,r,v,parts,E),parts.scen,
     a?parts.scale:'',a?parts.more:'',a?marketPanel(v):''].join('');
 }
@@ -626,8 +632,8 @@ function derived(v,r){
   s(G.inst,sum(v,IN));d['note:'+G.inst]=v.instPayer==='none'?'No installation, so nothing is counted.':instCounts(v)?`Counted as your cost: <b>${per(sum(v,IN))}</b>`:'Not counted as your cost, because '+(v.instPayer==='customer'?'the customer pays.':v.instPayer==='dealer'?'the dealer pays.':'the manufacturer pays.');
   if(v.biz!=='retail'&&v.mode!=='simple')s(G.oth,(L.misc||0)+(L.comm||0));
   d['note:'+G.bud]=`<div class="pchips">${[10000,15000,25000,50000,100000].map(n=>`<button type="button" class="chip" data-spend="${n}" aria-pressed="${v.spend===n}">₹${new Intl.NumberFormat('en-IN').format(n)}</button>`).join('')}<button type="button" class="chip" data-act="customSpend" aria-pressed="${![10000,15000,25000,50000,100000].includes(v.spend)}">Custom</button></div>`;
-  d['note:'+G.gen]=v.fmode==='cpl'?`${inr(v.spend)} ÷ ${inr(v.cpl)} = <b>${num(x.leads)} leads</b>`:`Impressions ${num(x.impr)} → clicks ${num(x.clicks)} → leads <b>${num(x.leads)}</b>. CPC ${inr(div(v.spend,x.clicks))}, CPL <b>${inr(x.cpl)}</b>.`;
-  d['note:'+G.fun]=`${num(x.leads)} leads → ${num(x.qual)} qualified → ${num(x.quotes)} quotations → ${num(x.visits)} visits → ${num(x.orders)} orders → <b>${num(x.doors)} doors</b>`;
+  d['note:'+G.gen]=v.fmode==='cpl'?`${inr(v.spend)} ÷ ${inr(v.cpl)} = <b>${cnt(x.leads)} leads</b>`:`Impressions ${cnt(x.impr)} → clicks ${cnt(x.clicks)} → leads <b>${cnt(x.leads)}</b>. CPC ${inr(div(v.spend,x.clicks))}, CPL <b>${inr(x.cpl)}</b>.`;
+  d['note:'+G.fun]=`${cnt(x.leads)} leads → ${cnt(x.qual)} qualified → ${cnt(x.quotes)} quotations → ${cnt(x.visits)} visits → ${cnt(x.orders)} orders → <b>${cnt(x.doors)} doors</b>`;
   d['note:'+G.tfun]=x.trade?`Trade price ${per(x.tradePrice)}, gross profit ${per(x.gpDoor)}. First order value <b>${inr(x.firstVal)}</b>, repeat order value <b>${inr(x.repVal)}</b>.`:'';
   d['note:'+G.camp]=isTrade(v)?'Dealer and architect campaigns use the B2B door lead funnel: leads, meetings, samples, onboarding, first and repeat orders.':`Funnel: ${(OBJSET[v.objective]||OBJSET.leads).lab.toLowerCase()} → qualified → quotation → site visit → order.`;
   return d;
@@ -706,7 +712,10 @@ function summary(r,v){
 }
 
 const this_={
-  key:'door',name:'Door manufacturer / retailer',short:'Doors',color:'var(--green)',unit:'order',unitP:'orders',
+  key:'door',name:'Door manufacturer / retailer',short:'Doors',color:'var(--green)',unit:'order',unitP:'orders',cat:'b2b',icon:'door',
+  flow:'Lead → Quote → Site visit → Order → Doors sold',desc:'Door manufacturers, retailers and dealers: itemised door cost, dealer campaigns, market reference prices.',
+  onInput(id,v){if(id==='daily'){v.spend=Math.round(v.daily*30.4);return['spend']}if(id==='spend'){v.daily=Math.round(v.spend/30.4);return['daily']}return null},
+  insightList:(r,v)=>insights(this_,r,v),
   goal:DEF_GOAL,fields,groups:GROUPS,
   modes:[['simple','Simple'],['advanced','Advanced']],
   presets:[

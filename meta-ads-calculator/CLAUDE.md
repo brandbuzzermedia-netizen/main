@@ -2,7 +2,9 @@
 
 A planning tool for Get Bee Seen (GBS), the digital marketing and website agency Mehul owns. It answers: "If I spend ₹X on Meta Ads, how many leads / sales will I get, what will they cost, and will the campaign be profitable?" It is used with clients and as a lead-gen asset, so it must look on-brand and never show misleading numbers.
 
-Four business models, each with its own funnel, inputs, formulas and results: **Service business**, **B2B**, **B2C / Ecommerce** and **Door manufacturer / retailer**. The door model is a specialised module (Simple and Advanced modes, itemised door costs, dealer campaigns, target calculators, simulators, market reference data) that plugs into the same engine.
+A multi industry platform: **37 calculators** chosen from a "Select your industry" dashboard (lead generation, B2B, B2C / ecommerce, professional / local services) plus a **Custom industry** builder. Every industry has its own inputs, funnel, cost engine and revenue model; they share one calculation engine for ad maths, ROAS, profit ROAS, ROI, breakeven, ranges, scenarios, goals, insights, actual vs projected and the report. Doors is a deeper specialised module (itemised door cost, dealer campaigns, market reference prices, simulators).
+
+The question every calculator answers: "If I spend ₹X on Meta Ads, what can I potentially generate, what will it cost, what revenue, what ROAS, and will I make a profit?" Every output is an estimate from the user's assumptions and must never be presented as a guaranteed result.
 
 ## Stack and commands
 
@@ -18,26 +20,31 @@ Always run `npm test` after touching formulas, and `npm run build` before handin
 
 ## File map
 
-- `index.html` – all static markup: header, hero (receipt + bee), ribbon, three sections with banners, footer. The calculator itself is rendered by JS into `#calc-root`.
-- `css/styles.css` – brand tokens in `:root`, dark-theme overrides, components, and the MOTION block at the bottom.
+- `index.html` – static markup: header, hero (receipt + bee), ribbon, the industry dashboard container `#industries`, the calculator container `#calc-root`, how it works, footer. Script order matters: market, benchmarks, framework, industries, door, app.
 - `js/market.js` – the market reference database for the door module (door prices, materials, laminate, hardware, labour, finishing, packaging, transport, installation; location, quality and finish multipliers; typical CPM by location). Every row has `source` and `updated`. All current rows are unverified GBS planning estimates: replace them with real supplier quotes.
+- `js/framework.js` – `MABC_FRAMEWORK(E).build(spec)` turns an industry definition into a model: universal inputs (monthly and daily budget, duration, location, audience, objective, forecast or manual mode, CPM, CTR, landing page conversion, frequency, CPL / CPP), the funnel, ROAS / profit ROAS / ROI, breakeven, likely ranges, scenario planner, goal calculator (revenue, customers, profit), insights, sensitivity, benchmark panel and the result layout.
+- `js/industries.js` – the industry definitions (funnel stages, inputs, `econ()` cost engine and revenue model for each), the icon set `MABC_ICONS` and the dashboard catalogue `MABC_CATALOG` (groups, order, aliases such as Coaching → Education and Gym → Fitness).
+- `js/benchmarks.js` – benchmark references by industry and metric with `sourceType`, `source` and `date`. **Intentionally empty**: never add numbers without a real source (verified industry source, agency history, Meta campaign data or the user's own history).
 - `js/door.js` – the door module. Defines `globalThis.MABC_DOOR(E)`, which app.js calls with its engine helpers to register `MODELS.door`.
-- `js/app.js` – everything else, in this order: helpers and formatters, motion helpers (`tweenText`), hero receipt, `MODELS` (fields, presets, `compute`), state and persistence, `setModel` / `shell` / `update`, goal planner, copy summary, scroll reveals.
+- `js/app.js` – the engine: helpers and formatters (`inr`, `num`, `cnt`, `pct`, `xx`), motion helpers, hero receipt, module registration and input sanitising, state and persistence, dashboard, industry picker, `shell` / `update`, actual vs projected, report, copy summary, scroll reveals.
 - `assets/` – real GBS brand files: `logo-horizontal.png`, `logo-stacked-white.png`, `bee.png`, `badge.png`. `img[data-asset]` tags get their `src` from the `ASSETS` map in app.js.
 - `build.js` – inlines css, every `js/*.js` script tag and assets/*.png into one HTML file in `dist/`.
 - `test/smoke.test.js` – dependency-free tests using a small DOM stub and the `__MABC_EXPOSE__` hook at the end of app.js.
 
 ## How the app works
 
-1. User picks a model (`setModel`). Nothing is calculated until they do.
-2. `shell()` builds the form from `MODELS[key].fields`, grouped by each field's `group`, plus containers for results and the goal planner.
-3. Any input change updates `state[cur]`, saves to localStorage (`mabc:<model>`), and calls `update()`.
-4. `update()` calls `MODELS[cur].compute(values)` and re-renders `#res-main` with `innerHTML` (verdict, cards, funnel, P&L, break-even meter, scenarios, scaling table), then `animateResults()`.
+1. User picks an industry on the dashboard or in the Industry picker (`setModel`). Nothing is calculated until they do.
+2. `shell()` builds the form from `MODELS[key].fields`, grouped by each field's `group`, plus containers for results, the goal calculator, actual vs projected and the report button.
+3. Any input change is validated (no negatives, rates capped at 100%), stored in `state[cur]`, saved to localStorage (`mabc:<key>`), and `update()` runs. Actual results are saved separately (`mabc:actual:<key>`), saved benchmark references in `mabc:bench:<key>`.
+4. `update()` calls `MODELS[cur].compute(values)` and renders `#res-main` through the model's `layout`, then `animateResults()`.
+5. Every model's `compute` is wrapped at registration so any caller (form, scenarios, scaling, goals, tests) gets sanitised numbers.
 
 ### The `compute(v)` result contract
 
 Every model returns the same shape; the renderer depends on it:
-`unit, unitP, units, leads?, total, spend, revenue, net, roas, roasLabel, cac, limit, limitLabel, ltvcac, ltv, roi, funnel[{l,n,r,c:[label,cost]}], cards[{k,v,s,t?}] (exactly 6), more[[label,value]], pnl[[label,amount]], note?`
+`unit, unitP, units, leads?, total, spend, revenue, net, roas, roasLabel, cac, limit, limitLabel, ltvcac, ltv, roi, funnel[{l,n,r,c:[label,cost]}], cards[{k,v,s,t?}] (6 or more), more[[label,value]], pnl[[label,amount]], note?, k`
+
+`k` is the standard summary the report and actual vs projected use: `spend, impr, reach, clicks, leads, leadWord, costWord, cpl, customers, cac, revenue, gross, net, roas, profitRoas, roi, beRoas, beCpl, beCac, invest, ticket, unit, unitP, ltv`.
 
 - `units` = the thing being sold (customers / deals / orders). `cac` is all-in (ad spend + other monthly costs) per unit.
 - `limit` = break-even cost per unit (gross profit or contribution per unit). The break-even meter compares `cac` to `limit`.
@@ -48,23 +55,34 @@ Every model returns the same shape; the renderer depends on it:
 
 Fields: `F(...)` numbers, plus option fields `{kind:'opt', type:'seg'|'cards'|'chips'|'select'|'text', options}`; any field can have `show(v)` (conditional), `simple` (visible in Simple mode) and `c` (compact row). Model keys: `modes` (Simple / Advanced switch, stored as `v.mode`), `groups` (per group `collapse`, `open`, `note`, `matrix`), `derived(v,r)` (fills `data-d` notes and group subtotals after each update), `onOpt`, `onPreset`, `actions` (buttons with `data-act`; return `false` to skip the re-render), `formIntro`, `layout(parts,r,v,E)`, `verdict`, `scenario(kind,v)`, `scenRows`, `scenNames`, `scenNote`, `goalPanel` / `renderGoal` / `goalInput` (replaces the goal planner), `renderSims` / `after` / `simInput`, `summary`. Existing models use none of them.
 
-### Formulas
+### Industry definitions (js/industries.js)
 
-Common top of funnel: `impressions = spend / CPM * 1000`, `clicks = impressions * CTR`.
+`{key, name, cat, icon, flow, desc, kind:'lead'|'order' (or a function of v), unit, unitP, ad:{spend,cpm,ctr,lpConv}, stages:[{id,l,r,def,help}] (or a function of v with stageDefs), pre:[...], fields:[...], econ(v, c, n), costTitle, presets, panels?, onOpt?}`
 
-- **Service**: leads = clicks * click→lead. Then contacted → appointment booked → appointment held → customer, each a % of the previous stage. Revenue = customers * first-sale value. Gross profit = revenue * margin. Net = gross profit − ad spend − other monthly costs. LTV = gross profit per customer * lifetime purchases. LTV:CAC = LTV / all-in CAC.
-- **B2B**: leads → MQL → discovery call held → proposal → deal won. Revenue = deals * first-year contract value. LTV = first-year gross profit * years retained. Payback months = CAC / (gross profit per deal / 12). Shows "chance of at least 1 deal" = 1 − e^(−deals) because B2B volume is lumpy.
-- **Door** (customer campaigns): leads come from CPM, CTR and landing page conversion (automatic) or spend ÷ CPL (manual CPL). Then qualified → quotation → site / showroom visit → order, each a % of the previous stage. Doors sold = orders × doors per order. Selling price = door area (width × height) × price per sq ft, or a price per door. Cost per door is itemised: manufacturer (raw material × quantity × (1 + wastage), laminate, adhesive, labour per door or monthly ÷ production, overhead ÷ production, finishing, hardware, packaging, transport per door or per trip ÷ doors per trip, commissions and provisions as % of price), retailer (purchase price after discount plus landed costs), or both blended by share manufactured. Installation only counts when the business pays. Net = revenue − doors × cost per door − ad spend − campaign costs. ROAS = revenue ÷ ad spend; profit ROAS = net ÷ ad spend; ROI = net ÷ (door cost + ad spend + campaign costs). Breakeven ROAS at this budget = (spend + campaign costs) ÷ (margin × spend); breakeven CPL = gross profit per lead × spend ÷ (spend + campaign costs). Likely ranges come from the conservative (CPL up 15%, qualification down 15%, later rates down 10%) and aggressive (CPL down 10%, qualification and conversion up 10%) scenarios. Dealer and architect objectives switch to the trade funnel: leads → qualified → meetings → sample requests → onboarded → first order, with trade price = selling price × (1 − trade discount) and LTV from first plus repeat orders.
-- **B2C**: clicks → landing page views → add to cart → checkout → order. Booked revenue = orders * AOV. Delivered orders = orders * (1 − RTO%). Kept revenue = delivered * AOV. Contribution = kept revenue − product cost − gateway fees − (shipping per order * ALL orders, because returns still cost shipping). Net = contribution − ad spend − other costs. ROAS shown is Meta-reported (booked); "Net ROAS" uses kept revenue.
+- `kind` lead: leads = clicks × landing page conversion (or spend ÷ CPL in manual mode), then each stage is a % of the previous one. `kind` order: stages start from clicks (or purchases = spend ÷ CPP in manual mode).
+- `econ(v, c, n)` is the industry's own economics: `c` = customers (last stage), `n` = {leads, clicks, counts}. Return `{revenue, lines:[[label, amount]], ltv?, revLabel?, extras?, warn?, note?}`. `lines` are the variable costs of those sales (COGS, shipping, commissions, brokerage, landed cost...).
+- Field helpers: `V` price or value input (varies in scenarios, shown in Simple mode), `N` economics number, `K` compact cost input, `S` funnel stage. Stage rate fields are created automatically.
 
-Scenarios: conservative = CPM +10% and every field flagged `scen:true` × 0.9; optimistic = CPM −8% and × 1.1. Scaling: each doubling of budget multiplies CPM by `1 + drop%` (`drop` field, default 10). The goal planner solves for the budget that yields a target number of units, including that inflation.
+### Shared formulas (js/framework.js)
+
+Top of funnel: `impressions = spend ÷ CPM × 1000`, `reach = impressions ÷ frequency`, `clicks = impressions × CTR`, CPC = spend ÷ clicks.
+Gross profit = revenue − variable cost lines. Net = gross − ad spend − other campaign costs. Total investment = variable costs + ad spend + campaign costs.
+ROAS = revenue attributed ÷ ad spend. Profit ROAS = net ÷ ad spend. ROI = net ÷ total investment × 100.
+Breakeven ROAS = 1 ÷ gross margin, so it comes from each industry's own cost structure; the "with campaign costs" version is (spend + campaign costs) ÷ (margin × spend). Breakeven CPL / CPP = gross profit per lead or purchase × spend ÷ (spend + campaign costs). Breakeven CAC = gross profit per customer.
+Recurring industries (SaaS, agency, accounting, fitness) say which months of revenue ROAS counts (`revLabel`) and show LTV separately.
+Scenarios: conservative = acquisition cost +15%, conversion −10%, value −5%; aggressive = acquisition cost −10%, conversion +10%, value +5%. Likely ranges in the forecast come from those two scenarios.
+Scaling: each doubling of budget multiplies CPM (and CPL) by `1 + drop%`. Goals and maximum profitable ad spend include that inflation.
+
+### Doors (js/door.js)
+
+- **Door** (customer campaigns): leads come from CPM, CTR and landing page conversion (automatic) or spend ÷ CPL (manual CPL). Then qualified → quotation → site / showroom visit → order, each a % of the previous stage. Doors sold = orders × doors per order. Selling price = door area (width × height) × price per sq ft, or a price per door. Cost per door is itemised: manufacturer (raw material × quantity × (1 + wastage), laminate, adhesive, labour per door or monthly ÷ production, overhead ÷ production, finishing, hardware, packaging, transport per door or per trip ÷ doors per trip, commissions and provisions as % of price), retailer (purchase price after discount plus landed costs), or both blended by share manufactured. Installation only counts when the business pays. Dealer and architect objectives switch to the trade funnel with trade price = selling price × (1 − trade discount) and LTV from first plus repeat orders.
 
 ## Common changes
 
-- **Add or change an input**: edit the `F(...)` list in the model. Signature: `F(id, label, unit, default, min, max, step, group, help, scen)`. Use it in `compute`. Add the id to any preset that should set it. The test suite fails if a preset references an unknown id.
-- **Add a niche preset**: append `[key, label, {fieldId: value}]` to the model's `presets`.
-- **Add a fourth model**: add an entry to `MODELS` that satisfies the result contract, then add a card in `index.html` (`data-m`, `data-pick`), a tab entry is generated automatically, and add a comparison-table column.
-- **Money**: always `inr()` (₹, en-IN grouping, L / Cr above one lakh / crore). Counts: `num()`. Ratios: `xx()`. Percent: `pct()`.
+- **Add or change an input**: edit the industry's `fields` in js/industries.js and use it in its `econ`. Signature: `F(id, label, unit, default, min, max, step, group, help)`; prefer the `V`, `N`, `K` helpers. The test suite fails if a preset references an unknown id.
+- **Add an industry**: add a definition to `specs` in js/industries.js with its own stages and `econ`, then add its key to `MABC_CATALOG`. The dashboard card, picker entry, report and tests pick it up automatically. Users can also build one in the Custom industry calculator.
+- **Add a benchmark**: only from a real source, in js/benchmarks.js, with `sourceType`, `source` and `date`.
+- **Money**: always `inr()` (₹, en-IN grouping, L / Cr above one lakh / crore). People and orders: `cnt()` (whole numbers, 'under 1', never negative). Other numbers: `num()`. Ratios: `xx()`. Percent: `pct()`.
 - **Division**: use `div(a, b)` (returns Infinity when b ≤ 0) and let formatters print "n/a". Rates go through `P()` which clamps to 0–100%.
 
 ## Brand system (Get Bee Seen)

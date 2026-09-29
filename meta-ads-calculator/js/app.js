@@ -26,6 +26,8 @@ function num(n){
 }
 const pct=n=>isFinite(n)?n.toFixed(1).replace(/\.0$/,'')+'%':'n/a';
 const xx=n=>isFinite(n)?(Math.abs(n)<0.005?0:n).toFixed(2)+'x':'n/a';
+/* people and orders: whole numbers, never negative or fractional */
+const cnt=n=>!isFinite(n)?'n/a':n<=0?'0':n<1?'under 1':IN.format(Math.round(n));
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2400)}
 
 /* ---------- assets, motion helpers ---------- */
@@ -70,207 +72,28 @@ function receipt(){
 const F=(id,label,unit,def,min,max,step,group,help,scen)=>({id,label,unit,def,min,max,step,group,help,scen});
 const DROP=F('drop','Efficiency loss when budget doubles','%',10,0,40,1,'Scaling','Extra cost per result each time you double spend. Meta costs usually rise as you scale; 10% is a cautious starting point.');
 
-const MODELS={
-service:{
-  key:'service',name:'Service Business',short:'Service',color:'var(--svc)',unit:'customer',unitP:'customers',goal:20,
-  fields:[
-    F('spend','Monthly Meta ad budget','₹',50000,5000,1000000,1000,'Ad delivery','What you plan to spend on Meta Ads each month.'),
-    F('cpm','CPM (cost per 1,000 impressions)','₹',180,50,800,5,'Ad delivery','Varies by city, audience and season. Check your last 30 days in Ads Manager.'),
-    F('ctr','Link click through rate','%',1.2,0.2,4,0.1,'Ad delivery','Clicks on your link divided by impressions.',true),
-    F('lpConv','Click → lead','%',10,1,40,0.5,'Lead capture','Of people who click, how many fill the form or start a chat.',true),
-    F('contactRate','Leads you actually reach','%',65,10,100,1,'Sales funnel','Leads who pick up or reply after your team follows up.',true),
-    F('apptRate','Reached → appointment / visit booked','%',35,5,100,1,'Sales funnel','Of the people you reach, how many book a call, visit or meeting.',true),
-    F('showRate','Appointments that show up','%',70,20,100,1,'Sales funnel','Missed appointments reduce this. Reminders raise it.',true),
-    F('closeRate','Showed up → paying customer','%',30,3,100,1,'Sales funnel','Your close rate after a meeting or visit.',true),
-    F('avgRevenue','First sale value per customer','₹',15000,500,1000000,500,'Business economics','Revenue from a new customer’s first purchase or project.'),
-    F('repeat','Purchases per customer over their lifetime','x',1.5,1,10,0.1,'Business economics','1 = buys once. 3 = an average customer buys three times.'),
-    F('margin','Gross margin','%',60,5,100,1,'Business economics','What is left after direct delivery costs (staff time, materials, commissions).'),
-    F('fixed','Other monthly campaign costs','₹',10000,0,500000,1000,'Business economics','Agency fee, creatives, tools, telecaller cost for this campaign.'),
-    DROP
-  ],
-  presets:[
-    ['custom','Custom (my own numbers)',{}],
-    ['clinic','Clinic / dental',{cpm:220,ctr:1.1,lpConv:9,contactRate:70,apptRate:40,showRate:70,closeRate:60,avgRevenue:8000,repeat:2,margin:55}],
-    ['salon','Salon / spa',{cpm:150,ctr:1.5,lpConv:12,contactRate:70,apptRate:45,showRate:65,closeRate:75,avgRevenue:2500,repeat:4,margin:60}],
-    ['realestate','Real estate services',{cpm:250,ctr:0.9,lpConv:8,contactRate:55,apptRate:20,showRate:55,closeRate:6,avgRevenue:150000,repeat:1,margin:85}],
-    ['consultant','Consultant / coach',{cpm:200,ctr:1,lpConv:10,contactRate:60,apptRate:30,showRate:60,closeRate:25,avgRevenue:25000,repeat:1.2,margin:80}],
-    ['lawyer','Lawyer / legal',{cpm:260,ctr:0.8,lpConv:8,contactRate:60,apptRate:35,showRate:65,closeRate:40,avgRevenue:30000,repeat:1.2,margin:70}],
-    ['interior','Interior designer / architect',{cpm:240,ctr:0.9,lpConv:7,contactRate:55,apptRate:25,showRate:60,closeRate:15,avgRevenue:250000,repeat:1,margin:30}],
-    ['gym','Gym / fitness',{cpm:140,ctr:1.6,lpConv:14,contactRate:65,apptRate:40,showRate:60,closeRate:35,avgRevenue:12000,repeat:1.5,margin:65}],
-    ['coaching','Coaching / education',{cpm:170,ctr:1.3,lpConv:12,contactRate:60,apptRate:35,showRate:60,closeRate:25,avgRevenue:30000,repeat:1.2,margin:70}]
-  ],
-  compute(v){
-    const cpm=Math.max(v.cpm,1);
-    const impr=v.spend/cpm*1000,clicks=impr*P(v.ctr),leads=clicks*P(v.lpConv);
-    const contacted=leads*P(v.contactRate),appts=contacted*P(v.apptRate),held=appts*P(v.showRate),units=held*P(v.closeRate);
-    const total=v.spend+v.fixed,revenue=units*v.avgRevenue,gp=revenue*P(v.margin),net=gp-total;
-    const gpUnit=v.avgRevenue*P(v.margin),ltv=gpUnit*v.repeat,cac=div(total,units);
-    const roas=div(revenue,v.spend),roi=total>0?net/total*100:0,ltvcac=div(ltv,cac);
-    const beRoas=v.margin>0?100/v.margin:Infinity;
-    const maxCpl=leads>0?Math.max(0,(gp-v.fixed)/leads):0;
-    return{unit:'customer',unitP:'customers',units,leads,total,spend:v.spend,revenue,net,roas,roasLabel:'ROAS',cac,limit:gpUnit,limitLabel:'Breakeven CAC',ltvcac,ltv,roi,
-      funnel:[
-        {l:'Impressions',n:impr,c:['CPM',cpm]},
-        {l:'Link clicks',n:clicks,r:v.ctr+'% CTR',c:['CPC',div(v.spend,clicks)]},
-        {l:'Leads',n:leads,r:v.lpConv+'% of clicks',c:['CPL',div(v.spend,leads)]},
-        {l:'Leads reached',n:contacted,r:v.contactRate+'% of leads',c:['Per reached lead',div(v.spend,contacted)]},
-        {l:'Appointments booked',n:appts,r:v.apptRate+'% of reached',c:['Per appointment',div(v.spend,appts)]},
-        {l:'Appointments held',n:held,r:v.showRate+'% show up',c:['Per meeting held',div(v.spend,held)]},
-        {l:'New customers',n:units,r:v.closeRate+'% close',c:['CAC (ads only)',div(v.spend,units)]}
-      ],
-      cards:[
-        {k:'Leads',v:num(leads),s:'CPL '+inr(div(v.spend,leads))},
-        {k:'Appointments held',v:num(held),s:inr(div(v.spend,held))+' each'},
-        {k:'New customers',v:num(units),s:'Total CAC '+inr(cac)},
-        {k:'Revenue (first sale)',v:inr(revenue),s:'ROAS '+xx(roas)},
-        {k:'Net profit',v:inr(net),s:'ROI '+pct(roi),t:net>=0?'good':'bad'},
-        {k:'LTV : CAC',v:xx(ltvcac),s:'Lifetime gross profit '+inr(ltv),t:ltvcac>=3?'good':ltvcac>=1?'warn':'bad'}
-      ],
-      more:[
-        ['Impressions',num(impr)],['Cost per click (CPC)',inr(div(v.spend,clicks))],
-        ['Lead → customer rate',pct(leads>0?units/leads*100:0)],['Breakeven ROAS (ads only)',xx(beRoas)],
-        ['Max CPL to break even',inr(maxCpl)],['Gross profit per customer',inr(gpUnit)],
-        ['Lifetime revenue',inr(units*v.avgRevenue*v.repeat)],['Net profit incl. repeat sales',inr(units*ltv-total)]
-      ],
-      pnl:[['Revenue from first sales',revenue],['Cost of delivering the service',-(revenue-gp)],['Meta ad spend',-v.spend],['Agency, creative & other costs',-v.fixed]]
-    };
-  }
-},
-b2b:{
-  key:'b2b',name:'B2B',short:'B2B',color:'var(--b2b)',unit:'deal',unitP:'deals',goal:3,
-  fields:[
-    F('spend','Monthly Meta ad budget','₹',100000,10000,2000000,5000,'Ad delivery','What you plan to spend on Meta Ads each month.'),
-    F('cpm','CPM (cost per 1,000 impressions)','₹',350,80,1000,10,'Ad delivery','B2B audiences (decision makers) usually cost more to reach.'),
-    F('ctr','Link click through rate','%',0.9,0.2,4,0.1,'Ad delivery','Clicks on your link divided by impressions.',true),
-    F('lpConv','Click → lead','%',8,1,40,0.5,'Lead capture','Of people who click, how many submit a form or book.',true),
-    F('mqlRate','Leads that fit your ideal customer','%',40,5,100,1,'Sales pipeline','Right company size, role and budget. Meta leads often include many poor fits.',true),
-    F('sqlRate','Fitting leads → discovery call / demo held','%',30,5,100,1,'Sales pipeline','Of the qualified leads, how many actually get on a call.',true),
-    F('oppRate','Calls → proposal / quote sent','%',50,5,100,1,'Sales pipeline','Calls that turn into a real proposal.',true),
-    F('closeRate','Proposals → deal won','%',20,3,80,1,'Sales pipeline','Your proposal win rate.',true),
-    F('acv','Average first year deal value','₹',300000,10000,5000000,10000,'Business economics','Contract value you bill in the first 12 months.'),
-    F('years','Average years a client stays','x',2,1,10,0.5,'Business economics','1 = a single project. Higher if contracts renew or expand.'),
-    F('margin','Gross margin','%',50,5,100,1,'Business economics','After the direct cost of delivering the work or product.'),
-    F('fixed','Sales team & other monthly costs','₹',60000,0,1000000,5000,'Business economics','SDR / sales salary share, CRM, tools, creatives, agency fee for this campaign.'),
-    F('cycle','Sales cycle length','days',45,7,365,1,'Business economics','Revenue from this month’s ads lands roughly this many days later. Plan cash flow accordingly.'),
-    DROP
-  ],
-  presets:[
-    ['custom','Custom (my own numbers)',{}],
-    ['saas','SaaS / software product',{cpm:380,ctr:0.8,lpConv:6,mqlRate:35,sqlRate:25,oppRate:45,closeRate:20,acv:240000,years:2.5,margin:80,cycle:45}],
-    ['it','IT / software services',{cpm:350,ctr:0.8,lpConv:7,mqlRate:40,sqlRate:30,oppRate:50,closeRate:18,acv:600000,years:1.5,margin:30,cycle:60}],
-    ['agency','Marketing / creative agency',{cpm:300,ctr:1,lpConv:9,mqlRate:40,sqlRate:35,oppRate:55,closeRate:25,acv:360000,years:1.5,margin:55,cycle:30}],
-    ['mfg','Manufacturer / wholesaler',{cpm:280,ctr:0.9,lpConv:7,mqlRate:35,sqlRate:30,oppRate:50,closeRate:22,acv:500000,years:2,margin:25,cycle:60}],
-    ['staffing','Staffing / HR services',{cpm:300,ctr:1,lpConv:8,mqlRate:40,sqlRate:30,oppRate:45,closeRate:20,acv:200000,years:2,margin:25,cycle:30}]
-  ],
-  compute(v){
-    const cpm=Math.max(v.cpm,1);
-    const impr=v.spend/cpm*1000,clicks=impr*P(v.ctr),leads=clicks*P(v.lpConv);
-    const mql=leads*P(v.mqlRate),sql=mql*P(v.sqlRate),opp=sql*P(v.oppRate),units=opp*P(v.closeRate);
-    const total=v.spend+v.fixed,revenue=units*v.acv,gp=revenue*P(v.margin),net=gp-total;
-    const gpUnit=v.acv*P(v.margin),ltv=gpUnit*v.years,cac=div(total,units);
-    const roas=div(revenue,v.spend),roi=total>0?net/total*100:0,ltvcac=div(ltv,cac);
-    const monthlyGp=gpUnit/12,payback=isFinite(cac)&&monthlyGp>0?cac/monthlyGp:Infinity;
-    return{unit:'deal',unitP:'deals',units,leads,total,spend:v.spend,revenue,net,roas,roasLabel:'ROAS',cac,limit:gpUnit,limitLabel:'Breakeven CAC',ltvcac,ltv,roi,
-      funnel:[
-        {l:'Impressions',n:impr,c:['CPM',cpm]},
-        {l:'Link clicks',n:clicks,r:v.ctr+'% CTR',c:['CPC',div(v.spend,clicks)]},
-        {l:'Leads',n:leads,r:v.lpConv+'% of clicks',c:['CPL',div(v.spend,leads)]},
-        {l:'Qualified leads (MQL)',n:mql,r:v.mqlRate+'% of leads',c:['Cost per MQL',div(v.spend,mql)]},
-        {l:'Discovery calls held (SQL)',n:sql,r:v.sqlRate+'% of MQLs',c:['Cost per SQL',div(v.spend,sql)]},
-        {l:'Proposals sent',n:opp,r:v.oppRate+'% of calls',c:['Cost per proposal',div(v.spend,opp)]},
-        {l:'Deals won',n:units,r:v.closeRate+'% win rate',c:['CAC (ads only)',div(v.spend,units)]}
-      ],
-      cards:[
-        {k:'Leads',v:num(leads),s:'CPL '+inr(div(v.spend,leads))},
-        {k:'Qualified leads',v:num(mql),s:inr(div(v.spend,mql))+' each'},
-        {k:'Deals won',v:num(units),s:'Chance of ≥1 deal: '+pct((1-Math.exp(-units))*100)},
-        {k:'First year revenue',v:inr(revenue),s:'Pipeline '+inr(opp*v.acv)},
-        {k:'Net profit (year 1)',v:inr(net),s:'ROI '+pct(roi),t:net>=0?'good':'bad'},
-        {k:'LTV : CAC',v:xx(ltvcac),s:'Total CAC '+inr(cac),t:ltvcac>=3?'good':ltvcac>=1?'warn':'bad'}
-      ],
-      more:[
-        ['Cost per proposal',inr(div(v.spend,opp))],['Lead → deal rate',pct(leads>0?units/leads*100:0)],
-        ['ROAS (first year revenue)',xx(roas)],['Breakeven ROAS (ads only)',xx(v.margin>0?100/v.margin:Infinity)],
-        ['CAC payback',isFinite(payback)?num(payback)+' months + '+v.cycle+' day sales cycle':'n/a'],['Gross profit per deal (yr 1)',inr(gpUnit)],
-        ['Lifetime gross profit per client',inr(ltv)],['Revenue lands after',v.cycle+' days']
-      ],
-      pnl:[['First year revenue from won deals',revenue],['Cost of delivery',-(revenue-gp)],['Meta ad spend',-v.spend],['Sales team & other costs',-v.fixed]],
-      note:units<1?'You expect fewer than one deal a month. B2B results at low volume are lumpy: a month can deliver zero or three. Judge this over 3 to 6 months.':''
-    };
-  }
-},
-b2c:{
-  key:'b2c',name:'B2C / Ecommerce',short:'B2C',color:'var(--b2c)',unit:'order',unitP:'orders',goal:500,
-  fields:[
-    F('spend','Monthly Meta ad budget','₹',100000,10000,3000000,5000,'Ad delivery','What you plan to spend on Meta Ads each month.'),
-    F('cpm','CPM (cost per 1,000 impressions)','₹',150,50,600,5,'Ad delivery','Varies by audience, creative and season (festive sales push it up).'),
-    F('ctr','Link click through rate','%',1.4,0.3,4,0.1,'Ad delivery','Link clicks divided by impressions.',true),
-    F('lpvRate','Clicks that load your page','%',80,40,100,1,'Store funnel','Link clicks → landing page views. Slow pages lose people here.',true),
-    F('atcRate','Page views → add to cart','%',8,1,25,0.5,'Store funnel','Visitors who add a product to cart.',true),
-    F('icRate','Add to cart → checkout started','%',45,10,90,1,'Store funnel','Carts that reach checkout.',true),
-    F('buyRate','Checkout → order placed','%',45,10,90,1,'Store funnel','Checkouts that complete, including COD confirmations.',true),
-    F('aov','Average order value','₹',1200,100,50000,50,'Order economics','What a customer pays per order.'),
-    F('cogs','Product cost (COGS)','%',35,5,90,1,'Order economics','Cost of goods as a share of order value.'),
-    F('ship','Shipping & packaging per order','₹',90,0,500,5,'Order economics','Charged on every shipped order, including ones that come back.'),
-    F('gateway','Payment gateway fee','%',2,0,5,0.1,'Order economics','Deducted from revenue you keep.'),
-    F('rto','Returns / RTO','%',15,0,50,1,'Order economics','Orders that are returned or refused (common with COD). They earn nothing but still cost shipping.'),
-    F('repeat','Orders per customer over their lifetime','x',1.3,1,10,0.1,'Order economics','1 = never reorders.'),
-    F('fixed','Other monthly costs','₹',25000,0,500000,1000,'Order economics','Agency fee, creatives, tools, influencer or content costs for this campaign.'),
-    DROP
-  ],
-  presets:[
-    ['custom','Custom (my own numbers)',{}],
-    ['fashion','Fashion & apparel',{cpm:140,ctr:1.4,lpvRate:78,atcRate:7,icRate:45,buyRate:45,aov:1300,cogs:40,ship:90,rto:22,repeat:1.4}],
-    ['beauty','Beauty & personal care',{cpm:160,ctr:1.5,lpvRate:80,atcRate:8,icRate:45,buyRate:50,aov:800,cogs:30,ship:80,rto:15,repeat:2}],
-    ['decor','Home decor',{cpm:150,ctr:1.2,lpvRate:75,atcRate:6,icRate:40,buyRate:45,aov:2200,cogs:45,ship:150,rto:12,repeat:1.2}],
-    ['electronics','Electronics & gadgets',{cpm:170,ctr:1.3,lpvRate:78,atcRate:6,icRate:40,buyRate:50,aov:2500,cogs:65,ship:100,rto:10,repeat:1.2}],
-    ['food','Food & snacks',{cpm:130,ctr:1.6,lpvRate:80,atcRate:9,icRate:48,buyRate:50,aov:700,cogs:45,ship:70,rto:8,repeat:2}],
-    ['toys','Toys & kids',{cpm:145,ctr:1.5,lpvRate:80,atcRate:8,icRate:45,buyRate:48,aov:1100,cogs:45,ship:90,rto:12,repeat:1.5}]
-  ],
-  compute(v){
-    const cpm=Math.max(v.cpm,1);
-    const impr=v.spend/cpm*1000,clicks=impr*P(v.ctr),lpv=clicks*P(v.lpvRate),atc=lpv*P(v.atcRate),ic=atc*P(v.icRate),units=ic*P(v.buyRate);
-    const delivered=units*(1-P(v.rto)),booked=units*v.aov,netRev=delivered*v.aov;
-    const cogsCost=netRev*P(v.cogs),gate=netRev*P(v.gateway),ship=units*v.ship;
-    const contribution=netRev-cogsCost-gate-ship,total=v.spend+v.fixed,net=contribution-total;
-    const perOrder=units>0?contribution/units:0,ltv=perOrder*v.repeat,cac=div(total,units);
-    const roas=div(booked,v.spend),netRoas=div(netRev,v.spend),roi=total>0?net/total*100:0,ltvcac=div(ltv,cac);
-    const cm=booked>0?contribution/booked:0,beRoas=cm>0?1/cm:Infinity;
-    return{unit:'order',unitP:'orders',units,total,spend:v.spend,revenue:booked,net,roas,roasLabel:'ROAS (as Meta reports it)',cac,limit:perOrder,limitLabel:'Breakeven CPA',ltvcac,ltv,roi,
-      funnel:[
-        {l:'Impressions',n:impr,c:['CPM',cpm]},
-        {l:'Link clicks',n:clicks,r:v.ctr+'% CTR',c:['CPC',div(v.spend,clicks)]},
-        {l:'Landing page views',n:lpv,r:v.lpvRate+'% of clicks',c:['Per page view',div(v.spend,lpv)]},
-        {l:'Add to carts',n:atc,r:v.atcRate+'% of views',c:['Per add to cart',div(v.spend,atc)]},
-        {l:'Checkouts started',n:ic,r:v.icRate+'% of carts',c:['Per checkout',div(v.spend,ic)]},
-        {l:'Orders',n:units,r:v.buyRate+'% of checkouts',c:['CPA (ads only)',div(v.spend,units)]}
-      ],
-      cards:[
-        {k:'Orders',v:num(units),s:'CPA '+inr(div(v.spend,units))},
-        {k:'Revenue booked',v:inr(booked),s:'ROAS '+xx(roas)},
-        {k:'Revenue kept after returns',v:inr(netRev),s:'Net ROAS '+xx(netRoas)},
-        {k:'Contribution before ads',v:inr(contribution),s:inr(perOrder)+' per order',t:contribution>0?'':'bad'},
-        {k:'Net profit',v:inr(net),s:'ROI '+pct(roi),t:net>=0?'good':'bad'},
-        {k:'LTV : CAC',v:xx(ltvcac),s:'Total CPA '+inr(cac),t:ltvcac>=3?'good':ltvcac>=1?'warn':'bad'}
-      ],
-      more:[
-        ['Cost per click (CPC)',inr(div(v.spend,clicks))],['Click → order rate',pct(clicks>0?units/clicks*100:0)],
-        ['Orders delivered',num(delivered)],['Breakeven ROAS (ads only)',isFinite(beRoas)?xx(beRoas):'Not reachable'],
-        ['Contribution per order',inr(perOrder)],['Cost per add to cart',inr(div(v.spend,atc))],
-        ['Lifetime contribution per customer',inr(ltv)],['Net profit incl. repeat orders',inr(units*ltv-total)]
-      ],
-      pnl:[['Revenue kept (delivered orders)',netRev],['Product cost',-cogsCost],['Payment fees',-gate],['Shipping & packaging',-ship],['Meta ad spend',-v.spend],['Other monthly costs',-v.fixed]],
-      note:v.rto>0?'Returns cut your revenue by '+inr(booked-netRev)+' while shipping is still paid on every order. Meta’s ROAS shows booked revenue, so your real return is the net ROAS above.':''
-    };
-  }
-}};
+const MODELS={};
 
-/* ---------- plug in modules (js/door.js) ---------- */
-const clone=x=>Array.isArray(x)?x.slice():(x&&typeof x==='object'?JSON.parse(JSON.stringify(x)):x);
-const ENGINE={F,DROP,inr,num,pct,xx,div,P,cl,$,$$,toast,cap:s=>s.charAt(0).toUpperCase()+s.slice(1),
+/* ---------- plug in modules (js/industries.js via js/framework.js, js/door.js) ---------- */
+const clone=x=>x&&typeof x==='object'?JSON.parse(JSON.stringify(x)):x;
+const ENGINE={F,DROP,inr,num,pct,xx,div,P,cl,cnt,$,$$,toast,cap:s=>s.charAt(0).toUpperCase()+s.slice(1),
   scaled:(m,v,mult)=>scaledOf(m,v,mult),scenario:(m,v,k)=>scenarioOf(m,v,k),
   get market(){return globalThis.MABC_MARKET||null}};
+(globalThis.MABC_MODULES||[]).forEach(fn=>(fn(ENGINE)||[]).forEach(m=>{MODELS[m.key]=m}));
 if(typeof globalThis.MABC_DOOR==='function')MODELS.door=globalThis.MABC_DOOR(ENGINE);
+/* validation for every model: whatever calls compute (form, scenarios, scaling, goals), numbers are never
+   negative or non numeric, and rates never exceed 100% (or the field's own higher max, e.g. repeat rates) */
+Object.values(MODELS).forEach(m=>{
+  const raw=m.compute,num=m.fields.filter(f=>f.kind!=='opt'&&typeof f.def==='number');
+  m.compute=function(v){
+    const o=Object.assign({},v);
+    num.forEach(f=>{let x=+o[f.id];if(!isFinite(x))x=f.def;if(x<0)x=0;if(f.unit==='%')x=Math.min(x,Math.max(100,f.max||100));o[f.id]=x});
+    return raw.call(this,o);
+  };
+});
+/* catalogue for the dashboard and the industry picker; falls back to every model */
+const CATALOG=(globalThis.MABC_CATALOG||[{cat:'Calculators',items:Object.keys(MODELS).map(key=>({key}))}])
+  .map(g=>({cat:g.cat,items:g.items.filter(i=>MODELS[i.key])})).filter(g=>g.items.length);
 
 /* ---------- state ---------- */
 const state={},presetSel={},goal={},openGroups={};
@@ -293,7 +116,7 @@ function save(){
 /* ---------- selection ---------- */
 function setModel(key,scroll){
   cur=key;if(!state[key])load(key);
-  $$('.model').forEach(c=>c.setAttribute('aria-pressed',c.dataset.m===key?'true':'false'));
+  $$('.ind').forEach(c=>c.setAttribute('aria-pressed',c.dataset.m===key?'true':'false'));
   shell();
   const g=$('.calc-grid'),rm=$('#res-main');g.classList.add('enter');rm.classList.add('fresh');
   update();
@@ -303,7 +126,7 @@ function setModel(key,scroll){
 document.addEventListener('click',e=>{
   const p=e.target.closest('[data-pick]');
   if(p){e.stopPropagation();setModel(p.dataset.pick,true);return}
-  const c=e.target.closest('.model');
+  const c=e.target.closest('.ind');
   if(c)setModel(c.dataset.m,true);
 });
 
@@ -358,8 +181,8 @@ function shell(){
         </div>`;
   $('#calc-root').innerHTML=`
     <div class="calc-head" style="--mc:${m.color}">
-      <div class="tabs" role="tablist" aria-label="Business model">
-        ${Object.values(MODELS).map(x=>`<button class="tab" role="tab" data-tab="${x.key}" aria-selected="${x.key===cur}" style="--tc:${x.color}">${x.name}</button>`).join('')}
+      <div class="picker"><label for="industry">Industry</label>
+        <select id="industry" aria-label="Industry">${CATALOG.map(g=>`<optgroup label="${esc(g.cat)}">${g.items.filter(i=>!i.alias).map(i=>`<option value="${i.key}"${i.key===cur?' selected':''}>${esc(i.name||MODELS[i.key].name)}</option>`).join('')}</optgroup>`).join('')}</select>
       </div>
       <div class="tools">
         ${modeSw}
@@ -374,8 +197,10 @@ function shell(){
         <div id="res-main" aria-live="polite"></div>
         ${goalPanel}
         ${m.renderSims?'<div id="sims"></div>':''}
+        ${avpPanel()}
         <div class="actions">
-          <button class="btn btn-green btn-sm" type="button" id="copy">Copy summary</button>
+          <button class="btn btn-green btn-sm" type="button" id="report-btn">Generate report</button>
+          <button class="btn btn-line btn-sm" type="button" id="copy">Copy summary</button>
           <button class="btn btn-line btn-sm" type="button" id="print">Print / save as PDF</button>
         </div>
         <p class="disc">Estimates only. They depend entirely on the assumptions you enter.</p>
@@ -403,18 +228,28 @@ root.addEventListener('input',e=>{
   if(t.dataset&&t.dataset.sim!==undefined){if(m.simInput)m.simInput(t,eng());return}
   if(t.dataset&&t.dataset.tgt!==undefined){if(m.goalInput)m.goalInput(t,eng());return}
   if(t.dataset&&t.dataset.opt&&t.type==='text'){state[cur][t.dataset.opt]=t.value;save();schedule();return}
+  if(t.dataset&&t.dataset.cust!==undefined){if(m.customInput){m.customInput(t,eng());markCustom();save();schedule()}return}
+  if(t.dataset&&t.dataset.avp!==undefined){const a=actual[cur]||(actual[cur]={}),n=parseFloat(t.value);if(isNaN(n)||n<0)delete a[t.dataset.avp];else a[t.dataset.avp]=n;
+    try{localStorage.setItem('mabc:actual:'+cur,JSON.stringify(a))}catch(err){}renderAvp();return}
   if(t.id==='goal'){goal[cur]=parseFloat(t.value)||0;save();renderGoal();return}
   const id=t.dataset&&t.dataset.id;if(!id)return;
-  const val=parseFloat(t.value);const n=isNaN(val)?0:Math.max(0,val);
+  const f=m.fields.find(x=>x.id===id),val=parseFloat(t.value);
+  /* validation: no negatives, rates capped at 100% */
+  let n=isNaN(val)?0:Math.max(0,val);
+  if(f&&f.unit==='%'&&n>100)n=100;
+  if(n!==val&&t.value!=='')t.value=n;
   state[cur][id]=n;
   const peer=t.dataset.r?$('#f-'+id):$(`input[data-r][data-id="${id}"]`);
   if(peer&&peer!==t)peer.value=n;
+  const linked=m.onInput?m.onInput(id,state[cur]):null;
+  if(linked)linked.forEach(k=>{$$(`[data-id="${k}"]`).forEach(el=>{el.value=state[cur][k]})});
   markCustom();
   save();schedule();
 });
 root.addEventListener('change',e=>{
   const t=e.target;
   if(t.tagName==='SELECT'&&t.dataset.opt){setOpt(t.dataset.opt,t.value);return}
+  if(t.id==='industry'){setModel(t.value,false);return}
   if(t.id==='preset'){
     const m=MODELS[cur],p=m.presets.find(x=>x[0]===t.value);
     if(p){Object.assign(state[cur],clone(p[2]));presetSel[cur]=p[0];if(m.onPreset)m.onPreset(state[cur]);save();shell();update()}
@@ -433,6 +268,7 @@ root.addEventListener('click',e=>{
   if(e.target.id==='reset'){state[cur]=defaults(MODELS[cur]);presetSel[cur]='custom';goal[cur]=clone(MODELS[cur].goal);save();shell();update();toast('Reset to defaults');return}
   if(e.target.id==='print'){try{window.print()}catch(err){toast('Printing is blocked here. Use your browser menu.')}return}
   if(e.target.id==='copy')copySummary();
+  if(e.target.id==='report-btn')openReport();
 });
 function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(update)}
 
@@ -476,7 +312,7 @@ function update(){
   const maxN=Math.max(...r.funnel.map(s=>s.n).filter(isFinite),1);
   const funnel=r.funnel.filter(s=>isFinite(s.n)).map((s,i)=>{
     const w=s.n>0?Math.max(2,lg(s.n+1)/lg(maxN+1)*100):0;
-    return `<div class="frow"><div class="fl">${s.l}${s.r?`<small>${s.r}</small>`:''}</div><div class="fbar" aria-hidden="true"><i data-w="${w}" style="width:${fresh?0:(oldBars[i]||0)}%;transition-delay:${fresh?i*70+300:0}ms"></i></div><div class="fv"><b>${num(s.n)}</b><small>${s.c[0]} ${inr(s.c[1])}</small></div></div>`}).join('');
+    return `<div class="frow"><div class="fl">${s.l}${s.r?`<small>${s.r}</small>`:''}</div><div class="fbar" aria-hidden="true"><i data-w="${w}" style="width:${fresh?0:(oldBars[i]||0)}%;transition-delay:${fresh?i*70+300:0}ms"></i></div><div class="fv"><b>${cnt(s.n)}</b><small>${s.c[0]} ${inr(s.c[1])}</small></div></div>`}).join('');
   const pnl=r.pnl.map(x=>`<tr><td>${x[0]}</td><td class="${x[1]<0?'bad':''}">${inr(x[1])}</td></tr>`).join('')+
     `<tr class="tot"><td>Net profit</td><td class="${r.net>=0?'good':'bad'}">${inr(r.net)}</td></tr>`;
   const ratio=r.limit>0&&isFinite(r.cac)?r.cac/r.limit:null;
@@ -501,7 +337,7 @@ function update(){
   const parts={
     verdict:`<div class="verdict ${vd.t}"><span class="vi" aria-hidden="true">${VICON[vd.t]}</span><div><h3>${vd.h}</h3><p>${vd.p}</p></div></div>`,
     note:r.note?`<p class="note" style="margin:-6px 0 16px;color:var(--muted);font-size:14px">${r.note}</p>`:'',
-    cards:`<div class="cards">${r.cards.map(c=>`<div class="card ${c.t||''}" data-k="${c.k}"><div class="k">${c.k}</div><div class="v">${c.v}</div><div class="s">${c.s}</div></div>`).join('')}</div>`,
+    cards:`<div class="cards ${m.cardsClass||''}">${r.cards.map(c=>`<div class="card ${c.t||''}" data-k="${c.k}"><div class="k">${c.k}</div><div class="v">${c.v}</div><div class="s">${c.s}</div></div>`).join('')}</div>`,
     funnel:`<div class="panel"><h3>${m.funnelTitle||'Your funnel'}</h3>${funnel}<p class="note">Bars use a log scale so every stage stays visible.</p></div>`,
     pnl:`<div class="panel"><h3>Profit breakdown (per month)</h3><div class="tscroll"><table><tbody>${pnl}</tbody></table></div></div>`,
     meterBody:meter,
@@ -516,6 +352,7 @@ function update(){
   animateResults(oldCards,vd,fresh);
   renderGoal();
   if(m.after)m.after(r,v,eng());
+  renderAvp();
   if(m.derived){const d=m.derived(v,r);$$('#calc-root [data-d]').forEach(el=>{const t=d[el.dataset.d];if(t!==undefined&&el.innerHTML!==t)el.innerHTML=t})}
 }
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
@@ -549,6 +386,90 @@ function renderGoal(){
     <p class="note">${mult>1&&v.drop>0?'Includes cost inflation from spending '+xx(mult).replace('x','×')+' your current budget.':'Based on your current efficiency.'}</p>`;
 }
 
+/* ---------- actual vs projected (every industry, via r.k) ---------- */
+const actual={};
+function loadActual(k){try{actual[k]=JSON.parse(localStorage.getItem('mabc:actual:'+k)||'{}')||{}}catch(e){actual[k]={}}}
+function avpPanel(){
+  if(!actual[cur])loadActual(cur);
+  const m=MODELS[cur],r=m.compute(state[cur]),k=r.k||{},a=actual[cur];
+  const inp=(id,l,rs)=>`<div class="field"><label for="a-${id}">${l}</label><div class="inp">${rs?'<span class="u">₹</span>':''}<input id="a-${id}" data-avp="${id}" type="number" inputmode="decimal" min="0" step="any" value="${a[id]!==undefined?a[id]:''}" placeholder="not entered"></div></div>`;
+  return `<div class="panel" id="avp"><h3>Actual vs projected</h3><p class="note" style="margin:0 0 12px">After the campaign runs, enter what really happened. Profit uses your margin assumption (${pct((k.revenue>0?k.gross/k.revenue:0)*100)}), so update costs too if they changed.</p>
+    <div class="avpin">${inp('spend','Actual ad spend',1)}${inp('leads','Actual '+(k.leadWord||'leads'),0)}${inp('customers','Actual '+(k.unitP||r.unitP),0)}${inp('revenue','Actual revenue',1)}</div><div id="avp-out"></div></div>`;
+}
+function renderAvp(){
+  const out=$('#avp-out');if(!out||!cur)return;
+  const m=MODELS[cur],v=state[cur],r=m.compute(v),k=r.k,a=actual[cur]||{};
+  if(!k){out.innerHTML='';return}
+  if(!Object.keys(a).length){out.innerHTML='<p class="note">Enter at least one actual result to compare it with the projection.</p>';return}
+  const fixed=Math.max(0,r.total-r.spend),mu=k.revenue>0?k.gross/k.revenue:0,g=(id,p)=>a[id]!==undefined?a[id]:p;
+  const sp=g('spend',k.spend),ld=g('leads',k.leads),cu=g('customers',k.customers),rv=g('revenue',k.revenue);
+  const pr=rv*mu-sp-fixed,inv=rv*(1-mu)+sp+fixed;
+  const A={leads:ld,cpl:div(sp,ld),customers:cu,cac:div(sp+fixed,cu),revenue:rv,roas:div(rv,sp),profit:pr,roi:inv>0?pr/inv*100:0};
+  const Pj={leads:k.leads,cpl:k.cpl,customers:k.customers,cac:k.cac,revenue:k.revenue,roas:k.roas,profit:k.net,roi:k.roi};
+  /* a metric is only shown as actual when every input it needs was really entered */
+  const need={leads:['leads'],cpl:['spend','leads'],customers:['customers'],cac:['spend','customers'],revenue:['revenue'],roas:['spend','revenue'],profit:['spend','revenue'],roi:['spend','revenue']};
+  const has=id=>need[id].every(q=>a[q]!==undefined);
+  const rows=[['leads',cap(k.leadWord||'leads'),cnt,1],['cpl',k.costWord||'CPL',inr,0],['customers',cap(k.unitP||'customers'),cnt,1],['cac','CAC',inr,0],['revenue','Revenue',inr,1],['roas','ROAS',xx,1],['profit','Profit',inr,1],['roi','ROI',pct,1]];
+  out.innerHTML=`<div class="tscroll"><table class="fc"><thead><tr><th></th><th>Projected</th><th>Actual</th><th>Difference</th></tr></thead><tbody>${rows.map(([id,l,f,hi])=>{
+    const p=Pj[id],ok=has(id),x=A[id],d=ok&&isFinite(p)&&isFinite(x)&&p!==0?(x-p)/Math.abs(p)*100:null,good=d===null?'':(hi?d>=0:d<=0)?'good':'bad';
+    return `<tr><td>${l}</td><td>${f(p)}</td><td>${ok?`<b>${f(x)}</b>`:'<span class="sub">needs '+need[id].map(q=>q==='leads'?(k.leadWord||'leads'):q==='customers'?(k.unitP||'customers'):q).join(' and ')+'</span>'}</td><td class="${good}">${d===null?'':(d>=0?'+':'')+pct(d)}</td></tr>`}).join('')}</tbody></table></div>
+    <p class="note">Use the gap to correct your assumptions: a higher real CPL means raising CPM or lowering CTR in Advanced mode.</p>`;
+}
+
+/* ---------- report ---------- */
+function reportHTML(){
+  const m=MODELS[cur],v=state[cur],r=m.compute(v),k=r.k||{},vd=(m.verdict||verdict)(r,v);
+  const optLab=id=>{const f=m.fields.find(x=>x.id===id);if(!f)return '';if(!f.options)return String(v[id]||'');const o=f.options.find(o=>o[0]===v[id]);return o?o[1]:String(v[id]||'')};
+  const skip=new Set(['mode','loc','locName','audience','objective','amode','cstages','types','tradeTargets','fmode','priceMode','labourMode','transMode']);
+  const model=m.fields.filter(f=>f.kind==='opt'&&!skip.has(f.id)&&f.type!=='text'&&(!f.show||f.show(v))).map(f=>`${f.label.replace(/\?$/,'')}: ${optLab(f.id)}`);
+  if(v.cname)model.unshift('Business: '+esc(v.cname));
+  if(v.types)model.push('Door types: '+v.types.length+' selected');
+  const loc=v.loc==='Custom'?(v.locName||'Custom'):v.loc;
+  const sc=['cons','exp','opt'].map(q=>scenarioOf(m,v,q)),SN=m.scenNames||['Conservative','Expected','Optimistic'];
+  const T=(rows,head)=>`<table>${head?`<thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead>`:''}<tbody>${rows.map(rw=>`<tr>${rw.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  const ins=m.insightList?m.insightList(r,v):[];
+  const a=actual[cur]||{};
+  const date=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  return `<header><p class="rk">Meta Ads Calculator · Get Bee Seen</p><h1>${esc(m.name)} forecast report</h1><p>${date}</p></header>
+  <section><h2>Business and campaign</h2>${T([
+    ['Industry',esc(m.name)],...model.map(x=>{const i=x.indexOf(': ');return[x.slice(0,i),x.slice(i+2)]}),
+    ['Campaign objective',esc(optLab('objective')||'Not set')],['Location',esc(loc||'')],['Target audience',esc(v.audience||'Not set')],
+    ['Monthly budget',inr(v.spend)],['Daily budget','₹'+IN.format(Math.round(v.spend/30.4))],['Campaign duration',(v.months||1)+' month'+((v.months||1)===1?'':'s')+' · '+inr(v.spend*(v.months||1))+' in total'],
+    ['Ad costs entered as',v.amode==='manual'||v.fmode==='cpl'?'Manual (known cost per lead or purchase)':'Forecast (CPM '+inr(v.cpm)+', CTR '+pct(v.ctr)+')']])}</section>
+  <section><h2>Verdict</h2><p><b>${vd.h}.</b> ${vd.p}</p></section>
+  <section><h2>Key results (per month)</h2>${T([
+    ['Ad spend',inr(k.spend)],[cap(k.leadWord||'leads'),cnt(k.leads)],[k.costWord||'CPL',inr(k.cpl)],[cap(k.unitP||r.unitP),cnt(k.customers)],['CAC',inr(k.cac)],
+    ['Average ticket / AOV',inr(k.ticket)],['Revenue',inr(k.revenue)],['Gross profit',inr(k.gross)],['Net profit',inr(k.net)],['ROAS',xx(k.roas)],['Profit ROAS',xx(k.profitRoas)],['ROI',pct(k.roi)]])}</section>
+  <section><h2>Funnel and conversion rates</h2>${T(r.funnel.filter(s=>isFinite(s.n)).map(s=>[s.l,cnt(s.n),s.r||'',s.c[0]+' '+inr(s.c[1])]),['Stage','Count','Rate','Cost'])}</section>
+  <section><h2>Profit breakdown</h2>${T([...r.pnl.map(x=>[x[0],inr(x[1])]),['<b>Net profit</b>','<b>'+inr(r.net)+'</b>']])}</section>
+  <section><h2>Breakeven</h2>${T([['Breakeven ROAS',isFinite(k.beRoas)?xx(k.beRoas):'not reachable'],['Breakeven '+(k.costWord||'CPL'),inr(k.beCpl)],['Breakeven CAC',inr(k.beCac)]])}</section>
+  <section><h2>Scenario analysis</h2>${T([['Ad spend',...sc.map(s=>inr((s.k||{}).spend))],[cap(k.leadWord||'leads'),...sc.map(s=>cnt((s.k||{}).leads))],[cap(k.unitP||r.unitP),...sc.map(s=>cnt((s.k||{}).customers))],
+    ['Revenue',...sc.map(s=>inr(s.revenue))],['CAC',...sc.map(s=>inr(s.cac))],['ROAS',...sc.map(s=>xx(s.roas))],['Profit',...sc.map(s=>inr(s.net))],['ROI',...sc.map(s=>pct(s.roi))]],['',...SN])}
+    <p class="small">${m.scenNote||''}</p></section>
+  ${ins.length?`<section><h2>Insights</h2><ul>${ins.map(t=>`<li>${t}</li>`).join('')}</ul></section>`:''}
+  ${Object.keys(a).length?`<section><h2>Actual results entered</h2>${T(Object.keys(a).map(id=>[cap(id),id==='spend'||id==='revenue'?inr(a[id]):cnt(a[id])]))}</section>`:''}
+  <footer><p><b>These are estimates based on the assumptions entered, not guaranteed Meta Ads results.</b> Actual performance changes with creative, offer, audience, season and sales follow up. Starting assumptions are placeholders, not benchmarks.</p></footer>`;
+}
+const REPORT_CSS=`body{font:14px/1.55 Archivo,system-ui,sans-serif;color:#191816;background:#fff;margin:0}.rep-doc{max-width:820px;margin:0 auto;padding:32px 24px}
+header{border-bottom:3px solid #FFB933;margin-bottom:18px;padding-bottom:10px}h1{font:400 30px 'Alfa Slab One',Georgia,serif;color:#196144;margin:4px 0}.rk{color:#196144;font-weight:700;margin:0;font-size:12px}
+h2{font:400 18px 'Alfa Slab One',Georgia,serif;color:#196144;margin:22px 0 8px}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#196144;color:#FFF2DC;text-align:left;padding:7px 8px}
+td{padding:7px 8px;border-bottom:1px solid #EBD9B8;vertical-align:top}td:not(:first-child){text-align:right}ul{padding-left:20px}li{margin-bottom:6px}.small{font-size:12px;color:#5F6B63}footer{margin-top:26px;font-size:12px;color:#5F6B63;border-top:1px solid #EBD9B8;padding-top:10px}`;
+function openReport(){
+  const body=reportHTML(),m=MODELS[cur];
+  let ov=$('#report');if(ov)ov.remove();
+  ov=document.createElement('div');ov.id='report';ov.className='rep-ov';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','Report');
+  ov.innerHTML=`<div class="rep"><div class="rep-bar"><b>Report preview</b><span><button class="btn btn-green btn-sm" type="button" data-rep="print">Print / save as PDF</button> <button class="btn btn-line btn-sm" type="button" data-rep="dl">Download HTML</button> <button class="btn btn-line btn-sm" type="button" data-rep="close">Close</button></span></div><article class="rep-doc">${body}</article></div>`;
+  document.body.appendChild(ov);document.body.classList.add('rep-open');
+  const close=()=>{ov.remove();document.body.classList.remove('rep-open');const b=$('#report-btn');if(b)b.focus()};
+  ov.addEventListener('click',e=>{const b=e.target.closest('[data-rep]');if(e.target===ov)close();if(!b)return;
+    if(b.dataset.rep==='close')close();
+    if(b.dataset.rep==='print'){document.body.classList.add('rp-print');try{window.print()}catch(err){toast('Printing is blocked here. Use your browser menu.')}setTimeout(()=>document.body.classList.remove('rp-print'),500)}
+    if(b.dataset.rep==='dl'){try{const doc=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(m.name)} forecast report</title><style>${REPORT_CSS}</style></head><body><div class="rep-doc">${body}</div></body></html>`;
+      const u=URL.createObjectURL(new Blob([doc],{type:'text/html'})),a=document.createElement('a');a.href=u;a.download='meta-ads-report-'+m.key+'.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}catch(err){toast('Download blocked by the browser. Use Print instead.')}}});
+  ov.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+  const f=ov.querySelector('[data-rep="print"]');if(f)f.focus();
+}
+
 /* ---------- copy ---------- */
 function summaryText(){
   const m=MODELS[cur],v=state[cur],r=m.compute(v),vd=(m.verdict||verdict)(r,v);
@@ -568,9 +489,35 @@ function copySummary(){
 
 /* Test hook: only active when a test harness defines globalThis.__MABC_EXPOSE__ */
 if(typeof globalThis!=='undefined'&&typeof globalThis.__MABC_EXPOSE__==='function'){
-  globalThis.__MABC_EXPOSE__({MODELS,state,inr,num,xx,pct,splitNum,fmtNum,zeroOf,tweenText,verdict,scaledOf,scenarioOf,ENGINE,
+  globalThis.__MABC_EXPOSE__({MODELS,CATALOG,cnt,reportHTML:()=>reportHTML(),state,inr,num,xx,pct,splitNum,fmtNum,zeroOf,tweenText,verdict,scaledOf,scenarioOf,ENGINE,
     open:function(k,vals){cur=k;load(k);if(vals)Object.assign(state[k],vals);shell();update();return{vals:state[k],summary:summaryText(),html:lastHtml}}});
 }
+
+/* ---------- industry dashboard ---------- */
+(function(){
+  const box=$('#industries');if(!box)return;
+  const ic=n=>`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(globalThis.MABC_ICONS||{})[n]||''}</svg>`;
+  box.innerHTML=`<div class="ifilter"><label for="ifind">Find your industry</label><div class="inp"><input id="ifind" type="search" placeholder="For example dental, timber, SaaS" autocomplete="off"></div></div>`+
+    CATALOG.map(g=>`<div class="igroup"><h3>${esc(g.cat)}</h3><div class="igrid">${g.items.map(i=>{const m=MODELS[i.key],nm=i.name||m.name;
+      return `<article class="ind" data-m="${i.key}" aria-pressed="false" data-q="${esc((nm+' '+m.name+' '+(m.desc||'')).toLowerCase())}"><div class="badge">${ic(m.icon)}</div><div class="ib"><h4>${esc(nm)}</h4><p>${esc(m.flow||'')}</p>${i.alias?`<small>Same calculator as ${esc(m.name)}</small>`:''}</div><button class="btn btn-green btn-sm" type="button" data-pick="${i.key}" aria-label="Calculate ${esc(nm)}">Calculate</button></article>`}).join('')}</div></div>`).join('')+
+    '<p class="note inone" hidden>No industry matches. Try the Custom industry calculator.</p>';
+  const q=$('#ifind');q.addEventListener('input',()=>{const t=q.value.trim().toLowerCase();let any=0;
+    $$('.igroup',box).forEach(g=>{let n=0;$$('.ind',g).forEach(c=>{const on=!t||c.dataset.q.includes(t);c.hidden=!on;n+=on});g.hidden=!n;any+=n});$('.inone',box).hidden=!!any});
+  const cnt$=$('#ind-count');if(cnt$)cnt$.textContent=Object.keys(MODELS).length;
+})();
+
+/* ---------- ribbon ticker: a permanent, seamless scroll of every industry ----------
+   Two identical copies side by side; the track moves left by one copy width and loops.
+   Reduced motion keeps the static ribbon from index.html. */
+(function(){
+  const rb=$('.ribbon');if(!rb||RM.matches)return;
+  const names=[...new Set(CATALOG.flatMap(g=>g.items.filter(i=>!i.alias).map(i=>i.name||MODELS[i.key].name)))];
+  if(!names.length)return;
+  const bee=ASSETS.bee;
+  const run=hidden=>`<div class="tk-run"${hidden?' aria-hidden="true"':''}>${names.map((n,i)=>`${i%6===0?`<img src="${bee}" alt="">`:'<i class="sep"></i>'}<span>${esc(n)}</span>`).join('')}<i class="sep"></i></div>`;
+  rb.innerHTML=`<div class="tk" role="marquee" aria-label="${names.length} industry calculators"><div class="tk-track" style="--tk-d:${Math.round(names.length*3.2)}s">${run(0)}${run(1)}</div></div>`;
+  rb.classList.add('ticking');
+})();
 
 /* ---------- scroll reveals ---------- */
 (function(){
