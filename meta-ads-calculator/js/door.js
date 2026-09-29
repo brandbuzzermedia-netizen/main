@@ -35,8 +35,8 @@ const adv=v=>v.mode!=='simple';
 const mfgOn=v=>adv(v)&&v.biz!=='retail';
 const retOn=v=>adv(v)&&v.biz!=='mfg';
 const lamOn=v=>v.types.includes('laminated');
-const locOf=v=>(MK()&&MK().locations[v.loc])||{price:1,cost:1,cpm:170};
-const locName=v=>v.loc==='Custom'?(String(v.locName||'').trim()||'your area'):v.loc;
+const locOf=v=>MK()?MK().blend(v.loc):{price:1,cost:1,cpm:170};
+const locName=v=>MK()?MK().locLabel(v.loc,v.locName):[].concat(v.loc).join(', ');
 
 /* ---------- fields ---------- */
 const G={biz:'Your door business',size:'Door size',price:'Selling price',simple:'Actual door cost',mix:'Product mix',
@@ -47,8 +47,8 @@ const fields=[
   O('mode','Detail level','seg',[['simple','Simple'],['advanced','Advanced']],'simple',G.biz,'',{show:()=>false}),
   O('biz','What type of door business do you operate?','cards',[['mfg','Manufacturer','I manufacture doors.'],['retail','Retailer / dealer','I purchase doors and sell them.'],['both','Manufacturer + retailer','I manufacture some doors and retail other products.']],'mfg',G.biz,'',{simple:1}),
   O('types','Door types you sell','chips',TYPES,['laminated'],G.biz,'Pick every type you sell. The market reference averages them.',{simple:1}),
-  O('loc','Where do you sell?','select',LOCS.map(l=>[l,l]),'Bengaluru',G.biz,'Sets the typical CPM and the market reference for your area.',{simple:1}),
-  O('locName','Location name','text',null,'',G.biz,'',{simple:1,show:v=>v.loc==='Custom'}),
+  O('loc','Where do you sell?','chips',LOCS.map(l=>[l,l]),['Bengaluru'],G.biz,'Pick every area you sell in. CPM and the market reference are averaged across them.',{simple:1}),
+  O('locName','Custom location name','text',null,'',G.biz,'',{simple:1,show:v=>v.loc.includes('Custom')}),
   O('quality','Door quality','select',[['economy','Economy'],['standard','Standard'],['premium','Premium']],'standard',G.biz,'Used for the market reference.'),
   O('finish','Finish','select',FIN,'laminate',G.biz,'Used for the market reference.'),
 
@@ -342,7 +342,7 @@ function thickF(v){const mk=MK(),b=mk?mk.baseThickness:32;return Math.min(1.5,Ma
 function refPrice(v){
   const mk=MK();if(!mk)return null;
   const fm=(mk.finish[v.finish]||{m:1}).m,tf=thickF(v),area=v.width*v.height;
-  const rs=v.types.map(t=>mk.lookup('door',t,v.loc,v.quality)).filter(Boolean);
+  const rs=v.types.map(t=>mk.lookupMulti('door',t,v.loc,v.quality)).filter(Boolean);
   if(!rs.length)return null;
   const avg=k=>rs.reduce((a,r)=>a+r[k],0)/rs.length*fm*tf;
   const low=avg('low'),high=avg('high'),mid=(low+high)/2;
@@ -350,7 +350,7 @@ function refPrice(v){
 }
 function costRef(v){
   const mk=MK();if(!mk)return null;
-  const g=(c,k)=>mk.lookup(c,k,v.loc,v.quality);
+  const g=(c,k)=>mk.lookupMulti(c,k,v.loc,v.quality);
   return{g,mat:Object.fromEntries(MATS.map(([k,,key])=>[k,g('material',key)])),lam:g('laminate','sheet'),adh:g('adhesive','door'),
     lab:g('labour','door'),pk:g('packaging','door'),tr:g('transport','door'),inst:g('installation','door'),hinge:g('hardware','hinge'),stop:g('hardware','stop'),bolt:g('hardware','bolt')};
 }
@@ -497,11 +497,11 @@ function marketPanel(v){
   const mk=MK();if(!mk)return '';
   const q=(mk.quality[v.quality]||{}).label||'Standard';
   const rows=[];
-  v.types.forEach(t=>{const r=mk.lookup('door',t,v.loc,v.quality);if(r)rows.push([r.row.label+' (selling price)',r])});
+  v.types.forEach(t=>{const r=mk.lookupMulti('door',t,v.loc,v.quality);if(r)rows.push([r.row.label+' (selling price)',r])});
   [['material','ply'],['material','block'],['material','mdf'],['material','hdhmr'],['material','wpc'],['material','solid'],['material','teak'],['laminate','sheet'],['adhesive','door'],
    ['hardware','handle'],['hardware','lock'],['hardware','hinge'],['labour','door'],['finishing','pu'],['finishing','duco'],['finishing','polish'],['packaging','door'],['transport','door'],['transport','trip'],['installation','door']]
-   .forEach(([c,k])=>{const r=mk.lookup(c,k,v.loc,v.quality);if(r)rows.push([r.row.label,r])});
-  return `<div class="panel"><h3>Market reference data</h3><p class="note" style="margin:0 0 10px"><b>${mk.note}</b> Showing ${locName(v)}, ${q} quality. Edit <code>js/market.js</code> to replace these with your own supplier quotes.</p>
+   .forEach(([c,k])=>{const r=mk.lookupMulti(c,k,v.loc,v.quality);if(r)rows.push([r.row.label,r])});
+  return `<div class="panel"><h3>Market reference data</h3><p class="note" style="margin:0 0 10px"><b>${mk.note}</b> Showing ${v.loc.length>1?'the average of ':''}${locName(v)}, ${q} quality. Edit <code>js/market.js</code> to replace these with your own supplier quotes.</p>
     <div class="tscroll"><table class="mref"><thead><tr><th>Item</th><th>Range</th><th>Unit</th><th>Source</th><th>Updated</th></tr></thead><tbody>${
     rows.map(([l,r])=>`<tr><td>${l}</td><td>${inr(r.low)} to ${inr(r.high)}</td><td>${r.row.unit}</td><td class="sub">${r.row.source}</td><td class="sub">${r.row.updated}</td></tr>`).join('')}</tbody></table></div></div>`;
 }
@@ -689,7 +689,7 @@ function goalInput(t,E){
 }
 function onOpt(id,val,v){
   if(id==='loc'){const L=locOf(v),o=OBJSET[v.objective]||OBJSET.leads;v.cpm=r5(L.cpm*o.cpmX,5);
-    return `CPM set to ${inr(v.cpm)}, a typical level for ${locName(v)}. ${adv(v)?'Edit it under Lead generation.':'Switch to Advanced to edit it.'}`}
+    return `CPM set to ${inr(v.cpm)}, ${v.loc.length>1?'the average level across':'a typical level for'} ${locName(v)}. ${adv(v)?'Edit it under Lead generation.':'Switch to Advanced to edit it.'}`}
   if(id==='objective'){applyObjective(v);const o=OBJSET[val];
     return `Loaded typical rates for ${o.lab.toLowerCase()}: ${v.lpConv}% of clicks become leads${isTrade(v)?'':', '+v.qualRate+'% qualify'}, CPM ${inr(v.cpm)}. Edit them if your numbers differ.`}
   if(id==='mode')return val==='advanced'?'Advanced mode: itemised door costs, funnel rates, simulators and market data.':'Simple mode: seven questions, the rest is estimated for you.';

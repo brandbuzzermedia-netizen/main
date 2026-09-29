@@ -256,4 +256,15 @@ t('door: page and summary say projections are not guaranteed, with no dashes', (
     assert(!/[A-Za-z]-[A-Za-z]/.test(text), 'hyphenated word in visible copy: ' + (text.match(/\S*[A-Za-z]-[A-Za-z]\S*/) || [])[0]);
   }
 });
+t('locations: multiple selection blends CPM and the door market reference', () => {
+  const M = globalThis.MABC_MARKET, m = api.MODELS.service, v = defaults(m);
+  assert(Array.isArray(v.loc) && v.loc[0] === 'Bengaluru');
+  v.loc = ['Bengaluru', 'Mumbai']; m.onOpt('loc', 'Mumbai', v);
+  assert.strictEqual(v.cpm, Math.round(180 * ((180 + 200) / 2) / 180 / 5) * 5);
+  const a = M.lookup('door', 'laminated', 'Bengaluru', 'standard'), b = M.lookup('door', 'laminated', 'Mumbai', 'standard'), ab = M.lookupMulti('door', 'laminated', ['Bengaluru', 'Mumbai'], 'standard');
+  near(ab.low, (a.low + b.low) / 2); near(ab.high, (a.high + b.high) / 2);
+  assert.strictEqual(M.locLabel(['Bengaluru', 'Custom', 'Pune'], 'Mysuru'), 'Bengaluru, Mysuru and Pune');
+  const o = api.open('door', { loc: ['Chennai', 'Kerala'] });
+  assert(/Chennai and Kerala/.test(o.summary));
+});
 console.log(`\n${passed} checks passed`);

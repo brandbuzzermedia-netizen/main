@@ -255,7 +255,7 @@ tr.tot td{font-weight:800;border-top:2px solid var(--green);border-bottom:0;font
 .sign .chips span{font-size:12px;font-weight:600;padding:4px 14px;border-radius:999px;border:1.5px solid var(--gold);color:var(--gold)}
 footer{padding:0 0 56px}
 footer .fine{color:var(--muted);font-size:12px;margin-top:22px;max-width:62em;line-height:1.6}
-.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translateX(-50%) translateY(20px);background:var(--green);color:var(--cream);border:2px solid var(--gold);padding:12px 22px;border-radius:999px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:50}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translateX(-50%) translateY(20px);background:var(--green);color:var(--cream);border:2px solid var(--gold);padding:12px 20px;border-radius:18px;font-weight:600;font-size:14px;line-height:1.45;text-align:center;width:max-content;max-width:min(calc(100vw - 32px),520px);opacity:0;pointer-events:none;transition:.2s;z-index:50}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media print{
   .top,.hero,.ribbon,#models,.sec.how,footer,.form-col,.actions,.calc-head .tools,.goal-in,.banner,#sims,.tgt{display:none!important}
@@ -742,6 +742,28 @@ MARKET.lookup=function(cat,key,location,quality){
   return{low,high,mid:(low+high)/2,row};
 };
 
+/* Several locations: a campaign can target more than one area.
+   locs: array of location names (a single name also works). */
+const asList=l=>(Array.isArray(l)?l:[l]).filter(Boolean);
+MARKET.blend=function(locs){
+  const L=asList(locs).map(n=>MARKET.locations[n]||MARKET.locations['Custom']);
+  if(!L.length)return Object.assign({},MARKET.locations['Bengaluru']);
+  const avg=k=>L.reduce((a,x)=>a+x[k],0)/L.length;
+  return{price:avg('price'),cost:avg('cost'),cpm:avg('cpm')};
+};
+MARKET.lookupMulti=function(cat,key,locs,quality){
+  const rs=asList(locs).map(l=>MARKET.lookup(cat,key,l,quality)).filter(Boolean);
+  if(!rs.length)return MARKET.lookup(cat,key,'Bengaluru',quality);
+  const avg=k=>rs.reduce((a,r)=>a+r[k],0)/rs.length;
+  return{low:avg('low'),high:avg('high'),mid:avg('mid'),row:rs[0].row,n:rs.length};
+};
+/* "Bengaluru, Mysuru and Chennai" (Custom shows the name typed in) */
+MARKET.locLabel=function(locs,customName){
+  const n=asList(locs).map(l=>l==='Custom'?(String(customName||'').trim()||'your custom area'):l);
+  if(!n.length)return 'no location';
+  return n.length===1?n[0]:n.slice(0,-1).join(', ')+' and '+n[n.length-1];
+};
+
 if(typeof window!=='undefined')window.MABC_MARKET=MARKET;
 if(typeof globalThis!=='undefined')globalThis.MABC_MARKET=MARKET;
 })();
@@ -811,6 +833,7 @@ const OBJ_ORDER=[['sales','Sales (purchases)'],['catalog','Catalogue / Advantage
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 const adv=v=>v.mode!=='simple';
 const G={setup:'Campaign setup',ad:'Ad delivery',fun:'Sales funnel',eco:'Business economics',cost:'Costs'};
+const locLabel=v=>MK()?MK().locLabel(v.loc,v.locName):[].concat(v.loc).join(', ');
 const rngC=n=>!isFinite(n)?'n/a':n<=0?'0':n<1?'under 1':new Intl.NumberFormat('en-IN').format(Math.round(n));
 
 function build(spec){
@@ -830,8 +853,8 @@ function build(spec){
     X(F('spend','Monthly ad budget','₹',ad.spend,1000,5000000,1000,G.setup,'What you plan to spend on Meta Ads each month.'),{simple:1}),
     X(F('daily','Daily ad budget','₹',Math.round(ad.spend/30.4),30,200000,10,G.setup,'Linked to the monthly budget (30.4 days a month).'),{show:adv}),
     X(F('months','Campaign duration','months',3,1,36,1,G.setup,'Used for campaign totals in the report.'),{show:adv}),
-    O('loc','Location','select',LOCS.map(l=>[l,l]),'Bengaluru',G.setup,'Sets a typical starting CPM for the area. Edit it in Advanced mode.',{simple:1}),
-    O('locName','Location name','text',null,'',G.setup,'',{simple:1,show:v=>v.loc==='Custom'}),
+    O('loc','Locations','chips',LOCS.map(l=>[l,l]),['Bengaluru'],G.setup,'Pick every area you target. The starting CPM is the average of their typical CPMs. Edit it in Advanced mode.',{simple:1}),
+    O('locName','Custom location name','text',null,'',G.setup,'',{simple:1,show:v=>v.loc.includes('Custom')}),
     O('audience','Target audience','text',null,spec.audience||'',G.setup,'',{show:adv}),
     O('objective','Campaign objective','select',spec.objectives||(kindOf({})==='lead'?OBJ_LEAD:OBJ_ORDER),(spec.objectives||(kindOf({})==='lead'?OBJ_LEAD:OBJ_ORDER))[0][0],G.setup,'Recorded in the report. Adjust CTR and conversion to match it.',{show:adv}),
     O('amode','How do you want to enter ad costs?','seg',[['forecast','Forecast mode'],['manual','Manual mode']],'forecast',G.ad,'Forecast estimates results from CPM, CTR and conversion. Manual uses a cost per lead or purchase you already know.',{show:adv}),
@@ -1088,8 +1111,8 @@ function build(spec){
   const groups=Object.assign({[G.setup]:{note:1},[G.ad]:{note:1},[G.fun]:{note:1},[G.eco]:{note:1},[G.cost]:{collapse:1,open:1}},spec.groups||{});
 
   function onOpt(id,val,v){
-    if(id==='loc'){const L=(MK()&&MK().locations[v.loc])||{cpm:180};v.cpm=Math.round(ad.cpm*L.cpm/180/5)*5;
-      return `CPM set to ${inr(v.cpm)}, a typical starting level for ${v.loc==='Custom'?'your area':v.loc}. ${adv(v)?'Edit it under Ad delivery.':'Switch to Advanced to edit it.'}`}
+    if(id==='loc'){const L=MK()?MK().blend(v.loc):{cpm:180};v.cpm=Math.round(ad.cpm*L.cpm/180/5)*5;
+      return `CPM set to ${inr(v.cpm)}, ${v.loc.length>1?'the average starting level across '+locLabel(v):'a typical starting level for '+locLabel(v)}. ${adv(v)?'Edit it under Ad delivery.':'Switch to Advanced to edit it.'}`}
     if(id==='mode')return val==='advanced'?'Advanced mode: ad metrics, costs, sensitivity, scaling and benchmarks.':'Simple mode: the essential questions only; the rest uses the starting assumptions.';
     return spec.onOpt?spec.onOpt(id,val,v)||'':'';
   }
@@ -1113,7 +1136,7 @@ function build(spec){
   function goalInput(t,Eng){const g=gOf(Eng.goal);g[t.dataset.tgt]=parseFloat(t.value)||0;g.kind=t.dataset.tgt;Eng.setGoal(g);renderGoal(Object.assign({},Eng,{goal:g}))}
   function summary(r,v){
     const x=r.x,sc=band(this_,v);
-    return[`Industry: ${spec.name}${spec.custom&&v.cname?' ('+v.cname+')':''}. Location: ${v.loc==='Custom'?(v.locName||'custom'):v.loc}.`,
+    return[`Industry: ${spec.name}${spec.custom&&v.cname?' ('+v.cname+')':''}. Location${v.loc.length>1?'s':''}: ${locLabel(v)}.`,
       `Estimated ${x.lead?'leads':'orders'} ${rng(sc,s=>s.x.lead?s.x.leads:s.x.c)} · ${spec.unitP} ${rng(sc,s=>s.x.c)} · revenue ${rng(sc,s=>s.revenue,inr)} · ROAS ${rng(sc,s=>s.roas,xx)}`,
       `ROAS ${xx(r.roas)} · Profit ROAS ${xx(x.profitRoas)} · ROI ${pct(r.roi)} · Breakeven ROAS ${isFinite(x.beRoasVar)?xx(x.beRoasVar):'not reachable'} · Breakeven ${x.lead?'CPL':'CPP'} ${inr(x.beCpl)}`,
       'These are estimates based on the assumptions entered, not guaranteed Meta Ads results.'];
@@ -1667,8 +1690,8 @@ const adv=v=>v.mode!=='simple';
 const mfgOn=v=>adv(v)&&v.biz!=='retail';
 const retOn=v=>adv(v)&&v.biz!=='mfg';
 const lamOn=v=>v.types.includes('laminated');
-const locOf=v=>(MK()&&MK().locations[v.loc])||{price:1,cost:1,cpm:170};
-const locName=v=>v.loc==='Custom'?(String(v.locName||'').trim()||'your area'):v.loc;
+const locOf=v=>MK()?MK().blend(v.loc):{price:1,cost:1,cpm:170};
+const locName=v=>MK()?MK().locLabel(v.loc,v.locName):[].concat(v.loc).join(', ');
 
 /* ---------- fields ---------- */
 const G={biz:'Your door business',size:'Door size',price:'Selling price',simple:'Actual door cost',mix:'Product mix',
@@ -1679,8 +1702,8 @@ const fields=[
   O('mode','Detail level','seg',[['simple','Simple'],['advanced','Advanced']],'simple',G.biz,'',{show:()=>false}),
   O('biz','What type of door business do you operate?','cards',[['mfg','Manufacturer','I manufacture doors.'],['retail','Retailer / dealer','I purchase doors and sell them.'],['both','Manufacturer + retailer','I manufacture some doors and retail other products.']],'mfg',G.biz,'',{simple:1}),
   O('types','Door types you sell','chips',TYPES,['laminated'],G.biz,'Pick every type you sell. The market reference averages them.',{simple:1}),
-  O('loc','Where do you sell?','select',LOCS.map(l=>[l,l]),'Bengaluru',G.biz,'Sets the typical CPM and the market reference for your area.',{simple:1}),
-  O('locName','Location name','text',null,'',G.biz,'',{simple:1,show:v=>v.loc==='Custom'}),
+  O('loc','Where do you sell?','chips',LOCS.map(l=>[l,l]),['Bengaluru'],G.biz,'Pick every area you sell in. CPM and the market reference are averaged across them.',{simple:1}),
+  O('locName','Custom location name','text',null,'',G.biz,'',{simple:1,show:v=>v.loc.includes('Custom')}),
   O('quality','Door quality','select',[['economy','Economy'],['standard','Standard'],['premium','Premium']],'standard',G.biz,'Used for the market reference.'),
   O('finish','Finish','select',FIN,'laminate',G.biz,'Used for the market reference.'),
 
@@ -1974,7 +1997,7 @@ function thickF(v){const mk=MK(),b=mk?mk.baseThickness:32;return Math.min(1.5,Ma
 function refPrice(v){
   const mk=MK();if(!mk)return null;
   const fm=(mk.finish[v.finish]||{m:1}).m,tf=thickF(v),area=v.width*v.height;
-  const rs=v.types.map(t=>mk.lookup('door',t,v.loc,v.quality)).filter(Boolean);
+  const rs=v.types.map(t=>mk.lookupMulti('door',t,v.loc,v.quality)).filter(Boolean);
   if(!rs.length)return null;
   const avg=k=>rs.reduce((a,r)=>a+r[k],0)/rs.length*fm*tf;
   const low=avg('low'),high=avg('high'),mid=(low+high)/2;
@@ -1982,7 +2005,7 @@ function refPrice(v){
 }
 function costRef(v){
   const mk=MK();if(!mk)return null;
-  const g=(c,k)=>mk.lookup(c,k,v.loc,v.quality);
+  const g=(c,k)=>mk.lookupMulti(c,k,v.loc,v.quality);
   return{g,mat:Object.fromEntries(MATS.map(([k,,key])=>[k,g('material',key)])),lam:g('laminate','sheet'),adh:g('adhesive','door'),
     lab:g('labour','door'),pk:g('packaging','door'),tr:g('transport','door'),inst:g('installation','door'),hinge:g('hardware','hinge'),stop:g('hardware','stop'),bolt:g('hardware','bolt')};
 }
@@ -2129,11 +2152,11 @@ function marketPanel(v){
   const mk=MK();if(!mk)return '';
   const q=(mk.quality[v.quality]||{}).label||'Standard';
   const rows=[];
-  v.types.forEach(t=>{const r=mk.lookup('door',t,v.loc,v.quality);if(r)rows.push([r.row.label+' (selling price)',r])});
+  v.types.forEach(t=>{const r=mk.lookupMulti('door',t,v.loc,v.quality);if(r)rows.push([r.row.label+' (selling price)',r])});
   [['material','ply'],['material','block'],['material','mdf'],['material','hdhmr'],['material','wpc'],['material','solid'],['material','teak'],['laminate','sheet'],['adhesive','door'],
    ['hardware','handle'],['hardware','lock'],['hardware','hinge'],['labour','door'],['finishing','pu'],['finishing','duco'],['finishing','polish'],['packaging','door'],['transport','door'],['transport','trip'],['installation','door']]
-   .forEach(([c,k])=>{const r=mk.lookup(c,k,v.loc,v.quality);if(r)rows.push([r.row.label,r])});
-  return `<div class="panel"><h3>Market reference data</h3><p class="note" style="margin:0 0 10px"><b>${mk.note}</b> Showing ${locName(v)}, ${q} quality. Edit <code>js/market.js</code> to replace these with your own supplier quotes.</p>
+   .forEach(([c,k])=>{const r=mk.lookupMulti(c,k,v.loc,v.quality);if(r)rows.push([r.row.label,r])});
+  return `<div class="panel"><h3>Market reference data</h3><p class="note" style="margin:0 0 10px"><b>${mk.note}</b> Showing ${v.loc.length>1?'the average of ':''}${locName(v)}, ${q} quality. Edit <code>js/market.js</code> to replace these with your own supplier quotes.</p>
     <div class="tscroll"><table class="mref"><thead><tr><th>Item</th><th>Range</th><th>Unit</th><th>Source</th><th>Updated</th></tr></thead><tbody>${
     rows.map(([l,r])=>`<tr><td>${l}</td><td>${inr(r.low)} to ${inr(r.high)}</td><td>${r.row.unit}</td><td class="sub">${r.row.source}</td><td class="sub">${r.row.updated}</td></tr>`).join('')}</tbody></table></div></div>`;
 }
@@ -2321,7 +2344,7 @@ function goalInput(t,E){
 }
 function onOpt(id,val,v){
   if(id==='loc'){const L=locOf(v),o=OBJSET[v.objective]||OBJSET.leads;v.cpm=r5(L.cpm*o.cpmX,5);
-    return `CPM set to ${inr(v.cpm)}, a typical level for ${locName(v)}. ${adv(v)?'Edit it under Lead generation.':'Switch to Advanced to edit it.'}`}
+    return `CPM set to ${inr(v.cpm)}, ${v.loc.length>1?'the average level across':'a typical level for'} ${locName(v)}. ${adv(v)?'Edit it under Lead generation.':'Switch to Advanced to edit it.'}`}
   if(id==='objective'){applyObjective(v);const o=OBJSET[val];
     return `Loaded typical rates for ${o.lab.toLowerCase()}: ${v.lpConv}% of clicks become leads${isTrade(v)?'':', '+v.qualRate+'% qualify'}, CPM ${inr(v.cpm)}. Edit them if your numbers differ.`}
   if(id==='mode')return val==='advanced'?'Advanced mode: itemised door costs, funnel rates, simulators and market data.':'Simple mode: seven questions, the rest is estimated for you.';
@@ -2794,7 +2817,7 @@ function reportHTML(){
   const model=m.fields.filter(f=>f.kind==='opt'&&!skip.has(f.id)&&f.type!=='text'&&(!f.show||f.show(v))).map(f=>`${f.label.replace(/\?$/,'')}: ${optLab(f.id)}`);
   if(v.cname)model.unshift('Business: '+esc(v.cname));
   if(v.types)model.push('Door types: '+v.types.length+' selected');
-  const loc=v.loc==='Custom'?(v.locName||'Custom'):v.loc;
+  const loc=globalThis.MABC_MARKET?MABC_MARKET.locLabel(v.loc,v.locName):[].concat(v.loc||[]).join(', ');
   const sc=['cons','exp','opt'].map(q=>scenarioOf(m,v,q)),SN=m.scenNames||['Conservative','Expected','Optimistic'];
   const T=(rows,head)=>`<table>${head?`<thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead>`:''}<tbody>${rows.map(rw=>`<tr>${rw.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   const ins=m.insightList?m.insightList(r,v):[];
@@ -2803,7 +2826,7 @@ function reportHTML(){
   return `<header><p class="rk">Meta Ads Calculator · Get Bee Seen</p><h1>${esc(m.name)} forecast report</h1><p>${date}</p></header>
   <section><h2>Business and campaign</h2>${T([
     ['Industry',esc(m.name)],...model.map(x=>{const i=x.indexOf(': ');return[x.slice(0,i),x.slice(i+2)]}),
-    ['Campaign objective',esc(optLab('objective')||'Not set')],['Location',esc(loc||'')],['Target audience',esc(v.audience||'Not set')],
+    ['Campaign objective',esc(optLab('objective')||'Not set')],[[].concat(v.loc||[]).length>1?'Locations':'Location',esc(loc||'')],['Target audience',esc(v.audience||'Not set')],
     ['Monthly budget',inr(v.spend)],['Daily budget','₹'+IN.format(Math.round(v.spend/30.4))],['Campaign duration',(v.months||1)+' month'+((v.months||1)===1?'':'s')+' · '+inr(v.spend*(v.months||1))+' in total'],
     ['Ad costs entered as',v.amode==='manual'||v.fmode==='cpl'?'Manual (known cost per lead or purchase)':'Forecast (CPM '+inr(v.cpm)+', CTR '+pct(v.ctr)+')']])}</section>
   <section><h2>Verdict</h2><p><b>${vd.h}.</b> ${vd.p}</p></section>

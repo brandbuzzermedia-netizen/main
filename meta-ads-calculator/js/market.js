@@ -131,6 +131,28 @@ MARKET.lookup=function(cat,key,location,quality){
   return{low,high,mid:(low+high)/2,row};
 };
 
+/* Several locations: a campaign can target more than one area.
+   locs: array of location names (a single name also works). */
+const asList=l=>(Array.isArray(l)?l:[l]).filter(Boolean);
+MARKET.blend=function(locs){
+  const L=asList(locs).map(n=>MARKET.locations[n]||MARKET.locations['Custom']);
+  if(!L.length)return Object.assign({},MARKET.locations['Bengaluru']);
+  const avg=k=>L.reduce((a,x)=>a+x[k],0)/L.length;
+  return{price:avg('price'),cost:avg('cost'),cpm:avg('cpm')};
+};
+MARKET.lookupMulti=function(cat,key,locs,quality){
+  const rs=asList(locs).map(l=>MARKET.lookup(cat,key,l,quality)).filter(Boolean);
+  if(!rs.length)return MARKET.lookup(cat,key,'Bengaluru',quality);
+  const avg=k=>rs.reduce((a,r)=>a+r[k],0)/rs.length;
+  return{low:avg('low'),high:avg('high'),mid:avg('mid'),row:rs[0].row,n:rs.length};
+};
+/* "Bengaluru, Mysuru and Chennai" (Custom shows the name typed in) */
+MARKET.locLabel=function(locs,customName){
+  const n=asList(locs).map(l=>l==='Custom'?(String(customName||'').trim()||'your custom area'):l);
+  if(!n.length)return 'no location';
+  return n.length===1?n[0]:n.slice(0,-1).join(', ')+' and '+n[n.length-1];
+};
+
 if(typeof window!=='undefined')window.MABC_MARKET=MARKET;
 if(typeof globalThis!=='undefined')globalThis.MABC_MARKET=MARKET;
 })();

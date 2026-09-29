@@ -424,7 +424,7 @@ function reportHTML(){
   const model=m.fields.filter(f=>f.kind==='opt'&&!skip.has(f.id)&&f.type!=='text'&&(!f.show||f.show(v))).map(f=>`${f.label.replace(/\?$/,'')}: ${optLab(f.id)}`);
   if(v.cname)model.unshift('Business: '+esc(v.cname));
   if(v.types)model.push('Door types: '+v.types.length+' selected');
-  const loc=v.loc==='Custom'?(v.locName||'Custom'):v.loc;
+  const loc=globalThis.MABC_MARKET?MABC_MARKET.locLabel(v.loc,v.locName):[].concat(v.loc||[]).join(', ');
   const sc=['cons','exp','opt'].map(q=>scenarioOf(m,v,q)),SN=m.scenNames||['Conservative','Expected','Optimistic'];
   const T=(rows,head)=>`<table>${head?`<thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead>`:''}<tbody>${rows.map(rw=>`<tr>${rw.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   const ins=m.insightList?m.insightList(r,v):[];
@@ -433,7 +433,7 @@ function reportHTML(){
   return `<header><p class="rk">Meta Ads Calculator · Get Bee Seen</p><h1>${esc(m.name)} forecast report</h1><p>${date}</p></header>
   <section><h2>Business and campaign</h2>${T([
     ['Industry',esc(m.name)],...model.map(x=>{const i=x.indexOf(': ');return[x.slice(0,i),x.slice(i+2)]}),
-    ['Campaign objective',esc(optLab('objective')||'Not set')],['Location',esc(loc||'')],['Target audience',esc(v.audience||'Not set')],
+    ['Campaign objective',esc(optLab('objective')||'Not set')],[[].concat(v.loc||[]).length>1?'Locations':'Location',esc(loc||'')],['Target audience',esc(v.audience||'Not set')],
     ['Monthly budget',inr(v.spend)],['Daily budget','₹'+IN.format(Math.round(v.spend/30.4))],['Campaign duration',(v.months||1)+' month'+((v.months||1)===1?'':'s')+' · '+inr(v.spend*(v.months||1))+' in total'],
     ['Ad costs entered as',v.amode==='manual'||v.fmode==='cpl'?'Manual (known cost per lead or purchase)':'Forecast (CPM '+inr(v.cpm)+', CTR '+pct(v.ctr)+')']])}</section>
   <section><h2>Verdict</h2><p><b>${vd.h}.</b> ${vd.p}</p></section>

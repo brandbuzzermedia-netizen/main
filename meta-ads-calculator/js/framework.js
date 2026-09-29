@@ -29,6 +29,7 @@ const OBJ_ORDER=[['sales','Sales (purchases)'],['catalog','Catalogue / Advantage
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 const adv=v=>v.mode!=='simple';
 const G={setup:'Campaign setup',ad:'Ad delivery',fun:'Sales funnel',eco:'Business economics',cost:'Costs'};
+const locLabel=v=>MK()?MK().locLabel(v.loc,v.locName):[].concat(v.loc).join(', ');
 const rngC=n=>!isFinite(n)?'n/a':n<=0?'0':n<1?'under 1':new Intl.NumberFormat('en-IN').format(Math.round(n));
 
 function build(spec){
@@ -48,8 +49,8 @@ function build(spec){
     X(F('spend','Monthly ad budget','₹',ad.spend,1000,5000000,1000,G.setup,'What you plan to spend on Meta Ads each month.'),{simple:1}),
     X(F('daily','Daily ad budget','₹',Math.round(ad.spend/30.4),30,200000,10,G.setup,'Linked to the monthly budget (30.4 days a month).'),{show:adv}),
     X(F('months','Campaign duration','months',3,1,36,1,G.setup,'Used for campaign totals in the report.'),{show:adv}),
-    O('loc','Location','select',LOCS.map(l=>[l,l]),'Bengaluru',G.setup,'Sets a typical starting CPM for the area. Edit it in Advanced mode.',{simple:1}),
-    O('locName','Location name','text',null,'',G.setup,'',{simple:1,show:v=>v.loc==='Custom'}),
+    O('loc','Locations','chips',LOCS.map(l=>[l,l]),['Bengaluru'],G.setup,'Pick every area you target. The starting CPM is the average of their typical CPMs. Edit it in Advanced mode.',{simple:1}),
+    O('locName','Custom location name','text',null,'',G.setup,'',{simple:1,show:v=>v.loc.includes('Custom')}),
     O('audience','Target audience','text',null,spec.audience||'',G.setup,'',{show:adv}),
     O('objective','Campaign objective','select',spec.objectives||(kindOf({})==='lead'?OBJ_LEAD:OBJ_ORDER),(spec.objectives||(kindOf({})==='lead'?OBJ_LEAD:OBJ_ORDER))[0][0],G.setup,'Recorded in the report. Adjust CTR and conversion to match it.',{show:adv}),
     O('amode','How do you want to enter ad costs?','seg',[['forecast','Forecast mode'],['manual','Manual mode']],'forecast',G.ad,'Forecast estimates results from CPM, CTR and conversion. Manual uses a cost per lead or purchase you already know.',{show:adv}),
@@ -306,8 +307,8 @@ function build(spec){
   const groups=Object.assign({[G.setup]:{note:1},[G.ad]:{note:1},[G.fun]:{note:1},[G.eco]:{note:1},[G.cost]:{collapse:1,open:1}},spec.groups||{});
 
   function onOpt(id,val,v){
-    if(id==='loc'){const L=(MK()&&MK().locations[v.loc])||{cpm:180};v.cpm=Math.round(ad.cpm*L.cpm/180/5)*5;
-      return `CPM set to ${inr(v.cpm)}, a typical starting level for ${v.loc==='Custom'?'your area':v.loc}. ${adv(v)?'Edit it under Ad delivery.':'Switch to Advanced to edit it.'}`}
+    if(id==='loc'){const L=MK()?MK().blend(v.loc):{cpm:180};v.cpm=Math.round(ad.cpm*L.cpm/180/5)*5;
+      return `CPM set to ${inr(v.cpm)}, ${v.loc.length>1?'the average starting level across '+locLabel(v):'a typical starting level for '+locLabel(v)}. ${adv(v)?'Edit it under Ad delivery.':'Switch to Advanced to edit it.'}`}
     if(id==='mode')return val==='advanced'?'Advanced mode: ad metrics, costs, sensitivity, scaling and benchmarks.':'Simple mode: the essential questions only; the rest uses the starting assumptions.';
     return spec.onOpt?spec.onOpt(id,val,v)||'':'';
   }
@@ -331,7 +332,7 @@ function build(spec){
   function goalInput(t,Eng){const g=gOf(Eng.goal);g[t.dataset.tgt]=parseFloat(t.value)||0;g.kind=t.dataset.tgt;Eng.setGoal(g);renderGoal(Object.assign({},Eng,{goal:g}))}
   function summary(r,v){
     const x=r.x,sc=band(this_,v);
-    return[`Industry: ${spec.name}${spec.custom&&v.cname?' ('+v.cname+')':''}. Location: ${v.loc==='Custom'?(v.locName||'custom'):v.loc}.`,
+    return[`Industry: ${spec.name}${spec.custom&&v.cname?' ('+v.cname+')':''}. Location${v.loc.length>1?'s':''}: ${locLabel(v)}.`,
       `Estimated ${x.lead?'leads':'orders'} ${rng(sc,s=>s.x.lead?s.x.leads:s.x.c)} · ${spec.unitP} ${rng(sc,s=>s.x.c)} · revenue ${rng(sc,s=>s.revenue,inr)} · ROAS ${rng(sc,s=>s.roas,xx)}`,
       `ROAS ${xx(r.roas)} · Profit ROAS ${xx(x.profitRoas)} · ROI ${pct(r.roi)} · Breakeven ROAS ${isFinite(x.beRoasVar)?xx(x.beRoasVar):'not reachable'} · Breakeven ${x.lead?'CPL':'CPP'} ${inr(x.beCpl)}`,
       'These are estimates based on the assumptions entered, not guaranteed Meta Ads results.'];
