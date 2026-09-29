@@ -353,6 +353,7 @@ function update(){
   renderGoal();
   if(m.after)m.after(r,v,eng());
   renderAvp();
+  if(typeof mbar!=='undefined')mbar.update(r);
   if(m.derived){const d=m.derived(v,r);$$('#calc-root [data-d]').forEach(el=>{const t=d[el.dataset.d];if(t!==undefined&&el.innerHTML!==t)el.innerHTML=t})}
 }
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
@@ -534,6 +535,32 @@ globalThis.MABC_APP={MODELS,CATALOG,econ:econOf,inr,num,cnt,pct,xx,div,esc,toast
   const run=hidden=>`<div class="tk-run"${hidden?' aria-hidden="true"':''}>${names.map((n,i)=>`${i%6===0?`<img src="${bee}" alt="">`:'<i class="sep"></i>'}<span>${esc(n)}</span>`).join('')}<i class="sep"></i></div>`;
   rb.innerHTML=`<div class="tk" role="marquee" aria-label="${names.length} industry calculators"><div class="tk-track" style="--tk-d:${Math.round(names.length*3.2)}s">${run(0)}${run(1)}</div></div>`;
   rb.classList.add('ticking');
+})();
+
+/* ---------- mobile header menu ---------- */
+(function(){
+  const btn=$('.menu-btn'),nav=$('#mainnav');if(!btn||!nav)return;
+  const set=o=>{btn.setAttribute('aria-expanded',String(o));document.documentElement.classList.toggle('menu-open',o)};
+  btn.addEventListener('click',()=>set(btn.getAttribute('aria-expanded')!=='true'));
+  nav.addEventListener('click',e=>{if(e.target.closest('a'))set(false)});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')set(false)});
+})();
+
+/* ---------- mobile results bar: while editing inputs on a phone, show the key result and a jump to results ---------- */
+const mbar=(function(){
+  if(typeof document.createElement!=='function'||!('IntersectionObserver' in window))return{update(){}};
+  const el=document.createElement('div');el.className='mbar';el.setAttribute('aria-live','polite');el.hidden=true;
+  el.innerHTML='<div class="mb-txt"></div><button type="button" class="btn btn-sm mb-go">See results</button>';
+  document.body.appendChild(el);
+  let inCalc=false,resVis=false;const mq=matchMedia('(max-width:1039px)');
+  const sync=()=>{el.hidden=!(mq.matches&&inCalc&&!resVis&&cur)};
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.target===wf)inCalc=e.isIntersecting;else resVis=e.isIntersecting;sync()}),{threshold:0});
+  let watched=null,wf=null;
+  el.querySelector('.mb-go').addEventListener('click',()=>{const r=$('#res-main');if(r)r.scrollIntoView({behavior:RM.matches?'auto':'smooth',block:'start'})});
+  if(mq.addEventListener)mq.addEventListener('change',sync);
+  return{update(r){const fc=$('#calculator .form-col');if(fc&&fc!==wf){if(wf)io.unobserve(wf);inCalc=false;io.observe(fc);wf=fc}
+    const rm=$('#res-main');if(rm&&rm!==watched){if(watched)io.unobserve(watched);io.observe(rm);watched=rm}
+    const k=r.k||{};el.querySelector('.mb-txt').innerHTML=`<span>Net profit <b class="${k.net>=0?'good':'bad'}">${inr(k.net)}</b></span><span>ROAS <b>${xx(k.roas)}</b></span><span>${cap(k.unitP||r.unitP)} <b>${cnt(k.customers)}</b></span>`;sync()}};
 })();
 
 /* ---------- scroll reveals ---------- */

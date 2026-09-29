@@ -52,7 +52,7 @@ img{max-width:100%}
 .top nav{display:flex;gap:22px;font-weight:600;font-size:14px}
 .top nav a{color:var(--muted);text-decoration:none}
 .top nav a:hover{color:var(--head)}
-@media (max-width:640px){.top nav a:not(:last-child){display:none}}
+
 
 /* hero: deep green, hex texture */
 .hero{background:var(--green) var(--hex);color:var(--cream);padding:64px 0 88px;position:relative;overflow:hidden}
@@ -583,3 +583,99 @@ table.cm th,table.asm th:first-child,.bench th{text-align:left}
 .rep .btn-line{border-color:#196144!important;color:#196144}
 .rep-bar{top:-24px;z-index:2}
 @media (max-width:520px){.rep-ov{padding:12px 8px}.rep-bar{top:-12px;padding:10px 12px}.rep-doc{padding:16px 14px}}
+
+
+/* ================= RESPONSIVE: PHONE, TABLET, LAPTOP ================= */
+/* header: a menu on phones, the full nav from 641px up */
+.menu-btn{display:none}
+@media (max-width:640px){
+  .menu-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:1.5px solid var(--green);border-radius:999px;background:transparent;color:var(--head);font:inherit;font-weight:700;font-size:14px;cursor:pointer}
+  .menu-btn span,.menu-btn span::before,.menu-btn span::after{display:block;width:16px;height:2px;background:currentColor;border-radius:2px;position:relative}
+  .menu-btn span::before,.menu-btn span::after{content:"";position:absolute;left:0}
+  .menu-btn span::before{top:-5px}.menu-btn span::after{top:5px}
+  .top nav{display:none;position:absolute;left:0;right:0;top:100%;flex-direction:column;gap:0;background:var(--bg);border-bottom:2px solid var(--green);box-shadow:var(--shadow);padding:6px 16px 12px}
+  .menu-open .top nav{display:flex}
+  .top nav a{padding:12px 4px;font-size:16px;color:var(--head);border-bottom:1px solid var(--line)}
+  .top nav a:last-child{border-bottom:0}
+  .top .wrap{position:relative;height:60px}
+  .brand img{height:30px}
+}
+/* section banners: number above the heading on phones so the text gets the full width */
+@media (max-width:520px){
+  .banner{flex-direction:column;align-items:flex-start;gap:10px;padding:18px 18px}
+  .banner .num{width:42px;height:42px;font-size:22px}
+}
+/* touch screens: thumb sized controls and 16px inputs (stops iPhone zooming into fields) */
+@media (pointer:coarse),(max-width:760px){
+  input,select,textarea,.inp input,.crow .inp input,.mxr .inp input,.cst .inp input,.cst>input,table.asm input,.agein input,.alin input,.fcg .inp input,.pcust .inp input,.pfield .inp input,.ctxt textarea{font-size:16px}
+  .btn-sm{min-height:44px;padding:0 18px}
+  .chip{min-height:40px;padding:8px 14px;font-size:13px}
+  .seg button,.seg-mode button{min-height:44px}
+  select,.osel{min-height:44px}
+  .crow .inp input,.mxr .inp input,.cst .inp input,.cst>input,.fcg .inp input,.pcust .inp input{min-height:42px}
+  table.asm input,.agein input,.alin input{min-height:40px}
+  .croin select{min-height:44px}
+  .cdel{width:44px;height:44px}
+  .pbar nav a{min-height:36px;display:inline-flex;align-items:center}
+  details.grp summary{min-height:52px}
+  .linkbtn{padding:6px 0}
+}
+/* sliders: easier to grab everywhere */
+input[type=range]{height:32px}
+input[type=range]::-webkit-slider-thumb{width:22px;height:22px}
+@media (pointer:coarse){input[type=range]{height:36px}}
+td small{font-size:11px}
+
+/* planner bar: one line at every size; sections scroll sideways instead of wrapping */
+.pbar{flex-wrap:nowrap;padding:8px 10px;gap:10px}
+.pbar nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;min-width:0;padding-bottom:2px}
+.pbar nav a{white-space:nowrap;flex:none}
+.pbar .pbtns{flex:none;flex-wrap:nowrap}
+@media (max-width:760px){
+  .pbar{top:calc(env(safe-area-inset-top,0px) + 62px);border-radius:14px;padding:6px 8px}
+  .pbar>b{display:none}
+  .pbar .pbtns [data-pact="report"]{display:none}
+  .pbar .pbtns .btn{padding:0 12px;font-size:12px}
+  .psec{scroll-margin-top:130px}
+}
+/* planner steps: one compact row on phones, label only on the current step */
+@media (max-width:640px){
+  .pprog{flex-wrap:nowrap;gap:4px}
+  .pprog li{flex:1 1 auto;min-width:0}
+  .pprog li:not(.on) .pl{display:none}
+  .pprog li.on{flex:3 1 auto}
+  .pprog button{justify-content:center;padding:4px;min-height:44px}
+  .pprog li.on button{justify-content:flex-start;padding-right:12px}
+  .pprog .pl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+.pprog .pl{font-style:normal}
+/* calculator head: full width controls on phones */
+@media (max-width:640px){
+  .calc-head,.tools,.picker{width:100%}
+  .picker select,.tools select{flex:1 1 100%;width:100%}
+  .tools{gap:8px}
+  .tools .seg-mode{flex:1 1 100%}
+  .tools label[for=preset]{flex:1 1 100%}
+  .tools #reset{flex:1 1 auto}
+  .form-col{padding:20px 16px 4px}
+  .panel{padding:18px 16px}
+  .cards.k10 .card{padding:14px 14px}
+}
+/* mobile results bar (calculator) */
+.mbar{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:30;display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--green);color:var(--cream);border:2px solid var(--gold);border-radius:18px;padding:8px 8px 8px 14px;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.mbar[hidden]{display:none}
+.mbar .mb-txt{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:12px;min-width:0}
+.mbar .mb-txt b{font-size:14px;color:var(--gold)}.mbar .mb-txt b.bad{color:#FFB3AB}.mbar .mb-txt b.good{color:var(--gold)}
+.mbar .mb-go{background:var(--gold);color:var(--on-gold);border:0;flex:none}
+@media (min-width:1040px){.mbar{display:none!important}}
+.toast{bottom:calc(env(safe-area-inset-bottom,0px) + 90px)}
+@media (min-width:1040px){.toast{bottom:calc(env(safe-area-inset-bottom,0px) + 24px)}}
+/* laptop screens with little height: keep the sticky results column usable */
+@media (min-width:1040px) and (max-height:800px){.res-col{top:calc(env(safe-area-inset-top,0px) + 72px);max-height:calc(100vh - 84px)}}
+@media print{.mbar,.menu-btn{display:none!important}}
+@media (pointer:coarse),(max-width:760px){
+  .pbar nav a{min-height:40px;padding:0 12px}
+  .brand{min-height:44px}
+  .linkbtn{min-height:40px;display:inline-flex;align-items:center}
+  .pprog li:not(.on) button{min-width:44px}
+}

@@ -450,7 +450,7 @@ let root=null;
 function render(){
   root=document.getElementById('planner-root');if(!root)return;
   const c=context();
-  const prog=`<ol class="pprog">${STEPS.map((s,i)=>`<li class="${S.step===i+1?'on':''} ${i+1<=S.reached?'done':''}"><button type="button" data-pstep="${i+1}" ${i+1>S.reached?'disabled':''}><span>${i+1}</span>${s}</button></li>`).join('')}</ol>`;
+  const prog=`<ol class="pprog">${STEPS.map((s,i)=>`<li class="${S.step===i+1?'on':''} ${i+1<=S.reached?'done':''}"><button type="button" data-pstep="${i+1}" ${i+1>S.reached?'disabled':''}><span>${i+1}</span><em class="pl">${s}</em></button></li>`).join('')}</ol>`;
   root.innerHTML=prog+`<div class="pstep">${[s1,s2,s3,s4,s5][S.step-1](c)}</div>`;
 }
 const sel=(k,opts,val,lab)=>`<label class="pfield"><span>${lab}</span><select data-pf="${k}" class="osel">${opts.map(o=>`<option value="${o[0]}"${o[0]===val?' selected':''}>${esc(o[1])}</option>`).join('')}</select></label>`;

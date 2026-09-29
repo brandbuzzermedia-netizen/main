@@ -112,6 +112,14 @@ Scaling: each doubling of budget multiplies CPM (and CPL) by `1 + drop%`. Goals 
 - Platform cost defaults are placeholders for India, not benchmarks. Forecasts show ranges by default and are labelled as projections.
 - Output controls (inputs inside the plan) update only the module bodies (`refreshBodies`) so focus is never lost.
 
+## Responsive rules (phone, tablet, laptop, desktop)
+
+- Touch sizes live in `@media (pointer:coarse),(max-width:760px)`: every tap target is at least 40px (buttons and selects 44px), and every input, select and textarea is 16px so iOS does not zoom on focus.
+- At 640px and below, the header nav collapses behind the Menu button (`.menu-btn`, toggles `html.menu-open`, Escape closes it).
+- Below 1040px, the mobile results bar (`.mbar`) shows net profit, ROAS and customers. It only appears while the calculator's `.form-col` is on screen and `#res-main` is not. `mbar.update(r)` re-observes both after each render because `shell()` replaces them.
+- Keep sticky chrome small: the planner bar stays on one line, and its steps collapse to numbers on phones, with only the current step labelled.
+- Grids that hold tables use `minmax(0,1fr)` so they never cause sideways scroll.
+
 ## Copy and content rules
 
 - Sentence case, plain verbs, buttons say exactly what happens.
