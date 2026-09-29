@@ -62,7 +62,9 @@ Scenarios: conservative = CPM +10% and every field flagged `scen:true` × 0.9; o
 ## Brand system (Get Bee Seen)
 
 - Colours: cream `#FFF2DC` (page), deep green `#196144` (primary), gold `#FFB933` (accent, CTAs), sage `#3E5D48`, ink `#262626`. Text on gold uses `--on-gold` (`#123F2C`) for contrast. Red/green/amber are kept only for loss/profit/warning states.
-- Fonts (Google Fonts): **Baloo 2** for headings (stand-in for the real "Bunga"), **Poppins** for body (stand-in for "Neue Leiden"). Swap in the real font files if Mehul provides them.
+- Fonts (Google Fonts), the same stand-ins the main Get Bee Seen site uses: **Alfa Slab One** for headings (`--display`, stand-in for the real "Bunga"), **Archivo** 400–700 for body (`--body`, stand-in for "Neue Leiden"). Swap in the real font files if Mehul provides them.
+- Alfa Slab One has a single weight. Always set `font-weight:400` on anything in `--display` (including `<b>` and headings), or the browser fakes a bold.
+- Alfa Slab One is wide, so big numbers are protected: grid tracks use `minmax(0,1fr)` so tables can't push the page wider than the screen, `.card .v` sizes itself with container units (`14cqi`), receipt amounts are `nowrap`, and `.nw` keeps a word like "E-commerce" from breaking at its hyphen.
 - Elements reused from GBS proposals: hex-textured green banners with a gold numbered circle, gold pill kicker, gold ribbon with the rounded bottom-left cut, flush white cards with gold icon circles, outlined gold pills, gold left-bar callouts, green table headers, and the green signature box with the badge.
 - Tone: playful but professional. Rounded shapes, generous space. Do not make it corporate-sterile or cutesy. Use the bee small and sparingly; never stretch it as a logo.
 - Dark mode is supported through `prefers-color-scheme` and `[data-theme]`. The hero, banners and receipt stay green/cream in both themes.
