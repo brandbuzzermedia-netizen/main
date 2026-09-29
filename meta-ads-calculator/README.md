@@ -1,6 +1,6 @@
 # Meta Ads Business Calculator
 
-Forecast leads, customers, revenue, CAC, CPL / CPP, ROAS, profit ROAS, ROI and breakeven before you spend on Meta Ads. 37 industry calculators (lead generation, B2B, ecommerce, professional services, plus a custom funnel builder), each with its own funnel and cost structure, on one shared engine. Built for Get Bee Seen.
+Forecast leads, customers, revenue, CAC, CPL / CPP, ROAS, profit ROAS, ROI and breakeven before you spend on Meta Ads. 37 industry calculators (lead generation, B2B, ecommerce, professional services, plus a custom funnel builder), each with its own funnel and cost structure, on one shared engine, plus a modular Marketing Planner (platforms including Meta, Google, LinkedIn, JioHotstar, TikTok, Pinterest and Amazon; audience, funnel, creatives, landing page, campaign structure, forecast, profitability, 90 day plan, tracking). Built for Get Bee Seen.
 
 ## Run it
 

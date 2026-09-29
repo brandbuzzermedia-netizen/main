@@ -488,6 +488,103 @@ body.rep-open{overflow:hidden}
   body.rp-print .rep-bar{display:none}
   #avp,.picker{display:none!important}
 }
+
+/* ================= MARKETING PLANNER ================= */
+.planner-root{display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+.pstep{min-width:0}
+.pprog{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px}
+.pprog li{flex:1 1 150px}
+.pprog button{width:100%;display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:6px 12px 6px 6px;font:inherit;font-weight:600;font-size:13px;cursor:pointer;min-height:40px}
+.pprog button span{width:26px;height:26px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--surface2);color:var(--muted);font-weight:700}
+.pprog li.done button{color:var(--head)} .pprog li.done button span{background:var(--gold);color:var(--on-gold)}
+.pprog li.on button{border-color:var(--green);background:var(--green);color:var(--cream)} .pprog li.on button span{background:var(--gold);color:var(--on-gold)}
+.pprog button:disabled{cursor:not-allowed;opacity:.6}
+.pgrid{display:grid;gap:12px 16px;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr))}
+.pfield{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600}
+.pfield .inp input{font-weight:600;font-size:15px}
+.pnav{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;margin-top:18px}
+.linkbtn{border:0;background:none;padding:0;color:var(--head);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer}
+.objs{display:flex;flex-wrap:wrap;gap:6px}
+.objs .chip[aria-checked="true"]{background:var(--gold);color:var(--on-gold)}
+.amzq{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px;font-weight:600;font-size:14px}
+.pcards,.mcards{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr))}
+.pcard,.mcard{position:relative;display:flex;flex-direction:column;gap:4px;text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:16px;padding:14px 14px 14px 16px;font:inherit;color:var(--ink);cursor:pointer;min-height:92px}
+.pcard b,.mcard b{font-family:var(--display);font-weight:400;font-size:17px;color:var(--head);padding-right:28px}
+.pcard small,.mcard small{font-size:12px;color:var(--muted);line-height:1.4}
+.pcard[aria-checked="true"],.mcard[aria-checked="true"]{border-color:var(--green);box-shadow:0 0 0 3px var(--gold)}
+.pcard .ck,.mcard .ck{position:absolute;top:12px;right:12px;width:24px;height:24px;border-radius:7px;border:2px solid var(--line);display:grid;place-items:center;font-size:14px;font-weight:700;color:transparent}
+.pcard[aria-checked="true"] .ck,.mcard[aria-checked="true"] .ck{background:var(--green);border-color:var(--green);color:var(--gold)}
+.pcard:disabled{cursor:default}.pcard.ex{opacity:.6}
+.mcard .mi{width:36px;height:36px;border-radius:50%;background:var(--gold);color:var(--green);display:grid;place-items:center;margin-bottom:4px}
+.fit{font-size:12px;font-weight:700;color:var(--good)} .fit.bad{color:var(--bad)}
+.mtools{display:grid;gap:10px;grid-template-columns:minmax(0,1fr);margin-bottom:14px}
+@media (min-width:640px){.mtools{grid-template-columns:minmax(0,1fr) auto;align-items:center}}
+.mcard.full{background:var(--peach)}
+.mbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ctxt{display:flex;flex-direction:column;gap:6px;margin-top:14px;font-weight:600;font-size:14px}
+.ctxt textarea{border:1.5px solid var(--line);border-radius:14px;background:var(--surface2);padding:10px 12px;font:inherit;font-size:14px;color:var(--ink);resize:vertical}
+.pplan{display:grid;gap:0;grid-template-columns:minmax(0,1fr)}
+.pbar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 66px);z-index:5;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;background:var(--green);color:var(--cream);border-radius:18px;padding:10px 14px;margin-bottom:18px;box-shadow:var(--shadow)}
+.pbar>b{font-family:var(--display);font-weight:400;font-size:17px;color:var(--gold)}
+.pbar nav{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 auto}
+.pbar nav a{color:var(--cream);text-decoration:none;font-size:12px;font-weight:600;border:1.5px solid rgba(255,242,220,.35);border-radius:999px;padding:4px 10px}
+.pbar nav a:hover{border-color:var(--gold);color:var(--gold)}
+.pbar .pbtns{display:flex;gap:6px;flex-wrap:wrap}
+.pbar .btn-line{border-color:var(--cream);color:var(--cream)}
+.psec{scroll-margin-top:150px}
+.pctrl{background:var(--surface2);border-radius:14px;padding:12px 14px;margin-bottom:14px}
+.plts,.personas,.tgts,.phs,.cmps,.p90{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))}
+.plt,.persona,.tgt-b,.phc,.cmp-b,.p90m{background:var(--surface2);border:1.5px solid var(--line);border-radius:16px;padding:14px;font-size:13px}
+.plt p,.tgt-b p{margin:6px 0}
+.plt ul{margin:6px 0;padding-left:18px}
+.plt.off{opacity:.75}
+.plh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.plh b{font-family:var(--display);font-weight:400;font-size:17px;color:var(--head)}
+.scb{height:8px;background:var(--surface);border-radius:999px;overflow:hidden;margin:8px 0}.scb i{display:block;height:100%;background:var(--green)}
+.persona h4,.tgt-b h4,.phc h4,.cmp-b h4,.p90m h4{font-family:var(--display);font-weight:400;font-size:17px;color:var(--head);margin:0 0 8px}
+table.kv{font-size:13px}table.kv th{background:none;color:var(--muted);text-align:left;font-weight:600;width:38%;vertical-align:top;border-bottom:1px solid var(--line)}
+table.kv td{text-align:left;overflow-wrap:anywhere}
+table.kv code{word-break:break-all}
+table.kv{table-layout:fixed}
+table.kv.ov th{width:30%}
+.ticks{margin:0;padding-left:18px;display:grid;gap:4px;font-size:13px}
+.agec,.stg{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));margin-bottom:12px}
+.ageb,.stg div{background:var(--surface2);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column}
+.ageb span,.stg span{font-size:12px;color:var(--muted)}.ageb b,.stg b{font-family:var(--display);font-weight:400;font-size:22px;color:var(--head)}.stg em{font-style:normal;font-size:12px;color:var(--ink)}
+.agein,.alin{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:13px;font-weight:600}
+.agein input,.alin input{width:64px;border:1.5px solid var(--line);border-radius:10px;padding:6px 8px;background:var(--surface);font:inherit;color:var(--ink)}
+.alloc{display:grid;gap:8px}
+.alr{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.6fr) auto auto;gap:10px;align-items:center;font-size:13px}
+.alr b{min-width:48px;text-align:right}.alr em{font-style:normal;color:var(--muted);min-width:80px;text-align:right}
+.alt{height:12px;background:var(--surface2);border-radius:999px;overflow:hidden}.alt i{display:block;height:100%;background:var(--gold);border-radius:999px}
+@media (max-width:520px){.alr{grid-template-columns:minmax(0,1fr) auto auto}.alt{grid-column:1/-1;order:3}}
+.fnlw{display:flex;flex-direction:column;align-items:center;gap:2px}
+.fnl{width:var(--w);min-width:min(100%,220px);max-width:100%}
+.fnb{background:var(--green);color:var(--cream);border-radius:14px;padding:8px 14px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 10px}
+.fnb b{font-family:var(--display);font-weight:400;font-size:16px;color:var(--gold)}.fnb span{grid-column:1;font-size:11px;opacity:.85}.fnb em{grid-row:1/3;grid-column:2;font-style:normal;font-weight:700}
+.fna{color:var(--gold);font-weight:700;line-height:1}
+.pfls{display:grid;gap:8px}.pfl{display:grid;grid-template-columns:110px 1fr;gap:10px;font-size:13px;background:var(--surface2);border-radius:12px;padding:8px 12px}
+.swl{display:flex;gap:8px;align-items:center;font-size:13px;font-weight:600}
+table.cm td{text-align:left;min-width:120px;font-size:12px;vertical-align:top}
+.lps{display:grid;gap:10px}
+.lpsec{display:grid;grid-template-columns:auto 1fr;gap:12px;background:var(--surface2);border-radius:14px;padding:12px 14px;font-size:13px}
+.lpsec .n{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--on-gold);display:grid;place-items:center;font-weight:700}
+.lpsec h4{font-family:var(--display);font-weight:400;font-size:16px;color:var(--head);margin:0 0 4px}.lpsec p{margin:0}.lpsec ul{margin:4px 0 0;padding-left:18px}
+.cros{display:grid;gap:14px;grid-template-columns:auto 1fr;align-items:start;margin-top:16px}
+.crosc{background:var(--green);color:var(--cream);border-radius:18px;padding:14px 18px;text-align:center}
+.crosc b{display:block;font-family:var(--display);font-weight:400;font-size:40px;color:var(--gold);line-height:1}.crosc span{font-size:12px}
+.croin{display:grid;gap:6px}.croin label{display:grid;grid-template-columns:minmax(0,1fr) 130px;gap:10px;align-items:center;font-size:13px}
+.croin select{border-radius:10px;min-height:34px;padding:4px 8px}
+.fcg{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));font-size:13px;font-weight:600}
+.fcg label{display:flex;flex-direction:column;gap:4px}.fcg .inp input{padding:7px 10px;font-size:14px}
+table.asm input{width:80px;border:1.5px solid var(--line);border-radius:8px;padding:5px 6px;background:var(--surface);font:inherit;color:var(--ink);text-align:right}
+table.asm td:first-child{text-align:left;font-weight:600}
+.sensin{display:grid;gap:6px 18px;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));align-items:end}
+.sensin label{display:flex;flex-direction:column;font-size:12px;font-weight:600}.sensin label span{display:flex;justify-content:space-between}
+.fcin .h4{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline}.fcin .h4 .sub{font-family:var(--body);font-size:12px}
+details.blib{margin-top:14px}
+.planner .pplan .more{margin-bottom:10px}
+table.cm th,table.asm th:first-child,.bench th{text-align:left}
 </style>
 </head>
 <body>
@@ -499,6 +596,7 @@ body.rep-open{overflow:hidden}
       <a href="#models">Business calculators</a>
       <a href="#how">How it works</a>
       <a href="#calculator">Calculator</a>
+      <a href="#planner">Marketing planner</a>
     </nav>
   </div>
 </header>
@@ -568,9 +666,16 @@ body.rep-open{overflow:hidden}
   </div>
 </section>
 
+<section class="sec planner" id="planner">
+  <div class="wrap">
+    <div class="banner rv"><span class="num">3</span><div><h2>Build your marketing plan</h2><p>Pick only what you need: platforms, audience, funnel, creatives, landing page, campaign structure, forecast, profitability, a 90 day plan or tracking. One module, a few, or the full plan.</p></div></div>
+    <div id="planner-root" class="planner-root"><noscript><p>The marketing planner needs JavaScript.</p></noscript></div>
+  </div>
+</section>
+
 <section class="sec how" id="how">
   <div class="wrap">
-    <div class="banner rv"><span class="num">3</span><div><h2>How it works</h2><p>The calculator turns a budget into a funnel, and a funnel into profit. Every number is an assumption you can change.</p></div></div>
+    <div class="banner rv"><span class="num">4</span><div><h2>How it works</h2><p>The calculator turns a budget into a funnel, and a funnel into profit. Every number is an assumption you can change.</p></div></div>
     <div class="steps">
       <div class="step rv" style="--d:0"><div class="n">1</div><h3>Choose your industry</h3><p>37 industries across lead generation, B2B, ecommerce and professional services, or build your own funnel. Each has its own funnel stages, costs and definition of a "sale".</p></div>
       <div class="step rv" style="--d:1"><div class="n">2</div><h3>Enter your assumptions</h3><p>Start from a niche preset, then replace it with numbers from your own Ads Manager and sales records. Real data beats any benchmark.</p></div>
@@ -2847,19 +2952,19 @@ function reportHTML(){
 const REPORT_CSS=`body{font:14px/1.55 Archivo,system-ui,sans-serif;color:#191816;background:#fff;margin:0}.rep-doc{max-width:820px;margin:0 auto;padding:32px 24px}
 header{border-bottom:3px solid #FFB933;margin-bottom:18px;padding-bottom:10px}h1{font:400 30px 'Alfa Slab One',Georgia,serif;color:#196144;margin:4px 0}.rk{color:#196144;font-weight:700;margin:0;font-size:12px}
 h2{font:400 18px 'Alfa Slab One',Georgia,serif;color:#196144;margin:22px 0 8px}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#196144;color:#FFF2DC;text-align:left;padding:7px 8px}
-td{padding:7px 8px;border-bottom:1px solid #EBD9B8;vertical-align:top}td:not(:first-child){text-align:right}ul{padding-left:20px}li{margin-bottom:6px}.small{font-size:12px;color:#5F6B63}footer{margin-top:26px;font-size:12px;color:#5F6B63;border-top:1px solid #EBD9B8;padding-top:10px}`;
-function openReport(){
-  const body=reportHTML(),m=MODELS[cur];
+td{padding:7px 8px;border-bottom:1px solid #EBD9B8;vertical-align:top}td:not(:first-child){text-align:right}ul{padding-left:20px}li{margin-bottom:6px}table.kv th{background:none;color:#5F6B63;width:32%}table.kv td,table.cm td,table.fc td{text-align:left}.plt,.persona,.tgt-b,.phc,.cmp-b,.p90m,.lpsec{border:1px solid #EBD9B8;border-radius:12px;padding:10px 12px;margin:8px 0}h4{margin:6px 0;color:#196144}.fnb{background:#196144;color:#FFF2DC;border-radius:10px;padding:6px 12px;margin:2px auto}.fnb b{color:#FFB933;margin-right:8px}.fna{text-align:center;color:#FFB933}.scb,.alt{height:8px;background:#FFF2DC;border-radius:8px;overflow:hidden}.scb i,.alt i{display:block;height:100%;background:#196144}.alr{display:grid;grid-template-columns:1.2fr 1.6fr auto auto;gap:8px;align-items:center}.alr em{font-style:normal}.ageb,.stg div{display:inline-block;border:1px solid #EBD9B8;border-radius:10px;padding:6px 10px;margin:4px}.crosc{display:inline-block;background:#196144;color:#FFF2DC;border-radius:12px;padding:10px 14px}.crosc b{display:block;font-size:28px;color:#FFB933}.note{font-size:12px;color:#5F6B63}.small{font-size:12px;color:#5F6B63}footer{margin-top:26px;font-size:12px;color:#5F6B63;border-top:1px solid #EBD9B8;padding-top:10px}`;
+function openReport(){const m=MODELS[cur];showReport(reportHTML(),m.name+' forecast report','meta-ads-report-'+m.key,'#report-btn')}
+function showReport(body,title,file,focusBack){
   let ov=$('#report');if(ov)ov.remove();
   ov=document.createElement('div');ov.id='report';ov.className='rep-ov';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','Report');
   ov.innerHTML=`<div class="rep"><div class="rep-bar"><b>Report preview</b><span><button class="btn btn-green btn-sm" type="button" data-rep="print">Print / save as PDF</button> <button class="btn btn-line btn-sm" type="button" data-rep="dl">Download HTML</button> <button class="btn btn-line btn-sm" type="button" data-rep="close">Close</button></span></div><article class="rep-doc">${body}</article></div>`;
   document.body.appendChild(ov);document.body.classList.add('rep-open');
-  const close=()=>{ov.remove();document.body.classList.remove('rep-open');const b=$('#report-btn');if(b)b.focus()};
+  const close=()=>{ov.remove();document.body.classList.remove('rep-open');const b=focusBack&&$(focusBack);if(b)b.focus()};
   ov.addEventListener('click',e=>{const b=e.target.closest('[data-rep]');if(e.target===ov)close();if(!b)return;
     if(b.dataset.rep==='close')close();
     if(b.dataset.rep==='print'){document.body.classList.add('rp-print');try{window.print()}catch(err){toast('Printing is blocked here. Use your browser menu.')}setTimeout(()=>document.body.classList.remove('rp-print'),500)}
-    if(b.dataset.rep==='dl'){try{const doc=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(m.name)} forecast report</title><style>${REPORT_CSS}</style></head><body><div class="rep-doc">${body}</div></body></html>`;
-      const u=URL.createObjectURL(new Blob([doc],{type:'text/html'})),a=document.createElement('a');a.href=u;a.download='meta-ads-report-'+m.key+'.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}catch(err){toast('Download blocked by the browser. Use Print instead.')}}});
+    if(b.dataset.rep==='dl'){try{const doc=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${REPORT_CSS}</style></head><body><div class="rep-doc">${body}</div></body></html>`;
+      const u=URL.createObjectURL(new Blob([doc],{type:'text/html'})),a=document.createElement('a');a.href=u;a.download=file+'.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}catch(err){toast('Download blocked by the browser. Use Print instead.')}}});
   ov.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
   const f=ov.querySelector('[data-rep="print"]');if(f)f.focus();
 }
@@ -2886,6 +2991,23 @@ if(typeof globalThis!=='undefined'&&typeof globalThis.__MABC_EXPOSE__==='functio
   globalThis.__MABC_EXPOSE__({MODELS,CATALOG,cnt,reportHTML:()=>reportHTML(),state,inr,num,xx,pct,splitNum,fmtNum,zeroOf,tweenText,verdict,scaledOf,scenarioOf,ENGINE,
     open:function(k,vals){cur=k;load(k);if(vals)Object.assign(state[k],vals);shell();update();return{vals:state[k],summary:summaryText(),html:lastHtml}}});
 }
+
+/* ---------- API for the marketing planner (js/planner.js) ---------- */
+/* econ(key): the industry's economics from its calculator (the user's saved inputs, or defaults) */
+function econOf(key){
+  const m=MODELS[key];if(!m)return null;if(!state[key])load(key);
+  const r=m.compute(state[key]),k=r.k||{},st=r.funnel.filter(s=>isFinite(s.n));
+  const leadIdx=k.leadWord==='leads'?st.findIndex(s=>Math.abs(s.n-k.leads)<1e-9&&k.leads>0):-1;
+  const after=leadIdx>-1?st.slice(leadIdx+1):[];
+  const lead=k.leadWord==='leads';
+  return{key,name:m.name,lead,ticket:k.customers>0?k.revenue/k.customers:0,mu:k.revenue>0?Math.max(0,k.gross/k.revenue):0,
+    l2c:lead?(k.leads>0?k.customers/k.leads:0):(k.clicks>0?k.customers/k.clicks:0),
+    qual:after[0]&&k.leads>0?after[0].n/k.leads:NaN,qualLabel:after[0]?after[0].l:'',
+    meet:after[1]&&after[0]&&after[0].n>0?after[1].n/after[0].n:NaN,meetLabel:after[1]?after[1].l:'',
+    unit:k.unit||r.unit,unitP:k.unitP||r.unitP,cpm:state[key].cpm,ctr:state[key].ctr,lpConv:state[key].lpConv};
+}
+globalThis.MABC_APP={MODELS,CATALOG,econ:econOf,inr,num,cnt,pct,xx,div,esc,toast,cap:s=>s.charAt(0).toUpperCase()+s.slice(1),
+  openCalculator:k=>{if(MODELS[k])setModel(k,true)},showReport,market:()=>globalThis.MABC_MARKET||null,RM};
 
 /* ---------- industry dashboard ---------- */
 (function(){
@@ -2921,6 +3043,804 @@ if(typeof globalThis!=='undefined'&&typeof globalThis.__MABC_EXPOSE__==='functio
   const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12,rootMargin:'0px 0px -5% 0px'});
   els.forEach(e=>io.observe(e));
 })();
+})();
+</script>
+<script>/* Knowledge base for the Marketing Planner (js/planner.js).
+   Everything here is planning guidance built from rules, not measured data. Starting cost assumptions are
+   placeholders for India and must be replaced with real numbers (see js/benchmarks.js).
+   Platform availability changes: the planner says "verify" wherever it is not certain. */
+(function(){
+'use strict';
+const D={};
+
+/* ---------- markets ---------- */
+/* amazon: an Amazon marketplace exists; tiktok: TikTok Ads can be considered; jio: JioHotstar (India only);
+   pinterest: 'yes' where self serve ads are established, 'verify' elsewhere; lang: suggested ad languages */
+D.COUNTRIES={
+  india:{label:'India',amazon:1,tiktok:0,jio:1,pinterest:'verify',lang:['English','Hindi','regional language of each state']},
+  usa:{label:'USA',amazon:1,tiktok:1,jio:0,pinterest:'yes',lang:['English','Spanish where relevant']},
+  uk:{label:'UK',amazon:1,tiktok:1,jio:0,pinterest:'yes',lang:['English']},
+  canada:{label:'Canada',amazon:1,tiktok:1,jio:0,pinterest:'yes',lang:['English','French (Quebec)']},
+  australia:{label:'Australia',amazon:1,tiktok:1,jio:0,pinterest:'yes',lang:['English']},
+  uae:{label:'UAE',amazon:1,tiktok:1,jio:0,pinterest:'verify',lang:['English','Arabic']},
+  saudi:{label:'Saudi Arabia',amazon:1,tiktok:1,jio:0,pinterest:'verify',lang:['Arabic','English']},
+  singapore:{label:'Singapore',amazon:1,tiktok:1,jio:0,pinterest:'verify',lang:['English']},
+  europe:{label:'Europe',amazon:1,tiktok:1,jio:0,pinterest:'yes',lang:['English','the local language of each country']},
+  sea:{label:'Southeast Asia',amazon:'verify',tiktok:1,jio:0,pinterest:'verify',lang:['English','the local language of each country']},
+  other:{label:'Other',amazon:'verify',tiktok:'verify',jio:0,pinterest:'verify',lang:['the local language']}
+};
+D.CITY_LANG={Bengaluru:'Kannada',Mysuru:'Kannada',Chennai:'Tamil',Coimbatore:'Tamil',Hyderabad:'Telugu',Mumbai:'Marathi',Pune:'Marathi',Kolkata:'Bengali',Ahmedabad:'Gujarati',Surat:'Gujarati',Kochi:'Malayalam',Thiruvananthapuram:'Malayalam',Delhi:'Hindi',Jaipur:'Hindi',Lucknow:'Hindi',Chandigarh:'Punjabi'};
+
+/* ---------- business models ---------- */
+D.BMODELS=[['b2b','B2B'],['b2c','B2C'],['d2c','D2C'],['ecom','Ecommerce'],['local','Local business'],['manufacturer','Manufacturer'],['distributor','Distributor'],['wholesaler','Wholesaler'],['retailer','Retailer'],['service','Service provider'],['saas','SaaS'],['marketplace','Marketplace'],['pro','Professional service'],['hybrid','Hybrid']];
+/* funnel type used by the diagram, landing page and forecasting */
+D.FUNNEL_OF={b2b:'b2b',manufacturer:'b2b',distributor:'b2b',wholesaler:'b2b',ecom:'ecom',d2c:'ecom',marketplace:'ecom',saas:'saas',local:'service',service:'service',pro:'service',retailer:'service',hybrid:'master',b2c:null};
+
+/* ---------- objectives ---------- */
+/* k: lead | order | reach | traffic | app | visit */
+D.OBJECTIVES=[['leads','Leads','lead'],['sales','Sales','order'],['traffic','Website traffic','traffic'],['awareness','Brand awareness','reach'],['discovery','Product discovery','reach'],['app','App installs','app'],['whatsapp','WhatsApp leads','lead'],['calls','Calls','lead'],['bookings','Bookings','lead'],['demo','Demo requests','lead'],['dealer','Dealer acquisition','lead'],['distributor','Distributor acquisition','lead'],['amazon','Amazon sales','order'],['store','Store visits','visit'],['consultation','Consultation','lead'],['enquiries','Enquiries','lead']];
+
+/* ---------- archetypes: audience, age and message defaults ---------- */
+D.ARCH={
+  b2b:{age:[[30,50],[25,30],[50,60]],ageWhy:'Buying decisions sit with owners, heads of department and senior managers.',gender:'All genders. Target by role and company, not gender.',occ:'Owners, procurement, operations and department heads',income:'Target by company size and industry rather than personal income',behav:'Researches suppliers online, compares quotes and asks for references before buying',intent:'High when searching, low on social feeds',angle:'Reliability, specifications, delivery timelines and total cost of ownership',lp:'b2b',funnel:'b2b',nurture:1,repeat:1,consumer:0},
+  dealer:{age:[[30,55],[25,30],[55,65]],ageWhy:'Dealers and distributors are usually established business owners.',gender:'All genders. Target by business type.',occ:'Dealers, distributors, retailers, contractors',income:'Target by business type and trade association membership',behav:'Looks for new product lines with good margins, reliable supply and marketing support',intent:'Medium: they respond to margin and exclusivity',angle:'Margins, territory, supply reliability and marketing support',lp:'b2b',funnel:'dealer',nurture:1,repeat:1,consumer:0},
+  ecom:{age:[[18,34],[35,44],[45,60]],ageWhy:'Online shoppers for this category skew younger, with a strong 35 to 44 segment to test.',gender:'All genders unless the product is gender specific; let the data narrow it.',occ:'Students, young professionals, homemakers',income:'Middle to upper middle income, urban and tier 2 cities',behav:'Shops on mobile, follows creators, responds to offers and reviews',intent:'Low to medium: impulse and comparison shopping',angle:'Look, price, reviews and fast delivery',lp:'ecom',funnel:'ecom',repeat:1,consumer:1},
+  local:{age:[[28,55],[22,28],[55,65]],ageWhy:'Homeowners and working adults who pay for local services.',gender:'All genders.',occ:'Homeowners, tenants, working professionals',income:'Middle income and above within the service area',behav:'Searches nearby, checks ratings, messages on WhatsApp before booking',intent:'High when searching, medium on social',angle:'Speed, trust, local reviews and clear pricing',lp:'local',funnel:'service',consumer:1},
+  highticket:{age:[[30,50],[25,30],[50,65]],ageWhy:'People with the budget and life stage for a large purchase (new home, upgrade, event).',gender:'All genders. Decisions are often made as a couple or family.',occ:'Salaried professionals, business owners, NRIs',income:'Upper middle and affluent households',behav:'Researches for weeks, compares options, visits before deciding',intent:'Medium: long consideration',angle:'Quality, proof of past work, transparency and a low risk first step',lp:'highticket',funnel:'service',nurture:1,consumer:1},
+  realestate:{age:[[30,50],[25,30],[50,65]],ageWhy:'First and second home buyers, with an investor segment above 50.',gender:'All genders. Couples usually decide together.',occ:'Salaried professionals, business owners, NRIs',income:'Upper middle and affluent',behav:'Compares projects, checks location and builder track record, visits sites',intent:'Medium to high near launch or possession',angle:'Location, price, possession date and builder trust',lp:'realestate',funnel:'service',nurture:1,consumer:1},
+  health:{age:[[25,55],[18,25],[55,70]],ageWhy:'Adults who manage their own and their family’s care.',gender:'All genders.',occ:'Working adults and parents',income:'Middle income and above',behav:'Searches symptoms and treatments, reads reviews, prefers nearby clinics',intent:'High when searching for a treatment',angle:'Expertise, safety, results and easy booking',lp:'health',funnel:'service',repeat:1,consumer:1},
+  edu:{age:[[18,25],[35,50],[25,35]],ageWhy:'Students who study and the parents who pay, plus working professionals who upskill.',gender:'All genders.',occ:'Students, parents, working professionals',income:'Middle income and above',behav:'Compares institutes, watches demo classes, asks about placements and results',intent:'Seasonal: peaks before admissions and exams',angle:'Outcomes, faculty, results and flexible schedules',lp:'lead',funnel:'service',consumer:1},
+  saas:{age:[[25,45],[45,55],[22,25]],ageWhy:'Managers and team leads who evaluate software, plus founders.',gender:'All genders. Target by role.',occ:'Founders, managers, team leads, IT and operations',income:'Target by company size',behav:'Reads reviews and comparisons, starts trials, involves the team',intent:'High when searching for a solution',angle:'Time saved, ROI, integrations and ease of setup',lp:'saas',funnel:'saas',repeat:1,consumer:0},
+  pro:{age:[[30,55],[25,30],[55,65]],ageWhy:'Business owners and individuals who need expert help.',gender:'All genders.',occ:'Business owners, professionals, families',income:'Middle income and above',behav:'Asks for referrals, checks credentials, prefers a first consultation',intent:'High when a need arises',angle:'Credentials, clarity on fees and a fast first consultation',lp:'highticket',funnel:'service',nurture:1,consumer:1},
+  hosp:{age:[[25,45],[45,60],[21,25]],ageWhy:'Couples, families and working professionals who travel for leisure.',gender:'All genders.',occ:'Working professionals, families',income:'Middle income and above',behav:'Plans around holidays and long weekends, compares prices and reviews',intent:'Seasonal: peaks before holidays',angle:'Experience, value, reviews and flexible cancellation',lp:'local',funnel:'service',consumer:1},
+  food:{age:[[18,40],[40,55],[16,18]],ageWhy:'Frequent orderers skew young and urban.',gender:'All genders.',occ:'Students, young professionals, families',income:'All income groups within delivery range',behav:'Orders on impulse around meal times, follows offers',intent:'High at meal times',angle:'Taste, speed, offers and hygiene',lp:'local',funnel:'ecom',repeat:1,consumer:1},
+  fitness:{age:[[20,35],[35,45],[45,55]],ageWhy:'Most new members join between 20 and 35; 35 to 45 is a strong second segment.',gender:'All genders; test separate creatives by goal.',occ:'Students, working professionals',income:'Middle income and above near the gym',behav:'Starts in January and before events, responds to trials and transformations',intent:'Medium: needs motivation',angle:'Results, community, trainers and a free trial',lp:'local',funnel:'service',repeat:1,consumer:1}
+};
+
+/* ---------- industries (planner list) ---------- */
+/* [label, calculator key, archetype, default business model, product noun, primary buyer, secondary buyer, interests, pains, visual category] */
+const IND=[
+  ['Service business','service','local','service','our service','Local customers who need the service now','People planning ahead','Home improvement|Local businesses|Family','Unreliable providers|Hidden charges|Slow response',0],
+  ['B2B','b2b','b2b','b2b','our product','Business owners and procurement heads','Department managers who influence the purchase','Business|Entrepreneurship|Industry news','Unreliable suppliers|Slow delivery|Poor after sales support',0],
+  ['B2C','b2c','ecom','b2c','our product','Everyday consumers in your category','Gift buyers','Shopping|Lifestyle|Deals','High prices|Poor quality|Slow delivery',0],
+  ['Ecommerce','b2c','ecom','ecom','our products','Online shoppers in your category','Gift buyers and repeat customers','Online shopping|Deals|Your product category','Fake products|Returns hassle|Slow delivery',1],
+  ['D2C','d2c','ecom','d2c','our brand','Online shoppers who prefer brands','Loyal repeat buyers','Online shopping|Brands|Your product category','Generic products|Inconsistent quality',1],
+  ['Door manufacturer','door','dealer','manufacturer','doors','Door dealers, builders and contractors','Architects and interior designers','Construction|Interior design|Home improvement|Real estate','Inconsistent quality|Late delivery|Poor finish',1],
+  ['Door retailer','door','highticket','retailer','doors','Homeowners building or renovating','Architects and contractors choosing products','Home improvement|Interior design|Real estate','Poor finish|Warping|Late installation',1],
+  ['Timber importer','timber','b2b','distributor','imported timber','Timber traders, furniture makers and contractors','Architects and builders','Construction|Furniture|Woodworking','Inconsistent grade|Moisture|Supply delays',0],
+  ['Timber retailer','timber','highticket','retailer','timber','Carpenters, furniture makers and homeowners','Interior contractors','Woodworking|Furniture|Home improvement','Wrong grade|Wastage|Price uncertainty',0],
+  ['Furniture','furniture','highticket','retailer','furniture','Homeowners furnishing a new or renovated home','Offices and cafes','Home decor|Interior design|Furniture','Poor quality|Late delivery|Size mismatch',1],
+  ['Interior design','interior','highticket','service','interior design','Homeowners with a new or renovated home','Offices and retail spaces','Interior design|Home decor|Real estate','Budget overruns|Delays|Poor execution',1],
+  ['Real estate','realestate','realestate','b2c','homes','Home buyers planning a first or bigger home','Investors and NRIs','Real estate|Home loans|Investment','Delayed possession|Hidden costs|Builder trust',0],
+  ['Healthcare','clinic','health','local','treatment','Patients looking for a trusted specialist','Family members who book on their behalf','Health and wellness|Fitness|Family','Long waits|Unclear costs|Trust',0],
+  ['Dental','dental','health','local','dental care','Adults who need treatment or a better smile','Parents booking for children','Health|Beauty|Family','Pain|Cost|Fear of treatment',0],
+  ['Education','education','edu','service','courses','Students choosing a course','Parents who pay and decide','Education|Careers|Exams','Uncertain outcomes|Fees|Time',0],
+  ['Coaching','education','edu','service','coaching','Students and professionals who want results','Parents','Education|Self improvement|Careers','No results|Generic teaching',0],
+  ['SaaS','saas','saas','saas','our software','Managers who own the problem the software solves','Founders and finance approvers','Technology|Productivity|Business software','Manual work|Tool sprawl|Hidden costs',0],
+  ['Technology','saas','saas','b2b','our technology','IT and operations leaders','Founders and CXOs','Technology|Cloud|Business','Downtime|Integration effort|Cost',0],
+  ['Manufacturing','manufacturing','b2b','manufacturer','our products','Procurement heads and plant managers','Design and engineering teams','Manufacturing|Engineering|Industry news','Quality rejects|Delivery delays|MOQ',0],
+  ['Industrial machinery','machinery','b2b','manufacturer','machines','Plant owners and production heads','Maintenance and engineering managers','Manufacturing|Engineering|Automation','Downtime|Service support|Payback',0],
+  ['Building materials','buildmat','dealer','distributor','building materials','Dealers, contractors and builders','Homeowners and architects','Construction|Real estate|Home improvement','Inconsistent supply|Quality|Credit terms',1],
+  ['Architecture','architecture','pro','pro','architecture services','Homeowners and developers planning a build','Commercial property owners','Architecture|Interior design|Real estate','Budget overruns|Approvals|Design mismatch',1],
+  ['Automotive','automotive','highticket','retailer','vehicles','Car buyers comparing models','Owners due for service or upgrade','Cars|Automotive|Travel','Price|Resale value|Service trust',0],
+  ['Finance','finance','pro','service','financial products','Salaried people planning loans or investments','Self employed and small business owners','Personal finance|Investment|Business','Rejections|Hidden charges|Paperwork',0],
+  ['Insurance','finance','pro','service','insurance','Families and earners who need cover','Business owners','Personal finance|Health|Family','Claim rejections|Complex policies',0],
+  ['Travel','travel','hosp','service','holiday packages','Couples and families planning a holiday','Corporate travel planners','Travel|Holidays|Adventure','Hidden costs|Poor hotels|Planning effort',1],
+  ['Hospitality','travel','hosp','local','stays','Travellers looking for a stay','Corporate and event bookings','Travel|Weekend getaways|Food','Poor reviews|Hidden fees',1],
+  ['Restaurant','food','food','local','food','Nearby diners and delivery customers','Party and group orders','Food|Dining|Delivery','Late delivery|Hygiene|Price',1],
+  ['Fitness','fitness','fitness','local','memberships','People starting their fitness journey','Returning members','Fitness|Health|Sports','Lack of results|Crowded gyms|Motivation',0],
+  ['Beauty','beauty','ecom','d2c','beauty products','Skincare and beauty shoppers','Gift buyers','Beauty|Skincare|Fashion','Skin reactions|Fake products',1],
+  ['Cosmetics','beauty','ecom','d2c','cosmetics','Makeup and skincare shoppers','Gift buyers','Beauty|Makeup|Fashion','Fake products|Shade mismatch',1],
+  ['Fashion','fashion','ecom','ecom','clothing','Style conscious online shoppers','Gift buyers','Fashion|Shopping|Lifestyle','Fit issues|Returns|Quality',1],
+  ['Jewellery','jewellery','highticket','retailer','jewellery','Buyers for weddings, festivals and gifts','Self purchase and investment buyers','Jewellery|Weddings|Fashion','Purity|Making charges|Trust',1],
+  ['Home decor','homedecor','ecom','ecom','home decor','Homeowners styling their space','Gift buyers','Home decor|Interior design|Lifestyle','Quality|Colour mismatch|Delivery damage',1],
+  ['Legal','legal','pro','pro','legal services','Individuals and businesses facing a legal matter','Businesses needing ongoing counsel','Business|Law|Real estate','Unclear fees|Slow process|Trust',0],
+  ['Accounting','accounting','pro','pro','accounting services','Small business owners and startups','Salaried individuals filing taxes','Business|Finance|Entrepreneurship','Compliance stress|Penalties|Time',0],
+  ['Consulting','consulting','pro','pro','consulting','Founders and leadership teams','Department heads with a specific problem','Business|Leadership|Strategy','Stalled growth|Execution gaps',0],
+  ['Marketing agency','agency','pro','service','marketing services','Business owners who need growth','Marketing managers','Marketing|Business|Entrepreneurship','Wasted ad spend|No leads|Poor reporting',0],
+  ['Photography','photography','highticket','service','photography','Couples and families with an upcoming event','Brands needing commercial shoots','Weddings|Photography|Events','Missed moments|Late delivery',1],
+  ['Wedding','wedding','highticket','service','wedding services','Couples planning a wedding','Parents who fund and decide','Weddings|Fashion|Travel','Budget overruns|Stress|Vendor reliability',1],
+  ['Events','wedding','highticket','service','event management','Companies and families planning events','Agencies needing partners','Events|Business|Entertainment','Poor execution|Budget overruns',1],
+  ['Other','custom','local','hybrid','our offer','Your primary customer','Your secondary customer','Your category','Your customer’s main problem',0]
+];
+D.INDUSTRIES=IND.map((r,i)=>({id:'i'+i,label:r[0],calc:r[1],arch:r[2],model:r[3],noun:r[4],buyer:r[5],buyer2:r[6],interests:r[7].split('|'),pains:r[8].split('|'),visual:!!r[9]}));
+
+/* ---------- platforms ---------- */
+D.PLATFORMS={
+  meta:{name:'Meta Ads',short:'Meta',funnel:{def:'Awareness → Consideration → Conversion → Retargeting',b2b:'Awareness → Lead form → Qualification → Retargeting',ecom:'Awareness → Product interest → Purchase → Retargeting'},
+    formats:['Reels','Static image','Carousel','UGC video','Testimonial','Product demo','Founder video','Before and after','Problem and solution','Offer'],
+    audiences:['Location and radius','Age and gender','Detailed interests','Behaviours where available','Custom audiences (website, customer list)','Lookalike audiences','Video viewers','Instagram and Facebook engagers'],
+    tags:['Meta Pixel','Conversions API (CAPI)'],cpm:180,ctr:1,convLead:8,convOrder:2,quality:1,freq:2.5},
+  google:{name:'Google Ads',short:'Google',funnel:{def:'Intent → Search → Landing page → Conversion',ecom:'Intent → Search or Shopping → Product page → Purchase',b2b:'Intent → Search → Landing page → Lead → Sales call'},
+    formats:['Responsive search ads','Performance Max assets','Shopping product feed','YouTube video','Demand Gen images and video','Display banners'],
+    audiences:['Search intent keywords','In market audiences','Affinity audiences','Remarketing lists','Customer Match','Website visitors','YouTube viewers'],
+    tags:['Google Tag Manager (GTM)','Google Analytics 4 (GA4)','Google Ads conversion tracking','Enhanced conversions'],cpm:1200,ctr:4,convLead:6,convOrder:2.5,quality:1.25,freq:1.5},
+  linkedin:{name:'LinkedIn Ads',short:'LinkedIn',funnel:{def:'Awareness → Content → Lead → Meeting → Sale',b2b:'Awareness → Engagement → Lead → Demo → Meeting → Proposal → Sale'},
+    formats:['Case study','Thought leadership post','Whitepaper or guide','Webinar invite','Product demo video','Testimonial','Industry report','Document ads'],
+    audiences:['Job titles','Job functions','Seniority','Company industry','Company size','Company location','Matched company lists (ABM)','Website retargeting'],
+    tags:['LinkedIn Insight Tag','LinkedIn Conversions API'],cpm:700,ctr:0.6,convLead:5,convOrder:0.5,quality:1.3,freq:3},
+  jiohotstar:{name:'JioHotstar Ads',short:'JioHotstar',funnel:{def:'Reach → Video → Awareness → Search and retargeting'},
+    formats:['Video ads (in stream)','Display','Sponsorship and special inventory where available'],
+    audiences:['Location','Age','Gender','Language','Content and contextual segments where available'],
+    tags:['Brand lift or reach reporting from the platform','Search uplift tracked in Google Ads and GA4'],cpm:250,ctr:0.3,convLead:1,convOrder:0.3,quality:0.6,freq:3},
+  tiktok:{name:'TikTok Ads',short:'TikTok',funnel:{def:'Discovery → Engagement → Product → Purchase',b2b:'Discovery → Engagement → Lead'},
+    formats:['UGC video','Creator content (Spark Ads)','Product demo','Native vertical video','Trend based creative','Testimonial','Before and after'],
+    audiences:['Location','Age','Gender','Interests','Behaviours','Devices','Custom audiences','Website visitors','Lookalike audiences'],
+    tags:['TikTok Pixel','TikTok Events API'],cpm:150,ctr:0.9,convLead:4,convOrder:1.2,quality:0.8,freq:2},
+  pinterest:{name:'Pinterest Ads',short:'Pinterest',funnel:{def:'Discovery → Inspiration → Product → Purchase',service:'Discovery → Inspiration → Idea board → Enquiry'},
+    formats:['Product pins','Video pins','Carousel','Collections','Shopping catalog ads where available'],
+    audiences:['Keywords','Interests','Categories','Demographics','Website visitors','Customer lists','Audience expansion where available'],
+    tags:['Pinterest Tag','Pinterest Conversions API'],cpm:200,ctr:0.6,convLead:3,convOrder:1.5,quality:0.9,freq:2},
+  amazon:{name:'Amazon Ads',short:'Amazon',funnel:{def:'Search → Product view → Cart → Purchase'},
+    formats:['Sponsored Products','Sponsored Brands (headline and video)','Sponsored Display','Amazon DSP where applicable','A+ content and Brand Store'],
+    audiences:['Keyword targeting (exact, phrase, broad)','Product and category targeting','Automatic targeting','Views remarketing (Sponsored Display)','In market audiences (DSP where applicable)'],
+    tags:['Amazon Attribution (for off Amazon traffic)','Amazon Brand Analytics and Seller Central reports'],cpm:800,ctr:0.4,convLead:0,convOrder:10,quality:1,freq:1.5}
+};
+D.PLATFORM_ORDER=['meta','google','linkedin','jiohotstar','tiktok','pinterest','amazon'];
+
+/* ---------- modules ---------- */
+D.MODULES=[
+  ['platforms','Platform recommendation','Which ad platforms to use and why','gear'],
+  ['audience','Target audience','Personas, interests, job titles and retargeting','phone'],
+  ['demo','Age and demographics','Age groups, gender, location and language','home'],
+  ['budget','Budget allocation','Split across platforms and funnel stages','rupee'],
+  ['funnel','Funnel diagram','Your performance marketing funnel, visually','box'],
+  ['phases','Phase wise strategy','Discovery to retention, phase by phase','ruler'],
+  ['creative','Creative strategy','Formats, hooks, messages and CTAs','camera'],
+  ['landing','Landing page strategy','Page structure, CRO score and fixes','lamp'],
+  ['campaigns','Campaign structure','Campaigns, ad sets and objectives per platform','briefcase'],
+  ['forecast','Forecasting','Impressions to revenue, ROAS and ROI','calc'],
+  ['profit','Profitability','Gross and net profit, CAC and breakeven','scale'],
+  ['plan90','90 day plan','Week by week: test, optimise, scale','book'],
+  ['tracking','Tracking and analytics','Pixels, tags and conversion events','code'],
+  ['custom','Custom module','Describe what you need, get a strategy','bulb']
+];
+
+/* ---------- funnels by business type ---------- */
+/* each stage: [label, forecast key or ''] */
+D.FUNNELS={
+  b2b:[['Awareness','impr'],['Website visit','clicks'],['Lead','leads'],['Qualified lead','qual'],['Meeting','meet'],['Proposal',''],['Negotiation',''],['Customer','cust'],['First order','revenue'],['Repeat order',''],['LTV','']],
+  dealer:[['Awareness','impr'],['Lead','leads'],['Qualified dealer','qual'],['Meeting','meet'],['Sample or catalogue',''],['First order','cust'],['Repeat orders',''],['Dealer LTV','']],
+  ecom:[['Impression','impr'],['Click','clicks'],['Product view',''],['Add to cart',''],['Checkout',''],['Purchase','cust'],['Repeat purchase',''],['Customer LTV','']],
+  service:[['Impression','impr'],['Click','clicks'],['Landing page',''],['Lead','leads'],['Qualified lead','qual'],['Call or consultation','meet'],['Proposal',''],['Customer','cust'],['Revenue','revenue']],
+  saas:[['Impression','impr'],['Click','clicks'],['Website visitor',''],['Signup','leads'],['Trial','qual'],['Paid customer','cust'],['Expansion',''],['LTV','']],
+  master:[['Awareness','impr'],['Reach','reach'],['Engagement',''],['Website visit','clicks'],['Lead or product view','leads'],['Qualified lead or add to cart','qual'],['Meeting or checkout','meet'],['Sale or purchase','cust'],['Revenue','revenue'],['Profit','net']]
+};
+D.STAGE_NOTE={Awareness:'People first see the brand',Reach:'Unique people reached',Impression:'Ad shown',Click:'Someone clicks through','Website visit':'Lands on your site','Landing page':'Reads the offer',Lead:'Shares contact details','Qualified lead':'Fits budget, need and location','Qualified dealer':'Right business type and territory',Meeting:'Call, visit or demo held','Call or consultation':'First conversation','Sample or catalogue':'Evaluates your product',Proposal:'Receives a quote',Negotiation:'Terms discussed',Customer:'Pays you','First order':'First revenue','Repeat order':'Buys again','Repeat orders':'Orders again','Repeat purchase':'Buys again','Product view':'Views a product','Add to cart':'Shows purchase intent',Checkout:'Starts paying',Purchase:'Completes the order','Customer LTV':'Lifetime value','Dealer LTV':'Lifetime value of the dealer',LTV:'Lifetime value','Website visitor':'Visits the site',Signup:'Creates an account',Trial:'Tries the product','Paid customer':'Starts paying',Expansion:'Upgrades or adds seats',Engagement:'Likes, comments, views','Lead or product view':'Shows interest','Qualified lead or add to cart':'Shows real intent','Meeting or checkout':'Close to buying','Sale or purchase':'Pays you',Revenue:'Money in',Profit:'Money kept'};
+
+/* ---------- creative hooks (templates: {p} product, {b} buyer, {loc} location) ---------- */
+D.HOOKS={
+  b2b:['Still losing orders to late deliveries? See how we ship {p} on schedule.','What 3 buyers asked before switching to our {p}.','The real cost of cheap {p}: a 60 second breakdown.','Case study: how a client cut rejects with our {p}.'],
+  dealer:['Add {p} to your range: better margins, reliable supply.','Why dealers in {loc} are switching to our {p}.','Territory open: become our {p} partner.','See our factory: how we make {p} that dealers trust.'],
+  ecom:['The {p} everyone in {loc} is asking about.','We tested it for 30 days. Here is what happened.','3 reasons our {p} sell out every month.','Before and after: the difference our {p} make.'],
+  local:['Need {p} in {loc} today? We are 30 minutes away.','Rated by your neighbours: see why.','No hidden charges on {p}. Here is our price list.','What to check before you book {p}.'],
+  highticket:['Planning {p}? Avoid these 5 costly mistakes.','See a finished project in {loc}, start to finish.','Why our clients never go over budget.','Book a free consultation: walk away with a clear plan.'],
+  realestate:['Homes in {loc} from a builder with on time possession.','See the site and the sample flat this weekend.','What your EMI looks like for a 2 BHK here.','Why investors are choosing {loc} right now.'],
+  health:['Worried about your symptoms? Talk to a specialist in {loc}.','What treatment really involves, explained by our doctor.','Real patient stories from {loc}.','Book a consultation today, no long waits.'],
+  edu:['The course that got our students placed.','Free demo class this week: see how we teach.','What topper students do differently.','Fees, schedule and outcomes, explained in 60 seconds.'],
+  saas:['Stop doing this by hand: see {p} in 60 seconds.','How a team like yours saved 10 hours a week.','{p} vs spreadsheets: an honest comparison.','Start a free trial, set up in minutes.'],
+  pro:['Confused about your options? Get clear advice in one call.','3 mistakes people make before hiring an expert.','Client story: how we solved it in 2 weeks.','Transparent fees. Book your first consultation.'],
+  hosp:['Your next weekend getaway, sorted.','See the view before you book.','Guests keep coming back for this.','Book direct and get the best rate.'],
+  food:['Hungry? Hot {p} in 30 minutes.','The dish {loc} keeps reordering.','Behind the kitchen: how we cook {p}.','Tonight only: first order offer.'],
+  fitness:['Your first week at our gym is on us.','Real members, real transformations.','A workout plan that fits your day.','Meet the trainers who get results.']
+};
+
+/* ---------- landing page types ---------- */
+D.LP={
+  b2b:{label:'B2B lead generation page',sections:['Hero','Problem','Solution','Benefits','Product or service','Proof','Process','Offer','FAQ','Final CTA'],cta:'Request a quote',offer:'Free sample, site assessment or technical consultation',proof:'Client logos, case studies with numbers, certifications'},
+  lead:{label:'Lead generation page',sections:['Hero','Problem','Solution','Benefits','Proof','Process','Offer','FAQ','Final CTA'],cta:'Book a free call',offer:'Free consultation or demo class',proof:'Results, testimonials and ratings'},
+  ecom:{label:'Product page (ecommerce)',sections:['Hero','Benefits','Product or service','Proof','Offer','FAQ','Final CTA'],cta:'Add to cart',offer:'First order discount, free shipping or bundle',proof:'Star ratings, reviews with photos, UGC'},
+  saas:{label:'SaaS trial or demo page',sections:['Hero','Problem','Solution','Benefits','Product or service','Proof','Process','Offer','FAQ','Final CTA'],cta:'Start free trial',offer:'Free trial or live demo',proof:'Customer logos, G2 or review ratings, case studies'},
+  health:{label:'Appointment booking page (healthcare)',sections:['Hero','Problem','Solution','Proof','Process','Offer','FAQ','Final CTA'],cta:'Book an appointment',offer:'Consultation slot this week',proof:'Doctor credentials, patient reviews, registrations'},
+  realestate:{label:'Project page (real estate)',sections:['Hero','Product or service','Benefits','Proof','Process','Offer','FAQ','Final CTA'],cta:'Book a site visit',offer:'Site visit with pickup, launch pricing',proof:'RERA details, builder track record, possession history'},
+  highticket:{label:'Consultation page (high ticket)',sections:['Hero','Problem','Solution','Benefits','Proof','Process','Offer','FAQ','Final CTA'],cta:'Book a free consultation',offer:'Free consultation with a written plan',proof:'Portfolio, before and after, client videos'},
+  local:{label:'Local business page',sections:['Hero','Benefits','Product or service','Proof','Process','Offer','FAQ','Final CTA'],cta:'Call or WhatsApp now',offer:'Same day slot or first visit offer',proof:'Google rating, local reviews, years in business'},
+  amazon:{label:'Amazon listing and Brand Store',sections:['Hero','Benefits','Product or service','Proof','Offer','FAQ'],cta:'Add to cart on Amazon',offer:'Coupon, Lightning Deal or bundle',proof:'Ratings and reviews, A+ comparison chart'}
+};
+D.FAQ={
+  b2b:['What is the minimum order quantity?','What are the delivery timelines?','Do you offer samples?','What certifications do you hold?','What are the payment terms?'],
+  dealer:['What margins do dealers earn?','Is my territory available?','What marketing support do you give?','What is the minimum first order?','How fast is replenishment?'],
+  ecom:['How long does delivery take?','What is the return policy?','Is cash on delivery available?','How do I choose the right size or variant?','Is it original?'],
+  local:['Which areas do you cover?','How soon can you come?','What are your charges?','Do you give a warranty?','How do I pay?'],
+  highticket:['What does it cost?','How long does it take?','Can I see past work?','What is included?','How do payments work?'],
+  realestate:['What is the possession date?','Is the project RERA registered?','Which banks give loans here?','What are the total charges?','Can I visit the sample flat?'],
+  health:['Do I need an appointment?','What does the consultation cost?','Is the treatment painful?','How many sessions will I need?','Do you accept insurance?'],
+  edu:['What are the fees and EMI options?','What is the batch schedule?','Do you help with placements?','Is there a demo class?','Online or offline?'],
+  saas:['Is there a free trial?','How long does setup take?','Which tools does it integrate with?','Is my data secure?','Can I cancel anytime?'],
+  pro:['What are your fees?','How long will it take?','What documents do I need?','Is the first consultation free?','Do you work remotely?'],
+  hosp:['What is the cancellation policy?','Is breakfast included?','How far is it from the airport or station?','Is parking available?','Can I check in early?'],
+  food:['What areas do you deliver to?','How long does delivery take?','Do you have vegetarian options?','Is there a minimum order?','How do I pay?'],
+  fitness:['Is there a free trial?','What are the timings?','Are trainers included?','Can I pause my membership?','Is parking available?']
+};
+
+/* ---------- custom module themes (keyword → strategy block) ---------- */
+D.THEMES=[
+  {k:['dealer','distributor','channel','partner','franchise'],name:'Dealer and channel acquisition',objective:'Recruit and activate trade partners',audience:'Existing dealers in adjacent categories, distributors, contractors and retailers',platforms:['linkedin','meta','google'],funnel:'Awareness → Enquiry → Qualification call → Factory or showroom visit → Sample order → First order → Repeat orders',creative:['Margin and earnings story','Factory tour video','Dealer testimonial','Territory availability announcement'],offer:'Introductory margin, sample kit and marketing support',kpi:['Cost per dealer enquiry','Qualified dealer rate','Dealers onboarded','First order value','90 day repeat order rate']},
+  {k:['launch','new product','introduce'],name:'Product launch',objective:'Build awareness and first sales for a new offer',audience:'Category buyers plus existing customers and engagers',platforms:['meta','google','jiohotstar','tiktok'],funnel:'Teaser → Reveal → Early access → Launch offer → Reviews → Scale',creative:['Teaser countdown','Founder reveal video','Unboxing or demo','Early buyer reviews'],offer:'Launch price or early access bonus',kpi:['Reach','Waitlist signups','Launch week sales','Cost per purchase']},
+  {k:['festive','diwali','season','sale','christmas','eid','wedding season'],name:'Seasonal campaign',objective:'Capture peak season demand',audience:'Past buyers, engagers and in market shoppers',platforms:['meta','google','amazon'],funnel:'Warm up → Offer reveal → Peak days → Last chance → Post season retention',creative:['Countdown','Gift guide carousel','Offer statics','Last chance reels'],offer:'Time bound discount or bundle',kpi:['Cost per purchase','Revenue per day','ROAS','Repeat purchase after season']},
+  {k:['hiring','recruit','job','talent'],name:'Recruitment campaign',objective:'Attract qualified applicants',audience:'Candidates by role, experience and location',platforms:['linkedin','meta','google'],funnel:'Employer brand → Job ad → Application → Screening → Interview → Hire',creative:['Team day in the life','Employee testimonial','Role and salary highlights'],offer:'Clear salary range and growth path',kpi:['Cost per application','Qualified applicant rate','Cost per hire']},
+  {k:['app','install','download'],name:'App growth',objective:'Drive installs and activation',audience:'Mobile users matching your core persona',platforms:['google','meta','tiktok'],funnel:'Install → Signup → Activation → First purchase → Retention',creative:['App walkthrough','Feature in 15 seconds','User reviews'],offer:'Signup bonus or first order credit',kpi:['Cost per install','Activation rate','Cost per activated user','Day 30 retention']},
+  {k:['store','footfall','walk in','showroom visit'],name:'Store footfall',objective:'Bring nearby people into the store',audience:'People within a short radius of each store',platforms:['meta','google'],funnel:'Local awareness → Directions or call → Visit → Purchase',creative:['Store tour','In store offer','Local customer testimonial'],offer:'In store only offer or event',kpi:['Store visits (where measured)','Direction requests','Calls','Cost per visit']},
+  {k:['review','reputation','rating'],name:'Reputation building',objective:'Grow reviews and trust',audience:'Recent customers and engagers',platforms:['meta','google'],funnel:'Purchase → Review request → Review → Social proof in ads',creative:['Customer story','Review highlight statics'],offer:'Thank you gift for honest reviews (follow platform rules)',kpi:['Reviews per month','Average rating','Conversion rate lift']},
+  {k:['webinar','event','workshop','masterclass'],name:'Webinar or event funnel',objective:'Fill seats and convert attendees',audience:'Your ideal customer profile plus warm audiences',platforms:['linkedin','meta','google'],funnel:'Invite → Registration → Reminder → Attendance → Offer → Sales call',creative:['Speaker video','What you will learn carousel','Reminder statics'],offer:'Free seat, bonus resource for attendees',kpi:['Cost per registration','Show up rate','Attendee to lead rate']},
+  {k:['retention','loyalty','repeat','upsell','cross sell','winback','win back'],name:'Retention and loyalty',objective:'Grow repeat purchases and lifetime value',audience:'Existing customers, lapsed buyers',platforms:['meta','google'],funnel:'Customer → Reminder → Repeat purchase → Upsell → Referral',creative:['Replenishment reminder','New arrivals for customers','Referral offer'],offer:'Loyalty points, bundle or referral reward',kpi:['Repeat purchase rate','LTV','Referral rate']},
+  {k:['export','international','overseas','global'],name:'International expansion',objective:'Win buyers in a new market',audience:'Importers, distributors and buyers in the target country',platforms:['linkedin','google','meta'],funnel:'Market awareness → Enquiry → Sample → Trial order → Contract',creative:['Capability video','Certifications and compliance','Case study from an existing export market'],offer:'Sample shipment or trial order terms',kpi:['Cost per qualified enquiry','Sample to order rate','First order value']}
+];
+
+globalThis.MABC_PLANNER_DATA=D;
+})();
+</script>
+<script>/* Marketing Planner: a modular performance marketing strategy builder on top of the calculators.
+   Flow: 1 Business → 2 Objective → 3 Platforms → 4 Select modules → 5 Plan.
+   Only the modules the user selects are generated, shown in the navigation and included in the report.
+   Recommendations come from rules (industry, business model, market, objective, budget); forecasts reuse
+   each industry calculator's economics plus per platform assumptions. Nothing here is a guarantee. */
+(function(){
+'use strict';
+const D=globalThis.MABC_PLANNER_DATA,APP=()=>globalThis.MABC_APP;
+if(!D)return;
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const IN=new Intl.NumberFormat('en-IN',{maximumFractionDigits:0});
+const inr=n=>{if(!isFinite(n))return 'n/a';const s=n<0&&Math.abs(n)>=0.5?'-':'',a=Math.abs(n);return a>=1e7?s+'₹'+(a/1e7).toFixed(2)+' Cr':a>=1e5?s+'₹'+(a/1e5).toFixed(2)+' L':s+'₹'+IN.format(Math.round(a))};
+const cnt=n=>!isFinite(n)?'n/a':n<=0?'0':n<1?'under 1':IN.format(Math.round(n));
+const pct=n=>isFinite(n)?(Math.round(n*10)/10).toString()+'%':'n/a';
+const xx=n=>isFinite(n)?(Math.abs(n)<0.005?0:n).toFixed(2)+'x':'n/a';
+const div=(a,b)=>b>0?a/b:Infinity;
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const list=a=>a.length<2?(a[0]||''):a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+const lc=a=>a.map((x,i)=>i?x.charAt(0).toLowerCase()+x.slice(1):x);
+const PL=D.PLATFORMS,PO=D.PLATFORM_ORDER;
+const OBJ=Object.fromEntries(D.OBJECTIVES.map(o=>[o[0],{id:o[0],label:o[1],k:o[2]}]));
+const MOD=Object.fromEntries(D.MODULES.map(m=>[m[0],{id:m[0],name:m[1],desc:m[2],icon:m[3]}]));
+const MOD_ORDER=D.MODULES.map(m=>m[0]);
+
+/* ---------- state ---------- */
+const KEY='mabc:planner';
+const DEF=()=>({step:1,industry:'',model:'',country:'india',countryName:'',cities:'Bengaluru',product:'',objective:'leads',budget:100000,
+  pmode:'auto',platforms:['meta','google'],amazonListed:'',modules:[],custom:'',reached:1,
+  ov:{ages:null,alloc:null,assume:{},econ:{},fixed:0,amz:{price:999,cost:350,referral:15,fba:70,ship:0,returns:5,disc:5,organic:100000},cro:{},sens:{},range:'range',vols:0}});
+let S=load();
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&typeof s==='object'){const d=DEF();return Object.assign(d,s,{ov:Object.assign(d.ov,s.ov||{})})}}catch(e){}return DEF()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+/* ---------- context ---------- */
+function context(st){
+  st=st||S;
+  const ind=D.INDUSTRIES.find(i=>i.id===st.industry)||D.INDUSTRIES[0];
+  const arch=D.ARCH[ind.arch]||D.ARCH.local,model=st.model||ind.model,obj=OBJ[st.objective]||OBJ.leads;
+  const country=D.COUNTRIES[st.country]||D.COUNTRIES.india,countryLabel=st.country==='other'?(String(st.countryName||'').trim()||'your market'):country.label;
+  let funnel=(obj.id==='dealer'||obj.id==='distributor')?'dealer':(D.FUNNEL_OF[model]||arch.funnel);
+  if(obj.id==='amazon')funnel='ecom';
+  const b2bish=['b2b','dealer','saas'].includes(ind.arch)||['b2b','manufacturer','distributor','wholesaler','saas'].includes(model)||obj.id==='dealer'||obj.id==='distributor'||obj.id==='demo';
+  const consumer=!!arch.consumer&&!b2bish;
+  const cities=String(st.cities||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const loc=cities.length?list(cities.slice(0,3)):countryLabel;
+  const product=String(st.product||'').trim()||ind.noun;
+  const app=APP(),econ0=app&&app.econ(ind.calc)||{lead:true,ticket:20000,mu:0.4,l2c:0.08,qual:0.5,meet:0.4,cpm:180,ctr:1,lpConv:8,name:ind.label,unit:'customer',unitP:'customers'};
+  const kind=(funnel==='ecom'||obj.k==='order')&&!(funnel==='service'&&obj.k==='lead')?'order':'lead';
+  const e=st.ov.econ||{};
+  const econ={ticket:num(e.ticket,econ0.ticket),mu:num(e.mu,econ0.mu*100)/100,
+    l2c:num(e.l2c,(kind==='lead'?(econ0.lead?econ0.l2c:0.08):(econ0.lead?0.02:econ0.l2c))*100)/100,
+    qual:num(e.qual,(isFinite(econ0.qual)?econ0.qual:0.5)*100)/100,meet:num(e.meet,(isFinite(econ0.meet)?econ0.meet:0.4)*100)/100,
+    calc:econ0.name,calcKey:ind.calc,unit:econ0.unit,unitP:econ0.unitP,cpm:econ0.cpm,ctr:econ0.ctr,lpConv:econ0.lpConv};
+  const c={st,ind,arch,model,modelLabel:(D.BMODELS.find(m=>m[0]===model)||['',model])[1],obj,country,countryKey:st.country,countryLabel,cities,loc,product,funnel,kind,b2bish,consumer,econ,budget:Math.max(0,+st.budget||0)};
+  c.evals=Object.fromEntries(PO.map(p=>[p,evaluate(p,c)]));
+  c.platforms=chosen(c);
+  c.alloc=allocate(c);
+  c.fc=forecast(c);
+  return c;
+}
+function num(v,d){const n=parseFloat(v);return isFinite(n)&&n>=0?n:d}
+
+/* ---------- platform eligibility and fit ---------- */
+function evaluate(p,c){
+  const R=[],W=[];let s=0,status='eligible';
+  const o=c.obj.id,ok=c.obj.k,ind=c.ind,a=ind.arch,vis=ind.visual;
+  const lowBudget=c.budget<30000;
+  if(p==='meta'){s=65;if(c.consumer){s+=15;R.push('Large consumer reach and strong lead and sales tools')}if(['lead'].includes(ok)){s+=10;R.push('Instant forms and WhatsApp make lead capture easy')}
+    if(ok==='order'){s+=8;R.push('Strong for product sales with catalog and retargeting')}if(ok==='reach'){s+=5;R.push('Efficient reach with Reels and video')}if(c.b2bish){s-=10;W.push('B2B lead quality varies: qualify leads quickly')}}
+  if(p==='google'){s=62;if(['local','highticket','health','pro','realestate','hosp','edu'].includes(a)){s+=18;R.push('People actively search for this service')}if(c.b2bish){s+=12;R.push('Captures buyers searching for suppliers and solutions')}
+    if(a==='ecom'){s+=10;R.push('Shopping and Performance Max for product demand')}if(['calls','bookings','consultation','enquiries','leads','demo','sales'].includes(o)){s+=8;R.push('High intent objective suits search')}
+    if(ok==='reach'){s-=8;R.push('YouTube and Demand Gen for awareness')}if(o==='app'){s+=10;R.push('App campaigns across Search, Play and YouTube')}}
+  if(p==='linkedin'){s=18;if(c.b2bish||['pro'].includes(a)&&!c.consumer){s+=55;R.push('Target by job title, function, seniority and company')}else if(a==='pro'||a==='saas'){s+=30;R.push('Reaches professionals and decision makers')}else{W.push('Consumer audiences are cheaper to reach on Meta and Google')}
+    if(['demo','dealer','distributor'].includes(o)){s+=8;R.push('Suits demo and partner acquisition')}if(lowBudget){s-=12;W.push('Cost per click is usually high; small budgets buy few clicks')}}
+  if(p==='jiohotstar'){if(!c.country.jio){status='excluded';W.push('JioHotstar is an Indian platform; not applicable to '+c.countryLabel)}
+    else{status='verify';s=15;if(ok==='reach'){s+=40;R.push('Premium video reach for awareness')}if(c.consumer&&['ecom','food','fitness','highticket','edu','realestate','hosp'].includes(a)){s+=18;R.push('Mass market audience across regions and languages')}
+      if(c.b2bish){s-=15;W.push('Mass reach wastes budget for niche B2B audiences')}if(ok==='lead'||ok==='order'){W.push('Best as awareness that lifts search and retargeting, not a direct lead source')}
+      W.push('Buying options, minimum spends and targeting depend on JioStar inventory: verify before planning');if(c.budget<200000)s-=10}}
+  if(p==='tiktok'){const t=c.country.tiktok;
+    if(t===0){status='excluded';W.push('TikTok is not available in '+c.countryLabel+', so it is excluded')}
+    else{if(t==='verify'){status='verify';W.push('Check TikTok Ads availability in '+c.countryLabel)}s=28;
+      if(a==='ecom'||a==='fitness'||a==='food'||['d2c','ecom'].includes(c.model)){s+=40;R.push('Native video and creators drive discovery for consumer brands')}if(o==='app'){s+=15;R.push('Strong app install formats')}
+      if(c.b2bish){s-=18;W.push('Weak fit for most B2B buying')}}}
+  if(p==='pinterest'){const t=c.country.pinterest;if(t==='verify'){status='verify';W.push('Self serve Pinterest Ads availability varies: check it for '+c.countryLabel)}s=15;
+    if(vis){s+=42;R.push('Visual discovery category: people plan and save ideas here')}if(ok==='order'||ok==='reach'){s+=8}if(c.b2bish){s-=25;W.push('Weak fit for B2B, dealer and partner acquisition')}if(!vis)W.push('Works best for visual inspiration categories')}
+  if(p==='amazon'){const m=c.country.amazon;
+    if(c.st.amazonListed!=='yes'){status='excluded';W.push(c.st.amazonListed==='no'?'Your products are not listed on Amazon, so Amazon Ads are excluded':'Answer whether your products are listed on Amazon to consider Amazon Ads')}
+    else if(!m){status='excluded';W.push('No Amazon marketplace for '+c.countryLabel)}
+    else{if(m==='verify'){status='verify';W.push('Check that an Amazon marketplace serves '+c.countryLabel)}s=58;if(o==='amazon'){s+=30;R.push('Your objective is Amazon sales')}if(c.kind==='order'){s+=10;R.push('Shoppers on Amazon are ready to buy')}}}
+  return{p,status,score:status==='excluded'?0:clamp(Math.round(s),0,100),reasons:R,cautions:W};
+}
+const fitLabel=s=>s>=75?'Strong fit':s>=55?'Good fit':s>=35?'Test':'Low priority';
+function chosen(c){
+  const ev=c.evals;
+  if(c.st.pmode==='manual')return c.st.platforms.filter(p=>ev[p]&&ev[p].status!=='excluded');
+  let r=PO.filter(p=>ev[p].status!=='excluded'&&ev[p].score>=45).sort((a,b)=>ev[b].score-ev[a].score);
+  const maxN=c.budget<50000?2:c.budget<150000?3:4;r=r.slice(0,maxN);
+  if(!r.length)r=['meta'];
+  return PO.filter(p=>r.includes(p));
+}
+
+/* ---------- budget allocation ---------- */
+function allocate(c){
+  const ps=c.platforms,n=ps.length,o=c.obj.id,k=c.obj.k;
+  const reserve=n>2?10:n>1?5:0;
+  const w={};ps.forEach(p=>{let x=Math.max(5,c.evals[p].score-20);
+    if(k==='reach'&&['jiohotstar','meta','tiktok','pinterest'].includes(p))x*=1.3;
+    if(['calls','bookings','consultation','enquiries','leads','demo'].includes(o)&&p==='google')x*=1.2;
+    if(['demo','dealer','distributor'].includes(o)&&p==='linkedin')x*=1.2;
+    if(o==='amazon'&&p==='amazon')x*=1.6;w[p]=x});
+  let share=round100(ps.map(p=>w[p]),100-reserve);
+  let rec=Object.fromEntries(ps.map((p,i)=>[p,share[i]]));rec.test=reserve;
+  const ov=c.st.ov.alloc;let used=rec,manual=false;
+  if(ov&&ps.every(p=>isFinite(+ov[p]))){const t=ps.reduce((a,p)=>a+Math.max(0,+ov[p]),0)+Math.max(0,+ov.test||0);
+    if(t>0){manual=true;used=Object.fromEntries([...ps,'test'].map(p=>[p,Math.max(0,+ov[p]||0)/t*100]))}}
+  const stage=stageSplit(c);
+  return{rec,pct:used,manual,amount:Object.fromEntries([...ps,'test'].map(p=>[p,c.budget*used[p]/100])),stage};
+}
+function round100(ws,total){const s=ws.reduce((a,b)=>a+b,0)||1,raw=ws.map(w=>w/s*total),fl=raw.map(Math.floor);let left=total-fl.reduce((a,b)=>a+b,0);
+  raw.map((r,i)=>[r-fl[i],i]).sort((a,b)=>b[0]-a[0]).forEach(([,i])=>{if(left>0){fl[i]++;left--}});return fl}
+function stageSplit(c){
+  const k=c.obj.k;let s=k==='reach'?[55,25,10,10]:k==='traffic'?[30,35,25,10]:k==='app'?[20,20,50,10]:k==='visit'?[30,25,30,15]:[15,20,50,15];
+  s=s.slice();if(c.b2bish&&k!=='reach'){s[1]+=5;s[2]-=5}if(c.arch.nurture&&k!=='reach'){s[3]+=5;s[2]-=5}
+  return[['Awareness',s[0]],['Consideration',s[1]],['Conversion',s[2]],['Retargeting',s[3]]];
+}
+
+/* ---------- forecasting (per platform assumptions) ---------- */
+function assumptions(c,p){
+  const d=PL[p],o=(c.st.ov.assume||{})[p]||{},lead=c.kind==='lead'&&p!=='amazon';
+  let cpm=d.cpm,ctr=d.ctr,conv=lead?d.convLead:d.convOrder;
+  if(p==='meta'){cpm=c.econ.cpm||cpm;ctr=c.econ.ctr||ctr;conv=lead?(c.econ.lpConv||conv):Math.max(0.1,Math.round(c.econ.l2c*1000)/10)}
+  return{cpm:num(o.cpm,cpm),ctr:num(o.ctr,ctr),conv:num(o.conv,conv),quality:num(o.quality,d.quality),freq:d.freq,lead};
+}
+const SENS=[['cpm','CPM'],['ctr','CTR'],['cpc','CPC'],['conv','Conversion rate'],['cpl','CPL'],['qual','Qualification rate'],['sales','Sales rate'],['aov','AOV / ticket size'],['margin','Gross margin']];
+function forecast(c,scen){
+  const sv=c.st.ov.sens||{},m=k=>1+(+sv[k]||0)/100,f=scen==='cons'?{acq:1.15,conv:0.85,l2c:0.9,val:0.95}:scen==='agg'?{acq:0.9,conv:1.15,l2c:1.1,val:1.05}:{acq:1,conv:1,l2c:1,val:1};
+  const E=c.econ,amz=c.st.ov.amz||{},rows=[];
+  const cpmM=m('cpm')*m('cpc')*m('cpl')*f.acq,ctrM=m('ctr'),convM=m('conv')*f.conv,qualM=m('qual'),salesM=m('sales')*f.l2c,aovM=m('aov')*f.val,muM=m('margin');
+  const mu=clamp(E.mu*muM,0,1),ticket=E.ticket*aovM;
+  c.platforms.forEach(p=>{
+    const a=assumptions(c,p),spend=c.alloc.amount[p]||0;
+    const impr=spend/Math.max(1,a.cpm*cpmM)*1000,reach=impr/Math.max(1,a.freq),clicks=impr*clamp(a.ctr*ctrM,0,100)/100;
+    let leads=NaN,qual=NaN,meet=NaN,cust,revenue,gross,vc;
+    const conv=clamp(a.conv*convM,0,100)/100;
+    if(p==='amazon'){cust=clicks*conv;const price=(+amz.price||0)*(1-clamp(+amz.disc||0,0,100)/100)*aovM;revenue=cust*price;
+      vc=cust*(+amz.cost||0)+revenue*clamp(+amz.referral||0,0,100)/100+cust*((+amz.fba||0)+(+amz.ship||0))+revenue*clamp(+amz.returns||0,0,100)/100;gross=revenue-vc}
+    else if(a.lead){leads=clicks*conv;qual=leads*clamp(E.qual*qualM,0,1);meet=qual*clamp(E.meet,0,1);cust=Math.min(leads,leads*clamp(E.l2c*salesM,0,1)*a.quality);revenue=cust*ticket;gross=revenue*mu;vc=revenue-gross}
+    else{cust=clicks*conv*clamp(salesM,0,2);revenue=cust*ticket;gross=revenue*mu;vc=revenue-gross}
+    const net=gross-spend;
+    rows.push({p,spend,impr,reach,clicks,ctr:a.ctr*ctrM,cpc:div(spend,clicks),cpm:a.cpm*cpmM,leads,qual,meet,cust,cpl:div(spend,leads),cpa:div(spend,cust),revenue,gross,vc,net,roas:div(revenue,spend),a});
+  });
+  const sum=k=>rows.reduce((t,r)=>t+(isFinite(r[k])?r[k]:0),0);
+  const reserve=c.alloc.amount.test||0,fixed=Math.max(0,+c.st.ov.fixed||0);
+  const spend=sum('spend')+reserve,revenue=sum('revenue'),gross=sum('gross'),vc=sum('vc'),cust=sum('cust'),leads=rows.some(r=>isFinite(r.leads))?sum('leads'):NaN;
+  const net=gross-spend-fixed,invest=vc+spend+fixed,muT=revenue>0?gross/revenue:0;
+  const T={spend,reserve,fixed,impr:sum('impr'),reach:sum('reach'),clicks:sum('clicks'),leads,qual:rows.some(r=>isFinite(r.qual))?sum('qual'):NaN,meet:rows.some(r=>isFinite(r.meet))?sum('meet'):NaN,cust,revenue,gross,vc,net,invest,
+    ctr:div(sum('clicks'),sum('impr'))*100,cpc:div(sum('spend'),sum('clicks')),cpl:div(sum('spend'),leads),cpa:div(spend,cust),cac:div(spend+fixed,cust),aov:div(revenue,cust),
+    roas:div(revenue,spend),profitRoas:spend>0?net/spend:NaN,roi:invest>0?net/invest*100:0,mu:muT,beRoas:muT>0?1/muT:Infinity,beCac:cust>0?Math.max(0,gross/cust):0,
+    beCpl:isFinite(leads)&&leads>0&&gross>0?gross/leads*spend/(spend+fixed):0};
+  const az=rows.find(r=>r.p==='amazon');
+  if(az){T.acos=div(az.spend,az.revenue)*100;T.tacos=div(az.spend,az.revenue+Math.max(0,+amz.organic||0))*100}
+  return{rows,T};
+}
+function band(c){return['cons','exp','agg'].map(k=>k==='exp'?c.fc:forecast(c,k))}
+function rng(sc,get,fmt,mode){const f=fmt||cnt,v=sc.map(get).filter(isFinite);if(!v.length)return 'n/a';if(mode==='single')return f(get(sc[1]));const lo=Math.min(...v),hi=Math.max(...v);return f(lo)===f(hi)?f(lo):f(lo)+' to '+f(hi)}
+
+/* ---------- helpers for recommendations ---------- */
+function ages(c){const o=c.st.ov.ages,A=c.arch.age;return o&&o.length===3?o:A}
+const ageTxt=a=>a[0]+' to '+a[1];
+function jobTitles(c){
+  const t={b2b:['Owner','Managing Director','Procurement Manager','Purchase Head','Operations Head'],dealer:['Proprietor','Dealer','Distributor','Retail store owner','Contractor'],saas:['Founder','CTO','IT Manager','Head of Operations','Product Manager'],pro:['Founder','Director','Finance Manager','HR Head']}[c.arch===D.ARCH.dealer?'dealer':c.ind.arch]||['Owner','Director','Manager'];
+  const extra={'Architecture':['Architect','Principal Architect'],'Interior design':['Interior Designer','Design Studio Owner'],'Building materials':['Civil Engineer','Project Manager','Site Engineer'],'Door manufacturer':['Builder','Project Manager','Interior Designer'],
+    'Timber importer':['Furniture Manufacturer','Sawmill Owner','Interior Contractor'],'Industrial machinery':['Production Manager','Maintenance Head','Plant Head'],'Manufacturing':['Plant Manager','Quality Head','Sourcing Manager'],'Technology':['IT Director','CIO'],'Marketing agency':['Marketing Manager','Growth Head']}[c.ind.label]||[];
+  return[...t,...extra].slice(0,9);
+}
+const FUNCS={b2b:['Procurement','Operations','Engineering','Management','Finance'],dealer:['Sales','Operations','Management'],saas:['IT','Operations','Engineering','Management','Finance'],pro:['Management','Finance','HR','Operations']};
+const SENIORITY=['Owner','Founder','Partner','CXO','Director','VP','Head','Manager','Senior'];
+function keywords(c){
+  const p=c.product.toLowerCase(),city=(c.cities[0]||c.countryLabel).toLowerCase(),b2b=c.b2bish;
+  return{
+    'High intent':[`${p} price`,`buy ${p}`,`${p} near me`],
+    'Commercial':b2b?[`${p} manufacturers`,`${p} suppliers`,`${p} wholesale`]:[`best ${p}`,`${p} cost`,`${p} reviews`],
+    'Transactional':b2b?[`${p} quotation`,`${p} bulk order`]:[`${p} online`,`${p} booking`],
+    'Local':[`${p} in ${city}`,`${p} ${city}`],
+    'Brand':['your brand name','your brand + product'],
+    'Competitor (optional)':['competitor name alternative','competitor vs your brand']};
+}
+function ctaFor(c){const o=c.obj.id;return({sales:'Shop now',amazon:'Shop on Amazon',whatsapp:'Chat on WhatsApp',calls:'Call now',bookings:'Book now',demo:'Book a demo',dealer:'Become a dealer',distributor:'Become a distributor',store:'Get directions',consultation:'Book a consultation',app:'Install now',traffic:'Learn more',awareness:'Learn more',discovery:'Explore the range'})[o]||'Get a quote'}
+function hook(c,i){const H=D.HOOKS[c.arch===D.ARCH.dealer?'dealer':c.ind.arch]||D.HOOKS.local;return H[i%H.length].replace(/\{p\}/g,c.product).replace(/\{loc\}/g,c.loc).replace(/\{b\}/g,c.ind.buyer)}
+const pname=p=>PL[p].short;
+function roleOf(c,p){const f=PL[p].funnel;return f[c.funnel==='dealer'?'b2b':c.funnel]||f[c.funnel==='saas'?'b2b':'def']||f.def}
+function campTypes(c,p){
+  const o=c.obj.id,k=c.obj.k;
+  if(p==='meta')return[k==='reach'?'Awareness':k==='order'?'Sales':o==='whatsapp'?'Leads (WhatsApp destination)':k==='traffic'?'Traffic':o==='app'?'App promotion':'Leads','Retargeting (Sales or Leads)'];
+  if(p==='google')return c.funnel==='ecom'?['Shopping or Performance Max','Search (brand and generic)','Remarketing']:o==='app'?['App campaign','Search (brand)']:k==='reach'?['YouTube (video reach)','Demand Gen','Search (brand)']:['Search (high intent)','Performance Max (after conversion tracking works)','Demand Gen or YouTube retargeting'];
+  if(p==='linkedin')return['Lead gen forms (Sponsored content)','Brand awareness or video','Website retargeting'];
+  if(p==='jiohotstar')return['Video reach (in stream)','Frequency capped awareness'];
+  if(p==='tiktok')return[k==='order'?'Web conversions (purchase)':o==='app'?'App promotion':'Lead generation','Spark Ads with creators','Retargeting'];
+  if(p==='pinterest')return[k==='order'?'Catalog sales (where available)':'Consideration (traffic)','Retargeting'];
+  if(p==='amazon')return['Sponsored Products','Sponsored Brands','Sponsored Display','DSP (only at larger budgets)'];
+  return[];
+}
+
+/* ---------- modules ---------- */
+const M={};
+M.platforms=c=>{
+  const cards=PO.map(p=>{const e=c.evals[p],on=c.platforms.includes(p);
+    if(!on&&e.status!=='excluded'&&c.st.pmode==='manual')return '';
+    if(!on&&e.status!=='excluded')return `<div class="plt off"><div class="plh"><b>${PL[p].name}</b><span class="fit">${fitLabel(e.score)} · not selected</span></div><p class="note">${esc(e.reasons[0]||e.cautions[0]||'Lower priority for this business and budget.')}</p></div>`;
+    if(e.status==='excluded')return `<div class="plt off ex"><div class="plh"><b>${PL[p].name}</b><span class="fit bad">Excluded</span></div><p class="note">${esc(e.cautions[0]||'')}</p></div>`;
+    return `<div class="plt"><div class="plh"><b>${PL[p].name}</b><span class="fit">${fitLabel(e.score)}${e.status==='verify'?' · verify':''}</span></div>
+      <div class="scb"><i style="width:${e.score}%"></i></div>
+      <p><b>Role:</b> ${esc(roleOf(c,p))}</p>
+      <p><b>Campaign types:</b> ${esc(campTypes(c,p).join(', '))}</p>
+      ${e.reasons.length?`<ul>${e.reasons.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`:''}
+      ${e.cautions.length?`<p class="note">${e.cautions.map(esc).join(' ')}</p>`:''}</div>`}).join('');
+  const ins=[];const top=c.platforms.slice().sort((a,b)=>c.evals[b].score-c.evals[a].score)[0];
+  if(top)ins.push(`${PL[top].name} is the strongest fit for a ${c.modelLabel.toLowerCase()} ${c.ind.label.toLowerCase()} business with a ${c.obj.label.toLowerCase()} objective.`);
+  if(c.platforms.length>3&&c.budget<150000)ins.push('Your budget is spread over many platforms. Fewer platforms learn faster and give clearer results.');
+  return{body:`<p class="note" style="margin:0 0 12px">${c.st.pmode==='auto'?'Recommended automatically from your industry, business model, market, objective and budget.':'Your manual selection, checked for eligibility.'} Platform features and availability change: confirm in each ads manager.</p><div class="plts">${cards}</div>`,ins};
+};
+M.audience=c=>{
+  const A=c.arch,g=ages(c),top=c.platforms.slice().sort((a,b)=>c.evals[b].score-c.evals[a].score);
+  const persona=(title,who,age,angle,plat)=>`<div class="persona"><h4>${title}</h4><table class="kv"><tbody>
+    ${[['Persona',who],['Age',age],['Gender',A.gender],['Location',c.loc],['Occupation',A.occ],['Income or affluence',A.income],['Interests',list(c.ind.interests)],['Behaviours',A.behav],['Pain points',list(lc(c.ind.pains))],['Purchase intent',A.intent],['Best platform',plat],['Messaging angle',angle]].map(r=>`<tr><th>${r[0]}</th><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table></div>`;
+  const rt=['Website visitors (30 days)','Product or service page viewers','Lead form openers who did not submit','Video viewers (50% or more)','Instagram and Facebook engagers','Existing leads not yet converted',...(c.kind==='order'?['Add to cart without purchase (7 days)']:[]),'Existing customers (exclude from prospecting, use for upsell)'];
+  const tgt=c.platforms.map(p=>{
+    if(p==='google')return `<div class="tgt-b"><h4>Google: search intent</h4>${Object.entries(keywords(c)).map(([k,v])=>`<p><b>${k}:</b> ${v.map(esc).join(', ')}</p>`).join('')}<p><b>Audiences:</b> ${PL.google.audiences.join(', ')}</p></div>`;
+    if(p==='linkedin')return `<div class="tgt-b"><h4>LinkedIn: decision makers</h4><p><b>Job titles:</b> ${jobTitles(c).map(esc).join(', ')}</p><p><b>Job functions:</b> ${(FUNCS[c.ind.arch]||FUNCS.b2b).join(', ')}</p><p><b>Seniority:</b> ${SENIORITY.slice(0,7).join(', ')}</p><p><b>Company:</b> industries that buy ${esc(c.product)}, company size by your deal size, location ${esc(c.loc)}</p></div>`;
+    if(p==='amazon')return `<div class="tgt-b"><h4>Amazon: shoppers</h4><p><b>Keywords:</b> ${keywords(c)['High intent'].concat(keywords(c)['Commercial']).map(esc).join(', ')}</p><p><b>Product targeting:</b> competitor ASINs and complementary products</p></div>`;
+    return `<div class="tgt-b"><h4>${PL[p].short}</h4><p><b>Targeting:</b> ${PL[p].audiences.join(', ')}</p><p><b>Interests to start with:</b> ${c.ind.interests.map(esc).join(', ')}</p></div>`}).join('');
+  const ins=[c.b2bish?'The primary audience should focus on decision makers because the business model is B2B.':`Lead with ${A.angle.toLowerCase()}: it is what this audience weighs most.`,'Keep retargeting audiences separate from prospecting so each gets the right message.'];
+  return{body:`<div class="personas">${persona('Primary audience',c.ind.buyer,ageTxt(g[0]),A.angle,top[0]?PL[top[0]].short:'Meta')}${persona('Secondary audience',c.ind.buyer2,ageTxt(g[1]),A.angle,top[1]?PL[top[1]].short:top[0]?PL[top[0]].short:'Meta')}</div>
+    <h4 class="h4">Retargeting audience</h4><ul class="ticks">${rt.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>${tgt?`<h4 class="h4">Platform targeting</h4><div class="tgts">${tgt}</div>`:''}`,ins};
+};
+M.demo=c=>{
+  const A=c.arch,g=ages(c),local=['local','service','pro','retailer'].includes(c.model)||['local','health','food','fitness'].includes(c.ind.arch);
+  const intl=!['india'].includes(c.countryKey);
+  const langs=[...c.country.lang];c.cities.forEach(ct=>{const l=D.CITY_LANG[ct];if(l&&!langs.includes(l))langs.push(l)});
+  const locRows=[['Country',c.countryLabel],['States or regions',c.cities.length?'Where '+list(c.cities)+' are':'Your strongest states first'],['Cities',c.cities.length?list(c.cities):'Your top cities by past sales'],
+    ['Radius or pin codes',local?'5 to 15 km around each location, or the pin codes you serve':'Not needed; target cities or regions'],['Urban or rural',c.consumer?'Urban and semi urban first, expand after results':'Business and industrial areas'],
+    ['Language',list(langs)]];
+  if(c.b2bish)locRows.push(['Business locations','Industrial clusters, trade hubs and business districts in '+(c.cities.length?list(c.cities):c.countryLabel)]);
+  if(intl)locRows.push(['Market by market','Separate campaigns per country so budgets and messages fit each market']);
+  const ctrl=`<div class="agein"><span>Override ages:</span>${['Primary','Secondary test','Expansion'].map((l,i)=>`<label>${l} <input type="number" min="13" max="80" data-pov="ages.${i}.0" value="${g[i][0]}"> to <input type="number" min="13" max="80" data-pov="ages.${i}.1" value="${g[i][1]}"></label>`).join('')}<button type="button" class="btn btn-line btn-sm" data-pact="resetAges">Use recommended</button></div>`;
+  return{ctrl,body:`<div class="agec">${[['Primary age',g[0]],['Secondary test age',g[1]],['Expansion age',g[2]]].map(([l,a])=>`<div class="ageb"><span>${l}</span><b>${ageTxt(a)}</b></div>`).join('')}</div>
+    <p><b>Why:</b> ${esc(A.ageWhy)} ${c.st.ov.ages?'<i>(your override)</i>':''}</p><p><b>Gender:</b> ${esc(A.gender)}</p>
+    <h4 class="h4">Location strategy</h4><table class="kv"><tbody>${locRows.map(r=>`<tr><th>${r[0]}</th><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table>`,
+    ins:[`Start with ${ageTxt(g[0])} and test ${ageTxt(g[1])} in a separate ad set so you can compare cost per result.`]};
+};
+M.budget=c=>{
+  const a=c.alloc,ps=[...c.platforms,'test'];
+  const rows=ps.map(p=>{const pc=a.pct[p]||0;return `<div class="alr"><span>${p==='test'?'Testing and new ideas':PL[p].name}</span><div class="alt"><i style="width:${pc}%"></i></div><b>${pct(pc)}</b><em>${inr(a.amount[p])}</em></div>`}).join('');
+  const thin=c.platforms.filter(p=>a.amount[p]>0&&a.amount[p]<10000);
+  const ctrl=`<div class="alin"><span>Manual split (%):</span>${ps.map(p=>`<label>${p==='test'?'Testing':PL[p].short} <input type="number" min="0" max="100" step="1" data-pov="alloc.${p}" value="${Math.round(a.pct[p]||0)}"></label>`).join('')}<button type="button" class="btn btn-line btn-sm" data-pact="resetAlloc">Use recommended</button></div>`;
+  const ins=[];if(thin.length)ins.push(`${list(thin.map(pname))} ${thin.length>1?'get':'gets'} under ₹10,000 a month, which is thin for the platform to learn. Consider fewer platforms.`);
+  ins.push(`Most of the budget goes to ${c.alloc.stage.slice().sort((x,y)=>y[1]-x[1])[0][0].toLowerCase()}, matching your ${c.obj.label.toLowerCase()} objective.`);
+  return{ctrl,body:`<p class="note" style="margin:0 0 10px">Monthly budget ${inr(c.budget)}. ${a.manual?'Your manual split, normalised to 100%.':'Recommended split from platform fit and your objective. Not a fixed rule: change it below.'}</p><div class="alloc">${rows}</div>
+    <h4 class="h4">By funnel stage</h4><div class="stg">${a.stage.map(s=>`<div><b>${s[1]}%</b><span>${s[0]}</span><em>${inr(c.budget*s[1]/100)}</em></div>`).join('')}</div>`,ins};
+};
+M.funnel=c=>{
+  const F=D.FUNNELS[c.funnel]||D.FUNNELS.master,T=c.fc.T,vols=!!c.st.ov.vols;
+  const val=k=>k==='impr'?T.impr:k==='reach'?T.reach:k==='clicks'?T.clicks:k==='leads'?(c.kind==='lead'?T.leads:NaN):k==='qual'?T.qual:k==='meet'?T.meet:k==='cust'?T.cust:k==='revenue'?T.revenue:k==='net'?T.net:NaN;
+  const n=F.length;
+  const html=F.map(([l,k],i)=>{const v=k?val(k):NaN,w=100-i*(60/Math.max(1,n-1));
+    return `<div class="fnl" style="--w:${w}%"><div class="fnb"><b>${esc(l)}</b><span>${esc(D.STAGE_NOTE[l]||'')}</span>${vols&&isFinite(v)?`<em>${k==='revenue'||k==='net'?inr(v):cnt(v)}</em>`:''}</div></div>`}).join('<div class="fna" aria-hidden="true">↓</div>');
+  const pf=c.platforms.map(p=>`<div class="pfl"><b>${PL[p].short}</b><span>${esc(roleOf(c,p))}</span></div>`).join('');
+  const ctrl=`<label class="swl"><input type="checkbox" data-pov="vols" ${vols?'checked':''}> Show estimated volumes (projections)</label>`;
+  const drop={b2b:'qualified leads and meetings',dealer:'qualified dealers and meetings',ecom:'add to cart and purchase',service:'leads and qualified leads',saas:'trial and paid customer',master:'leads and qualified leads'}[c.funnel]||'leads and customers';
+  return{ctrl,body:`<div class="fnlw">${html}</div>${vols?'<p class="note">Volumes are projections from the forecast assumptions, not guaranteed results.</p>':''}${pf?`<h4 class="h4">Each platform’s role</h4><div class="pfls">${pf}</div>`:''}`,
+    ins:[`The largest potential drop off is usually between ${drop}. Track this stage weekly.`]};
+};
+M.phases=c=>{
+  const ps=c.platforms,has=p=>ps.includes(p),pick=a=>a.filter(has).map(pname);
+  const ph=[
+    ['Phase 1: Discovery','Introduce the business and '+c.product,pick(['meta','jiohotstar','tiktok','pinterest','google']),'Educational, problem awareness and short video','Broad cold audience in '+c.loc,'Reach, CPM, video views'],
+    ['Phase 2: Awareness','Build familiarity','',"Brand story, product introduction, problem awareness, founder, educational",'Cold audience and video viewers','Frequency, engagement, ad recall'],
+    ['Phase 3: Consideration','Build trust',pick(['meta','google','linkedin','pinterest','tiktok']),'Testimonials, reviews, case studies, comparisons, demonstrations, benefits','Engagers, video viewers, site visitors','CTR, landing page views, time on site'],
+    ['Phase 4: Conversion','Generate '+(c.kind==='order'?'sales':'leads'),pick(['google','meta','amazon','linkedin','tiktok']),'Offer, product, pricing, demo, consultation and a clear CTA: '+ctaFor(c),'High intent searchers and warm audiences',c.kind==='order'?'CPP, conversion rate, ROAS':'CPL, qualified lead rate, CAC'],
+    ['Phase 5: Retargeting','Bring back people who showed interest',pick(['meta','google','linkedin','tiktok','pinterest']),'Reminders, objection handling, reviews, limited offers','Website visitors, video viewers, engagers, product viewers, add to cart, lead form users','Cost per conversion from retargeting']];
+  ph[1][2]=ph[0][2];
+  if(c.arch.nurture||c.b2bish)ph.push(['Phase 6: Nurture','Turn leads into customers','WhatsApp, email and CRM','Lead → WhatsApp or email → qualification → call → meeting → proposal → follow up → sale','All leads not yet closed','Lead to meeting rate, meeting to sale rate, sales cycle']);
+  if(c.arch.repeat||c.funnel==='ecom')ph.push(['Phase 7: Retention','Grow lifetime value','Customer lists on Meta and Google, email, WhatsApp','Customer → repeat purchase → upsell → cross sell → referral','Existing customers','Repeat rate, LTV, referral rate']);
+  return{body:`<div class="phs">${ph.map(p=>`<div class="phc"><h4>${p[0]}</h4><table class="kv"><tbody><tr><th>Objective</th><td>${esc(p[1])}</td></tr><tr><th>Platforms</th><td>${esc(Array.isArray(p[2])?(p[2].length?p[2].join(', '):'Your selected platforms'):p[2])}</td></tr><tr><th>Creative</th><td>${esc(p[3])}</td></tr><tr><th>Audience</th><td>${esc(p[4])}</td></tr><tr><th>KPIs</th><td>${esc(p[5])}</td></tr></tbody></table></div>`).join('')}</div>`,
+    ins:[c.arch.nurture?'This is a considered purchase: budget for nurture and follow up, not just lead generation.':'Keep conversion and retargeting always on; rotate discovery creatives every 2 to 3 weeks.']};
+};
+M.creative=c=>{
+  const ps=c.platforms.length?c.platforms:['meta'],cta=ctaFor(c);
+  const fmt=(p,stage)=>({meta:['Reel','Carousel','Testimonial video','Static offer','Dynamic retargeting'],google:['YouTube video','Responsive search ad','Responsive search ad','Performance Max assets','Display remarketing'],linkedin:['Thought leadership post','Case study document','Lead gen form','Webinar invite','Retargeting case study'],
+    jiohotstar:['Video (in stream)','Video (in stream)','Display','Display','Video reminder'],tiktok:['Creator video','UGC review','Product demo','Offer video','Retargeting UGC'],pinterest:['Idea pin','Carousel','Product pin','Shopping pin','Retargeting pin'],amazon:['Sponsored Brands video','Sponsored Products','Sponsored Products','Sponsored Products','Sponsored Display']}[p]||['Video','Carousel','Static','Offer','Reminder'])[stage];
+  const stages=[['Cold awareness','Cold audience: '+c.ind.buyer,'Problem the buyer feels','Show the problem in the first 3 seconds, product in use'],['Consideration','Engagers and viewers','Why you: proof and benefits','Real customers, before and after, comparisons'],['Conversion','High intent and warm','The offer and next step','Product close up, price or offer on screen, one CTA'],['Retargeting','Visitors who did not act','Answer the main objection','Reviews, FAQ, guarantee, urgency'],...(c.arch.repeat||c.funnel==='ecom'?[['Customers','Existing customers','Buy again, upgrade, refer','New arrivals, bundles, referral reward']]:[])];
+  const rows=[];stages.forEach(([st,aud,msg,vis],i)=>{const plats=i===0?ps.slice(0,2):i===3?ps.filter(p=>p!=='jiohotstar').slice(0,2):ps.slice(0,2);(plats.length?plats:ps.slice(0,1)).forEach((p,j)=>rows.push([st,aud,PL[p].short,fmt(p,Math.min(i,4)),hook(c,i+j),msg,vis,i===0?'Learn more':st==='Customers'?(c.funnel==='ecom'?'Shop again':c.funnel==='dealer'||c.b2bish?'Reorder now':'Refer a friend'):cta]))});
+  const types=['Static','Carousel','Reel','UGC','Testimonial','Founder','Product demo','Before and after','Case study','Comparison','Educational','Offer','FAQ'].filter(t=>!(c.b2bish&&['UGC','Before and after'].includes(t))||c.ind.visual);
+  return{body:`<div class="tscroll"><table class="fc cm"><thead><tr><th>Stage</th><th>Audience</th><th>Platform</th><th>Format</th><th>Hook</th><th>Main message</th><th>Visual direction</th><th>CTA</th></tr></thead><tbody>${rows.map(r=>`<tr>${r.map(x=>`<td>${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <p class="note">Recommended creative types for this business: ${types.join(', ')}. Hooks are starting points: write 3 to 5 versions of each and let results decide.</p>`,
+    ins:[c.b2bish?'Use case studies for warm audiences and problem led creatives for cold audiences.':'Lead with the product in use; the first 3 seconds decide whether anyone watches.']};
+};
+const CRO=[['headline','Headline states the outcome clearly',12],['cta','One clear CTA, visible without scrolling',12],['offer','A specific offer or reason to act now',10],['trust','Trust signals (ratings, certifications, guarantees)',10],['proof','Proof (testimonials, reviews, case studies, logos)',10],['match','Message matches the ad promise',10],['mobile','Works well on mobile',8],['speed','Loads in under about 3 seconds',8],['form','Short form or one tap contact',8],['objections','Answers the main objections',6],['faq','FAQ section',6]];
+M.landing=c=>{
+  const t=c.obj.id==='amazon'?'amazon':c.funnel==='ecom'?'ecom':c.funnel==='saas'?'saas':c.ind.arch==='realestate'?'realestate':c.ind.arch==='health'?'health':(c.b2bish||c.funnel==='dealer')?'b2b':['highticket','pro'].includes(c.ind.arch)?'highticket':c.ind.arch==='edu'?'lead':'local';
+  const L=D.LP[t],fq=D.FAQ[c.funnel==='dealer'?'dealer':c.ind.arch]||D.FAQ[t]||D.FAQ.local,A=c.arch;
+  const content={
+    'Hero':`<b>Headline:</b> ${esc(c.b2bish?`${cap(c.product)} your projects can rely on`:`${cap(c.product)} in ${c.loc}, done right`)}<br><b>Subheadline:</b> ${esc(A.angle)}<br><b>CTA:</b> ${esc(L.cta)}<br><b>Trust element:</b> ${esc(L.proof.split(',')[0])}<br><b>Visual:</b> ${esc(c.ind.visual?'Product or finished work, in real settings':'People using the service, or a short explainer video')}`,
+    'Problem':esc(list(lc(c.ind.pains))),
+    'Solution':esc(`How ${c.product} solves it: one clear paragraph and a short video.`),
+    'Benefits':'<ul>'+[A.angle.split(',')[0],'Clear, upfront pricing','Fast response and delivery',c.b2bish?'Consistent quality at volume':'Trusted by customers in '+c.loc,'Support after purchase'].map(b=>`<li>${esc(b)}</li>`).join('')+'</ul>',
+    'Product or service':esc('Key options, specifications or packages, with photos. Keep it scannable.'),
+    'Proof':esc(L.proof),
+    'Process':esc((c.funnel==='ecom'?['Choose','Order','Delivered','Support']:c.b2bish?['Enquire','Requirement call','Quotation','Sample or trial','Order and delivery']:['Contact us','Free consultation','Plan and quote','Delivery or service','Follow up']).join(' → ')),
+    'Offer':esc(L.offer),
+    'FAQ':'<ul>'+fq.map(q=>`<li>${esc(q)}</li>`).join('')+'</ul>',
+    'Final CTA':esc(L.cta+', repeated with the offer and a trust line')};
+  const cro=c.st.ov.cro||{},rated=CRO.filter(([k])=>cro[k]),score=CRO.reduce((a,[k,,w])=>a+w*({yes:1,partly:0.5}[cro[k]]||0),0);
+  const fixes=CRO.filter(([k])=>cro[k]==='no'||cro[k]==='partly').map(([,l])=>l),unrated=CRO.length-rated.length;
+  const ctrl=`<div class="croin"><p class="note" style="margin:0 0 8px">Rate your current landing page to get a CRO score.</p>${CRO.map(([k,l])=>`<label><span>${l}</span><select data-pov="cro.${k}"><option value="">Not checked</option>${[['yes','Yes'],['partly','Partly'],['no','No']].map(o=>`<option value="${o[0]}"${cro[k]===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select></label>`).join('')}</div>`;
+  return{ctrl,body:`<p><b>Page type:</b> ${esc(L.label)}</p><div class="lps">${L.sections.map((s,i)=>`<div class="lpsec"><span class="n">${i+1}</span><div><h4>${s}</h4><p>${content[s]||''}</p></div></div>`).join('')}</div>
+    ${rated.length?`<div class="cros"><div class="crosc"><b>${Math.round(score)}</b><span>CRO score / 100</span></div><div><h4 class="h4" style="margin-top:0">Improve next</h4><ul class="ticks">${(fixes.length?fixes.slice(0,6):[unrated?'Rate the remaining criteria to complete the score.':'Everything is in place. Test headline and offer variations next.']).map(f=>`<li>${esc(f)}</li>`).join('')}</ul>${unrated?`<p class="note">${unrated} criteria not rated yet count as 0.</p>`:''}</div></div>`:'<p class="note">Rate your current page in the checklist above to get a CRO score out of 100.</p>'}`,
+    ins:['The page should match the ad promise immediately above the fold.',...(rated.length===CRO.length&&score<60?['A CRO score under 60 usually costs more than any ad optimisation can save: fix the page first.']:[])]};
+};
+M.campaigns=c=>{
+  const geo=(c.countryKey==='india'?'IN':c.countryKey.slice(0,2).toUpperCase())+'_'+(c.cities[0]||'ALL').replace(/\s+/g,'').slice(0,6).toUpperCase();
+  const blocks=c.platforms.map(p=>{const types=campTypes(c,p),amt=c.alloc.amount[p]||0;
+    const sets={meta:['Broad (Advantage+ audience)','Interest stack: '+c.ind.interests.slice(0,3).join(', '),'Lookalike 1% of customers','Retargeting: site visitors 30 days and engagers 90 days'],
+      google:c.funnel==='ecom'?['Shopping: all products, then best sellers','Search: brand','Search: generic '+c.product,'Remarketing: cart abandoners']:['Brand','Generic: '+c.product,'Local: '+c.product+' in '+(c.cities[0]||c.countryLabel),'Competitor (optional)'],
+      linkedin:['ABM: matched company list','Job titles: '+jobTitles(c).slice(0,3).join(', '),'Retargeting: website visitors and video viewers'],
+      jiohotstar:['Regional language: '+(c.cities.map(x=>D.CITY_LANG[x]).filter(Boolean)[0]||'Hindi'),'Age '+ageTxt(ages(c)[0]),'Sports and entertainment contexts where available'],
+      tiktok:['Broad','Interests: '+c.ind.interests.slice(0,2).join(', '),'Custom: site visitors','Lookalike of purchasers'],
+      pinterest:['Keywords: '+c.product,'Interests: '+c.ind.interests.slice(0,2).join(', '),'Retargeting: site visitors'],
+      amazon:['Auto targeting','Manual: exact and phrase keywords','Product targeting: competitor ASINs','Brand defence: your brand terms']}[p];
+    return `<div class="cmp-b"><h4>${PL[p].name} <span class="sub">${inr(amt)} / month</span></h4><table class="kv"><tbody>
+      <tr><th>Campaigns</th><td>${types.map(esc).join('<br>')}</td></tr><tr><th>${p==='google'||p==='amazon'?'Ad groups':'Ad sets'}</th><td>${sets.map(esc).join('<br>')}</td></tr>
+      <tr><th>Ads</th><td>${esc(PL[p].formats.slice(0,4).join(', '))}</td></tr><tr><th>Naming</th><td><code>${geo}_${PL[p].short.toUpperCase()}_${c.obj.id.toUpperCase()}_PROSPECTING</code></td></tr></tbody></table></div>`}).join('');
+  return{body:blocks?`<div class="cmps">${blocks}</div><p class="note">Start with fewer ad sets and consolidate: splitting a small budget too finely slows learning.</p>`:'<p class="note">No platforms selected.</p>',ins:['Separate prospecting and retargeting campaigns so you can read each one’s cost per result.']};
+};
+M.forecast=c=>{
+  const sc=band(c),T=c.fc.T,mode=c.st.ov.range,E=c.econ,lead=c.kind==='lead';
+  const ctrl=`<div class="fcin">
+    <div class="seg" role="radiogroup" aria-label="Forecast display"><button type="button" role="radio" data-pact="range" data-v="range" aria-checked="${mode!=='single'}">Range forecast</button><button type="button" role="radio" data-pact="range" data-v="single" aria-checked="${mode==='single'}">Single forecast</button></div>
+    <h4 class="h4">Minimum inputs <span class="sub">from the ${esc(E.calc)} calculator, change them for this plan</span></h4>
+    <div class="fcg">${[['ticket','AOV / ticket size','₹',E.ticket],['mu','Gross margin','%',E.mu*100],...(lead?[['l2c','Lead to customer rate','%',E.l2c*100],['qual','Qualification rate','%',E.qual*100],['meet','Qualified to meeting rate','%',E.meet*100]]:[])].map(([k,l,u,v])=>`<label>${l}<span class="inp">${u==='₹'?'<span class="u">₹</span>':''}<input type="number" min="0" step="any" data-pov="econ.${k}" value="${Math.round(v*100)/100}">${u==='%'?'<span class="u">%</span>':''}</span></label>`).join('')}
+      <label>Other monthly costs<span class="inp"><span class="u">₹</span><input type="number" min="0" step="any" data-pov="fixed" value="${+c.st.ov.fixed||0}"></span></label></div>
+    <h4 class="h4">Platform assumptions <span class="sub">starting placeholders for India, not benchmarks</span></h4>
+    <div class="tscroll"><table class="fc asm"><thead><tr><th>Platform</th><th>CPM ₹</th><th>CTR %</th><th>${lead?'Click to lead %':'Click to purchase %'}</th><th>Lead quality ×</th></tr></thead><tbody>${c.platforms.map(p=>{const a=assumptions(c,p);
+      return `<tr><td>${PL[p].short}</td>${['cpm','ctr','conv','quality'].map(k=>`<td><input type="number" min="0" step="any" data-pov="assume.${p}.${k}" value="${Math.round(a[k]*100)/100}" aria-label="${PL[p].short} ${k}"></td>`).join('')}</tr>`}).join('')}</tbody></table></div>
+    ${c.platforms.includes('amazon')?`<h4 class="h4">Amazon economics</h4><div class="fcg">${[['price','Product price','₹'],['cost','Product cost','₹'],['referral','Referral fee','%'],['fba','Fulfilment fee per unit','₹'],['ship','Shipping per unit','₹'],['returns','Returns','%'],['disc','Discounts and coupons','%'],['organic','Organic Amazon revenue a month','₹']].map(([k,l,u])=>`<label>${l}<span class="inp">${u==='₹'?'<span class="u">₹</span>':''}<input type="number" min="0" step="any" data-pov="amz.${k}" value="${(c.st.ov.amz||{})[k]||0}">${u==='%'?'<span class="u">%</span>':''}</span></label>`).join('')}</div>`:''}
+    <h4 class="h4">Sensitivity <span class="sub">change each driver and results update instantly</span></h4>
+    <div class="sensin">${SENS.map(([k,l])=>{const v=+(c.st.ov.sens||{})[k]||0;return `<label><span>${l} <b data-sv="${k}">${v>0?'+':''}${v}%</b></span><input type="range" min="-50" max="50" step="5" data-pov="sens.${k}" value="${v}"></label>`}).join('')}<button type="button" class="btn btn-line btn-sm" data-pact="resetSens">Reset sensitivity</button></div>
+    <p class="note">CAC is a result: move the drivers above to see it change.</p>
+    ${benchLib(c)}</div>`;
+  const cell=(get,fmt)=>rng(sc,get,fmt,mode);
+  const prow=c.fc.rows.map((r,i)=>`<tr><td>${PL[r.p].short}</td><td>${inr(r.spend)}</td><td>${cell(s=>s.rows[i].impr)}</td><td>${cell(s=>s.rows[i].clicks)}</td><td>${inr(r.cpc)}</td><td>${lead&&r.p!=='amazon'?cell(s=>s.rows[i].leads):'n/a'}</td><td>${lead&&r.p!=='amazon'?inr(r.cpl):'n/a'}</td><td>${cell(s=>s.rows[i].cust)}</td><td>${cell(s=>s.rows[i].revenue,inr)}</td><td>${cell(s=>s.rows[i].roas,xx)}</td></tr>`).join('');
+  const kv=[['Spend',inr(T.spend)+(T.reserve>0?' (incl. '+inr(T.reserve)+' testing, not forecast)':'')],['Impressions',cell(s=>s.T.impr)],['Reach',cell(s=>s.T.reach)],['Clicks',cell(s=>s.T.clicks)],['CTR',pct(T.ctr)],['CPC',inr(T.cpc)],
+    ...(lead?[['Leads',cell(s=>s.T.leads)],['CPL',cell(s=>s.T.cpl,inr)],['Qualified leads',cell(s=>s.T.qual)],['Meetings',cell(s=>s.T.meet)]]:[['Orders',cell(s=>s.T.cust)]]),
+    [cap(E.unitP||'customers'),cell(s=>s.T.cust)],['CPA',cell(s=>s.T.cpa,inr)],['CAC',cell(s=>s.T.cac,inr)],['AOV',inr(T.aov)],['Revenue',cell(s=>s.T.revenue,inr)],['Gross profit',cell(s=>s.T.gross,inr)],['Net profit',cell(s=>s.T.net,inr)],
+    ['ROAS',cell(s=>s.T.roas,xx)],['Profit ROAS',cell(s=>s.T.profitRoas,xx)],['ROI',cell(s=>s.T.roi,pct)],...(isFinite(T.acos)?[['Amazon ACOS',pct(T.acos)],['Amazon TACOS',pct(T.tacos)]]:[])];
+  const scen=`<div class="tscroll"><table class="fc"><thead><tr><th>Projected</th><th>Conservative</th><th>Expected</th><th>Aggressive</th></tr></thead><tbody>${[['Spend',s=>inr(s.T.spend)],['Traffic (clicks)',s=>cnt(s.T.clicks)],...(lead?[['Leads',s=>cnt(s.T.leads)]]:[]),[cap(E.unitP||'customers'),s=>cnt(s.T.cust)],['Revenue',s=>inr(s.T.revenue)],['Profit',s=>inr(s.T.net)],['ROAS',s=>xx(s.T.roas)],['ROI',s=>pct(s.T.roi)]]
+    .map(([l,f])=>`<tr><td>${l}</td>${sc.map(s=>`<td>${f(s)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const ins=[`The projected CAC is highly sensitive to the ${lead?'lead to sale':'click to purchase'} conversion rate: a 10% change moves CAC by roughly 10% the other way.`];
+  if(T.roas<T.beRoas)ins.push(`Projected ROAS of ${xx(T.roas)} is below the ${xx(T.beRoas)} needed to cover variable costs.`);
+  return{ctrl,body:`<p class="note" style="margin:0 0 10px"><b>Projections, not guaranteed results.</b> Actual results depend on audience, creative, offer, competition, auction conditions and landing page performance. ${mode==='single'?'Showing the expected case.':'Ranges run from conservative to aggressive.'}</p>
+    <div class="tscroll"><table class="fc"><thead><tr><th>Platform</th><th>Spend</th><th>Impressions</th><th>Clicks</th><th>CPC</th><th>Leads</th><th>CPL</th><th>${esc(cap(E.unitP||'customers'))}</th><th>Revenue</th><th>ROAS</th></tr></thead><tbody>${prow}</tbody></table></div>
+    <h4 class="h4">Plan totals</h4><div class="more">${kv.map(([l,v])=>`<div><span>${l}</span><b>${v}</b></div>`).join('')}</div>
+    <p class="note">ROAS = revenue ÷ ad spend. Profit ROAS = net profit ÷ ad spend. ROI = net profit ÷ total investment × 100.${isFinite(T.acos)?' ACOS = Amazon ad spend ÷ attributed revenue × 100. TACOS = Amazon ad spend ÷ total Amazon revenue × 100.':''}</p>
+    <h4 class="h4">Scenario planner (projected)</h4>${scen}`,ins};
+};
+function benchLib(c){
+  const lib=benchRows();
+  return `<details class="grp blib"><summary><span>Benchmark library</span><b>${lib.length} saved</b></summary><div class="gbody">
+    <p class="note" style="margin:0 0 8px">Save assumptions with their source so the next plan can reuse them. Nothing here is universal: record the industry, market, platform, objective and where the numbers came from.</p>
+    <div class="fcg"><label>Source<span class="inp"><input type="text" data-pbs="source" placeholder="For example: our Meta account, Jan to Mar"></span></label><label>Notes<span class="inp"><input type="text" data-pbs="notes" placeholder="Optional"></span></label></div>
+    <button type="button" class="btn btn-line btn-sm" data-pact="benchSave">Save current platform assumptions</button>
+    ${lib.length?`<div class="tscroll"><table class="fc"><thead><tr><th>Industry</th><th>Country</th><th>Platform</th><th>Objective</th><th>CPM</th><th>CTR</th><th>CPC</th><th>CPL</th><th>Conv.</th><th>CAC</th><th>AOV</th><th>Updated</th><th>Source</th><th></th></tr></thead><tbody>${lib.map((b,i)=>`<tr><td>${esc(b.industry)}</td><td>${esc(b.country)}</td><td>${esc(b.platform)}</td><td>${esc(b.objective)}</td><td>${inr(b.cpm)}</td><td>${pct(b.ctr)}</td><td>${inr(b.cpc)}</td><td>${inr(b.cpl)}</td><td>${pct(b.conv)}</td><td>${inr(b.cac)}</td><td>${inr(b.aov)}</td><td>${esc(b.date)}</td><td>${esc(b.source)}${b.notes?'<br><small>'+esc(b.notes)+'</small>':''}</td><td><button type="button" class="btn btn-line btn-sm" data-pact="benchUse" data-i="${i}">Use</button> <button type="button" class="cdel" data-pact="benchDel" data-i="${i}" aria-label="Delete">×</button></td></tr>`).join('')}</tbody></table></div>`:''}
+  </div></details>`;
+}
+function benchRows(){let a=[];try{a=JSON.parse(localStorage.getItem('mabc:benchlib')||'[]')}catch(e){}const B=globalThis.MABC_BENCH;return[...((B&&B.rows)||[]),...(Array.isArray(a)?a:[])]}
+M.profit=c=>{
+  const T=c.fc.T,lead=c.kind==='lead';
+  let best=[1,T.net];for(let i=0;i<=60;i++){const k=Math.pow(10,-1.5+i*0.05),n=netInfl(c,k);if(n>best[1])best=[k,n]}
+  const hi=best[1]>0?findRoot(c,best[0]):null;
+  const rows=[['Revenue',inr(T.revenue)],['Variable costs',inr(T.vc)],['Gross profit',inr(T.gross)],['Ad spend',inr(T.spend)],['Other costs',inr(T.fixed)],['Net profit',inr(T.net)],['CAC',inr(T.cac)],
+    ['Breakeven ROAS',isFinite(T.beRoas)?xx(T.beRoas):'not reachable'],...(lead?[['Breakeven CPL',inr(T.beCpl)]]:[]),['Breakeven CAC',inr(T.beCac)],
+    ['Maximum profitable ad spend',best[1]<=0?'None at these economics':hi===Infinity?'No ceiling found up to 30× this budget':'About '+inr(c.budget*hi)+' a month'],['Most profit near',best[1]>0?inr(c.budget*best[0])+' a month ('+inr(best[1])+')':'n/a']];
+  const per=c.fc.rows.map(r=>`<tr><td>${PL[r.p].short}</td><td>${inr(r.revenue)}</td><td>${inr(r.gross)}</td><td>${inr(r.spend)}</td><td class="${r.net>=0?'good':'bad'}">${inr(r.net)}</td></tr>`).join('');
+  const ins=[T.net>=0?`Projected net profit is ${inr(T.net)} a month on ${inr(T.spend)} of spend.`:`At these assumptions the plan loses ${inr(-T.net)} a month: improve conversion, ticket size or margin before scaling.`];
+  return{body:`<div class="more">${rows.map(([l,v])=>`<div><span>${l}</span><b>${v}</b></div>`).join('')}</div>
+    <div class="tscroll"><table class="fc"><thead><tr><th>Platform</th><th>Revenue</th><th>Gross profit</th><th>Spend</th><th>Profit after ads</th></tr></thead><tbody>${per}</tbody></table></div>
+    <p class="note">Projections. Maximum profitable spend assumes costs per result rise about 10% each time the budget doubles.</p>`,ins};
+};
+function scaleAlloc(c,k){return Object.assign({},c.alloc,{amount:Object.fromEntries(Object.entries(c.alloc.amount).map(([p,a])=>[p,a*k]))})}
+function netInfl(c,k){const infl=k>1?1+0.1*Math.log2(k):1,ov=Object.assign({},c.st.ov,{sens:Object.assign({},c.st.ov.sens,{cpm:((1+(+(c.st.ov.sens||{}).cpm||0)/100)*infl-1)*100})});
+  const cc=Object.assign({},c,{st:Object.assign({},c.st,{ov}),alloc:scaleAlloc(c,k)});return forecast(cc).T.net}
+function findRoot(c,from){let a=from,b=from;for(let i=0;i<12&&netInfl(c,b)>=0;i++)b*=2;if(netInfl(c,b)>=0)return Infinity;for(let i=0;i<40;i++){const m=(a+b)/2;netInfl(c,m)>=0?a=m:b=m}return a}
+M.plan90=c=>{
+  const ps=c.platforms.map(pname),P=list(ps)||'your platforms',sel=c.st.modules;
+  const W=[
+    ['Month 1: Test',[['Week 1','Set up tracking, pixels and conversion events. Build audiences: '+(sel.includes('audience')?'use the personas in this plan':'primary and secondary personas')+'.'],['Week 2','Launch on '+P+' with 3 to 5 creatives per stage and 2 audiences each.'+(sel.includes('landing')?' Publish the landing page from this plan.':'')],['Week 3','Test offers and landing page headline. Pause clear losers after enough spend.'],['Week 4','Review CPM, CTR, CPC and '+(c.kind==='lead'?'CPL':'CPP')+' by platform, audience and creative.']]],
+    ['Month 2: Optimise',[['Week 5','Improve CTR with new hooks on the best performing format.'],['Week 6','Lower CPC and '+(c.kind==='lead'?'CPL':'CPP')+': consolidate ad sets, narrow to winning audiences.'],['Week 7','Improve conversion: fix landing page friction, speed and form length.'],['Week 8','Work on CAC: '+(c.kind==='lead'?'faster lead follow up and better qualification':'checkout and offer tests')+'.']]],
+    ['Month 3: Scale',[['Week 9','Scale winning audiences and creatives by about 20% every few days.'],['Week 10','Shift budget to the winning platform and geography.'],['Week 11','Expand to lookalikes and the expansion age group; refresh creatives.'],['Week 12','Scale the winning offer; add retention or referral campaigns.'],['Week 13','Review the quarter against the forecast and set next quarter’s targets.']]]];
+  return{body:`<div class="p90">${W.map(([m,ws])=>`<div class="p90m"><h4>${m}</h4><table class="kv"><tbody>${ws.map(w=>`<tr><th>${w[0]}</th><td>${esc(w[1])}</td></tr>`).join('')}</tbody></table></div>`).join('')}</div>`,ins:['Judge platforms on at least 2 to 3 weeks of data before cutting them.']};
+};
+M.tracking=c=>{
+  const ev=c.kind==='order'?[['Page View','PageView','page_view'],['View Content','ViewContent','view_item'],['Add to Cart','AddToCart','add_to_cart'],['Checkout','InitiateCheckout','begin_checkout'],['Purchase','Purchase','purchase']]
+    :[['Page View','PageView','page_view'],['View Content','ViewContent','view_item'],['Lead','Lead','generate_lead'],['Contact','Contact','contact (custom)'],['WhatsApp click','Contact','whatsapp_click (custom)'],...(['demo','bookings','consultation'].includes(c.obj.id)||c.b2bish?[['Demo or booking','Schedule','book_appointment (custom)']]:[])];
+  const tags=c.platforms.map(p=>`<div class="tgt-b"><h4>${PL[p].name}</h4><ul class="ticks">${PL[p].tags.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`).join('');
+  return{body:`<div class="tgts">${tags}<div class="tgt-b"><h4>Everywhere</h4><ul class="ticks"><li>Google Tag Manager to manage tags</li><li>GA4 for cross platform analytics</li><li>UTM tags on every ad: source, medium, campaign, content</li><li>CRM or sheet to record lead quality and sales</li></ul></div></div>
+    <h4 class="h4">Events to track</h4><div class="tscroll"><table class="fc"><thead><tr><th>Event</th><th>Meta standard event</th><th>GA4 event</th></tr></thead><tbody>${ev.map(e=>`<tr><td>${e[0]}</td><td>${e[1]}</td><td>${e[2]}</td></tr>`).join('')}</tbody></table></div>
+    <p class="note">Send the same events server side where possible (Conversions API, Events API) so ad blockers and browser limits lose fewer conversions. Check each platform’s current event names before setup.</p>`,
+    ins:[c.kind==='lead'?'Pass lead quality back to the platforms (qualified, sale) so they optimise for customers, not just form fills.':'Track purchase value, not just purchases, so ROAS bidding works.']};
+};
+M.custom=c=>{
+  const txt=String(c.st.custom||'').trim(),low=txt.toLowerCase();
+  const th=D.THEMES.filter(t=>t.k.some(k=>low.includes(k)));
+  const ctrl=`<label class="ctxt"><span>Describe what you want</span><textarea data-pf="custom" rows="3" placeholder="For example: I want a dealer acquisition strategy for a door manufacturer">${esc(txt)}</textarea></label>`;
+  if(!txt)return{ctrl,body:'<p class="note">Describe what you want above and the strategy appears here.</p>',ins:[]};
+  const t=th[0];
+  const base=t||{name:'Custom strategy',objective:c.obj.label+' for '+c.product,audience:c.ind.buyer,platforms:c.platforms,funnel:(D.FUNNELS[c.funnel]||D.FUNNELS.master).map(x=>x[0]).join(' → '),creative:[hook(c,0),hook(c,1),hook(c,2)],offer:D.LP[c.b2bish?'b2b':'lead'].offer,kpi:[c.kind==='lead'?'CPL':'CPP','Qualified rate','CAC','ROAS']};
+  const plats=base.platforms.filter(p=>c.evals[p]&&c.evals[p].status!=='excluded');
+  return{ctrl,body:`<p class="note" style="margin:0 0 10px">Built from ${t?'the "'+esc(t.name.toLowerCase())+'" playbook matched to your description':'your business inputs (no specific playbook matched your words)'} and your ${esc(c.ind.label.toLowerCase())} context. Rule based, not AI written.</p>
+    <table class="kv"><tbody>${[['Your request',txt],['Strategy',base.name],['Objective',base.objective],['Audience',base.audience],['Platforms',plats.map(pname).join(', ')||'Meta'],['Funnel',base.funnel],['Creatives',base.creative.join('; ')],['Offer',base.offer],['KPIs',base.kpi.join(', ')],
+      ['First 30 days','Set up tracking and audiences, launch the offer with 3 creatives on '+(plats.map(pname)[0]||'Meta')+', measure '+base.kpi[0].charAt(0).toLowerCase()+base.kpi[0].slice(1)],['Days 31 to 60','Keep the best creative and audience, add retargeting and follow up'],['Days 61 to 90','Scale what works, add the next platform, report against the KPIs']].map(r=>`<tr><th>${r[0]}</th><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table>
+    ${th.length>1?`<p class="note">Also relevant: ${th.slice(1).map(x=>esc(x.name)).join(', ')}.</p>`:''}`,ins:t?[`Your request matches the ${t.name.toLowerCase()} playbook; KPIs to watch first: ${t.kpi.slice(0,2).join(' and ')}.`]:[]};
+};
+
+/* ---------- plan assembly ---------- */
+function selected(st){return MOD_ORDER.filter(m=>(st||S).modules.includes(m))}
+function buildPlan(st,forReport){
+  const c=context(st),mods=selected(c.st);
+  const secs=mods.map(id=>{const r=M[id](c);return{id,title:MOD[id].name,ctrl:r.ctrl||'',body:r.body,ins:r.ins||[]}});
+  return{c,secs};
+}
+function overview(c){
+  return `<table class="kv ov"><tbody>${[['Industry',c.ind.label],['Business model',c.modelLabel],['Market',c.countryLabel+(c.cities.length?' · '+list(c.cities):'')],['Product or service',c.product],['Objective',c.obj.label],['Monthly budget',inr(c.budget)],['Platforms',c.platforms.map(p=>PL[p].name).join(', ')||'None']].map(r=>`<tr><th>${r[0]}</th><td>${esc(r[1])}</td></tr>`).join('')}</tbody></table>`;
+}
+function reportBody(){
+  const {c,secs}=buildPlan(S,true),full=MOD_ORDER.filter(m=>m!=='custom').every(m=>S.modules.includes(m));
+  const date=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  const ins=secs.flatMap(s=>s.ins);
+  return `<header><p class="rk">Marketing plan · Get Bee Seen</p><h1>${esc(full?'Full marketing plan':'Marketing plan')}: ${esc(c.ind.label)}</h1><p>${date}</p></header>
+    <section><h2>Business overview</h2>${overview(c)}</section>
+    ${secs.map((s,i)=>`<section><h2>${i+1}. ${esc(s.title)}</h2>${s.body}</section>`).join('')}
+    ${ins.length?`<section><h2>Insights</h2><ul>${ins.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></section>`:''}
+    <footer><p><b>These are strategic recommendations and projections, not guaranteed outcomes.</b> Starting assumptions are placeholders, not benchmarks. Platform features, availability and costs change: verify before launch.</p></footer>`;
+}
+
+/* ---------- UI ---------- */
+const STEPS=['Business','Objective','Platforms','Select modules','Generate plan'];
+const ICON=n=>`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(globalThis.MABC_ICONS||{})[n]||''}</svg>`;
+let root=null;
+function render(){
+  root=document.getElementById('planner-root');if(!root)return;
+  const c=context();
+  const prog=`<ol class="pprog">${STEPS.map((s,i)=>`<li class="${S.step===i+1?'on':''} ${i+1<=S.reached?'done':''}"><button type="button" data-pstep="${i+1}" ${i+1>S.reached?'disabled':''}><span>${i+1}</span>${s}</button></li>`).join('')}</ol>`;
+  root.innerHTML=prog+`<div class="pstep">${[s1,s2,s3,s4,s5][S.step-1](c)}</div>`;
+}
+const sel=(k,opts,val,lab)=>`<label class="pfield"><span>${lab}</span><select data-pf="${k}" class="osel">${opts.map(o=>`<option value="${o[0]}"${o[0]===val?' selected':''}>${esc(o[1])}</option>`).join('')}</select></label>`;
+const txt=(k,val,lab,ph)=>`<label class="pfield"><span>${lab}</span><span class="inp"><input type="text" data-pf="${k}" value="${esc(val)}" placeholder="${esc(ph||'')}" maxlength="80"></span></label>`;
+const nav=(back,next,label)=>`<div class="pnav">${back?`<button type="button" class="btn btn-line" data-pstep="${back}">Back</button>`:''}${next?`<button type="button" class="btn btn-green" data-pgo="${next}">${label||'Continue'}</button>`:''}</div>`;
+function s1(c){
+  return `<div class="panel"><h3>1. Your business</h3><div class="pgrid">
+    ${sel('industry',[['','Choose your industry'],...D.INDUSTRIES.map(i=>[i.id,i.label])],S.industry,'Industry')}
+    ${sel('model',[['','Suggested: '+(D.BMODELS.find(m=>m[0]===c.ind.model)||['',''])[1]],...D.BMODELS],S.model,'Business model')}
+    ${sel('country',Object.entries(D.COUNTRIES).map(([k,v])=>[k,v.label]),S.country,'Country or market')}
+    ${S.country==='other'?txt('countryName',S.countryName,'Country name','Your market'):''}
+    ${txt('cities',S.cities,'Cities or regions (comma separated)','For example Bengaluru, Mysuru')}
+    ${txt('product',S.product,'Product or service',c.ind.noun)}
+  </div>${S.industry&&c.ind.calc&&APP()&&APP().MODELS[c.ind.calc]?`<p class="note">Forecasts use the economics from the <button type="button" class="linkbtn" data-pact="openCalc">${esc(APP().MODELS[c.ind.calc].name)} calculator</button>. Enter your numbers there for a sharper plan.</p>`:''}
+  ${nav(0,2)}</div>`;
+}
+function s2(){
+  return `<div class="panel"><h3>2. Objective and budget</h3><div class="objs" role="radiogroup" aria-label="Marketing objective">${D.OBJECTIVES.map(o=>`<button type="button" role="radio" class="chip" data-pobj="${o[0]}" aria-checked="${S.objective===o[0]}" aria-pressed="${S.objective===o[0]}">${o[1]}</button>`).join('')}</div>
+    <div class="pgrid" style="margin-top:14px"><label class="pfield"><span>Monthly ad budget (all platforms)</span><span class="inp"><span class="u">₹</span><input type="number" min="0" step="1000" data-pf="budget" value="${S.budget}"></span></label></div>
+    ${nav(1,3)}</div>`;
+}
+function s3(c){
+  const auto=S.pmode==='auto';
+  const cards=PO.map(p=>{const e=c.evals[p],on=auto?c.platforms.includes(p):S.platforms.includes(p);
+    return `<button type="button" class="pcard${e.status==='excluded'?' ex':''}" role="checkbox" aria-checked="${on}" data-pplat="${p}" ${auto||e.status==='excluded'?'disabled':''}><span class="ck" aria-hidden="true">✓</span><b>${PL[p].name}</b><span class="fit${e.status==='excluded'?' bad':''}">${e.status==='excluded'?'Not available':fitLabel(e.score)+(e.status==='verify'?' · verify':'')}</span><small>${esc(e.status==='excluded'?e.cautions[0]:(e.reasons[0]||e.cautions[0]||''))}</small></button>`}).join('');
+  const amzQ=`<div class="amzq"><span>Are your products listed on Amazon?</span><div class="seg" role="radiogroup" aria-label="Listed on Amazon">${[['yes','Yes'],['no','No']].map(o=>`<button type="button" role="radio" data-pact="amz" data-v="${o[0]}" aria-checked="${S.amazonListed===o[0]}">${o[1]}</button>`).join('')}</div></div>`;
+  return `<div class="panel"><h3>3. Which platforms do you want to consider?</h3>
+    <div class="seg" role="radiogroup" aria-label="Platform mode" style="margin-bottom:12px"><button type="button" role="radio" data-pact="pmode" data-v="auto" aria-checked="${auto}">Auto recommend</button><button type="button" role="radio" data-pact="pmode" data-v="manual" aria-checked="${!auto}">Manual selection</button></div>
+    <p class="note" style="margin:0 0 12px">${auto?'Platforms are chosen from your industry, market, objective and budget. Switch to manual to pick your own.':'Pick the platforms to include. Platforms that do not apply to your market or setup are locked.'}</p>
+    ${amzQ}<div class="pcards">${cards}</div>${nav(2,4)}</div>`;
+}
+function s4(c){
+  const all=MOD_ORDER.filter(m=>m!=='custom'),full=all.every(m=>S.modules.includes(m));
+  const cards=MOD_ORDER.map(m=>{const d=MOD[m],on=S.modules.includes(m);return `<button type="button" class="mcard" role="checkbox" aria-checked="${on}" data-pmod="${m}"><span class="mi">${ICON(d.icon)}</span><span class="ck" aria-hidden="true">✓</span><b>${d.name}</b><small>${d.desc}</small></button>`}).join('');
+  return `<div class="panel"><h3>4. What do you want to build?</h3>
+    <div class="mtools"><button type="button" class="mcard full" role="checkbox" aria-checked="${full}" data-pact="full"><span class="mi">${ICON('sparkle')}</span><span class="ck" aria-hidden="true">✓</span><b>Full marketing plan</b><small>Every module, in one plan</small></button>
+      <div class="mbtns"><button type="button" class="btn btn-line btn-sm" data-pact="selAll">Select all</button><button type="button" class="btn btn-line btn-sm" data-pact="clear">Clear all</button><span class="sub">${S.modules.length} selected</span></div></div>
+    <div class="mcards">${cards}</div>
+    ${S.modules.includes('custom')?`<label class="ctxt"><span>Custom module: describe what you want</span><textarea data-pf="custom" rows="3" placeholder="For example: I want a dealer acquisition strategy for a door manufacturer">${esc(S.custom)}</textarea></label>`:''}
+    ${needs(c)}
+    ${nav(3,S.modules.length?5:0,'Generate plan')}${S.modules.length?'':'<p class="note">Select at least one module.</p>'}</div>`;
+}
+function needs(c){
+  const m=S.modules,ask=[];
+  if((m.includes('forecast')||m.includes('profit'))&&!(c.budget>0))ask.push('a monthly ad budget (step 2)');
+  if((m.includes('forecast')||m.includes('profit'))&&!(c.econ.ticket>0))ask.push('your AOV or ticket size (in the forecast inputs)');
+  if(S.pmode==='manual'&&!c.platforms.length&&m.some(x=>['platforms','budget','campaigns','forecast','profit','tracking'].includes(x)))ask.push('at least one available platform (step 3)');
+  return ask.length?`<p class="warnbox">To build these modules the planner still needs ${list(ask)}.</p>`:'';
+}
+function s5(c){
+  const {secs}=buildPlan(S);
+  if(!secs.length)return `<div class="panel"><p>No modules selected.</p>${nav(4,0)}</div>`;
+  const ins=secs.flatMap(s=>s.ins);
+  return `<div class="pplan"><div class="pbar"><b>Marketing plan</b><nav aria-label="Plan sections">${secs.map(s=>`<a href="#pm-${s.id}">${esc(MOD[s.id].name)}</a>`).join('')}${ins.length?'<a href="#pm-insights">Insights</a>':''}</nav>
+    <span class="pbtns"><button type="button" class="btn btn-line btn-sm" data-pstep="4">Edit modules</button><button type="button" class="btn btn-green btn-sm" data-pact="report">Generate report</button></span></div>
+    <div class="panel"><h3>Plan summary</h3>${overview(c)}<p class="note">Strategic recommendations and projections, not guaranteed outcomes.</p></div>
+    ${secs.map(s=>`<section class="panel psec" id="pm-${s.id}"><h3>${esc(s.title)}</h3>${s.ctrl?`<div class="pctrl">${s.ctrl}</div>`:''}<div data-pbody="${s.id}">${s.body}</div></section>`).join('')}
+    ${ins.length?`<section class="panel" id="pm-insights"><h3>Insights</h3><ul class="ins" data-pbody="insights">${ins.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></section>`:''}
+    <div class="pnav"><button type="button" class="btn btn-line" data-pstep="4">Add or remove modules</button><button type="button" class="btn btn-green" data-pact="report">Generate report</button></div></div>`;
+}
+/* re-render only the output bodies (keeps focus in the controls) */
+function refreshBodies(){
+  if(!root||S.step!==5)return;
+  const {secs}=buildPlan(S);
+  secs.forEach(s=>{const el=root.querySelector(`[data-pbody="${s.id}"]`);if(el)el.innerHTML=s.body});
+  const ie=root.querySelector('[data-pbody="insights"]');if(ie)ie.innerHTML=secs.flatMap(s=>s.ins).map(t=>`<li>${esc(t)}</li>`).join('');
+}
+function setPath(obj,path,val){const k=path.split('.');let o=obj;for(let i=0;i<k.length-1;i++){if(o[k[i]]==null||typeof o[k[i]]!=='object')o[k[i]]=/^\d+$/.test(k[i+1])?[]:{};o=o[k[i]]}o[k[k.length-1]]=val}
+function bind(){
+  const host=document.getElementById('planner-root');if(!host||host._b)return;host._b=1;
+  host.addEventListener('click',e=>{
+    const t=e.target.closest('[data-pstep],[data-pgo],[data-pobj],[data-pplat],[data-pmod],[data-pact]');if(!t||t.disabled)return;
+    if(t.dataset.pstep){S.step=+t.dataset.pstep;save();render();host.scrollIntoView({block:'start',behavior:APP()&&APP().RM.matches?'auto':'smooth'});return}
+    if(t.dataset.pgo){const n=+t.dataset.pgo;if(n===2&&!S.industry){toast('Choose your industry first');return}S.step=n;S.reached=Math.max(S.reached,n);save();render();host.scrollIntoView({block:'start'});return}
+    if(t.dataset.pobj){S.objective=t.dataset.pobj;save();render();return}
+    if(t.dataset.pplat){const p=t.dataset.pplat,i=S.platforms.indexOf(p);if(i>-1)S.platforms.splice(i,1);else S.platforms.push(p);save();render();return}
+    if(t.dataset.pmod){const m=t.dataset.pmod,i=S.modules.indexOf(m);if(i>-1)S.modules.splice(i,1);else S.modules.push(m);save();render();return}
+    const a=t.dataset.pact,c0=()=>context();
+    if(a==='selAll'){S.modules=MOD_ORDER.slice();}
+    else if(a==='clear'){S.modules=[];}
+    else if(a==='full'){const all=MOD_ORDER.filter(m=>m!=='custom');S.modules=all.every(m=>S.modules.includes(m))?S.modules.filter(m=>m==='custom'):Array.from(new Set([...S.modules,...all]));}
+    else if(a==='pmode'){S.pmode=t.dataset.v;if(S.pmode==='manual'&&!S.platforms.length)S.platforms=c0().platforms.slice()}
+    else if(a==='amz'){S.amazonListed=t.dataset.v;if(t.dataset.v==='yes'&&S.pmode==='manual'&&!S.platforms.includes('amazon'))S.platforms.push('amazon')}
+    else if(a==='range'){S.ov.range=t.dataset.v}
+    else if(a==='resetAges'){S.ov.ages=null}
+    else if(a==='resetAlloc'){S.ov.alloc=null}
+    else if(a==='resetSens'){S.ov.sens={}}
+    else if(a==='openCalc'){const k=c0().ind.calc;if(APP())APP().openCalculator(k);return}
+    else if(a==='report'){if(APP())APP().showReport(reportBody(),'Marketing plan','marketing-plan-'+c0().ind.label.toLowerCase().replace(/[^a-z0-9]+/g,'_'),'[data-pact="report"]');return}
+    else if(a==='benchSave'){const c=c0(),src=(host.querySelector('[data-pbs="source"]')||{}).value||'My planning assumption',notes=(host.querySelector('[data-pbs="notes"]')||{}).value||'';
+      let lib=[];try{lib=JSON.parse(localStorage.getItem('mabc:benchlib')||'[]')}catch(err){}
+      c.fc.rows.forEach(r=>lib.push({industry:c.ind.label,country:c.countryLabel,platform:PL[r.p].short,p:r.p,objective:c.obj.label,cpm:r.a.cpm,ctr:r.a.ctr,cpc:r.cpc,cpl:r.cpl,conv:r.a.conv,cac:r.cpa,aov:c.fc.T.aov,date:new Date().toISOString().slice(0,10),source:src,notes}));
+      try{localStorage.setItem('mabc:benchlib',JSON.stringify(lib))}catch(err){}toast('Saved to the benchmark library')}
+    else if(a==='benchDel'){let lib=[];try{lib=JSON.parse(localStorage.getItem('mabc:benchlib')||'[]')}catch(err){}const off=((globalThis.MABC_BENCH||{}).rows||[]).length;lib.splice(+t.dataset.i-off,1);try{localStorage.setItem('mabc:benchlib',JSON.stringify(lib))}catch(err){}}
+    else if(a==='benchUse'){const b=benchRows()[+t.dataset.i];if(b&&b.p){S.ov.assume=S.ov.assume||{};S.ov.assume[b.p]={cpm:b.cpm,ctr:b.ctr,conv:b.conv}}toast('Loaded into the '+(b?b.platform:'')+' assumptions')}
+    else return;
+    save();render();
+  });
+  const onField=(e,live)=>{
+    const t=e.target;
+    if(t.dataset.pf){const k=t.dataset.pf;if(k==='budget')S.budget=Math.max(0,parseFloat(t.value)||0);else S[k]=t.value;
+      if(k==='industry'){S.model='';S.ov.econ={};S.ov.ages=null}
+      save();if(t.tagName==='SELECT'||(!live&&k!=='custom'))render();else if(S.step===5)refreshBodies();return}
+    if(t.dataset.pov){const path=t.dataset.pov;let v=t.type==='checkbox'?(t.checked?1:0):t.tagName==='SELECT'?t.value:parseFloat(t.value);
+      if(t.tagName!=='SELECT'&&t.type!=='checkbox'){if(!isFinite(v))return;v=Math.max(t.type==='range'?-50:0,v);if(/^(econ\.(mu|l2c|qual|meet)|alloc\.|amz\.(referral|returns|disc))/.test(path)&&v>100){v=100;t.value=100}}
+      if(path.startsWith('ages.')&&!S.ov.ages)S.ov.ages=JSON.parse(JSON.stringify(context().arch.age));
+      if(path.startsWith('alloc.')&&!S.ov.alloc){const a=context().alloc;S.ov.alloc=Object.assign({},a.pct)}
+      setPath(S.ov,path,v);
+      const sv=t.dataset.pov.startsWith('sens.')&&root.querySelector(`[data-sv="${path.slice(5)}"]`);if(sv)sv.textContent=(v>0?'+':'')+v+'%';
+      save();refreshBodies();}
+  };
+  host.addEventListener('input',e=>onField(e,true));
+  host.addEventListener('change',e=>onField(e,false));
+}
+function toast(m){const a=APP();if(a)a.toast(m)}
+
+if(typeof document!=='undefined'&&document.getElementById&&document.getElementById('planner-root')){bind();render()}
+globalThis.MABC_PLANNER={context,buildPlan,evaluate,allocate,forecast,reportBody,M,MOD_ORDER,setState:s=>{S=Object.assign(DEF(),s,{ov:Object.assign(DEF().ov,(s||{}).ov||{})})},getState:()=>S,render};
 })();
 </script>
 </body>

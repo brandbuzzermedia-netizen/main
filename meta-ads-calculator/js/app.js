@@ -453,19 +453,19 @@ function reportHTML(){
 const REPORT_CSS=`body{font:14px/1.55 Archivo,system-ui,sans-serif;color:#191816;background:#fff;margin:0}.rep-doc{max-width:820px;margin:0 auto;padding:32px 24px}
 header{border-bottom:3px solid #FFB933;margin-bottom:18px;padding-bottom:10px}h1{font:400 30px 'Alfa Slab One',Georgia,serif;color:#196144;margin:4px 0}.rk{color:#196144;font-weight:700;margin:0;font-size:12px}
 h2{font:400 18px 'Alfa Slab One',Georgia,serif;color:#196144;margin:22px 0 8px}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#196144;color:#FFF2DC;text-align:left;padding:7px 8px}
-td{padding:7px 8px;border-bottom:1px solid #EBD9B8;vertical-align:top}td:not(:first-child){text-align:right}ul{padding-left:20px}li{margin-bottom:6px}.small{font-size:12px;color:#5F6B63}footer{margin-top:26px;font-size:12px;color:#5F6B63;border-top:1px solid #EBD9B8;padding-top:10px}`;
-function openReport(){
-  const body=reportHTML(),m=MODELS[cur];
+td{padding:7px 8px;border-bottom:1px solid #EBD9B8;vertical-align:top}td:not(:first-child){text-align:right}ul{padding-left:20px}li{margin-bottom:6px}table.kv th{background:none;color:#5F6B63;width:32%}table.kv td,table.cm td,table.fc td{text-align:left}.plt,.persona,.tgt-b,.phc,.cmp-b,.p90m,.lpsec{border:1px solid #EBD9B8;border-radius:12px;padding:10px 12px;margin:8px 0}h4{margin:6px 0;color:#196144}.fnb{background:#196144;color:#FFF2DC;border-radius:10px;padding:6px 12px;margin:2px auto}.fnb b{color:#FFB933;margin-right:8px}.fna{text-align:center;color:#FFB933}.scb,.alt{height:8px;background:#FFF2DC;border-radius:8px;overflow:hidden}.scb i,.alt i{display:block;height:100%;background:#196144}.alr{display:grid;grid-template-columns:1.2fr 1.6fr auto auto;gap:8px;align-items:center}.alr em{font-style:normal}.ageb,.stg div{display:inline-block;border:1px solid #EBD9B8;border-radius:10px;padding:6px 10px;margin:4px}.crosc{display:inline-block;background:#196144;color:#FFF2DC;border-radius:12px;padding:10px 14px}.crosc b{display:block;font-size:28px;color:#FFB933}.note{font-size:12px;color:#5F6B63}.small{font-size:12px;color:#5F6B63}footer{margin-top:26px;font-size:12px;color:#5F6B63;border-top:1px solid #EBD9B8;padding-top:10px}`;
+function openReport(){const m=MODELS[cur];showReport(reportHTML(),m.name+' forecast report','meta-ads-report-'+m.key,'#report-btn')}
+function showReport(body,title,file,focusBack){
   let ov=$('#report');if(ov)ov.remove();
   ov=document.createElement('div');ov.id='report';ov.className='rep-ov';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-label','Report');
   ov.innerHTML=`<div class="rep"><div class="rep-bar"><b>Report preview</b><span><button class="btn btn-green btn-sm" type="button" data-rep="print">Print / save as PDF</button> <button class="btn btn-line btn-sm" type="button" data-rep="dl">Download HTML</button> <button class="btn btn-line btn-sm" type="button" data-rep="close">Close</button></span></div><article class="rep-doc">${body}</article></div>`;
   document.body.appendChild(ov);document.body.classList.add('rep-open');
-  const close=()=>{ov.remove();document.body.classList.remove('rep-open');const b=$('#report-btn');if(b)b.focus()};
+  const close=()=>{ov.remove();document.body.classList.remove('rep-open');const b=focusBack&&$(focusBack);if(b)b.focus()};
   ov.addEventListener('click',e=>{const b=e.target.closest('[data-rep]');if(e.target===ov)close();if(!b)return;
     if(b.dataset.rep==='close')close();
     if(b.dataset.rep==='print'){document.body.classList.add('rp-print');try{window.print()}catch(err){toast('Printing is blocked here. Use your browser menu.')}setTimeout(()=>document.body.classList.remove('rp-print'),500)}
-    if(b.dataset.rep==='dl'){try{const doc=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(m.name)} forecast report</title><style>${REPORT_CSS}</style></head><body><div class="rep-doc">${body}</div></body></html>`;
-      const u=URL.createObjectURL(new Blob([doc],{type:'text/html'})),a=document.createElement('a');a.href=u;a.download='meta-ads-report-'+m.key+'.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}catch(err){toast('Download blocked by the browser. Use Print instead.')}}});
+    if(b.dataset.rep==='dl'){try{const doc=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${REPORT_CSS}</style></head><body><div class="rep-doc">${body}</div></body></html>`;
+      const u=URL.createObjectURL(new Blob([doc],{type:'text/html'})),a=document.createElement('a');a.href=u;a.download=file+'.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}catch(err){toast('Download blocked by the browser. Use Print instead.')}}});
   ov.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
   const f=ov.querySelector('[data-rep="print"]');if(f)f.focus();
 }
@@ -492,6 +492,23 @@ if(typeof globalThis!=='undefined'&&typeof globalThis.__MABC_EXPOSE__==='functio
   globalThis.__MABC_EXPOSE__({MODELS,CATALOG,cnt,reportHTML:()=>reportHTML(),state,inr,num,xx,pct,splitNum,fmtNum,zeroOf,tweenText,verdict,scaledOf,scenarioOf,ENGINE,
     open:function(k,vals){cur=k;load(k);if(vals)Object.assign(state[k],vals);shell();update();return{vals:state[k],summary:summaryText(),html:lastHtml}}});
 }
+
+/* ---------- API for the marketing planner (js/planner.js) ---------- */
+/* econ(key): the industry's economics from its calculator (the user's saved inputs, or defaults) */
+function econOf(key){
+  const m=MODELS[key];if(!m)return null;if(!state[key])load(key);
+  const r=m.compute(state[key]),k=r.k||{},st=r.funnel.filter(s=>isFinite(s.n));
+  const leadIdx=k.leadWord==='leads'?st.findIndex(s=>Math.abs(s.n-k.leads)<1e-9&&k.leads>0):-1;
+  const after=leadIdx>-1?st.slice(leadIdx+1):[];
+  const lead=k.leadWord==='leads';
+  return{key,name:m.name,lead,ticket:k.customers>0?k.revenue/k.customers:0,mu:k.revenue>0?Math.max(0,k.gross/k.revenue):0,
+    l2c:lead?(k.leads>0?k.customers/k.leads:0):(k.clicks>0?k.customers/k.clicks:0),
+    qual:after[0]&&k.leads>0?after[0].n/k.leads:NaN,qualLabel:after[0]?after[0].l:'',
+    meet:after[1]&&after[0]&&after[0].n>0?after[1].n/after[0].n:NaN,meetLabel:after[1]?after[1].l:'',
+    unit:k.unit||r.unit,unitP:k.unitP||r.unitP,cpm:state[key].cpm,ctr:state[key].ctr,lpConv:state[key].lpConv};
+}
+globalThis.MABC_APP={MODELS,CATALOG,econ:econOf,inr,num,cnt,pct,xx,div,esc,toast,cap:s=>s.charAt(0).toUpperCase()+s.slice(1),
+  openCalculator:k=>{if(MODELS[k])setModel(k,true)},showReport,market:()=>globalThis.MABC_MARKET||null,RM};
 
 /* ---------- industry dashboard ---------- */
 (function(){

@@ -26,7 +26,7 @@ globalThis.window = globalThis;
 let api;
 globalThis.__MABC_EXPOSE__ = (x) => { api = x; };
 // eslint-disable-next-line no-eval
-for (const f of ['market.js', 'benchmarks.js', 'framework.js', 'industries.js', 'door.js', 'app.js']) (0, eval)(fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8'));
+for (const f of ['market.js', 'benchmarks.js', 'framework.js', 'industries.js', 'door.js', 'app.js', 'planner-data.js', 'planner.js']) (0, eval)(fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8'));
 assert(api, 'test hook did not fire');
 
 const defaults = (m) => Object.fromEntries(m.fields.map((f) => [f.id, f.def && typeof f.def === 'object' ? JSON.parse(JSON.stringify(f.def)) : f.def]));
@@ -266,5 +266,77 @@ t('locations: multiple selection blends CPM and the door market reference', () =
   assert.strictEqual(M.locLabel(['Bengaluru', 'Custom', 'Pune'], 'Mysuru'), 'Bengaluru, Mysuru and Pune');
   const o = api.open('door', { loc: ['Chennai', 'Kerala'] });
   assert(/Chennai and Kerala/.test(o.summary));
+});
+/* ---------- marketing planner ---------- */
+const PLN = globalThis.MABC_PLANNER, PD = globalThis.MABC_PLANNER_DATA;
+const ind = (label) => PD.INDUSTRIES.find((i) => i.label === label).id;
+const plan = (o) => { PLN.setState(Object.assign({ industry: ind('Healthcare') }, o)); return PLN.buildPlan(PLN.getState()); };
+const clean = (html, where) => { const text = html.replace(/<[^>]*>/g, ' ');
+  assert(!/NaN|Infinity|undefined|\[object/.test(text), where + ' bad value: ' + (text.match(/.{20}(NaN|Infinity|undefined|\[object).{20}/) || [])[0]);
+  assert(!/[‒-―−]/.test(text), where + ' dash in copy');
+  const h = text.match(/\S*[A-Za-z]-[A-Za-z]\S*/); assert(!h, where + ' hyphenated word: ' + (h && h[0])); };
+t('planner: a single module generates only that module', () => {
+  const p = plan({ modules: ['funnel'] });
+  assert.deepStrictEqual(p.secs.map((s) => s.id), ['funnel']);
+  const rep = PLN.reportBody();
+  assert(/Funnel diagram/.test(rep));
+  for (const other of ['Budget allocation', 'Creative strategy', 'Landing page strategy', 'Forecasting', '90 day plan', 'Platform recommendation']) assert(!rep.includes(other), 'report leaked ' + other);
+});
+t('planner: multiple selection keeps order and only those modules', () => {
+  const p = plan({ modules: ['creative', 'funnel', 'audience'] });
+  assert.deepStrictEqual(p.secs.map((s) => s.id), ['audience', 'funnel', 'creative']);
+});
+t('planner: select all builds every module', () => {
+  const p = plan({ modules: PLN.MOD_ORDER.slice(), custom: 'dealer acquisition for doors' });
+  assert.strictEqual(p.secs.length, 14);
+});
+t('planner: platform eligibility follows the market and setup', () => {
+  const india = plan({ country: 'india' }).c, usa = plan({ country: 'usa' }).c;
+  assert.strictEqual(india.evals.tiktok.status, 'excluded'); assert.notStrictEqual(usa.evals.tiktok.status, 'excluded');
+  assert.strictEqual(usa.evals.jiohotstar.status, 'excluded'); assert.notStrictEqual(india.evals.jiohotstar.status, 'excluded');
+  assert.strictEqual(plan({ amazonListed: 'no' }).c.evals.amazon.status, 'excluded');
+  assert.notStrictEqual(plan({ amazonListed: 'yes', industry: ind('Ecommerce') }).c.evals.amazon.status, 'excluded');
+  const b2b = plan({ industry: ind('Manufacturing') }).c, b2c = plan({ industry: ind('Fashion') }).c;
+  assert(b2b.evals.linkedin.score > b2c.evals.linkedin.score + 30, 'LinkedIn should favour B2B');
+  assert(plan({ industry: ind('Home decor'), country: 'usa' }).c.evals.pinterest.score > b2b.evals.pinterest.score, 'Pinterest favours visual categories');
+});
+t('planner: manual platforms appear only when selected and available', () => {
+  const c = plan({ pmode: 'manual', platforms: ['meta', 'tiktok', 'linkedin'], country: 'india', modules: ['platforms'] }).c;
+  assert.deepStrictEqual(c.platforms, ['meta', 'linkedin']);
+});
+t('planner: budget split adds up to 100% and follows manual override', () => {
+  const c = plan({ budget: 200000 }).c, tot = Object.values(c.alloc.pct).reduce((a, b) => a + b, 0);
+  near(tot, 100); near(Object.values(c.alloc.amount).reduce((a, b) => a + b, 0), 200000);
+  const o = {}; c.platforms.forEach((p) => { o[p] = 1; }); o.test = 0;
+  const m = plan({ budget: 200000, ov: { alloc: o } }).c; assert(m.alloc.manual); near(m.alloc.pct[c.platforms[0]], 100 / c.platforms.length);
+});
+t('planner: ROAS, profit ROAS, ROI, ACOS and TACOS use the right formulas', () => {
+  const c = plan({ industry: ind('Ecommerce'), amazonListed: 'yes', pmode: 'manual', platforms: ['meta', 'amazon'], budget: 100000 }).c, T = c.fc.T;
+  near(T.roas, T.revenue / T.spend); near(T.profitRoas, T.net / T.spend); near(T.roi, T.net / T.invest * 100);
+  const az = c.fc.rows.find((r) => r.p === 'amazon');
+  near(T.acos, az.spend / az.revenue * 100); near(T.tacos, az.spend / (az.revenue + 100000) * 100);
+  assert(T.tacos < T.acos);
+});
+t('planner: range forecast shows ranges, single forecast does not', () => {
+  const r = plan({ modules: ['forecast'] }).secs[0].body, s = plan({ modules: ['forecast'], ov: { range: 'single' } }).secs[0].body;
+  assert(/\d to [₹\d]/.test(r)); assert(/expected case/.test(s));
+});
+t('planner: funnel and ages change with the business', () => {
+  const f1 = plan({ industry: ind('Manufacturing'), modules: ['funnel'] }).secs[0].body, f2 = plan({ industry: ind('Fashion'), modules: ['funnel'] }).secs[0].body;
+  assert(/Negotiation/.test(f1) && /Add to cart/.test(f2) && !/Add to cart/.test(f1));
+  const a1 = plan({ industry: ind('Fashion') }).c.arch.age[0], a2 = plan({ industry: ind('Manufacturing') }).c.arch.age[0];
+  assert.notDeepStrictEqual(a1, a2);
+});
+t('planner: custom module matches a playbook from the description', () => {
+  const b = plan({ industry: ind('Door manufacturer'), modules: ['custom'], custom: 'I want a dealer acquisition strategy for a door manufacturer' }).secs[0].body;
+  assert(/Dealer and channel acquisition/.test(b));
+});
+t('planner: every industry and module is free of NaN, dashes and hyphens', () => {
+  const combos = [{ country: 'india', objective: 'leads' }, { country: 'usa', objective: 'sales', amazonListed: 'yes' }, { country: 'uae', objective: 'awareness', budget: 0 }, { country: 'other', countryName: 'Kenya', objective: 'dealer', pmode: 'manual', platforms: ['linkedin', 'amazon'] }];
+  PD.INDUSTRIES.forEach((i) => combos.forEach((cb) => {
+    const p = plan(Object.assign({ industry: i.id, modules: PLN.MOD_ORDER.slice(), custom: 'festive sale launch' }, cb));
+    p.secs.forEach((s) => clean(s.ctrl + s.body + s.ins.join(' '), i.label + ' / ' + s.id));
+    clean(PLN.reportBody(), i.label + ' report');
+  }));
 });
 console.log(`\n${passed} checks passed`);

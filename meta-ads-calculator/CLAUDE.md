@@ -26,6 +26,8 @@ Always run `npm test` after touching formulas, and `npm run build` before handin
 - `js/industries.js` – the industry definitions (funnel stages, inputs, `econ()` cost engine and revenue model for each), the icon set `MABC_ICONS` and the dashboard catalogue `MABC_CATALOG` (groups, order, aliases such as Coaching → Education and Gym → Fitness).
 - `js/benchmarks.js` – benchmark references by industry and metric with `sourceType`, `source` and `date`. **Intentionally empty**: never add numbers without a real source (verified industry source, agency history, Meta campaign data or the user's own history).
 - `js/door.js` – the door module. Defines `globalThis.MABC_DOOR(E)`, which app.js calls with its engine helpers to register `MODELS.door`.
+- `js/planner-data.js` – the Marketing Planner knowledge base: markets (with platform availability flags), business models, objectives, archetypes (ages with reasons, personas, messaging), the planner industry list mapped to calculator keys, the 7 platforms (roles, formats, targeting, tracking tags, starting cost placeholders), the 14 modules, funnels by business type, hooks, landing page types, FAQs and custom module playbooks.
+- `js/planner.js` – the Marketing Planner (section `#planner`): 5 steps (Business → Objective → Platforms → Select modules → Plan), platform eligibility and scoring, budget allocation, per platform forecasting (ranges, scenarios, sensitivity, Amazon ACOS / TACOS) using `MABC_APP.econ(key)` from the industry calculators, one renderer per module (`M.<id>` returns `{ctrl, body, ins}`), plan report. Only selected modules are generated, shown in the navigation or put in the report. Saved in `mabc:planner`; the benchmark library in `mabc:benchlib`.
 - `js/app.js` – the engine: helpers and formatters (`inr`, `num`, `cnt`, `pct`, `xx`), motion helpers, hero receipt, module registration and input sanitising, state and persistence, dashboard, industry picker, `shell` / `update`, actual vs projected, report, copy summary, scroll reveals.
 - `assets/` – real GBS brand files: `logo-horizontal.png`, `logo-stacked-white.png`, `bee.png`, `badge.png`. `img[data-asset]` tags get their `src` from the `ASSETS` map in app.js.
 - `build.js` – inlines css, every `js/*.js` script tag and assets/*.png into one HTML file in `dist/`.
@@ -102,6 +104,13 @@ Scaling: each doubling of budget multiplies CPM (and CPL) by `1 + drop%`. Goals 
 - Results re-render with `innerHTML` on every keystroke, which would restart CSS animations. So numbers and bars are animated in `animateResults()` instead: cards carry `data-k`, bars and the meter carry `data-w`, and the previous visible values are captured before each re-render. Do not add CSS entrance animations to elements inside `#res-main` except under `.fresh`.
 - Do not use `animation-fill-mode: forwards` on hoverable elements; it overrides hover transforms.
 - Everything must switch off under `prefers-reduced-motion` (a global rule in the MOTION block plus `RM.matches` checks in JS).
+
+## Marketing planner rules
+
+- Every module is optional. Never render, navigate to or report a module the user did not select. Editing modules must keep all other inputs.
+- Recommendations are rules, not AI: say so where it matters (the custom module does). Never invent platform availability: use `COUNTRIES` flags and say "verify" when unsure. TikTok is excluded for India; JioHotstar is India only; Amazon needs a listing and a marketplace.
+- Platform cost defaults are placeholders for India, not benchmarks. Forecasts show ranges by default and are labelled as projections.
+- Output controls (inputs inside the plan) update only the module bodies (`refreshBodies`) so focus is never lost.
 
 ## Copy and content rules
 
