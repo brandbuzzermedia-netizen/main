@@ -40,6 +40,7 @@ Standalone tools for GBS, each self-contained with its own README and tests.
 | Directory | Tool |
 | --- | --- |
 | `meta-ads-calculator/` | Meta Ads Business Calculator — 37 industry calculators, a custom funnel builder and a modular multi platform Marketing Planner (vanilla JS; `npm test`, `npm run build`) |
+| `report-studio/` | GBS Client Report Studio — monthly client reports as branded A4 PDFs (Next.js, Supabase, Playwright; `npm test`, `npm run build`) |
 
 ## Editing
 
