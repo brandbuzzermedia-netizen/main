@@ -66,8 +66,18 @@ docker run -p 3000:3000 -v gbs-data:/app/data \
   -e STUDIO_PASSWORD=... -e SESSION_SECRET=... gbs-report-studio
 ```
 
-Any host that runs a container and gives it a persistent disk works
-(Render, Railway, Fly.io, a small VPS). Mount the disk at `/app/data` and
+The image is based on Microsoft's Playwright image (Chromium and its system
+libraries included), so keep its tag equal to the `playwright` version in
+`package.json`. It is about 4.3 GB.
+
+**Render** (simplest): `render.yaml` at the repository root is a Blueprint.
+In Render choose New → Blueprint, pick this repository and branch, and enter
+a `STUDIO_PASSWORD`. It creates the web service with a 1 GB disk at
+`/app/data` and generates `SESSION_SECRET`. The disk needs a paid instance
+(Starter). Render serves it over HTTPS.
+
+Any other host that runs a container with a persistent disk works too
+(Railway, Fly.io, a small VPS with Docker). Mount the disk at `/app/data` and
 put HTTPS in front. Run one instance only: the data file is not shared
 between servers.
 
@@ -104,11 +114,12 @@ The two pages that differ do so on purpose. The prototype gives the
 uses to hide the studio header, so the pill vanishes from its PDF. The port
 shows it (content breakdown, pages 7 and 8).
 
-Against `reference/` itself, pages differ by 0.4–3.3% of pixels because
-glyphs there are spaced slightly wider. That file was printed in a
-different browser setup. The prototype, exported here, differs from it by
-the same amounts, so the gap is in how the reference was printed, not in
-the port.
+Against `reference/` itself, the Chromium version decides the result. The
+Docker image (Playwright 1.63's Chromium) reproduces it almost exactly:
+0.00–1.15% of pixels per page. An older Chromium (141, used in development
+here) spaces glyphs slightly narrower, giving 0.4–3.3% per page, as it also
+does for the prototype itself. Run `npm run compare` with the same Chromium
+that produced the PDF, or its prototype baseline will differ in the same way.
 
 Details that matter for fidelity:
 

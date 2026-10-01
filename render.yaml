@@ -1,0 +1,25 @@
+# Render Blueprint for the GBS Report Studio (report-studio/).
+# In Render: New > Blueprint > pick this repository. It asks for
+# STUDIO_PASSWORD; SESSION_SECRET is generated. The disk keeps clients,
+# reports and screenshots across deploys, so run a single instance.
+services:
+  - type: web
+    name: gbs-report-studio
+    runtime: docker
+    rootDir: report-studio
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    numInstances: 1
+    healthCheckPath: /login
+    disk:
+      name: studio-data
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: STUDIO_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
