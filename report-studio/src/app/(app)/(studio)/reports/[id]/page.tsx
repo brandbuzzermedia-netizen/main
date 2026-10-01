@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { addNote, chooseResolution } from "@/app/(app)/actions";
+import { addNote, changeStatus, chooseResolution } from "@/app/(app)/actions";
 import { blockConfidence, buildPages, ReportPages } from "@/components/report/pages";
 import { FitPages } from "@/components/studio/fit-pages";
 import { PageHeader, StatusChip } from "@/components/studio/views";
@@ -21,8 +21,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 type Warn = ["medium" | "low", React.ReactNode];
 
-export default async function ReportViewer({ params }: { params: Promise<{ id: string }> }) {
+export default async function ReportViewer({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ duplicates?: string }> }) {
   const { id } = await params;
+  const duplicates = Number((await searchParams).duplicates) || 0;
   const doc = await getReportDoc(id);
   if (!doc) notFound();
   const { data, conflicts } = resolveData(doc);
@@ -34,6 +35,8 @@ export default async function ReportViewer({ params }: { params: Promise<{ id: s
   const samples = data.content.filter((c) => c.provenance === "sample").length;
   if (samples) warns.push(["medium", `${samples} of ${data.content.length} pieces carry sample figures (only fields confirmed in the brief are real). Replace them with extracted data before sending.`]);
   if (doc.isDemo && !Object.keys(doc.uploads).length) warns.push(["medium", "Source screenshot pages show placeholder renders of the figures, not the uploaded screenshots."]);
+  if (!doc.isDemo && !Object.values(doc.uploads).some((l) => l?.length)) warns.push(["medium", "No source screenshots attached, so the report has no source pages and its figures cannot be checked against them. Add them under Edit data."]);
+  if (!data.content.length && doc.sections.content) warns.push(["medium", "No posts entered, so the content pages show no pieces."]);
   warns.push(["low", "“Why it performed this way” is hedged on purpose. Visual causes need creative-file review."]);
   if (!hasPrevious(data)) warns.push(["medium", "No previous-month data, so month-over-month is hidden."]);
   ([["profileVisits", "Profile visits"], ["websiteClicks", "Website clicks"]] as const).forEach(([k, l]) => {
@@ -57,11 +60,17 @@ export default async function ReportViewer({ params }: { params: Promise<{ id: s
           </span>
         }
       >
-        <Button asChild variant="ghost"><Link href="/">Back to dashboard</Link></Button>
+        <Button asChild variant="ghost"><Link href="/reports">All reports</Link></Button>
+        <Button asChild><Link href={`/reports/${doc.id}/edit`}>Edit data</Link></Button>
         <Button asChild><a href={`/print/reports/${doc.id}`} target="_blank" rel="noreferrer">Print view</a></Button>
         <Button asChild variant="primary"><a href={`/api/reports/${doc.id}/pdf`}>Download PDF</a></Button>
       </PageHeader>
 
+      {duplicates ? (
+        <p role="status" className="mb-4 rounded-2xl border border-border bg-card px-3.5 py-2 text-[13px]">
+          {duplicates} screenshot{duplicates === 1 ? " was" : "s were"} already attached, so {duplicates === 1 ? "it was" : "they were"} skipped instead of being counted twice.
+        </p>
+      ) : null}
       <div className="grid grid-cols-[190px_minmax(0,1fr)_300px] items-start gap-[18px] max-[1560px]:grid-cols-[minmax(0,1fr)_280px] max-[980px]:grid-cols-1">
         <nav aria-label="Pages" className="sticky top-4 max-h-[calc(100vh-40px)] overflow-auto text-[12.5px] max-[1560px]:hidden">
           {pages.map((p, i) => (
@@ -77,6 +86,16 @@ export default async function ReportViewer({ params }: { params: Promise<{ id: s
         </FitPages>
 
         <aside className="sticky top-4 grid max-h-[calc(100vh-40px)] gap-3.5 overflow-auto max-[980px]:static max-[980px]:max-h-none">
+          <form action={changeStatus} className="flex flex-wrap items-end gap-2 rounded-[20px] border border-border bg-card p-3.5">
+            <input type="hidden" name="reportId" value={doc.id} />
+            <label className="grid flex-1 gap-1 text-[12.5px] font-medium text-muted-foreground">
+              Status
+              <select name="status" defaultValue={doc.status} className="h-8 rounded-xl border border-input bg-card px-2 text-sm text-foreground">
+                {["Draft", "Pending", "Ready for review", "Delivered"].map((x) => <option key={x}>{x}</option>)}
+              </select>
+            </label>
+            <Button size="sm" type="submit">Update</Button>
+          </form>
           {conflicts.map((c) => (
             <div key={c.metric} className={`rounded-[20px] border bg-card p-3.5 ${c.chosen ? "border-border" : "border-warn"}`}>
               <h2 className="mb-1.5 text-[13px] font-bold">Potential data conflict detected: {c.label.toLowerCase()}</h2>

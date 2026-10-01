@@ -21,7 +21,7 @@ export default async function Dashboard() {
         <div className="flex items-center gap-[18px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/bee.png" alt="" className="h-[92px] w-auto max-[640px]:hidden" />
-          <Button disabled variant="primary" title="Report creation arrives in build step 3">+ Create new report</Button>
+          <Button asChild variant="primary"><Link href="/create">+ Create new report</Link></Button>
         </div>
       </section>
       <Stats

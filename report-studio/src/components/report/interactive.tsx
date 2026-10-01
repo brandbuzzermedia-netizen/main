@@ -28,14 +28,15 @@ export interface MatrixRow {
 type SortKey = "date" | "views" | "shares" | "saves" | "reach" | "er";
 
 /** Content performance matrix, sortable by clicking a column. */
-export function ContentMatrix({ rows }: { rows: MatrixRow[] }) {
+/** `max` is the most views of any piece this month, so bars compare across pages. */
+export function ContentMatrix({ rows, max }: { rows: MatrixRow[]; max?: number }) {
   const [sort, setSort] = useState<{ k: SortKey; dir: number }>({ k: "views", dir: -1 });
   const val = (x: MatrixRow) => (sort.k === "date" ? x.date : x[sort.k]) as string | number | null;
   const sorted = rows.slice().sort((a, b) => {
     const fa = val(a) as number, fb = val(b) as number;
     return (fa > fb ? 1 : fa < fb ? -1 : 0) * sort.dir;
   });
-  const mx = Math.max(...rows.map((x) => x.views || 0), 1);
+  const mx = max ?? Math.max(...rows.map((x) => x.views || 0), 1);
   const th = (k: SortKey, label: string) => (
     <th>
       <button

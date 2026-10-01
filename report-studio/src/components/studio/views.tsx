@@ -58,10 +58,11 @@ export function ReportsTable({ reports, showClient = true }: { reports: ReportSu
               {r.available ? (
                 <div className="flex flex-wrap gap-2">
                   <Button asChild size="sm"><Link href={`/reports/${r.id}`}>View</Link></Button>
+                  <Button asChild size="sm"><Link href={`/reports/${r.id}/edit`}>Edit data</Link></Button>
                   <Button asChild size="sm"><a href={`/api/reports/${r.id}/pdf`}>Download PDF</a></Button>
                 </div>
               ) : (
-                <span className="text-xs text-muted-foreground">No data uploaded yet</span>
+                <span className="text-xs text-muted-foreground">No data entered yet</span>
               )}
             </TableCell>
           </TableRow>

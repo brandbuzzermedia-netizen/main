@@ -44,8 +44,12 @@ export function ClientWord({ name, brand, size }: { name: string; brand: Brand; 
   );
 }
 
-/** Placeholder cover until a real cover image is uploaded. Derived from the client palette. */
-export function CoverArt({ item, index, brand }: { item: ContentItem; index: number; brand: Brand }) {
+/**
+ * Placeholder cover until a real cover image is uploaded, derived from the
+ * client palette. The demo keeps the prototype's door drawing; other clients
+ * get a neutral frame so no product is implied.
+ */
+export function CoverArt({ item, index, brand, motif = "plain" }: { item: ContentItem; index: number; brand: Brand; motif?: "door" | "plain" }) {
   // eslint-disable-next-line @next/next/no-img-element
   if (item.img) return <img src={item.img} alt="" />;
   const i = Math.max(0, index), b = brand.primary, a = brand.accent;
@@ -54,12 +58,20 @@ export function CoverArt({ item, index, brand }: { item: ContentItem; index: num
   return (
     <svg viewBox="0 0 100 125" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <rect width="100" height="125" fill={bg} />
-      <g transform={`translate(${dx} 0)`} fill="none" stroke={a} strokeWidth=".9">
-        <rect x="26" y="22" width="48" height="86" />
-        <rect x="31" y="28" width="38" height="34" />
-        <rect x="31" y="68" width="38" height="34" />
-        <circle cx="66" cy="66" r="1.6" fill={a} />
-      </g>
+      {motif === "door" ? (
+        <g transform={`translate(${dx} 0)`} fill="none" stroke={a} strokeWidth=".9">
+          <rect x="26" y="22" width="48" height="86" />
+          <rect x="31" y="28" width="38" height="34" />
+          <rect x="31" y="68" width="38" height="34" />
+          <circle cx="66" cy="66" r="1.6" fill={a} />
+        </g>
+      ) : (
+        <g fill="none" stroke={a} strokeWidth=".9">
+          <rect x="14" y="16" width="72" height="93" />
+          {item.type === "Carousel" ? <><rect x="20" y="22" width="60" height="81" opacity=".6" /><rect x="26" y="28" width="48" height="69" opacity=".35" /></> : null}
+          <path d={`M14 ${70 + (dx % 9)}h72`} opacity=".45" />
+        </g>
+      )}
       {item.type === "Reel" ? (
         <g transform="translate(82 14)">
           <circle r="7" fill="rgba(0,0,0,.45)" />

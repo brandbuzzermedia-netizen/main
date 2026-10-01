@@ -9,9 +9,23 @@ import { cookies } from "next/headers";
 import { SESSION_COOKIE, readSessionToken, type Session } from "@/lib/auth/session";
 import { thrishankAugust2026 } from "@/lib/fixtures/thrishank-2026-08";
 import { MONTHS, parseDay } from "@/lib/format";
-import type { InternalNote, ReportDoc, ReportStatus, Resolution } from "@/lib/report/types";
+import {
+  SECTION_KEYS, type Brand, type InternalNote, type ReportData, type ReportDoc, type ReportStatus, type Resolution,
+  type SectionKey, type SourceShot, type Template, type Platform,
+} from "@/lib/report/types";
 
 export type { Session };
+
+/** A client's report branding. Logo and cover are stored file URLs. */
+export interface ClientBrand {
+  primary: string;
+  accent: string;
+  logo: string | null;
+  cover: string | null;
+}
+
+/** Palette used until a client's own colours are set (the prototype's placeholder). */
+export const DEFAULT_BRAND: ClientBrand = { primary: "#3B2A21", accent: "#C9974A", logo: null, cover: null };
 
 export interface ClientRow {
   id: string;
@@ -22,6 +36,7 @@ export interface ClientRow {
   website: string | null;
   instagram: string | null;
   createdAt: string;
+  brand?: ClientBrand;
 }
 
 export type ClientInput = Pick<ClientRow, "name" | "industry" | "location" | "website" | "instagram">;
@@ -91,26 +106,29 @@ function seed(): Store {
   };
 }
 
+const g = globalThis as unknown as { __gbsWrites?: Promise<unknown>; __gbsSeeding?: Promise<void>; __gbsTmp?: number };
+
 async function load(): Promise<Store> {
   try {
     return JSON.parse(await readFile(FILE, "utf8")) as Store;
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
-    const s = seed();
-    await save(s);
-    return s;
+    // First run: create the file once, however many requests arrive together.
+    g.__gbsSeeding ??= save(seed()).finally(() => (g.__gbsSeeding = undefined));
+    await g.__gbsSeeding;
+    return JSON.parse(await readFile(FILE, "utf8")) as Store;
   }
 }
 
 async function save(s: Store) {
   await mkdir(DATA_DIR, { recursive: true });
-  const tmp = `${FILE}.${process.pid}.tmp`;
+  // A unique temporary name per write, then an atomic rename into place.
+  const tmp = `${FILE}.${process.pid}.${(g.__gbsTmp = (g.__gbsTmp ?? 0) + 1)}.tmp`;
   await writeFile(tmp, JSON.stringify(s, null, 2));
   await rename(tmp, FILE);
 }
 
 // Writes are queued so two requests never read-modify-write at once.
-const g = globalThis as unknown as { __gbsWrites?: Promise<unknown> };
 function mutate<T>(fn: (s: Store) => T): Promise<T> {
   const run = (g.__gbsWrites ?? Promise.resolve()).then(async () => {
     const s = await load();
@@ -183,9 +201,85 @@ export async function listReports(clientId?: string): Promise<ReportSummary[]> {
     }));
 }
 
+/** The report as the renderer needs it, with the client's current name and branding. */
 export async function getReportDoc(id: string): Promise<ReportDoc | null> {
-  return (await load()).reports.find((r) => r.id === id)?.doc ?? null;
+  const s = await load();
+  const r = s.reports.find((x) => x.id === id);
+  if (!r?.doc) return null;
+  const doc = r.doc;
+  doc.status = r.status;
+  const client = s.clients.find((c) => c.id === r.clientId);
+  if (client) {
+    doc.client = { id: client.id, name: client.name, industry: client.industry ?? "", location: client.location ?? "" };
+    if (client.brand) {
+      const b = client.brand;
+      doc.brand = { ...doc.brand, primary: b.primary, accent: b.accent, logo: b.logo, cover: b.cover } satisfies Brand;
+    }
+  }
+  return doc;
 }
+
+export async function getReportRecord(id: string) {
+  const r = (await load()).reports.find((x) => x.id === id);
+  return r ? { id: r.id, clientId: r.clientId, status: r.status } : null;
+}
+
+export function setClientBrand(id: string, brand: ClientBrand): Promise<void> {
+  return mutate((s) => {
+    const c = s.clients.find((x) => x.id === id);
+    if (!c) throw new Error("Client not found");
+    c.brand = brand;
+  });
+}
+
+export function setReportStatus(id: string, status: ReportStatus): Promise<void> {
+  return mutate((s) => {
+    const r = s.reports.find((x) => x.id === id);
+    if (r) r.status = status;
+  });
+}
+
+export interface ReportInput {
+  clientId: string;
+  template: Template;
+  sections: Record<SectionKey, boolean>;
+  data: ReportData;
+}
+
+export class ReportExistsError extends Error {}
+
+/** Report ids are "<client>-<yyyy-mm>", one report per client per month. */
+export const reportId = (clientId: string, periodStart: string) => `${clientId}-${periodStart.slice(0, 7)}`;
+
+export function createReport(input: ReportInput, uploads: Partial<Record<Platform, SourceShot[]>>): Promise<string> {
+  return mutate((s) => {
+    if (!s.clients.some((c) => c.id === input.clientId)) throw new Error("Client not found");
+    const id = reportId(input.clientId, input.data.period.start);
+    if (s.reports.some((r) => r.id === id)) throw new ReportExistsError(id);
+    const client = s.clients.find((c) => c.id === input.clientId)!;
+    const doc: ReportDoc = {
+      id, status: "Draft", createdAt: new Date().toISOString().slice(0, 10),
+      client: { id: client.id, name: client.name, industry: client.industry ?? "", location: client.location ?? "" },
+      brand: { ...DEFAULT_BRAND, gbs: null, ...(client.brand ?? {}) },
+      template: input.template, sections: input.sections, data: input.data,
+      texts: {}, variant: {}, titles: {}, rows: null, uploads, resolutions: {}, notes: [], isDemo: false,
+    };
+    s.reports.push({ id, clientId: input.clientId, periodStart: input.data.period.start, status: "Draft", createdAt: doc.createdAt, doc });
+    return id;
+  });
+}
+
+/** Replaces a report's data, keeping its notes, edits and reviewer choices. */
+export function updateReport(id: string, input: Omit<ReportInput, "clientId">, uploads: Partial<Record<Platform, SourceShot[]>>): Promise<void> {
+  return mutate((s) => {
+    const r = s.reports.find((x) => x.id === id);
+    if (!r?.doc) throw new Error("Report not found");
+    Object.assign(r.doc, { template: input.template, sections: input.sections, data: input.data, uploads, isDemo: false });
+    r.periodStart = input.data.period.start;
+  });
+}
+
+export const allSections = (on: boolean) => Object.fromEntries(SECTION_KEYS.map((k) => [k, on])) as Record<SectionKey, boolean>;
 
 export function addInternalNote(session: Session, reportId: string, text: string): Promise<void> {
   const note: InternalNote = { text, by: session.name, date: new Date().toISOString().slice(0, 10) };

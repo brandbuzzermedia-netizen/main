@@ -5,7 +5,8 @@ import { removeClient } from "@/app/(app)/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageHeader, ReportsTable } from "@/components/studio/views";
-import { getClient, listReports } from "@/lib/data/repo";
+import { BrandForm } from "@/components/studio/brand-form";
+import { DEFAULT_BRAND, getClient, listReports } from "@/lib/data/repo";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const c = await getClient((await params).id);
@@ -23,11 +24,17 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
       <PageHeader title={client.name} sub={details || undefined}>
         <Button asChild variant="ghost"><Link href="/clients">All clients</Link></Button>
         <Button asChild><Link href={`/clients/${id}/edit`}>Edit details</Link></Button>
+        <Button asChild variant="primary"><Link href={`/create?client=${id}`}>+ New report</Link></Button>
       </PageHeader>
       <Card className="mb-5">
         <CardTitle>Report history</CardTitle>
         <CardDescription>Previous months stay available for comparison.</CardDescription>
         <ReportsTable reports={reports} showClient={false} />
+      </Card>
+      <Card className="mb-5">
+        <CardTitle>Report branding</CardTitle>
+        <CardDescription>The client&apos;s logo and colours lead every report; Get Bee Seen co-brands each page.</CardDescription>
+        <BrandForm clientId={client.id} brand={client.brand ?? DEFAULT_BRAND} />
       </Card>
       <Card>
         <CardTitle>Delete client</CardTitle>

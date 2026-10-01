@@ -163,5 +163,6 @@ a.srcbtn{text-decoration:none}
  .pbox{width:1122px;height:793px;box-shadow:none;break-after:page;page-break-after:always;overflow:hidden}
  .pbox:last-child{break-after:auto;page-break-after:auto}
  .page{transform:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
- .cap{display:block!important;-webkit-line-clamp:unset!important}
+ /* Full captions, up to four lines so long ones cannot push a card off the page. */
+ .cap{-webkit-line-clamp:4!important}
 }

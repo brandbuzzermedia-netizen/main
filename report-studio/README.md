@@ -9,7 +9,18 @@ the visual and behavioural spec, and `reference/` holds the PDF it exports.
 
 ## Status
 
-Build steps 1 and 2 of 5 (see `CLAUDE.md`) are done:
+Usable for real monthly reports, with figures typed in from screenshots.
+Build steps 1 and 2 of 5 (see `CLAUDE.md`) are done, plus a manual-entry
+version of step 3:
+
+- **Create report**: pick the client and month, type the Instagram
+  Insights and Meta Ads figures, add each post, attach the screenshots
+  (duplicates are skipped by file hash), choose the template and pages.
+  Impossible values (reach above impressions, a post outside the month) are
+  refused with a message. **Edit data** later from the report.
+- **Client branding**: upload a logo and the colours are suggested from it;
+  adjust and save. Every report for that client follows.
+- **Report status**: Draft, Pending, Ready for review, Delivered.
 
 - **Studio shell** in the GBS brand: sign-in, dashboard, clients
   (create, edit, delete), reports list, report viewer.
@@ -23,8 +34,10 @@ Build steps 1 and 2 of 5 (see `CLAUDE.md`) are done:
 - **Review panel** (staff only): data conflicts with a choice of value,
   sample-data and missing-data warnings, copy confidence, internal notes.
 
-Create report, templates, brand assets, analytics and settings are
-placeholders for steps 3 to 5.
+Still to come: reading figures from screenshots automatically (step 3),
+Claude-written text and on-page editing (step 4), share links and present
+mode (step 5). The Templates, Brand assets, Analytics and Settings pages are
+placeholders.
 
 ## Run it
 
@@ -43,10 +56,26 @@ says so. For anything online, copy `.env.example` to `.env.local` and set:
 Production builds refuse to start a session without both. Serve the studio
 over HTTPS: the session cookie is Secure in production.
 
+### Deploy
+
+`Dockerfile` builds a production image with Chromium for PDF export:
+
+```bash
+docker build -t gbs-report-studio .
+docker run -p 3000:3000 -v gbs-data:/app/data \
+  -e STUDIO_PASSWORD=... -e SESSION_SECRET=... gbs-report-studio
+```
+
+Any host that runs a container and gives it a persistent disk works
+(Render, Railway, Fly.io, a small VPS). Mount the disk at `/app/data` and
+put HTTPS in front. Run one instance only: the data file is not shared
+between servers.
+
 ### Data
 
 Clients, reports, reviewer choices and internal notes are stored in
-`data/studio.json` (or `$DATA_DIR/studio.json`). The file is created from
+`data/studio.json` (or `$DATA_DIR/studio.json`); uploaded screenshots and
+logos in `data/files/`, served only to signed-in staff. The file is created from
 the Thrishank Doors seed on first run; delete it to start again from the
 seed. Writes are queued and atomic (temporary file, then rename). This
 suits one server with a persistent disk. Back the file up like any other
@@ -57,7 +86,7 @@ business record. It is not shared between servers, and it is not in git
 
 | Command | What it checks |
 | --- | --- |
-| `npm test` | Analysis, conflicts and copy (`node --test`, no extra packages) |
+| `npm test` | Analysis, conflicts, copy and report form validation (`node --test`, no extra packages) |
 | `npm run typecheck` | TypeScript |
 | `npm run build` | Production build |
 | `STUDIO_PASSWORD=… npm run compare -- --fetch http://127.0.0.1:3000` | Exports the demo report and compares it page by page with the prototype and the reference PDF (needs `pdftoppm`) |

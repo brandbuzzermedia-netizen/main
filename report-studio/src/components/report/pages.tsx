@@ -78,7 +78,8 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
   const per = `${fLong(d.period.start)} – ${fLong(d.period.end)}`;
   const T = (id: string) => blockText(doc, A, id);
   const idx = (x: ContentItem) => d.content.indexOf(x);
-  const art = (x: ContentItem) => <CoverArt item={x} index={idx(x)} brand={brand} />;
+  const motif = doc.isDemo ? "door" : "plain";
+  const art = (x: ContentItem) => <CoverArt item={x} index={idx(x)} brand={brand} motif={motif} />;
 
   const Ai = ({ id, lab }: { id: string; lab?: string }) => (
     <div className="ai" data-id={id}>
@@ -105,7 +106,16 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
   add("cover", "Cover", (
     <div className="cover">
       <div className="l">
-        <div><ClientWord name={doc.client.name} brand={brand} size={34} /></div>
+        <div>
+          {brand.logo ? (
+            // The palette comes from the logo, so it sits on a light plate to stay visible on the cover colour.
+            <span style={{ display: "inline-block", background: "#fff", padding: "10px 14px", borderRadius: 4 }}>
+              <ClientWord name={doc.client.name} brand={brand} size={34} />
+            </span>
+          ) : (
+            <ClientWord name={doc.client.name} brand={brand} size={34} />
+          )}
+        </div>
         <div>
           <div className="kick">Monthly performance report</div>
           <h1 data-title="cover">{doc.titles.cover || A.month}</h1>
@@ -120,7 +130,7 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
         {brand.cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img className="bg" src={brand.cover} alt="" />
-        ) : (
+        ) : doc.isDemo ? (
           <svg viewBox="0 0 300 420" fill="none" stroke="var(--accent)" strokeWidth="1.4" aria-hidden="true">
             <rect x="40" y="20" width="220" height="380" />
             <rect x="62" y="44" width="176" height="150" />
@@ -128,6 +138,18 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
             <path d="M62 119h176M150 44v150M62 296h176M150 214v164" opacity=".35" />
             <circle cx="224" cy="206" r="5" fill="var(--accent)" />
           </svg>
+        ) : (
+          // No cover image: a framed panel with the client's logo or name.
+          <div style={{ position: "absolute", inset: "64px 64px 64px 0", border: "1.4px solid var(--accent)", display: "grid", placeItems: "center", padding: 48 }}>
+            {brand.logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <span style={{ background: "#fff", padding: "28px 36px", borderRadius: 6, display: "grid", placeItems: "center", maxWidth: "80%" }}>
+                <img src={brand.logo} alt="" style={{ maxWidth: "100%", maxHeight: 160, objectFit: "contain" }} />
+              </span>
+            ) : (
+              <span style={{ font: "400 64px/1 var(--serif)", color: "var(--accent)", textAlign: "center" }}>{doc.client.name}</span>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -199,12 +221,12 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
     for (let i = 0; i < first; i++) cells.push(<div className="d out" key={`o${i}`} />);
     for (let n = 1; n <= days; n++) {
       const ds = `${s.y}-${String(s.m + 1).padStart(2, "0")}-${String(n).padStart(2, "0")}`;
-      const c = d.content.find((x) => x.date === ds);
+      const same = d.content.filter((x) => x.date === ds), c = same[0];
       cells.push(c ? (
         <div className="d has" key={n}>
           <b>{n}</b>
           <div className="art">{art(c)}</div>
-          <div className="tg">{c.type.toUpperCase()} · {fDay(ds).toUpperCase()}</div>
+          <div className="tg">{same.length > 1 ? `${same.length} POSTS` : c.type.toUpperCase()} · {fDay(ds).toUpperCase()}</div>
         </div>
       ) : (
         <div className="d" key={n}><b>{n}</b></div>
@@ -287,13 +309,20 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
         insight: insight(x), viewsLabel: f0(x.views), sharesLabel: f0(x.shares), savesLabel: f0(x.saves), reachLabel: f0(x.reach), erLabel: PCT(er, 2),
       };
     });
-    add("matrix", "Content performance", (
-      <>
-        <Ttl k="matrix" def="Content performance" sub={`Every piece published in ${A.month}. Click a column to sort.`} />
-        <div id="matrix"><ContentMatrix rows={rows} /></div>
-        <div className="basis">Engagement rate = (likes + comments + shares + saves) ÷ reach. Bars under views show size relative to the largest piece.</div>
-      </>
-    ));
+    // Eight rows fit a page; longer months continue on further pages, busiest first.
+    const PER_MATRIX = 8;
+    const byViews = rows.slice().sort((a, b) => (b.views ?? -1) - (a.views ?? -1));
+    const matrixPages = Math.max(1, Math.ceil(byViews.length / PER_MATRIX));
+    for (let pg = 0; pg < matrixPages; pg++) {
+      const key = pg ? `matrix${pg}` : "matrix";
+      add(key, "Content performance", (
+        <>
+          <Ttl k={key} def="Content performance" sub={`Every piece published in ${A.month}. Click a column to sort.${matrixPages > 1 ? ` ${pg + 1} of ${matrixPages}.` : ""}`} />
+          <div id={pg ? undefined : "matrix"}><ContentMatrix rows={byViews.slice(pg * PER_MATRIX, (pg + 1) * PER_MATRIX)} max={Math.max(...rows.map((x) => x.views || 0), 1)} /></div>
+          <div className="basis">Engagement rate = (likes + comments + shares + saves) ÷ reach. Bars under views show size relative to the largest piece.</div>
+        </>
+      ));
+    }
 
     const card = (x: ContentItem) => {
       const [rl, rc] = A.rating(x);
@@ -305,7 +334,9 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
           : `Likely contributing factors based on available data: ${x.type.toLowerCase()} format and ${x.theme.toLowerCase()} theme. ${NA}`;
       const replicate = rc === "top"
         ? `Repeat the ${x.type.toLowerCase()} structure and ${x.theme.toLowerCase()} theme, then test one change at a time.`
-        : rc === "mid" ? "Keep the format and test a stronger opening and call-to-action." : "Rework the idea as a Reel or carousel and compare against this version.";
+        : rc === "mid" ? "Keep the format and test a stronger opening and call-to-action."
+          : x.type === "Reel" ? "Rework the opening seconds and the cover, then compare against this version."
+          : "Rework the idea as a Reel or carousel and compare against this version.";
       return (
         <div className="cc" key={x.id}>
           <div className="cv">{art(x)}{x.img ? null : <span className="rb">Cover placeholder</span>}</div>
@@ -385,11 +416,12 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
             <table className="ptbl">
               <tbody>
                 <tr><th>Theme</th><th>Pieces</th><th>Avg views</th><th>Avg engagement</th><th>Best piece</th></tr>
-                {A.themes.map((t) => (
+                {A.themes.slice(0, 8).map((t) => (
                   <tr key={t.name}><td><b>{t.name}</b></td><td>{t.n}</td><td>{K(t.avg)}</td><td>{PCT(t.er, 2)}</td><td>{t.best ? fDay(t.best.date) : "—"}</td></tr>
                 ))}
               </tbody>
             </table>
+            {A.themes.length > 8 ? <div className="basis">{A.themes.length - 8} smaller themes not shown.</div> : null}
             <div className="basis" style={{ marginTop: 10 }}>Visual patterns such as human presence, close-ups or text hooks: {NA} Upload the creative files to enable cover-level analysis.</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

@@ -5,9 +5,9 @@ import { saveClient, type FormState } from "@/app/(app)/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { ClientRow } from "@/lib/data/repo";
+import type { ClientInput, ClientRow } from "@/lib/data/repo";
 
-const FIELDS: [keyof Omit<ClientRow, "id" | "slug" | "createdAt">, string, string][] = [
+const FIELDS: [keyof ClientInput, string, string][] = [
   ["name", "Client name", "Thrishank Doors"],
   ["industry", "Industry", "Doors and architectural hardware"],
   ["location", "Location", "Bengaluru, India"],

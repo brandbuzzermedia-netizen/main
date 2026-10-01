@@ -112,8 +112,11 @@ export const PLATFORM_LABELS: Record<Platform, string> = {
 
 /** An uploaded source screenshot, served only to signed-in staff. */
 export interface SourceShot {
+  /** Original file name, shown as the caption. */
   name: string;
   url: string;
+  /** SHA-256 of the file, used to catch the same screenshot uploaded twice. */
+  hash?: string;
 }
 
 export type Resolution = "reported" | "calculated";
