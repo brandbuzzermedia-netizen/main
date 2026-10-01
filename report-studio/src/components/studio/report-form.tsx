@@ -2,7 +2,7 @@
 // Create or edit a report's data: the figures typed from the month's
 // screenshots, each published piece, and the screenshots themselves.
 import Link from "next/link";
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
 import type { FormAction, ReportFormState } from "@/lib/forms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,8 +65,66 @@ const pathValue = (data: ReportData | undefined, name: string) => {
   return v == null ? "" : String(v);
 };
 
-export function ReportForm({ clients, initial, action: save }: { clients: { id: string; name: string }[]; initial: ReportFormInitial; action: FormAction<ReportFormState> }) {
+type Mark = { kind: "filled" | "conflict"; confidence: string; value: string };
+type ExtractStatus = { busy?: boolean; text?: string; bad?: boolean };
+type Extracted = {
+  error?: string; notes?: string;
+  fields?: Record<string, { value: number | string; confidence: string }>;
+  period?: { start: string | null; end: string | null };
+  posts?: { date: string | null; type: string | null; caption: string | null; views: number | null; reach: number | null; likes: number | null; comments: number | null; shares: number | null; saves: number | null }[];
+};
+
+export function ReportForm({ clients, initial, action: save, extractEnabled = false }: {
+  clients: { id: string; name: string }[]; initial: ReportFormInitial; action: FormAction<ReportFormState>;
+  /** Claude can read screenshots (ANTHROPIC_API_KEY is set on the server). */
+  extractEnabled?: boolean;
+}) {
   const [state, action] = useActionState<ReportFormState, FormData>(save, {});
+  const formRef = useRef<HTMLFormElement>(null);
+  const [marks, setMarks] = useState<Record<string, Mark>>({});
+  const [extract, setExtract] = useState<Record<string, ExtractStatus>>({});
+
+  /** Reads one platform's chosen screenshots with Claude and fills the empty fields. Nothing is saved. */
+  async function readScreenshots(p: "instagram" | "meta") {
+    const form = formRef.current;
+    const input = form?.elements.namedItem(`shots.${p}`) as HTMLInputElement | null;
+    const files = Array.from(input?.files ?? []);
+    if (!form || !files.length) { setExtract((x) => ({ ...x, [p]: { text: "Choose the screenshots first, then read them.", bad: true } })); return; }
+    setExtract((x) => ({ ...x, [p]: { busy: true, text: "Reading the screenshots…" } }));
+    const fd = new FormData();
+    fd.set("platform", p);
+    files.slice(0, 6).forEach((f) => fd.append("files", f));
+    let res: Extracted;
+    try { res = await (await fetch("/api/extract", { method: "POST", body: fd })).json(); }
+    catch { res = { error: "The screenshots could not be sent. Check your connection and try again." }; }
+    if (res.error) { setExtract((x) => ({ ...x, [p]: { text: res.error, bad: true } })); return; }
+    const next: Record<string, Mark> = {};
+    let filled = 0, conflicts = 0;
+    for (const [name, f] of Object.entries(res.fields ?? {})) {
+      const el = form.elements.namedItem(name) as HTMLInputElement | null;
+      if (!el) continue;
+      const value = String(f.value);
+      const current = el.value.replace(/[,\s₹%]/g, "");
+      if (!current) { el.value = value; filled++; next[name] = { kind: "filled", confidence: f.confidence, value }; }
+      else if (current !== value.replace(/[,\s]/g, "")) { conflicts++; next[name] = { kind: "conflict", confidence: f.confidence, value }; }
+    }
+    setMarks((m) => ({ ...m, ...next }));
+    const posts = (res.posts ?? []).filter((x) => x.date);
+    if (posts.length) {
+      setRows((r) => [...r.filter((x) => x.date || x.theme || x.caption), ...posts.map((x) => ({
+        date: x.date ?? "", type: x.type ?? "Post", theme: "", caption: x.caption ?? "", tags: "",
+        ...Object.fromEntries(POST_METRICS.map((k) => [k, x[k] == null ? "" : String(x[k])])),
+      }))]);
+    }
+    const start = (form.elements.namedItem("periodStart") as HTMLInputElement).value, end = (form.elements.namedItem("periodEnd") as HTMLInputElement).value;
+    const period = res.period?.start && start && (res.period.start !== start || res.period.end !== end)
+      ? ` The screenshots show ${res.period.start} to ${res.period.end}, which is not the report period: check they are the right screenshots.` : "";
+    setExtract((x) => ({ ...x, [p]: {
+      bad: !!period || conflicts > 0,
+      text: `Filled ${filled} field${filled === 1 ? "" : "s"}${posts.length ? ` and added ${posts.length} post${posts.length === 1 ? "" : "s"}` : ""}. Check each one against the screenshot before saving.` +
+        (conflicts ? ` ${conflicts} field${conflicts === 1 ? "" : "s"} already had a different value; both are shown so you can choose.` : "") + period + (res.notes ? ` Note: ${res.notes}` : ""),
+    } }));
+  }
   const [pending, start] = useTransition();
   const [rows, setRows] = useState<ContentRowInput[]>(() =>
     !initial.id && !initial.data?.content.length ? [emptyRow()] : initial.data!.content.map((c) => ({
@@ -88,7 +146,19 @@ export function ReportForm({ clients, initial, action: save }: { clients: { id: 
         aria-invalid={!!err[name]}
         aria-describedby={err[name] ? `${name}-err` : undefined}
       />
-      {err[name] ? <span id={`${name}-err`} className="text-xs text-bad">{err[name]}</span> : hint ? <span className="text-[11.5px] font-normal">{hint}</span> : null}
+      {err[name] ? <span id={`${name}-err`} className="text-xs text-bad">{err[name]}</span>
+        : marks[name]?.kind === "conflict" ? (
+          <span className="text-xs text-warn">
+            Potential data conflict: the screenshot shows {marks[name].value}.{" "}
+            <button type="button" className="font-semibold underline" onClick={() => {
+              const el = formRef.current?.elements.namedItem(name) as HTMLInputElement | null;
+              if (el) el.value = marks[name].value;
+              setMarks((m) => ({ ...m, [name]: { ...m[name], kind: "filled" } }));
+            }}>Use the screenshot value</button>
+          </span>
+        )
+        : marks[name] ? <span className="text-xs text-ok">From screenshot ({marks[name].confidence} confidence). Check it.</span>
+        : hint ? <span className="text-[11.5px] font-normal">{hint}</span> : null}
     </Label>
   );
   const group = (title: string, sub: string, fields: Field[]) => (
@@ -101,6 +171,7 @@ export function ReportForm({ clients, initial, action: save }: { clients: { id: 
 
   return (
     <form
+      ref={formRef}
       noValidate
       encType="multipart/form-data"
       className="grid gap-5"
@@ -216,6 +287,16 @@ export function ReportForm({ clients, initial, action: save }: { clients: { id: 
                 <span className="font-semibold text-foreground">{PLATFORM_LABELS[p]}</span>
                 <input type="file" name={`shots.${p}`} multiple accept="image/png,image/jpeg,image/webp" className="text-xs" />
               </Label>
+              {p === "instagram" || p === "meta" ? (
+                extractEnabled ? (
+                  <div className="mt-2 grid gap-1">
+                    <Button type="button" size="sm" className="justify-self-start" disabled={extract[p]?.busy} onClick={() => readScreenshots(p)}>
+                      {extract[p]?.busy ? "Reading…" : extract[p]?.text ? "Read again" : "Read figures from screenshots"}
+                    </Button>
+                    {extract[p]?.text ? <span role="status" className={`text-[11.5px] ${extract[p]?.bad ? "text-warn" : "text-muted-foreground"}`}>{extract[p]?.text}</span> : null}
+                  </div>
+                ) : <p className="mt-2 text-[11.5px] text-muted-foreground">Reading figures from screenshots needs Claude (ANTHROPIC_API_KEY on the server). Enter them by hand meanwhile.</p>
+              ) : null}
               {(initial.uploads?.[p] ?? []).map((f) => (
                 <label key={f.hash ?? f.url} className="mt-2 flex items-center gap-2 text-xs">
                   <input type="checkbox" name={`keep.${p}`} value={f.hash} defaultChecked />

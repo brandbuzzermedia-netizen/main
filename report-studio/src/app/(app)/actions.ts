@@ -14,6 +14,8 @@ import { analyze } from "@/lib/analysis";
 import { blockText, variantCount } from "@/lib/copy/generators";
 import { expand, shorten } from "@/lib/copy/edit";
 import { resolveData } from "@/lib/report/conflicts";
+import { aiConfigured } from "@/lib/ai/client";
+import { AiError, writeReportText } from "@/lib/ai/write";
 import { PLATFORM_LABELS, type Platform, type ReportStatus, type SourceShot } from "@/lib/report/types";
 import type { BrandFormState, FormState, ReportFormState } from "@/lib/forms";
 import { parseClientForm } from "@/lib/validation";
@@ -265,4 +267,32 @@ export async function saveDefaultTemplate(fd: FormData) {
   const t = String(fd.get("template"));
   if (t === "premium" || t === "minimal" || t === "dark") await setSettings({ defaultTemplate: t });
   revalidatePath("/", "layout");
+}
+
+// ------------------------------------------------------------------ Claude
+
+/** Claude rewrites the report text; only blocks that pass the grounding check are saved. */
+export async function writeWithClaude(fd: FormData) {
+  const session = await requireStaff();
+  const reportId = String(fd.get("reportId"));
+  const doc = await getReportDoc(reportId);
+  if (!doc) return;
+  let notice: string;
+  if (!aiConfigured()) notice = "Claude is not set up on this server (ANTHROPIC_API_KEY).";
+  else {
+    try {
+      const r = await writeReportText(doc);
+      const n = Object.keys(r.accepted).length;
+      await saveVersion(reportId, "Before Claude rewrite", session.name);
+      if (n) await applyTexts(reportId, r.accepted, "Written by Claude", session.name);
+      notice = `Claude rewrote ${n} block${n === 1 ? "" : "s"}.` + (r.rejected.length
+        ? ` ${r.rejected.length} kept their current text: ${r.rejected.map((x) => `${x.id} (${x.reason})`).join("; ")}.`
+        : " Every figure matched the report data.");
+    } catch (e) {
+      if (e instanceof AiError) notice = e.message;
+      else throw e;
+    }
+  }
+  revalidatePath(`/reports/${reportId}`, "layout");
+  redirect(`/reports/${reportId}/text?notice=${encodeURIComponent(notice)}`);
 }

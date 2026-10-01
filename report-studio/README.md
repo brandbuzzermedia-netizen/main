@@ -9,35 +9,41 @@ the visual and behavioural spec, and `reference/` holds the PDF it exports.
 
 ## Status
 
-Usable for real monthly reports, with figures typed in from screenshots.
-Build steps 1 and 2 of 5 (see `CLAUDE.md`) are done, plus a manual-entry
-version of step 3:
+All five build steps in `CLAUDE.md` are in place.
 
-- **Create report**: pick the client and month, type the Instagram
-  Insights and Meta Ads figures, add each post, attach the screenshots
-  (duplicates are skipped by file hash), choose the template and pages.
-  Impossible values (reach above impressions, a post outside the month) are
-  refused with a message. **Edit data** later from the report.
-- **Client branding**: upload a logo and the colours are suggested from it;
-  adjust and save. Every report for that client follows.
-- **Report status**: Draft, Pending, Ready for review, Delivered.
-
-- **Studio shell** in the GBS brand: sign-in, dashboard, clients
-  (create, edit, delete), reports list, report viewer.
-- **Storage and sign-in without external services**: clients and reports
-  live in one JSON file on the server; the team signs in with a shared
-  studio password.
-- **Report renderer**: the prototype's 23 pages as React components, fed by
-  the Thrishank Doors August 2026 fixture.
-- **PDF export**: `GET /api/reports/:id/pdf`, rendered by Playwright from the
-  same components as the preview.
+- **Studio** in the GBS brand: sign-in, dashboard, clients, reports,
+  templates, brand assets, settings.
+- **Create a report**:
+  - Pick the client and month, then enter the Instagram Insights and Meta
+    Ads figures and each post, and attach the screenshots. The same
+    screenshot uploaded twice is kept once (file hash).
+  - **Read figures from screenshots** (Claude) fills the empty fields, each
+    marked with a confidence level to check. A screenshot that disagrees
+    with a value already typed is shown as a potential data conflict, and
+    nothing changes until you choose. A screenshot from a different period
+    is flagged.
+  - **Start next month** pre-fills the next report, with this month as the
+    comparison.
+- **Report**: the prototype's pages, in Premium, Minimal or Dark, with the
+  client's logo and colours. Long months continue onto extra pages.
+- **Report text**: edit, shorten, expand or reset any block, with saved
+  versions. **Write with Claude** rewrites every block from the report's
+  figures only. A block that mentions a figure not in the data, or claims
+  a cause without hedging, is rejected and keeps its current text.
 - **Review panel** (staff only): data conflicts with a choice of value,
-  sample-data and missing-data warnings, copy confidence, internal notes.
+  warnings, confidence, internal notes, status.
+- **Client links**: a private link per report, with an optional password,
+  that can be replaced or stopped. The client sees only the report, can
+  present it, and can download the PDF.
+- **PDF export** rendered server-side by Playwright from the same pages.
 
-Still to come: reading figures from screenshots automatically (step 3),
-Claude-written text and on-page editing (step 4), share links and present
-mode (step 5). The Templates, Brand assets, Analytics and Settings pages are
-placeholders.
+Claude features need `ANTHROPIC_API_KEY` on the server. Without it they say
+so and everything else works. They call `claude-opus-5-5` with structured
+JSON output and Anthropic's server-side refusal fallback; a refusal or API
+error leaves the report unchanged.
+
+Not built: Analytics (a placeholder), CSV/XLSX import, and Google Ads or
+LinkedIn figures (those pages show "not included").
 
 ## Run it
 
@@ -52,6 +58,10 @@ says so. For anything online, copy `.env.example` to `.env.local` and set:
 
 - `STUDIO_PASSWORD`: the password the team signs in with.
 - `SESSION_SECRET`: a long random string that signs the session cookie.
+- `ANTHROPIC_API_KEY` (optional): turns on reading screenshots and
+  writing with Claude.
+- `PUBLIC_URL` (optional): the address used in client links, for example
+  `https://reports.getbeeseen.com`.
 
 Production builds refuse to start a session without both. Serve the studio
 over HTTPS: the session cookie is Secure in production.
@@ -96,7 +106,7 @@ business record. It is not shared between servers, and it is not in git
 
 | Command | What it checks |
 | --- | --- |
-| `npm test` | Analysis, conflicts, copy and report form validation (`node --test`, no extra packages) |
+| `npm test` | Analysis, conflicts, copy, form validation and the grounding check on Claude's text (`node --test`) |
 | `npm run typecheck` | TypeScript |
 | `npm run build` | Production build |
 | `STUDIO_PASSWORD=… npm run compare -- --fetch http://127.0.0.1:3000` | Exports the demo report and compares it page by page with the prototype and the reference PDF (needs `pdftoppm`) |

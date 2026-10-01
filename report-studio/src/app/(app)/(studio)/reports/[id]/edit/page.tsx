@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { saveReport } from "@/app/(app)/actions";
 import { ReportForm } from "@/components/studio/report-form";
+import { aiConfigured } from "@/lib/ai/client";
 import { PageHeader } from "@/components/studio/views";
 import { analyze } from "@/lib/analysis";
 import { getReportDoc, listClients } from "@/lib/data/repo";
@@ -20,6 +21,7 @@ export default async function EditReportPage({ params }: { params: Promise<{ id:
       />
       <ReportForm
         action={saveReport}
+        extractEnabled={aiConfigured()}
         clients={clients.map((c) => ({ id: c.id, name: c.name }))}
         initial={{ id: doc.id, clientId: doc.client.id, template: doc.template, sections: doc.sections, data: doc.data, uploads: doc.uploads }}
       />

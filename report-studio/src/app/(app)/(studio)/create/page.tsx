@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { saveReport } from "@/app/(app)/actions";
 import { ReportForm } from "@/components/studio/report-form";
+import { aiConfigured } from "@/lib/ai/client";
 import { PageHeader } from "@/components/studio/views";
 import { Button } from "@/components/ui/button";
 import { analyze } from "@/lib/analysis";
@@ -29,7 +30,7 @@ export default async function CreateReportPage({ searchParams }: { searchParams:
   return (
     <>
       <PageHeader title="Create report" sub="Enter the month's figures from the platform screenshots and attach the screenshots. The report is written from these figures only." />
-      <ReportForm action={saveReport} clients={clients.map((c) => ({ id: c.id, name: c.name }))} initial={source ? {
+      <ReportForm action={saveReport} extractEnabled={aiConfigured()} clients={clients.map((c) => ({ id: c.id, name: c.name }))} initial={source ? {
         clientId: source.client.id, template: source.template, sections, data: nextMonthData(source),
         note: `Started from ${source.client.name}, ${analyze(source.data).month}. Its figures are filled in as the previous month; check them, then enter this month's figures.`,
       } : { clientId: clients.some((c) => c.id === client) ? client : undefined, template: settings.defaultTemplate, sections }} />

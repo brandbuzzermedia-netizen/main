@@ -23,3 +23,9 @@ services:
         sync: false
       - key: SESSION_SECRET
         generateValue: true
+      # Optional: Claude reads screenshots and writes report text.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # Optional: the address used in client share links.
+      - key: PUBLIC_URL
+        sync: false
