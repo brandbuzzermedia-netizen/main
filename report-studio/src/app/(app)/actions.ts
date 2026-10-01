@@ -2,11 +2,10 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { SESSION_COOKIE, checkPassword, createSessionToken, signInConfigured } from "@/lib/auth/session";
 import {
   addInternalNote, createClient, deleteClient, getSession, setResolution, updateClient, type Session,
 } from "@/lib/data/repo";
-import { DEMO_COOKIE, demoAllowed, supabaseEnv } from "@/lib/supabase/env";
-import { supabaseServer } from "@/lib/supabase/server";
 import { parseClientForm, type FieldErrors } from "@/lib/validation";
 
 export interface FormState {
@@ -14,11 +13,10 @@ export interface FormState {
   fields?: FieldErrors;
 }
 
-/** Only agency staff may change data. RLS enforces the same in the database. */
+/** Every change requires a valid, signed session. */
 async function requireStaff(): Promise<Session> {
   const s = await getSession();
   if (!s) redirect("/login");
-  if (s.role === "client_viewer") throw new Error("Client viewers cannot change studio data.");
   return s;
 }
 
@@ -26,26 +24,21 @@ const safeNext = (v: FormDataEntryValue | null) => (typeof v === "string" && v.s
 
 export async function signIn(_: FormState, fd: FormData): Promise<FormState> {
   const next = safeNext(fd.get("next"));
-  if (supabaseEnv()) {
-    const sb = await supabaseServer();
-    const { error } = await sb.auth.signInWithPassword({ email: String(fd.get("email") ?? ""), password: String(fd.get("password") ?? "") });
-    if (error) return { error: "That email and password did not match. Try again." };
-  } else if (demoAllowed()) {
-    (await cookies()).set(DEMO_COOKIE, "1", { httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production" });
-  } else {
-    return { error: "Sign-in is not configured. Set the Supabase environment variables." };
-  }
+  if (!signInConfigured()) return { error: "Sign-in is not configured. Set STUDIO_PASSWORD on the server." };
+  if (!checkPassword(String(fd.get("password") ?? ""))) return { error: "That password is not right. Try again." };
+  const name = String(fd.get("name") ?? "").trim().slice(0, 60) || "GBS team";
+  const { value, maxAge } = createSessionToken(name);
+  (await cookies()).set(SESSION_COOKIE, value, { httpOnly: true, sameSite: "lax", path: "/", maxAge, secure: process.env.NODE_ENV === "production" });
   redirect(next);
 }
 
 export async function signOut() {
-  if (supabaseEnv()) await (await supabaseServer()).auth.signOut();
-  else (await cookies()).delete(DEMO_COOKIE);
+  (await cookies()).delete(SESSION_COOKIE);
   redirect("/login");
 }
 
 export async function saveClient(_: FormState, fd: FormData): Promise<FormState> {
-  const session = await requireStaff();
+  await requireStaff();
   const parsed = parseClientForm(fd);
   if (!parsed.ok) return { fields: parsed.errors };
   const id = typeof fd.get("id") === "string" ? (fd.get("id") as string) : "";
@@ -55,7 +48,7 @@ export async function saveClient(_: FormState, fd: FormData): Promise<FormState>
       await updateClient(id, parsed.value);
       target = id;
     } else {
-      target = await createClient(session, parsed.value);
+      target = await createClient(parsed.value);
     }
   } catch {
     return { error: "The client could not be saved. Try again." };

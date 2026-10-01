@@ -110,7 +110,7 @@ export const PLATFORM_LABELS: Record<Platform, string> = {
   ga: "Google Analytics", gbp: "Google Business Profile", yt: "YouTube Analytics", other: "Other marketing screenshots",
 };
 
-/** An uploaded source screenshot, served from private storage by signed URL. */
+/** An uploaded source screenshot, served only to signed-in staff. */
 export interface SourceShot {
   name: string;
   url: string;

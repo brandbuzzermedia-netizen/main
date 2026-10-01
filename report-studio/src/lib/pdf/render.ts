@@ -23,7 +23,7 @@ function browser(): Promise<Browser> {
 export interface RenderOptions {
   /** Absolute URL of the print page. */
   url: string;
-  /** Session cookies forwarded so the print page loads as the same user (RLS applies). */
+  /** Session cookies forwarded so the print page loads as the same user (the print page requires a valid session). */
   cookies: { name: string; value: string }[];
 }
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Checks a generated report PDF against the prototype, page by page.
 //
-//   node scripts/compare-reference.mjs --fetch http://127.0.0.1:3000   (server in demo mode)
+//   STUDIO_PASSWORD=... node scripts/compare-reference.mjs --fetch http://127.0.0.1:3000
 //   node scripts/compare-reference.mjs generated.pdf
 //
 // Two baselines:
@@ -47,20 +47,38 @@ const args = process.argv.slice(2);
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
+const browser = await chromium.launch({ executablePath });
+
 let generated = args[0];
 if (args[0] === "--fetch") {
+  // Sign in through the login page (STUDIO_PASSWORD, or anything when none is set).
   const origin = args[1] || "http://127.0.0.1:3000";
-  const res = await fetch(`${origin}/api/reports/thrishank-2026-08/pdf`, { headers: { cookie: "gbs_demo_session=1" } });
-  if (!res.ok) throw new Error(`PDF route returned ${res.status}: ${await res.text()}`);
+  const context = await browser.newContext();
+  const login = await context.newPage();
+  await login.goto(`${origin}/login`);
+  await login.fill("input[name=password]", process.env.STUDIO_PASSWORD || "compare");
+  await Promise.all([login.waitForURL((u) => !u.pathname.startsWith("/login")), login.click("button[type=submit]")]);
+  // Fetched from inside the page: the session cookie is Secure in production
+  // builds, which browsers send to localhost but Playwright's API client does not.
+  const pdf = await login.evaluate(async (url) => {
+    const res = await fetch(url);
+    if (!res.ok) return { error: `${res.status}: ${await res.text()}` };
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    let bin = "";
+    for (let k = 0; k < bytes.length; k += 0x8000) bin += String.fromCharCode(...bytes.subarray(k, k + 0x8000));
+    return { b64: btoa(bin) };
+  }, `${origin}/api/reports/thrishank-2026-08/pdf`);
+  if (pdf.error) throw new Error(`PDF route returned ${pdf.error}`);
   generated = join(OUT, "generated.pdf");
-  writeFileSync(generated, Buffer.from(await res.arrayBuffer()));
+  writeFileSync(generated, Buffer.from(pdf.b64, "base64"));
+  await context.close();
 }
 if (!generated) {
   console.error("Usage: compare-reference.mjs <generated.pdf> | --fetch <origin>");
   process.exit(2);
 }
 
-const browser = await chromium.launch({ executablePath });
+
 
 // --- Export the prototype exactly as the app exports reports. Its Google
 // Fonts request is answered with the app's self-hosted static fonts.

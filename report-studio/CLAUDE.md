@@ -1,5 +1,10 @@
 # GBS Client Report Studio
 
+> **Decision (Oct 2026): no Supabase.** Mehul does not want Supabase. Storage is a JSON file on
+> the server (`src/lib/data/repo.ts`) and sign-in is a shared studio password with a signed cookie
+> (`src/lib/auth/session.ts`). Where this spec says Supabase, Postgres, RLS or signed storage URLs,
+> build on those instead, and ask before adding a database or auth service. README.md has the current state.
+
 Production build of a SaaS web app for **Get Bee Seen (GBS)**, a digital marketing agency (owner: Mehul, Bengaluru).
 Agency staff upload raw monthly data (platform screenshots, CSV/XLSX, social URLs, client branding) and the app produces a
 polished, client-facing **Monthly Business Review** as an A4-landscape PDF, shareable link and presentation mode.
