@@ -7,9 +7,13 @@ import { SESSION_COOKIE, checkPassword, createSessionToken, shareCookieName, sha
 import { UploadError, isFile, saveImage } from "@/lib/data/files";
 import {
   DEFAULT_BRAND, ReportExistsError, addInternalNote, createClient, createReport, createShare, deleteClient, findSharedReport, getClient, getReportDoc, getShare, removeShare, setSharePassword,
-  getReportRecord, getSession, reportId, setClientBrand, setReportStatus, setResolution, updateClient, updateReport, type Session,
+  applyTexts, setSettings, getReportRecord, getSession, reportId, restoreVersion, saveVersion, setBlock, setClientBrand, setReportStatus, setResolution, updateClient, updateReport, type Session,
 } from "@/lib/data/repo";
 import { parseReportForm } from "@/lib/report/parse";
+import { analyze } from "@/lib/analysis";
+import { blockText, variantCount } from "@/lib/copy/generators";
+import { expand, shorten } from "@/lib/copy/edit";
+import { resolveData } from "@/lib/report/conflicts";
 import { PLATFORM_LABELS, type Platform, type ReportStatus, type SourceShot } from "@/lib/report/types";
 import type { BrandFormState, FormState, ReportFormState } from "@/lib/forms";
 import { parseClientForm } from "@/lib/validation";
@@ -212,4 +216,53 @@ export async function unlockShare(_: { error?: string }, fd: FormData): Promise<
     httpOnly: true, sameSite: "lax", path: "/report", maxAge: 60 * 60 * 24 * 30, secure: process.env.NODE_ENV === "production",
   });
   redirect(`/report/${client}/${month}/${token}`);
+}
+
+// ------------------------------------------------------------------ report text
+
+/** One copy block: save, shorten, expand, next wording, or reset to generated. */
+export async function editBlock(fd: FormData) {
+  await requireStaff();
+  const reportId = String(fd.get("reportId")), id = String(fd.get("block")), op = String(fd.get("op"));
+  const doc = await getReportDoc(reportId);
+  if (!doc) return;
+  const A = analyze(resolveData(doc).data);
+  const current = String(fd.get("text") ?? "").trim() || blockText(doc, A, id);
+  if (op === "save") await setBlock(reportId, id, { text: current.slice(0, 2000) });
+  else if (op === "shorten") await setBlock(reportId, id, { text: shorten(current) });
+  else if (op === "expand") await setBlock(reportId, id, { text: expand(id, current, A).slice(0, 2000) });
+  else if (op === "next") await setBlock(reportId, id, { text: null, variant: ((doc.variant[id] ?? 0) + 1) % variantCount(id, A) });
+  else if (op === "reset") await setBlock(reportId, id, { text: null, variant: 0 });
+  revalidatePath(`/reports/${reportId}`, "layout");
+  redirect(`/reports/${reportId}/text#${encodeURIComponent(id)}`);
+}
+
+export async function saveTextVersion(fd: FormData) {
+  const session = await requireStaff();
+  const reportId = String(fd.get("reportId"));
+  await saveVersion(reportId, String(fd.get("label") ?? "").trim().slice(0, 80) || "Saved by hand", session.name);
+  revalidatePath(`/reports/${reportId}`, "layout");
+}
+
+export async function restoreTextVersion(fd: FormData) {
+  const session = await requireStaff();
+  const reportId = String(fd.get("reportId"));
+  await restoreVersion(reportId, Number(fd.get("v")), session.name);
+  revalidatePath(`/reports/${reportId}`, "layout");
+}
+
+export async function resetAllText(fd: FormData) {
+  const session = await requireStaff();
+  const reportId = String(fd.get("reportId"));
+  await applyTexts(reportId, {}, "Reset to template text", session.name, true);
+  revalidatePath(`/reports/${reportId}`, "layout");
+}
+
+// ------------------------------------------------------------------ settings
+
+export async function saveDefaultTemplate(fd: FormData) {
+  await requireStaff();
+  const t = String(fd.get("template"));
+  if (t === "premium" || t === "minimal" || t === "dark") await setSettings({ defaultTemplate: t });
+  revalidatePath("/", "layout");
 }

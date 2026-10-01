@@ -4,7 +4,7 @@
 // reviewer edited it. Nothing here reads internal notes or admin warnings.
 import type { CSSProperties, ReactNode } from "react";
 import { analyze, delta, engagementRate, hasPrevious, type Analysis } from "@/lib/analysis";
-import { CONF, NA, cdesc, gen } from "@/lib/copy/generators";
+import { CONF, NA, blockText, cdesc, whyText } from "@/lib/copy/generators";
 import { INR, K, MONTHS, PCT, daysInMonth, f0, f1, f2, fDay, fLong, parseDay, sgn } from "@/lib/format";
 import { clientReady } from "@/lib/report/conflicts";
 import { PLATFORM_LABELS, type ContentItem, type Platform, type ReportDoc, type SourceShot } from "@/lib/report/types";
@@ -32,10 +32,7 @@ export function reportTitle(doc: ReportDoc) {
   return `${doc.client.name} – Monthly Performance Report – ${analyze(doc.data).month} – Get Bee Seen`;
 }
 
-/** Text for a copy block: the reviewer's edit if any, else the generated variant. */
-export function blockText(doc: ReportDoc, A: Analysis, id: string) {
-  return doc.texts[id] ?? gen(id, A, doc.variant[id] || 0);
-}
+export { blockText };
 
 /** Confidence of a block, for the admin panel only. */
 export const blockConfidence = (id: string) => CONF[id.split(".")[0]] ?? "low";
@@ -326,12 +323,7 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
 
     const card = (x: ContentItem) => {
       const [rl, rc] = A.rating(x);
-      const fmt = A.fm.find((f) => f.name === x.type + "s");
-      const why = x === A.topViews
-        ? `Likely contributing factors based on available data: ${A.lead && x.type === "Reel" && A.ratio && A.other ? `Reels averaged ${f1(A.ratio)}× the views of ${A.other.name.toLowerCase()} this month` : "format"}, and a ${x.theme.toLowerCase()} theme. Visual hook: ${NA.toLowerCase()}`
-        : rc === "low"
-          ? `Likely contributing factors based on available data: ${x.type.toLowerCase()} format averaged ${K(fmt?.avg)} views this month. ${NA}`
-          : `Likely contributing factors based on available data: ${x.type.toLowerCase()} format and ${x.theme.toLowerCase()} theme. ${NA}`;
+      const why = whyText(x, A);
       const replicate = rc === "top"
         ? `Repeat the ${x.type.toLowerCase()} structure and ${x.theme.toLowerCase()} theme, then test one change at a time.`
         : rc === "mid" ? "Keep the format and test a stronger opening and call-to-action."
@@ -767,14 +759,18 @@ export function ReportPages({ doc: draft, mode, scale }: { doc: ReportDoc; mode:
   );
 }
 
-/** The cover alone, for thumbnails in the studio. */
-export function ReportCover({ doc: draft, scale }: { doc: ReportDoc; scale: number }) {
+/** One page alone, for thumbnails in the studio (0 is the cover). */
+export function ReportThumb({ doc: draft, scale, index = 0 }: { doc: ReportDoc; scale: number; index?: number }) {
   const doc = clientReady(draft);
   const A = analyze(doc.data);
   const pages = buildPages(doc, A);
+  const i = Math.min(index, pages.length - 1);
   return (
     <div className="pages report-root" style={css({ "--s": scale, pointerEvents: "none" })} aria-hidden="true">
-      <ReportPage doc={doc} A={A} page={pages[0]} i={0} total={pages.length} mode="screen" />
+      <ReportPage doc={doc} A={A} page={pages[i]} i={i} total={pages.length} mode="screen" />
     </div>
   );
 }
+
+/** The cover alone, for thumbnails in the studio. */
+export const ReportCover = ({ doc, scale }: { doc: ReportDoc; scale: number }) => <ReportThumb doc={doc} scale={scale} index={0} />;

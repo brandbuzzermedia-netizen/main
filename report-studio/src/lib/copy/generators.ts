@@ -5,7 +5,7 @@
 // step 4). Each block returns variants; list blocks return one variant list
 // per item. A figure that is missing yields NA rather than a guess.
 import type { Analysis } from "../analysis.ts";
-import type { Confidence } from "../report/types.ts";
+import type { Confidence, ContentItem, ReportDoc } from "../report/types.ts";
 import { INR, K, PCT, f0, f1, f2, fDay, fLong, sgn } from "../format.ts";
 
 export const NA = "Insufficient data to determine.";
@@ -97,13 +97,43 @@ export const CONF: Record<string, Confidence> = {
   pd_act: "medium", camp_obs: "high", camp_int: "medium", imp: "high", rc: "medium", why: "low",
 };
 
-/** Generated text for a block id such as "exec" or "t.2", at the given variant. */
+/** "Why it performed this way" for one piece. Hedged: visual causes are never claimed. */
+export function whyText(x: ContentItem, A: Analysis): string {
+  const rc = A.rating(x)[1];
+  const fmt = A.fm.find((f) => f.name === x.type + "s");
+  if (x.id === A.topViews?.id) {
+    return `Likely contributing factors based on available data: ${A.lead && x.type === "Reel" && A.ratio && A.other ? `Reels averaged ${f1(A.ratio)}× the views of ${A.other.name.toLowerCase()} this month` : "format"}, and a ${x.theme.toLowerCase()} theme. Visual hook: ${NA.toLowerCase()}`;
+  }
+  return rc === "low"
+    ? `Likely contributing factors based on available data: ${x.type.toLowerCase()} format averaged ${K(fmt?.avg)} views this month. ${NA}`
+    : `Likely contributing factors based on available data: ${x.type.toLowerCase()} format and ${x.theme.toLowerCase()} theme. ${NA}`;
+}
+
+/** How many wordings a block has (the "next wording" option cycles through them). */
+export function variantCount(id: string, A: Analysis): number {
+  const [b, i] = id.split(".");
+  if (b === "why" || !G[b]) return 1;
+  const r = G[b](A);
+  const sub = (i != null ? r[+i] : r) as string[] | undefined;
+  return sub?.length ?? 1;
+}
+
+/** Generated text for a block id such as "exec", "t.2" or "why.c1", at the given variant. */
 export function gen(id: string, A: Analysis, variant = 0): string {
   const [b, i] = id.split(".");
+  if (b === "why") {
+    const item = A.data.content.find((x) => x.id === i);
+    return item ? whyText(item, A) : "";
+  }
   const f = G[b];
   if (!f) return "";
   const r = f(A);
   const sub = (i != null ? r[+i] : r) as string[] | undefined;
   if (!sub || !sub.length) return "";
   return sub[variant % sub.length];
+}
+
+/** Text for a copy block: the reviewer's edit if any, else the generated variant. */
+export function blockText(doc: Pick<ReportDoc, "texts" | "variant">, A: Analysis, id: string): string {
+  return doc.texts[id] ?? gen(id, A, doc.variant[id] || 0);
 }

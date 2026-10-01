@@ -59,6 +59,7 @@ export function ReportReview({ doc, duplicates, actions, share }: { doc: ReportD
       >
         <Button asChild variant="ghost"><Link href="/reports">All reports</Link></Button>
         <Button asChild><Link href={`/reports/${doc.id}/edit`}>Edit data</Link></Button>
+        <Button asChild><Link href={`/reports/${doc.id}/text`}>Edit text</Link></Button>
         <Button asChild><Link href={`/create?from=${doc.id}`}>Start next month</Link></Button>
         <PresentButton className={buttonVariants({})}>Present</PresentButton>
         <Button asChild><a href={`/print/reports/${doc.id}`} target="_blank" rel="noreferrer">Print view</a></Button>
