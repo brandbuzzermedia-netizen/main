@@ -8,14 +8,11 @@ import {
   DEFAULT_BRAND, ReportExistsError, addInternalNote, createClient, createReport, deleteClient, getClient, getReportDoc,
   getReportRecord, getSession, reportId, setClientBrand, setReportStatus, setResolution, updateClient, updateReport, type Session,
 } from "@/lib/data/repo";
-import { parseReportForm, type FormErrors } from "@/lib/report/parse";
+import { parseReportForm } from "@/lib/report/parse";
 import { PLATFORM_LABELS, type Platform, type ReportStatus, type SourceShot } from "@/lib/report/types";
-import { parseClientForm, type FieldErrors } from "@/lib/validation";
+import type { BrandFormState, FormState, ReportFormState } from "@/lib/forms";
+import { parseClientForm } from "@/lib/validation";
 
-export interface FormState {
-  error?: string;
-  fields?: FieldErrors;
-}
 
 /** Every change requires a valid, signed session. */
 async function requireStaff(): Promise<Session> {
@@ -86,10 +83,6 @@ export async function chooseResolution(fd: FormData) {
 
 // ------------------------------------------------------------------ reports
 
-export interface ReportFormState {
-  errors?: FormErrors;
-  error?: string;
-}
 
 const UPLOAD_PLATFORMS = Object.keys(PLATFORM_LABELS) as Platform[];
 
@@ -155,10 +148,6 @@ export async function changeStatus(fd: FormData) {
 
 // ------------------------------------------------------------------ client branding
 
-export interface BrandFormState {
-  error?: string;
-  saved?: boolean;
-}
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 

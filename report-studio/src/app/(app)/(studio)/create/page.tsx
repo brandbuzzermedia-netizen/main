@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { saveReport } from "@/app/(app)/actions";
 import { ReportForm } from "@/components/studio/report-form";
 import { PageHeader } from "@/components/studio/views";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,7 @@ export default async function CreateReportPage({ searchParams }: { searchParams:
   return (
     <>
       <PageHeader title="Create report" sub="Enter the month's figures from the platform screenshots and attach the screenshots. The report is written from these figures only." />
-      <ReportForm clients={clients.map((c) => ({ id: c.id, name: c.name }))} initial={{ clientId: clients.some((c) => c.id === client) ? client : undefined, template: "premium", sections }} />
+      <ReportForm action={saveReport} clients={clients.map((c) => ({ id: c.id, name: c.name }))} initial={{ clientId: clients.some((c) => c.id === client) ? client : undefined, template: "premium", sections }} />
     </>
   );
 }

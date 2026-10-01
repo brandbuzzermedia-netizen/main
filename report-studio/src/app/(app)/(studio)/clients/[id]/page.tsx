@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { removeClient } from "@/app/(app)/actions";
+import { removeClient, saveBrand } from "@/app/(app)/actions";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { PageHeader, ReportsTable } from "@/components/studio/views";
@@ -34,7 +34,7 @@ export default async function ClientPage({ params }: { params: Promise<{ id: str
       <Card className="mb-5">
         <CardTitle>Report branding</CardTitle>
         <CardDescription>The client&apos;s logo and colours lead every report; Get Bee Seen co-brands each page.</CardDescription>
-        <BrandForm clientId={client.id} brand={client.brand ?? DEFAULT_BRAND} />
+        <BrandForm action={saveBrand} clientId={client.id} brand={client.brand ?? DEFAULT_BRAND} />
       </Card>
       <Card>
         <CardTitle>Delete client</CardTitle>

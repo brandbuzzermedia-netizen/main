@@ -1,13 +1,13 @@
 "use client";
 import { useActionState } from "react";
-import { signIn, type FormState } from "@/app/(app)/actions";
+import type { FormAction, FormState } from "@/lib/forms";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function SignInForm({ next, open }: { next: string; open: boolean }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(signIn, {});
+export function SignInForm({ next, open, action: submit }: { next: string; open: boolean; action: FormAction<FormState> }) {
+  const [state, action, pending] = useActionState<FormState, FormData>(submit, {});
   return (
     <form action={action} className="grid w-full gap-3.5 rounded-[28px] bg-gbs-cream p-[30px] text-gbs-ink shadow-[0_30px_60px_-24px_rgba(0,0,0,.5)]">
       <div><Badge variant="bee">Client Report Studio</Badge></div>

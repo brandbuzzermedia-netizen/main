@@ -1,5 +1,5 @@
 // Form validation for the studio, kept dependency-free.
-import type { ClientInput } from "@/lib/data/repo";
+import type { ClientInput } from "@/lib/data/shared";
 
 export type FieldErrors = Partial<Record<keyof ClientInput, string>>;
 

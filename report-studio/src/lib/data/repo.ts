@@ -10,48 +10,13 @@ import { SESSION_COOKIE, readSessionToken, type Session } from "@/lib/auth/sessi
 import { thrishankAugust2026 } from "@/lib/fixtures/thrishank-2026-08";
 import { MONTHS, parseDay } from "@/lib/format";
 import {
-  SECTION_KEYS, type Brand, type InternalNote, type ReportData, type ReportDoc, type ReportStatus, type Resolution,
+  type Brand, type InternalNote, type ReportData, type ReportDoc, type ReportStatus, type Resolution,
   type SectionKey, type SourceShot, type Template, type Platform,
 } from "@/lib/report/types";
 
 export type { Session };
-
-/** A client's report branding. Logo and cover are stored file URLs. */
-export interface ClientBrand {
-  primary: string;
-  accent: string;
-  logo: string | null;
-  cover: string | null;
-}
-
-/** Palette used until a client's own colours are set (the prototype's placeholder). */
-export const DEFAULT_BRAND: ClientBrand = { primary: "#3B2A21", accent: "#C9974A", logo: null, cover: null };
-
-export interface ClientRow {
-  id: string;
-  name: string;
-  slug: string;
-  industry: string | null;
-  location: string | null;
-  website: string | null;
-  instagram: string | null;
-  createdAt: string;
-  brand?: ClientBrand;
-}
-
-export type ClientInput = Pick<ClientRow, "name" | "industry" | "location" | "website" | "instagram">;
-
-export interface ReportSummary {
-  id: string;
-  clientId: string;
-  clientName: string;
-  periodStart: string;
-  month: string;
-  status: ReportStatus;
-  createdAt: string;
-  /** False when the report has no data to render yet. */
-  available: boolean;
-}
+export * from "./shared";
+import { DEFAULT_BRAND, monthLabel, reportId, slugify, type ClientBrand, type ClientInput, type ClientRow, type ReportSummary } from "./shared";
 
 interface StoredReport {
   id: string;
@@ -67,14 +32,6 @@ interface Store {
   clients: ClientRow[];
   reports: StoredReport[];
 }
-
-export const monthLabel = (isoDay: string) => {
-  const d = parseDay(isoDay);
-  return `${MONTHS[d.m]} ${d.y}`;
-};
-
-export const slugify = (s: string) =>
-  s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "client";
 
 // ------------------------------------------------------------------ file store
 
@@ -248,8 +205,6 @@ export interface ReportInput {
 
 export class ReportExistsError extends Error {}
 
-/** Report ids are "<client>-<yyyy-mm>", one report per client per month. */
-export const reportId = (clientId: string, periodStart: string) => `${clientId}-${periodStart.slice(0, 7)}`;
 
 export function createReport(input: ReportInput, uploads: Partial<Record<Platform, SourceShot[]>>): Promise<string> {
   return mutate((s) => {
@@ -279,7 +234,7 @@ export function updateReport(id: string, input: Omit<ReportInput, "clientId">, u
   });
 }
 
-export const allSections = (on: boolean) => Object.fromEntries(SECTION_KEYS.map((k) => [k, on])) as Record<SectionKey, boolean>;
+
 
 export function addInternalNote(session: Session, reportId: string, text: string): Promise<void> {
   const note: InternalNote = { text, by: session.name, date: new Date().toISOString().slice(0, 10) };

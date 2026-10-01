@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { saveClient } from "@/app/(app)/actions";
 import { ClientForm } from "@/components/studio/client-form";
 import { PageHeader } from "@/components/studio/views";
 import { getClient } from "@/lib/data/repo";
@@ -12,7 +13,7 @@ export default async function EditClientPage({ params }: { params: Promise<{ id:
   return (
     <>
       <PageHeader title={`Edit ${client.name}`} />
-      <ClientForm client={client} />
+      <ClientForm client={client} action={saveClient} />
     </>
   );
 }

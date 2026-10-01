@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useActionState } from "react";
-import { saveClient, type FormState } from "@/app/(app)/actions";
+import type { FormAction, FormState } from "@/lib/forms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,8 +15,8 @@ const FIELDS: [keyof ClientInput, string, string][] = [
   ["instagram", "Instagram handle", "thrishankdoors"],
 ];
 
-export function ClientForm({ client }: { client?: ClientRow }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(saveClient, {});
+export function ClientForm({ client, action: save }: { client?: ClientRow; action: FormAction<FormState> }) {
+  const [state, action, pending] = useActionState<FormState, FormData>(save, {});
   return (
     <form action={action} className="grid max-w-3xl gap-4" noValidate>
       {client ? <input type="hidden" name="id" value={client.id} /> : null}

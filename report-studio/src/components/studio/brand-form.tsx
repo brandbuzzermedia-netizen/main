@@ -3,7 +3,7 @@
 // palette from it (ported from the prototype's derivePalette); the colours
 // can then be adjusted before saving.
 import { useActionState, useRef, useState } from "react";
-import { saveBrand, type BrandFormState } from "@/app/(app)/actions";
+import type { BrandFormState, FormAction } from "@/lib/forms";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { mix, toHex } from "@/lib/format";
@@ -27,8 +27,8 @@ function derivePalette(img: HTMLImageElement): string | null {
   return top ? toHex(top[0].split(",").map((v) => Math.min(255, Number(v)))) : null;
 }
 
-export function BrandForm({ clientId, brand }: { clientId: string; brand: ClientBrand }) {
-  const [state, action, pending] = useActionState<BrandFormState, FormData>(saveBrand, {});
+export function BrandForm({ clientId, brand, action: save }: { clientId: string; brand: ClientBrand; action: FormAction<BrandFormState> }) {
+  const [state, action, pending] = useActionState<BrandFormState, FormData>(save, {});
   const [primary, setPrimary] = useState(brand.primary);
   const [accent, setAccent] = useState(brand.accent);
   const [logo, setLogo] = useState<string | null>(brand.logo);

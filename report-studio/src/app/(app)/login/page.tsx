@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { signIn } from "@/app/(app)/actions";
 import { SignInForm } from "@/components/studio/sign-in-form";
 import { signInOpen } from "@/lib/auth/session";
 
@@ -12,7 +13,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <div className="grid w-full max-w-[420px] justify-items-center gap-[22px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/logo-stacked-white.png" alt="Get Bee Seen" className="w-[170px]" />
-        <SignInForm next={next ?? "/"} open={open} />
+        <SignInForm next={next ?? "/"} open={open} action={signIn} />
         <p className="text-center text-xs text-gbs-cream/80">
           Making brands impossible to ignore.
           {open ? (

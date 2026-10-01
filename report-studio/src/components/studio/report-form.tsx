@@ -3,7 +3,7 @@
 // screenshots, each published piece, and the screenshots themselves.
 import Link from "next/link";
 import { useActionState, useState, useTransition } from "react";
-import { saveReport, type ReportFormState } from "@/app/(app)/actions";
+import type { FormAction, ReportFormState } from "@/lib/forms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,8 +63,8 @@ const pathValue = (data: ReportData | undefined, name: string) => {
   return v == null ? "" : String(v);
 };
 
-export function ReportForm({ clients, initial }: { clients: { id: string; name: string }[]; initial: ReportFormInitial }) {
-  const [state, action] = useActionState<ReportFormState, FormData>(saveReport, {});
+export function ReportForm({ clients, initial, action: save }: { clients: { id: string; name: string }[]; initial: ReportFormInitial; action: FormAction<ReportFormState> }) {
+  const [state, action] = useActionState<ReportFormState, FormData>(save, {});
   const [pending, start] = useTransition();
   const [rows, setRows] = useState<ContentRowInput[]>(() =>
     initial.data?.content.map((c) => ({

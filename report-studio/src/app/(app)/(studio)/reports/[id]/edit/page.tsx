@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { saveReport } from "@/app/(app)/actions";
 import { ReportForm } from "@/components/studio/report-form";
 import { PageHeader } from "@/components/studio/views";
 import { analyze } from "@/lib/analysis";
@@ -18,6 +19,7 @@ export default async function EditReportPage({ params }: { params: Promise<{ id:
         sub="Saving rebuilds the report from these figures. Internal notes and your choice on data conflicts are kept."
       />
       <ReportForm
+        action={saveReport}
         clients={clients.map((c) => ({ id: c.id, name: c.name }))}
         initial={{ id: doc.id, clientId: doc.client.id, template: doc.template, sections: doc.sections, data: doc.data, uploads: doc.uploads }}
       />
