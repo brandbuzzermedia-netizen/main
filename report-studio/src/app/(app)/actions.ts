@@ -2,10 +2,11 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { SESSION_COOKIE, checkPassword, createSessionToken, signInConfigured } from "@/lib/auth/session";
+import { hashPassword, newToken, verifyPassword } from "@/lib/auth/password";
+import { SESSION_COOKIE, checkPassword, createSessionToken, shareCookieName, shareUnlockValue, signInConfigured } from "@/lib/auth/session";
 import { UploadError, isFile, saveImage } from "@/lib/data/files";
 import {
-  DEFAULT_BRAND, ReportExistsError, addInternalNote, createClient, createReport, deleteClient, getClient, getReportDoc,
+  DEFAULT_BRAND, ReportExistsError, addInternalNote, createClient, createReport, createShare, deleteClient, findSharedReport, getClient, getReportDoc, getShare, removeShare, setSharePassword,
   getReportRecord, getSession, reportId, setClientBrand, setReportStatus, setResolution, updateClient, updateReport, type Session,
 } from "@/lib/data/repo";
 import { parseReportForm } from "@/lib/report/parse";
@@ -173,4 +174,42 @@ export async function saveBrand(_: BrandFormState, fd: FormData): Promise<BrandF
   await setClientBrand(id, brand);
   revalidatePath("/", "layout");
   return { saved: true };
+}
+
+// ------------------------------------------------------------------ client share links
+
+export async function createShareLink(fd: FormData) {
+  await requireStaff();
+  const id = String(fd.get("reportId"));
+  await createShare(id, newToken());
+  revalidatePath(`/reports/${id}`);
+}
+
+export async function removeShareLink(fd: FormData) {
+  await requireStaff();
+  const id = String(fd.get("reportId"));
+  await removeShare(id);
+  revalidatePath(`/reports/${id}`);
+}
+
+export async function setShareLinkPassword(fd: FormData) {
+  await requireStaff();
+  const id = String(fd.get("reportId"));
+  const pw = String(fd.get("password") ?? "").trim();
+  await setSharePassword(id, fd.get("clear") ? null : pw.length >= 6 ? await hashPassword(pw) : (await getShare(id))?.passwordHash ?? null);
+  revalidatePath(`/reports/${id}`);
+}
+
+/** The client's password form on a protected link. */
+export async function unlockShare(_: { error?: string }, fd: FormData): Promise<{ error?: string }> {
+  const [client, month, token] = ["client", "month", "token"].map((k) => String(fd.get(k) ?? ""));
+  const found = await findSharedReport(client, month, token);
+  if (!found?.share.passwordHash) return { error: "This link is not available." };
+  if (!(await verifyPassword(String(fd.get("password") ?? ""), found.share.passwordHash))) {
+    return { error: "That password is not right. Ask Get Bee Seen for the report password." };
+  }
+  (await cookies()).set(shareCookieName(token), shareUnlockValue(token, found.share.passwordHash), {
+    httpOnly: true, sameSite: "lax", path: "/report", maxAge: 60 * 60 * 24 * 30, secure: process.env.NODE_ENV === "production",
+  });
+  redirect(`/report/${client}/${month}/${token}`);
 }

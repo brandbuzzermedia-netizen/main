@@ -166,3 +166,12 @@ a.srcbtn{text-decoration:none}
  /* Full captions, up to four lines so long ones cannot push a card off the page. */
  .cap{-webkit-line-clamp:4!important}
 }
+
+/* Present mode (components/studio/fit-pages.tsx). */
+.presenting{position:fixed;inset:0;z-index:100;background:#000;display:grid;place-items:center;padding-bottom:48px}
+.presenting .pages{gap:0}
+.presenting .pbox{box-shadow:none}
+.present-hud{position:fixed;left:0;right:0;bottom:calc(10px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;gap:10px;align-items:center;color:#ccc;font:500 13px var(--font-poppins),system-ui,sans-serif}
+.present-hud button{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:99px;padding:7px 14px;font:inherit;cursor:pointer}
+.present-hud button:disabled{opacity:.35;cursor:default}
+@media print{.present-hud{display:none}}

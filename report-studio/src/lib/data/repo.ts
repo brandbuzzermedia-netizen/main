@@ -18,6 +18,23 @@ export type { Session };
 export * from "./shared";
 import { DEFAULT_BRAND, monthLabel, reportId, slugify, type ClientBrand, type ClientInput, type ClientRow, type ReportSummary } from "./shared";
 
+/** A client share link. The token is the secret; the password is optional. */
+export interface ShareInfo {
+  token: string;
+  createdAt: string;
+  /** scrypt hash, see lib/auth/password.ts. */
+  passwordHash: string | null;
+}
+
+/** A saved state of a report's written copy, so earlier text can be restored. */
+export interface TextVersion {
+  v: number;
+  label: string;
+  at: string;
+  by: string;
+  content: Pick<ReportDoc, "texts" | "variant" | "titles" | "rows">;
+}
+
 interface StoredReport {
   id: string;
   clientId: string;
@@ -25,12 +42,19 @@ interface StoredReport {
   status: ReportStatus;
   createdAt: string;
   doc: ReportDoc | null;
+  share?: ShareInfo | null;
+  versions?: TextVersion[];
+}
+
+export interface StudioSettings {
+  defaultTemplate: Template;
 }
 
 interface Store {
   version: 1;
   clients: ClientRow[];
   reports: StoredReport[];
+  settings?: StudioSettings;
 }
 
 // ------------------------------------------------------------------ file store
@@ -250,5 +274,139 @@ export function setResolution(reportId: string, metric: string, choice: Resoluti
     if (!doc) return;
     if (choice) doc.resolutions[metric] = choice;
     else delete doc.resolutions[metric];
+  });
+}
+
+// ------------------------------------------------------------------ settings
+
+export async function getSettings(): Promise<StudioSettings> {
+  return { defaultTemplate: "premium", ...((await load()).settings ?? {}) };
+}
+
+export function setSettings(next: StudioSettings): Promise<void> {
+  return mutate((s) => { s.settings = next; });
+}
+
+// ------------------------------------------------------------------ sharing
+
+export async function getShare(reportId: string): Promise<ShareInfo | null> {
+  return (await load()).reports.find((r) => r.id === reportId)?.share ?? null;
+}
+
+/** Creates a new link (any earlier link for this report stops working). */
+export function createShare(reportId: string, token: string): Promise<void> {
+  return mutate((s) => {
+    const r = s.reports.find((x) => x.id === reportId);
+    if (!r?.doc) throw new Error("Report not found");
+    r.share = { token, createdAt: new Date().toISOString(), passwordHash: r.share?.passwordHash ?? null };
+  });
+}
+
+export function setSharePassword(reportId: string, passwordHash: string | null): Promise<void> {
+  return mutate((s) => {
+    const r = s.reports.find((x) => x.id === reportId);
+    if (r?.share) r.share.passwordHash = passwordHash;
+  });
+}
+
+export function removeShare(reportId: string): Promise<void> {
+  return mutate((s) => {
+    const r = s.reports.find((x) => x.id === reportId);
+    if (r) r.share = null;
+  });
+}
+
+/** The report behind a client link, when the client, month and token all match. */
+export async function findSharedReport(clientSlug: string, monthSlug: string, token: string) {
+  const s = await load();
+  const r = s.reports.find((x) => x.share?.token === token);
+  if (!r?.doc || !r.share) return null;
+  const client = s.clients.find((c) => c.id === r.clientId);
+  if (!client || client.slug !== clientSlug || shareMonthSlug(r.periodStart) !== monthSlug) return null;
+  const doc = await getReportDoc(r.id);
+  return doc ? { doc, share: r.share } : null;
+}
+
+/** "2026-08-01" -> "august-2026", used in client links. */
+export const shareMonthSlug = (periodStart: string) => monthLabel(periodStart).toLowerCase().replace(" ", "-");
+
+export async function shareUrlPath(reportId: string): Promise<string | null> {
+  const s = await load();
+  const r = s.reports.find((x) => x.id === reportId);
+  const client = r && s.clients.find((c) => c.id === r.clientId);
+  if (!r?.share || !client) return null;
+  return `/report/${client.slug}/${shareMonthSlug(r.periodStart)}/${r.share.token}`;
+}
+
+// ------------------------------------------------------------------ report text and versions
+
+const textContent = (d: ReportDoc): TextVersion["content"] =>
+  structuredClone({ texts: d.texts, variant: d.variant, titles: d.titles, rows: d.rows });
+
+function pushVersion(r: StoredReport, label: string, by: string) {
+  if (!r.doc) return;
+  const list = (r.versions ??= []);
+  list.push({ v: (list.at(-1)?.v ?? 0) + 1, label, at: new Date().toISOString(), by, content: textContent(r.doc) });
+  if (list.length > 50) list.splice(0, list.length - 50);
+}
+
+export async function listVersions(reportId: string): Promise<TextVersion[]> {
+  return ((await load()).reports.find((r) => r.id === reportId)?.versions ?? []).slice().reverse();
+}
+
+/** Changes one copy block (null resets it to the generated text) and/or its variant. */
+export function setBlock(reportId: string, blockId: string, change: { text?: string | null; variant?: number }): Promise<void> {
+  return mutate((s) => {
+    const doc = s.reports.find((r) => r.id === reportId)?.doc;
+    if (!doc) throw new Error("Report not found");
+    if (change.variant != null) doc.variant[blockId] = change.variant;
+    if (change.text === null) delete doc.texts[blockId];
+    else if (change.text != null) doc.texts[blockId] = change.text;
+  });
+}
+
+export function setPageTitle(reportId: string, key: string, title: string | null): Promise<void> {
+  return mutate((s) => {
+    const doc = s.reports.find((r) => r.id === reportId)?.doc;
+    if (!doc) throw new Error("Report not found");
+    if (title) doc.titles[key] = title; else delete doc.titles[key];
+  });
+}
+
+export function setActionRows(reportId: string, rows: string[][] | null): Promise<void> {
+  return mutate((s) => {
+    const doc = s.reports.find((r) => r.id === reportId)?.doc;
+    if (doc) doc.rows = rows;
+  });
+}
+
+/** Saves the current copy as a version, before and after big changes. */
+export function saveVersion(reportId: string, label: string, by: string): Promise<void> {
+  return mutate((s) => {
+    const r = s.reports.find((x) => x.id === reportId);
+    if (r) pushVersion(r, label, by);
+  });
+}
+
+/** Replaces the copy with generated text (keeping a version of what was there). */
+export function applyTexts(reportId: string, texts: Record<string, string>, label: string, by: string, reset = false): Promise<void> {
+  return mutate((s) => {
+    const r = s.reports.find((x) => x.id === reportId);
+    if (!r?.doc) throw new Error("Report not found");
+    if (!r.versions?.length) pushVersion(r, "Before changes", by);
+    if (reset) { r.doc.texts = {}; r.doc.variant = {}; }
+    Object.assign(r.doc.texts, texts);
+    pushVersion(r, label, by);
+  });
+}
+
+export function restoreVersion(reportId: string, v: number, by: string): Promise<boolean> {
+  return mutate((s) => {
+    const r = s.reports.find((x) => x.id === reportId);
+    const ver = r?.versions?.find((x) => x.v === v);
+    if (!r?.doc || !ver) return false;
+    Object.assign(r.doc, structuredClone(ver.content));
+    pushVersion(r, `Restored version ${v}`, by);
+    return true;
   });
 }

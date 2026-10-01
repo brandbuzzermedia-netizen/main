@@ -48,6 +48,8 @@ const TEXT_FIELDS = new Set(["meta.campaign", "meta.objective"]);
 
 export interface ReportFormInitial {
   id?: string;
+  /** Shown above the form, e.g. where pre-filled figures came from. */
+  note?: string;
   clientId?: string;
   template: Template;
   sections: Record<SectionKey, boolean>;
@@ -67,10 +69,10 @@ export function ReportForm({ clients, initial, action: save }: { clients: { id: 
   const [state, action] = useActionState<ReportFormState, FormData>(save, {});
   const [pending, start] = useTransition();
   const [rows, setRows] = useState<ContentRowInput[]>(() =>
-    initial.data?.content.map((c) => ({
+    !initial.id && !initial.data?.content.length ? [emptyRow()] : initial.data!.content.map((c) => ({
       date: c.date, type: c.type, theme: c.theme, caption: c.caption, tags: c.tags,
       ...Object.fromEntries(POST_METRICS.map((k) => [k, c[k] == null ? "" : String(c[k])])),
-    })) ?? [emptyRow()],
+    })) ?? [],
   );
   const err = state.errors ?? {};
   const setRow = (i: number, patch: Partial<ContentRowInput>) => setRows((r) => r.map((x, j) => (j === i ? { ...x, ...patch } : x)));
@@ -112,6 +114,7 @@ export function ReportForm({ clients, initial, action: save }: { clients: { id: 
       {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
       <input type="hidden" name="content" value={JSON.stringify(rows)} />
 
+      {initial.note ? <p className="rounded-2xl border border-border bg-card px-4 py-2.5 text-sm">{initial.note}</p> : null}
       {state.error ? <p role="alert" className="rounded-2xl border border-bad bg-card px-4 py-2.5 text-sm text-bad">{state.error}</p> : null}
 
       <fieldset className="rounded-[20px] border border-border bg-card p-5">

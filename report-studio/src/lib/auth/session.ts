@@ -54,3 +54,16 @@ export function readSessionToken(token: string | undefined): Session | null {
     return null;
   }
 }
+
+// ------------------------------------------------------------------ share link unlock
+
+/** Cookie name that remembers a client unlocked one password-protected link. */
+export const shareCookieName = (token: string) => `gbs_share_${token.slice(0, 10)}`;
+
+/** Value tied to the link and its current password, so changing either locks it again. */
+export const shareUnlockValue = (token: string, passwordHash: string) => sign(`share:${token}:${passwordHash}`);
+
+export function isShareUnlocked(cookie: string | undefined, token: string, passwordHash: string | null): boolean {
+  if (!passwordHash) return true;
+  return !!cookie && same(cookie, shareUnlockValue(token, passwordHash));
+}
