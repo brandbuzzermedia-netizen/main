@@ -7,7 +7,8 @@ const SESSION_COOKIE = "gbs_session";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   // Client share links are public; each checks its own token and password.
-  const isShare = pathname.startsWith("/report/");
+  // Signed file links (from share pages) are checked by the files route.
+  const isShare = pathname.startsWith("/report/") || (pathname.startsWith("/api/files/") && request.nextUrl.searchParams.has("s"));
   const isPublic = pathname === "/login" || isShare;
   const hasCookie = !!request.cookies.get(SESSION_COOKIE)?.value;
   if (isShare) return NextResponse.next();

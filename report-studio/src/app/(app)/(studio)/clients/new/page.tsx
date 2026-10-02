@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Add client" };
 export default function NewClientPage() {
   return (
     <>
-      <PageHeader title="Add client" sub="Brand colours and logo are added under Brand assets." />
+      <PageHeader title="Add client" sub="The profile, logo and colours are used on every report for this client." />
       <ClientForm action={saveClient} />
     </>
   );

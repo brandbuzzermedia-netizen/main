@@ -3,7 +3,7 @@ import { aiConfigured } from "@/lib/ai/client";
 import { extractFigures, type ImageInput } from "@/lib/ai/extract";
 import { AiError } from "@/lib/ai/write";
 import { MAX_UPLOAD_BYTES, isFile } from "@/lib/data/files";
-import { getSession } from "@/lib/data/repo";
+import { getClient, getSession, monthLabel } from "@/lib/data/repo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,8 +26,12 @@ export async function POST(request: NextRequest) {
     if (f.size > MAX_UPLOAD_BYTES) return NextResponse.json({ error: `${f.name} is larger than 10 MB.` }, { status: 400 });
     images.push({ mediaType: f.type as ImageInput["mediaType"], base64: Buffer.from(await f.arrayBuffer()).toString("base64") });
   }
+  // Scope the request to the one client the report is for.
+  const client = typeof fd.get("clientId") === "string" ? await getClient(fd.get("clientId") as string) : null;
+  const start = fd.get("periodStart");
+  const scope = client ? { clientName: client.name, handle: client.instagram, month: typeof start === "string" && /^\d{4}-\d{2}-\d{2}$/.test(start) ? monthLabel(start) : null } : undefined;
   try {
-    return NextResponse.json(await extractFigures(platform, images));
+    return NextResponse.json(await extractFigures(platform, images, scope));
   } catch (e) {
     if (e instanceof AiError) return NextResponse.json({ error: e.message }, { status: 502 });
     console.error("Extraction failed", e);

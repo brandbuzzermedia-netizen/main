@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { ReportSummary } from "@/lib/data/repo";
+import type { ClientRow, ReportSummary } from "@/lib/data/repo";
 import { fDate } from "@/lib/format";
 import type { ReportStatus } from "@/lib/report/types";
 
@@ -82,5 +82,58 @@ export function ComingInStep({ title, step, children }: { title: string; step: n
         <div className="mt-3 max-w-prose text-[13.5px] text-muted-foreground">{children}</div>
       </div>
     </>
+  );
+}
+
+/** Every client with their latest report, for the dashboard and the clients page. */
+export function ClientsTable({ clients, reports }: { clients: ClientRow[]; reports: ReportSummary[] }) {
+  if (!clients.length) return <p className="text-muted-foreground">No clients yet. Add your first client to start a report.</p>;
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow><TableHead>Client</TableHead><TableHead>Industry</TableHead><TableHead>Reports</TableHead><TableHead>Last report</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead></TableRow>
+      </TableHeader>
+      <TableBody>
+        {clients.map((c) => {
+          const rs = reports.filter((r) => r.clientId === c.id).sort((a, b) => (a.periodStart < b.periodStart ? 1 : -1));
+          const last = rs[0];
+          return (
+            <TableRow key={c.id}>
+              <TableCell>
+                <Link href={`/clients/${c.id}`} className="flex items-center gap-2.5 font-bold">
+                  <ClientSwatch client={c} />
+                  {c.name}
+                </Link>
+              </TableCell>
+              <TableCell>{c.industry ?? "—"}</TableCell>
+              <TableCell>{rs.length}</TableCell>
+              <TableCell>{last?.month ?? "—"}</TableCell>
+              <TableCell>{last ? <StatusChip status={last.status} /> : <span className="text-xs text-muted-foreground">No reports yet</span>}</TableCell>
+              <TableCell>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild size="sm"><Link href={`/clients/${c.id}`}>Open</Link></Button>
+                  <Button asChild size="sm" variant="primary"><Link href={last?.available ? `/create?from=${last.id}` : `/create?client=${c.id}`}>+ Monthly report</Link></Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
+}
+
+/** The client's logo, or their two brand colours, as a small mark. */
+export function ClientSwatch({ client, size = 28 }: { client: ClientRow; size?: number }) {
+  const b = client.brand;
+  if (b?.logo) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={b.logo} alt="" width={size} height={size} className="rounded-md border border-border bg-white object-contain p-0.5" style={{ width: size, height: size }} />;
+  }
+  return (
+    <span aria-hidden="true" className="inline-flex overflow-hidden rounded-md border border-border" style={{ width: size, height: size }}>
+      <span style={{ flex: 1, background: b?.primary ?? "#3B2A21" }} />
+      <span style={{ flex: 1, background: b?.accent ?? "#C9974A" }} />
+    </span>
   );
 }

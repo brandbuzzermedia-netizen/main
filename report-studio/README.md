@@ -9,13 +9,52 @@ the visual and behavioural spec, and `reference/` holds the PDF it exports.
 
 ## Status
 
-All five build steps in `CLAUDE.md` are in place.
+All five build steps in `CLAUDE.md` are in place, and the studio is a
+**multi-client** report generator: one report engine, any number of clients,
+added from the studio with no code change. Thrishank Doors is only the
+sample client the store starts with.
+
+- **Clients**: each has its own profile (client and company name, industry,
+  location, contact, website, Instagram, Facebook, internal notes, report
+  design) and branding (logo, primary and secondary colour, cover image).
+  Every report reads the profile at render time, so the logo, colours,
+  company name, handles and website on the report are always that client's.
+- **Dashboard**: every client with their latest report and its status, the
+  client, created-this-month and pending counts, and **+ Add client** /
+  **+ Create report**. A client's page shows their profile and their own
+  report history grouped by year, with **+ Create monthly report** and
+  **Start next month**.
+- **One report per client per month** (id `<client>-<yyyy-mm>`).
+- **Start next month** copies branding, template, pages, campaign, result
+  type and action plan, carries this month's figures as the previous month,
+  and starts every figure, post and screenshot empty. **Duplicate report**
+  copies the figures and posts into another month of the same client (never
+  the screenshots) and is flagged in the review panel until replaced.
+- **Copy follows the data**: Meta results have a type (messaging
+  conversations, leads, calls, link clicks, landing page views, purchases,
+  other), and every label and sentence about paid results uses it. A month
+  without enquiry-type results leads with reach and engagement instead.
+- **Pages without data are left out**: no Meta Ads data means no paid pages;
+  no post list means no calendar or per-post pages; an Instagram engagement
+  page appears when accounts engaged or interaction totals are entered.
+- **Isolation**: screenshots are stored in the client's own folders, a report
+  only shows files from its client's folders, Claude's requests name the one
+  client, report and month, extraction warns when screenshots show another
+  account, and Claude's text is rejected if it names another client.
+- **PDF name**: `<Client_Name>_<Month>_<Year>_Monthly_Performance_Report.pdf`,
+  e.g. `Wudgres_September_2026_Monthly_Performance_Report.pdf` (every word of
+  the client name is kept, so "Thrishank Doors" gives `Thrishank_Doors_…`).
 
 - **Studio** in the GBS brand: sign-in, dashboard, clients, reports,
   templates, brand assets, settings.
 - **Create a report**:
-  - Pick the client and month, then enter the Instagram Insights and Meta
-    Ads figures and each post, and attach the screenshots. The same
+  - Pick the client and month, then enter the Instagram Insights figures
+    (followers at start and end, reach, views/impressions, accounts engaged,
+    likes, comments, shares, saves, posts, Reels, stories) and Meta Ads
+    figures (campaign, objective, result type, spend, results, impressions,
+    reach, clicks, CTR/CPC/CPM when clicks are not shown), each post if you
+    have them, and attach the screenshots. Net follows, CTR, CPC, CPM and
+    cost per result are calculated. The same
     screenshot uploaded twice is kept once (file hash).
   - **Read figures from screenshots** (Claude) fills the empty fields, each
     marked with a confidence level to check. A screenshot that disagrees
@@ -95,9 +134,24 @@ between servers.
 
 Clients, reports, reviewer choices and internal notes are stored in
 `data/studio.json` (or `$DATA_DIR/studio.json`); uploaded screenshots and
-logos in `data/files/`, served only to signed-in staff. The file is created from
-the Thrishank Doors seed on first run; delete it to start again from the
-seed. Writes are queued and atomic (temporary file, then rename). This
+logos in `data/files/`, one folder per client:
+
+```text
+data/files/
+  wudgres/
+    brand/                  logo, cover image
+    september-2026/
+      instagram/
+      meta-ads/
+  lykes/
+    september-2026/
+      instagram/
+```
+
+Files are served to signed-in staff, and to a client's share link through
+signed, expiring per-file addresses. Deleting a client deletes its folder.
+The JSON file is created on first run with one sample client (Thrishank
+Doors, August 2026); delete it to start again. Writes are queued and atomic (temporary file, then rename). This
 suits one server with a persistent disk. Back the file up like any other
 business record. It is not shared between servers, and it is not in git
 (`data/` is ignored).
@@ -106,7 +160,8 @@ business record. It is not shared between servers, and it is not in git
 
 | Command | What it checks |
 | --- | --- |
-| `npm test` | Analysis, conflicts, copy, form validation and the grounding check on Claude's text (`node --test`) |
+| `npm test` | Analysis, conflicts, copy, form validation, result-type wording, next month and duplicate, and the grounding check on Claude's text (`node --test`) |
+| `scripts/acceptance/` | Three-client acceptance test (Thrishank, Wudgres, Lykes) through the real UI and PDFs; see the header of `acceptance.mjs` |
 | `npm run typecheck` | TypeScript |
 | `npm run build` | Production build |
 | `STUDIO_PASSWORD=… npm run compare -- --fetch http://127.0.0.1:3000` | Exports the demo report and compares it page by page with the prototype and the reference PDF (needs `pdftoppm`) |

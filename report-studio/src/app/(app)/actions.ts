@@ -4,10 +4,10 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { hashPassword, newToken, verifyPassword } from "@/lib/auth/password";
 import { SESSION_COOKIE, checkPassword, createSessionToken, shareCookieName, shareUnlockValue, signInConfigured } from "@/lib/auth/session";
-import { UploadError, isFile, saveImage } from "@/lib/data/files";
+import { UploadError, brandScope, removeClientFiles, isFile, saveImage, screenshotScope } from "@/lib/data/files";
 import {
-  DEFAULT_BRAND, ReportExistsError, addInternalNote, createClient, createReport, createShare, deleteClient, findSharedReport, getClient, getReportDoc, getShare, removeShare, setSharePassword,
-  applyTexts, setSettings, getReportRecord, getSession, reportId, restoreVersion, saveVersion, setBlock, setClientBrand, setReportStatus, setResolution, updateClient, updateReport, type Session,
+  DEFAULT_BRAND, ReportExistsError, listClients, monthFolder, addInternalNote, createClient, createReport, createShare, deleteClient, findSharedReport, getClient, getReportDoc, getShare, removeShare, setSharePassword,
+  applyTexts, setSettings, getReportRecord, type ReportInput, getSession, reportId, restoreVersion, saveVersion, setBlock, setClientBrand, setReportStatus, setResolution, updateClient, updateReport, type Session,
 } from "@/lib/data/repo";
 import { parseReportForm } from "@/lib/report/parse";
 import { analyze } from "@/lib/analysis";
@@ -27,6 +27,8 @@ async function requireStaff(): Promise<Session> {
   if (!s) redirect("/login");
   return s;
 }
+
+const HEX = /^#[0-9a-fA-F]{6}$/;
 
 const safeNext = (v: FormDataEntryValue | null) => (typeof v === "string" && v.startsWith("/") && !v.startsWith("//") ? v : "/");
 
@@ -56,9 +58,17 @@ export async function saveClient(_: FormState, fd: FormData): Promise<FormState>
       await updateClient(id, parsed.value);
       target = id;
     } else {
+      const primary = String(fd.get("primary") ?? ""), accent = String(fd.get("accent") ?? "");
+      const logo = fd.get("logo");
+      if (isFile(logo) && !["image/png", "image/jpeg", "image/webp"].includes(logo.type)) return { error: "The logo must be a PNG, JPG or WebP image." };
       target = await createClient(parsed.value);
+      // Branding chosen on the form is saved into the new client's own brand folder.
+      const brand = { ...DEFAULT_BRAND, primary: HEX.test(primary) ? primary : DEFAULT_BRAND.primary, accent: HEX.test(accent) ? accent : DEFAULT_BRAND.accent };
+      if (isFile(logo)) brand.logo = (await saveImage(brandScope(target), logo)).url;
+      await setClientBrand(target, brand);
     }
-  } catch {
+  } catch (e) {
+    if (e instanceof UploadError) return { error: e.message };
     return { error: "The client could not be saved. Try again." };
   }
   revalidatePath("/", "layout");
@@ -67,7 +77,9 @@ export async function saveClient(_: FormState, fd: FormData): Promise<FormState>
 
 export async function removeClient(fd: FormData) {
   await requireStaff();
-  await deleteClient(String(fd.get("id")));
+  const id = String(fd.get("id"));
+  await deleteClient(id);
+  await removeClientFiles(id);
   revalidatePath("/", "layout");
   redirect("/clients");
 }
@@ -120,7 +132,7 @@ export async function saveReport(_: ReportFormState, fd: FormData): Promise<Repo
       list.forEach((f) => seen.add(f.hash!));
       for (const file of fd.getAll(`shots.${p}`)) {
         if (!isFile(file)) continue;
-        const saved = await saveImage(`reports/${id}/${p}`, file);
+        const saved = await saveImage(screenshotScope(clientId, monthFolder(parsed.value.data.period.start), p), file);
         if (seen.has(saved.hash)) { dupes++; continue; }
         seen.add(saved.hash);
         list.push({ name: saved.name, url: saved.url, hash: saved.hash });
@@ -132,9 +144,20 @@ export async function saveReport(_: ReportFormState, fd: FormData): Promise<Repo
     throw e;
   }
 
+  // A copy only ever comes from a report of the same client.
+  let copy: Pick<ReportInput, "rows" | "titles" | "copiedFrom"> = {};
+  const copyFrom = get("copyFrom"), copyKind = get("copyKind");
+  if (!existingId && copyFrom && (copyKind === "next-month" || copyKind === "duplicate")) {
+    const src = await getReportDoc(copyFrom);
+    if (src && src.client.id === clientId) {
+      copy = { copiedFrom: { id: src.id, kind: copyKind }, rows: src.rows ? structuredClone(src.rows) : null, titles: copyKind === "duplicate" ? { ...src.titles } : {} };
+      delete copy.titles?.cover;
+    }
+  }
+
   try {
     if (existingId) await updateReport(id, parsed.value, uploads);
-    else await createReport({ clientId, ...parsed.value }, uploads);
+    else await createReport({ clientId, ...parsed.value, ...copy }, uploads);
   } catch (e) {
     if (e instanceof ReportExistsError) return { errors: { periodStart: "This client already has a report for that month." } };
     throw e;
@@ -156,7 +179,6 @@ export async function changeStatus(fd: FormData) {
 // ------------------------------------------------------------------ client branding
 
 
-const HEX = /^#[0-9a-fA-F]{6}$/;
 
 export async function saveBrand(_: BrandFormState, fd: FormData): Promise<BrandFormState> {
   await requireStaff();
@@ -169,9 +191,9 @@ export async function saveBrand(_: BrandFormState, fd: FormData): Promise<BrandF
   const brand = { ...current, primary, accent };
   try {
     const logo = fd.get("logo"), cover = fd.get("cover");
-    if (isFile(logo)) brand.logo = (await saveImage(`clients/${id}`, logo)).url;
+    if (isFile(logo)) brand.logo = (await saveImage(brandScope(id), logo)).url;
     else if (fd.get("removeLogo")) brand.logo = null;
-    if (isFile(cover)) brand.cover = (await saveImage(`clients/${id}`, cover)).url;
+    if (isFile(cover)) brand.cover = (await saveImage(brandScope(id), cover)).url;
     else if (fd.get("removeCover")) brand.cover = null;
   } catch (e) {
     if (e instanceof UploadError) return { error: e.message };
@@ -281,7 +303,8 @@ export async function writeWithClaude(fd: FormData) {
   if (!aiConfigured()) notice = "Claude is not set up on this server (ANTHROPIC_API_KEY).";
   else {
     try {
-      const r = await writeReportText(doc);
+      const others = (await listClients()).filter((c) => c.id !== doc.client.id).flatMap((c) => [c.name, c.company ?? ""]);
+      const r = await writeReportText(doc, others.filter((n) => n && !doc.client.name.toLowerCase().includes(n.toLowerCase())));
       const n = Object.keys(r.accepted).length;
       await saveVersion(reportId, "Before Claude rewrite", session.name);
       if (n) await applyTexts(reportId, r.accepted, "Written by Claude", session.name);

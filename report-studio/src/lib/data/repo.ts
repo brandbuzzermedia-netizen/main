@@ -6,7 +6,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { cookies } from "next/headers";
-import { SESSION_COOKIE, readSessionToken, type Session } from "@/lib/auth/session";
+import { SESSION_COOKIE, readSessionToken, signFileUrl, type Session } from "@/lib/auth/session";
 import { thrishankAugust2026 } from "@/lib/fixtures/thrishank-2026-08";
 import { MONTHS, parseDay } from "@/lib/format";
 import {
@@ -16,7 +16,7 @@ import {
 
 export type { Session };
 export * from "./shared";
-import { DEFAULT_BRAND, monthLabel, reportId, slugify, type ClientBrand, type ClientInput, type ClientRow, type ReportSummary } from "./shared";
+import { DEFAULT_BRAND, monthLabel, reportClient, reportId, slugify, type ClientBrand, type ClientInput, type ClientRow, type ReportSummary } from "./shared";
 
 /** A client share link. The token is the secret; the password is optional. */
 export interface ShareInfo {
@@ -62,28 +62,18 @@ interface Store {
 const DATA_DIR = process.env.DATA_DIR || join(process.cwd(), "data");
 const FILE = join(DATA_DIR, "studio.json");
 
+/** First run: one sample client with one sample report. Every other client is added by staff. */
 function seed(): Store {
   const doc = thrishankAugust2026();
-  const c = (id: string, name: string, industry: string, location: string | null): ClientRow => ({
-    id, name, slug: slugify(name), industry, location, website: null, instagram: null, createdAt: "2026-06-01",
-  });
-  const r = (id: string, clientId: string, periodStart: string, status: ReportStatus, createdAt: string, d: ReportDoc | null = null): StoredReport => ({
-    id, clientId, periodStart, status, createdAt, doc: d,
-  });
   return {
     version: 1,
-    clients: [
-      c("thrishank", "Thrishank Doors", "Doors and architectural hardware", "Bengaluru, India"),
-      c("lykes", "Lykes", "Retail", null),
-      c("conic-gold", "Conic Gold", "Jewellery", null),
-    ],
-    reports: [
-      r(doc.id, "thrishank", "2026-08-01", "Ready for review", "2026-09-03", doc),
-      r("thrishank-2026-07", "thrishank", "2026-07-01", "Delivered", "2026-08-04"),
-      r("thrishank-2026-06", "thrishank", "2026-06-01", "Delivered", "2026-07-03"),
-      r("lykes-2026-08", "lykes", "2026-08-01", "Pending", "2026-09-30"),
-      r("conic-gold-2026-08", "conic-gold", "2026-08-01", "Draft", "2026-10-01"),
-    ],
+    clients: [{
+      id: "thrishank", name: "Thrishank Doors", slug: "thrishank-doors", company: "Thrishank Doors",
+      industry: "Doors and architectural hardware", location: "Bengaluru, India", website: null, instagram: null,
+      facebook: null, contact: null, notes: "Sample client from the prototype. Its per-post figures are sample values.",
+      template: "premium", createdAt: "2026-06-01",
+    }],
+    reports: [{ id: doc.id, clientId: "thrishank", periodStart: "2026-08-01", status: "Ready for review", createdAt: "2026-09-03", doc }],
   };
 }
 
@@ -121,6 +111,13 @@ function mutate<T>(fn: (s: Store) => T): Promise<T> {
   return run;
 }
 
+/** True when a stored file URL sits in this client's folders (or this report's, for files saved before client folders). */
+export function ownsFile(clientId: string, reportId: string, url: string | null | undefined): boolean {
+  if (!url?.startsWith("/api/files/")) return false;
+  const path = decodeURIComponent(url.slice("/api/files/".length).split("?")[0]);
+  return path.startsWith(`${clientId}/`) || path.startsWith(`reports/${reportId}/`) || path.startsWith(`clients/${clientId}/`);
+}
+
 // ------------------------------------------------------------------ session
 
 export async function getSession(): Promise<Session | null> {
@@ -156,7 +153,7 @@ export function updateClient(id: string, input: ClientInput): Promise<void> {
     if (!c) throw new Error("Client not found");
     Object.assign(c, input);
     for (const r of s.reports) {
-      if (r.clientId === id && r.doc) Object.assign(r.doc.client, { name: input.name, industry: input.industry ?? "", location: input.location ?? "" });
+      if (r.clientId === id && r.doc) r.doc.client = reportClient(c);
     }
   });
 }
@@ -189,9 +186,13 @@ export async function getReportDoc(id: string): Promise<ReportDoc | null> {
   if (!r?.doc) return null;
   const doc = r.doc;
   doc.status = r.status;
+  // Isolation guard: a report only ever shows files from its own client's folders.
+  for (const [p, list] of Object.entries(doc.uploads)) {
+    doc.uploads[p as Platform] = list?.filter((f) => ownsFile(r.clientId, r.id, f.url));
+  }
   const client = s.clients.find((c) => c.id === r.clientId);
   if (client) {
-    doc.client = { id: client.id, name: client.name, industry: client.industry ?? "", location: client.location ?? "" };
+    doc.client = reportClient(client);
     if (client.brand) {
       const b = client.brand;
       doc.brand = { ...doc.brand, primary: b.primary, accent: b.accent, logo: b.logo, cover: b.cover } satisfies Brand;
@@ -202,7 +203,12 @@ export async function getReportDoc(id: string): Promise<ReportDoc | null> {
 
 export async function getReportRecord(id: string) {
   const r = (await load()).reports.find((x) => x.id === id);
-  return r ? { id: r.id, clientId: r.clientId, status: r.status } : null;
+  return r ? { id: r.id, clientId: r.clientId, status: r.status, periodStart: r.periodStart } : null;
+}
+
+/** Deletes one report. Its files stay on disk under the client's month folder. */
+export function deleteReport(id: string): Promise<void> {
+  return mutate((s) => { s.reports = s.reports.filter((r) => r.id !== id); });
 }
 
 export function setClientBrand(id: string, brand: ClientBrand): Promise<void> {
@@ -225,6 +231,10 @@ export interface ReportInput {
   template: Template;
   sections: Record<SectionKey, boolean>;
   data: ReportData;
+  /** Carried over by "Start next month" and "Duplicate report". */
+  rows?: string[][] | null;
+  titles?: Record<string, string>;
+  copiedFrom?: ReportDoc["copiedFrom"];
 }
 
 export class ReportExistsError extends Error {}
@@ -238,10 +248,11 @@ export function createReport(input: ReportInput, uploads: Partial<Record<Platfor
     const client = s.clients.find((c) => c.id === input.clientId)!;
     const doc: ReportDoc = {
       id, status: "Draft", createdAt: new Date().toISOString().slice(0, 10),
-      client: { id: client.id, name: client.name, industry: client.industry ?? "", location: client.location ?? "" },
+      client: reportClient(client),
       brand: { ...DEFAULT_BRAND, gbs: null, ...(client.brand ?? {}) },
       template: input.template, sections: input.sections, data: input.data,
-      texts: {}, variant: {}, titles: {}, rows: null, uploads, resolutions: {}, notes: [], isDemo: false,
+      texts: {}, variant: {}, titles: input.titles ?? {}, rows: input.rows ?? null, uploads, resolutions: {}, notes: [], isDemo: false,
+      copiedFrom: input.copiedFrom ?? null,
     };
     s.reports.push({ id, clientId: input.clientId, periodStart: input.data.period.start, status: "Draft", createdAt: doc.createdAt, doc });
     return id;
@@ -249,11 +260,12 @@ export function createReport(input: ReportInput, uploads: Partial<Record<Platfor
 }
 
 /** Replaces a report's data, keeping its notes, edits and reviewer choices. */
-export function updateReport(id: string, input: Omit<ReportInput, "clientId">, uploads: Partial<Record<Platform, SourceShot[]>>): Promise<void> {
+export function updateReport(id: string, input: Omit<ReportInput, "clientId" | "copiedFrom" | "titles">, uploads: Partial<Record<Platform, SourceShot[]>>): Promise<void> {
   return mutate((s) => {
     const r = s.reports.find((x) => x.id === id);
     if (!r?.doc) throw new Error("Report not found");
     Object.assign(r.doc, { template: input.template, sections: input.sections, data: input.data, uploads, isDemo: false });
+    if (input.rows !== undefined) r.doc.rows = input.rows;
     r.periodStart = input.data.period.start;
   });
 }
@@ -325,6 +337,18 @@ export async function findSharedReport(clientSlug: string, monthSlug: string, to
   if (!client || client.slug !== clientSlug || shareMonthSlug(r.periodStart) !== monthSlug) return null;
   const doc = await getReportDoc(r.id);
   return doc ? { doc, share: r.share } : null;
+}
+
+/** A copy of the report whose images use signed links, for viewers without a staff session. */
+export function withSignedFiles(doc: ReportDoc): ReportDoc {
+  const d = structuredClone(doc);
+  const sig = (u: string | null | undefined) => (u ? signFileUrl(u) : u ?? null);
+  d.brand.logo = sig(d.brand.logo);
+  d.brand.cover = sig(d.brand.cover);
+  d.brand.gbs = sig(d.brand.gbs);
+  for (const list of Object.values(d.uploads)) list?.forEach((f) => (f.url = sig(f.url) ?? ""));
+  d.data.content.forEach((x) => (x.img = sig(x.img)));
+  return d;
 }
 
 /** "2026-08-01" -> "august-2026", used in client links. */

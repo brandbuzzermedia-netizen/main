@@ -67,3 +67,22 @@ export function isShareUnlocked(cookie: string | undefined, token: string, passw
   if (!passwordHash) return true;
   return !!cookie && same(cookie, shareUnlockValue(token, passwordHash));
 }
+
+// ------------------------------------------------------------------ signed file links
+// Client share pages cannot use a staff session, so each file the shared
+// report shows gets its own signed, expiring address. A signature covers one
+// path only, so it cannot be reused for another client's files.
+
+const FILE_LINK_S = 60 * 60 * 24;
+
+export function signFileUrl(url: string, now = Date.now()): string {
+  if (!url.startsWith("/api/files/")) return url;
+  const path = url.split("?")[0];
+  const e = Math.floor(now / 1000) + FILE_LINK_S;
+  return `${path}?e=${e}&s=${sign(`file:${decodeURIComponent(path)}:${e}`)}`;
+}
+
+export function fileSignatureValid(path: string, e: string | null, s: string | null): boolean {
+  if (!e || !s || !/^\d+$/.test(e) || Number(e) < Date.now() / 1000) return false;
+  return same(s, sign(`file:${decodeURIComponent(path)}:${e}`));
+}

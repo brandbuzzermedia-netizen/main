@@ -42,9 +42,9 @@ export function actionRows(doc: ReportDoc, A: Analysis): string[][] {
   const r: string[][] = [];
   if (A.lead) r.push([`Create 6 ${A.lead.name} built on the structure of the top ${A.topViews ? A.topViews.type : "piece"}`, A.ratio && A.other ? `${A.lead.name} averaged ${f1(A.ratio)}× the views of ${A.other.name}` : "Strongest discovery format", "High", "GBS", "Next month"]);
   if (A.vpf) r.push(["Test 3 follow or enquiry call-to-action variations", `About 1 follower per ${f0(A.vpf)} views`, "High", "GBS", "Weeks 1 to 2"]);
-  if (A.hasMeta) r.push(["Test 2 to 3 new creative angles on the messaging campaign", `Baseline cost per conversation: ${INR(A.cpr)}`, "Medium", "GBS", "Next month"]);
-  r.push(["Share which conversations became qualified enquiries", "Sales attribution not available in current reporting data", "High", "Client", "By the 7th"]);
-  r.push(["Publish 2 carousels", A.counts.car ? "Compare with posts" : "No carousels this month: insufficient data", "Medium", "GBS", "Next month"]);
+  if (A.hasMeta) r.push([`Test 2 to 3 new creative angles on the ${A.rw.kind} campaign`, A.cpr ? `Baseline cost per ${A.rw.one}: ${INR(A.cpr)}` : "Cost per result not in uploaded data", "Medium", "GBS", "Next month"]);
+  r.push([A.hasMeta && A.data.meta.conv && A.rw.focus === "enquiry" ? `Share which ${A.rw.few} became qualified enquiries` : A.rw.focus === "sales" && A.hasMeta ? "Share confirmed sales for the period" : "Share enquiries and sales from the period", "Sales attribution not available in current reporting data", "High", "Client", "By the 7th"]);
+  if (A.listed) r.push(["Publish 2 carousels", A.counts.car ? "Compare with posts" : "No carousels this month: insufficient data", "Medium", "GBS", "Next month"]);
   if (!hasPrevious(doc.data)) r.push(["Provide last month’s Insights and Ads screenshots", "Unlocks month-over-month comparison", "Low", "Client", "With next upload"]);
   return r;
 }
@@ -53,7 +53,9 @@ function focusItems(A: Analysis): [string, string][] {
   return [
     ["Scale what reached new people", A.lead ? `Make ${A.lead.name} the backbone of the content calendar.` : "Double down on the best-reaching format."],
     ["Turn viewers into followers", A.vpf ? `Raise on-screen and caption prompts. Baseline: 1 follower per ${f0(A.vpf)} views.` : "Add follow prompts to high-reach content."],
-    ["Measure enquiry quality", "Agree how qualified enquiries, bookings and sales get reported back."],
+    A.rw.focus === "traffic" && A.hasMeta
+      ? ["Measure what visitors do", "Agree how website enquiries and sales get reported back."]
+      : ["Measure enquiry quality", "Agree how qualified enquiries, bookings and sales get reported back."],
     ["Test new formats", "Carousels and call-to-action variants, with results compared fairly."],
   ];
 }
@@ -162,9 +164,15 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
     }
     if (A.hasMeta) {
       k.push(<Kpi key="s" v={INR(m.spend)} l="Ad spend" e="Total spent on Meta ads" cls="sm" />);
-      if (m.conv != null) k.push(<Kpi key="c" v={f0(m.conv)} l="Messaging conversations" e="People who messaged after an ad" cls="sm" />);
-      if (A.cpr) k.push(<Kpi key="cpr" v={INR(A.cpr)} l="Cost per conversation" e="Spend divided by conversations" cls="sm" />);
+      if (m.conv != null) k.push(<Kpi key="c" v={f0(m.conv)} l={A.rw.Title} e={A.rw.key === "messaging" ? "People who messaged after an ad" : `${A.rw.Title} from Meta ads`} cls="sm" />);
+      if (A.cpr) k.push(<Kpi key="cpr" v={INR(A.cpr)} l={`Cost per ${A.rw.one}`} e={`Spend divided by ${A.rw.few}`} cls="sm" />);
     }
+    // Engagement-led months (no enquiry results) lead with how people interacted.
+    if (A.focus === "engagement" && A.hasEngagement) {
+      if (ig.engaged != null) k.push(<Kpi key="eng" v={f0(ig.engaged)} l="Accounts engaged" e="People who interacted with content" cls="sm" />);
+      if (A.interactions != null && k.length < 6) k.push(<Kpi key="int" v={f0(A.interactions)} l="Interactions" e="Likes, comments, shares and saves" cls="sm" />);
+    }
+    k.splice(6);
     add("exec", "Executive summary", (
       <div className="cols" style={{ gridTemplateColumns: "1.05fr 1fr", gap: 44, flex: 1 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -196,10 +204,10 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
       <>
         <Ttl k="social" def="What we worked on this month" />
         <div className="cnt">
-          <div><b>{c.reels + c.posts + c.car}</b><span>pieces published</span></div>
-          <div><b>{c.reels}</b><span>Reels</span></div>
-          <div><b>{c.posts}</b><span>posts</span></div>
-          <div><b>{c.car}</b><span>carousels</span></div>
+          <div><b>{A.countsKnown ? c.reels + c.posts + c.car : "—"}</b><span>pieces published</span></div>
+          <div><b>{A.countsKnown ? c.reels : "—"}</b><span>Reels</span></div>
+          <div><b>{A.countsKnown ? c.posts : "—"}</b><span>posts</span></div>
+          {A.listed || c.stories == null ? <div><b>{A.countsKnown ? c.car : "—"}</b><span>carousels</span></div> : <div><b>{c.stories}</b><span>stories</span></div>}
           <div><b>{A.hasMeta ? 1 : 0}</b><span>paid campaign{A.hasMeta ? "" : "s"}</span></div>
         </div>
         <div style={{ flex: 1 }}>
@@ -212,7 +220,7 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
   }
 
   // Content calendar, Monday first
-  if (sec.calendar) {
+  if (sec.calendar && A.listed) {
     const s = parseDay(d.period.start), first = (parseDay(`${s.y}-${String(s.m + 1).padStart(2, "0")}-01`).weekday + 6) % 7;
     const days = daysInMonth(s.y, s.m), cells: ReactNode[] = [];
     for (let i = 0; i < first; i++) cells.push(<div className="d out" key={`o${i}`} />);
@@ -231,7 +239,7 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
     }
     add("calendar", "Content calendar", (
       <>
-        <Ttl k="calendar" def="Instagram content calendar" sub={`${A.month}. ${A.counts.reels} Reels, ${A.counts.posts} posts, ${A.counts.car} carousels. Stories: not available in uploaded data.`} />
+        <Ttl k="calendar" def="Instagram content calendar" sub={`${A.month}. ${A.counts.reels} Reels, ${A.counts.posts} posts, ${A.counts.car} carousels. ${A.counts.stories != null ? `${f0(A.counts.stories)} stories.` : "Stories: not available in uploaded data."}`} />
         <div className="cal">
           {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((x) => <div className="dh" key={x}>{x}</div>)}
           {cells}
@@ -241,15 +249,9 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
   }
 
   // Instagram performance
+  // A section without data is left out entirely, never shown as an empty page.
   if (sec.ig) {
-    if (!A.hasIG) {
-      add("ig", "Instagram performance", (
-        <>
-          <Ttl k="ig" def="Instagram performance" />
-          <div className="empty">Instagram Insights were not available. Upload Instagram Insights screenshots to include detailed performance analysis.</div>
-        </>
-      ));
-    } else {
+    if (A.hasIG) {
       const k: ReactNode[] = [<Kpi key="v" v={f0(ig.views)} l="Total views" e="Times content was watched or seen" cls="sm" />];
       if (ig.unique != null) k.push(<Kpi key="u" v={f0(ig.unique)} l="Unique viewers" e="Different people reached" cls="sm" />);
       if (ig.nonFol != null) k.push(<Kpi key="nf" v={PCT(ig.nonFol)} l="Views from non-followers" e="Views from people outside your audience" cls="sm" />);
@@ -264,10 +266,12 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
           <div className="kpis">{k}</div>
           <div className="cols" style={{ gridTemplateColumns: "1fr 1.2fr", gap: 36, flex: 1 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              <div>
-                <div className="ct">Instagram views by content type</div>
-                <BarsV items={A.fm.map((x) => ({ l: x.name, v: x.views, c: x.name === "Reels" ? "var(--num)" : "var(--rmute)" }))} w={420} h={170} />
-              </div>
+              {A.fm.length ? (
+                <div>
+                  <div className="ct">Instagram views by content type</div>
+                  <BarsV items={A.fm.map((x) => ({ l: x.name, v: x.views, c: x.name === "Reels" ? "var(--num)" : "var(--rmute)" }))} w={420} h={170} />
+                </div>
+              ) : null}
               {ig.nonFol != null ? (
                 <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
                   <div><Donut p={ig.nonFol} size={140} /></div>
@@ -285,10 +289,46 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
         </>
       ), { src: "instagram" });
     }
+    if (A.hasEngagement || ig.followersStart != null) {
+      const k: ReactNode[] = [];
+      if (ig.engaged != null) k.push(<Kpi key="e" v={f0(ig.engaged)} l="Accounts engaged" e="People who interacted with content" cls="sm" />);
+      if (A.interactions != null) k.push(<Kpi key="i" v={f0(A.interactions)} l="Interactions" e="Likes, comments, shares and saves" cls="sm" />);
+      if (A.accountER != null) k.push(<Kpi key="er" v={PCT(A.accountER, 2)} l="Account engagement rate" e="Interactions ÷ accounts reached" cls="sm" />);
+      if (ig.followersStart != null) k.push(<Kpi key="fs" v={f0(ig.followersStart)} l="Followers at start" e="On the first day of the month" cls="sm" />);
+      if (ig.followers != null && ig.followersStart != null) k.push(<Kpi key="fe" v={f0(ig.followers)} l="Followers at end" e="On the last day of the month" cls="sm" />);
+      const pub = ([["Posts", ig.posts], ["Reels", ig.reels], ["Stories", ig.stories]] as const).filter(([, v]) => v != null);
+      const bars = ([["Likes", ig.likes], ["Comments", ig.comments], ["Shares", ig.shares], ["Saves", ig.saves]] as const).filter(([, v]) => v != null);
+      add("igeng", "Instagram engagement", (
+        <>
+          <Ttl k="igeng" def="How people engaged" sub={per} />
+          <div className="kpis">{k}</div>
+          <div className="cols" style={{ gridTemplateColumns: "1fr 1.2fr", gap: 36, flex: 1 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+              {bars.length ? (
+                <div>
+                  <div className="ct">Interactions by type</div>
+                  <HBars items={bars.map(([l, v]) => ({ l, v: v ?? null }))} />
+                </div>
+              ) : null}
+              {pub.length ? (
+                <div>
+                  <div className="ct">Published this month, from Insights</div>
+                  <div className="cnt" style={{ marginTop: 8 }}>{pub.map(([l, v]) => <div key={l}><b>{f0(v)}</b><span>{l.toLowerCase()}</span></div>)}</div>
+                </div>
+              ) : null}
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <Ai id="ig_eng" lab="What happened" />
+              <div className="basis">Account-level totals from the Instagram Insights screenshots. Engagement rate = (likes + comments + shares + saves) ÷ accounts reached.</div>
+            </div>
+          </div>
+        </>
+      ), { src: "instagram" });
+    }
   }
 
   // Content performance, breakdown, top performers, insights
-  if (sec.content) {
+  if (sec.content && A.listed) {
     const insight = (x: ContentItem) => {
       const t: string[] = [];
       if (x === A.topViews) t.push("Most views, reach" + (x === A.topShares ? " and shares" : ""));
@@ -440,8 +480,12 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
     ) : null;
     if (sec.meta && A.hasMeta) {
       const k: ReactNode[] = [<Kpi key="s" v={INR(m.spend)} l="Ad spend" e="Total spent in the period" />];
-      if (m.conv != null) k.push(<Kpi key="c" v={f0(m.conv)} l="Messaging conversations" e="People who started a chat" />);
-      if (A.cpr) k.push(<Kpi key="cpr" v={INR(A.cpr)} l="Cost per conversation" e="Spend ÷ conversations" />);
+      if (m.conv != null) k.push(<Kpi key="c" v={f0(m.conv)} l={A.rw.Title} e={A.rw.key === "messaging" ? "People who started a chat" : `Counted by Meta as ${A.rw.many}`} />);
+      if (A.cpr) k.push(<Kpi key="cpr" v={INR(A.cpr)} l={`Cost per ${A.rw.one}`} e={`Spend ÷ ${A.rw.few}`} />);
+      if (m.impr == null || m.reach == null) {
+        if (A.ctr != null) k.push(<Kpi key="ctr" v={PCT(A.ctr, 2)} l="Click-through rate" e="Clicks ÷ impressions" />);
+        if (A.cpc != null) k.push(<Kpi key="cpc" v={INR(A.cpc)} l="Cost per click" e="Spend ÷ clicks" />);
+      }
       if (m.impr != null) k.push(<Kpi key="i" v={f0(m.impr)} l="Impressions" e="Times ads were shown" />);
       if (m.reach != null) k.push(<Kpi key="r" v={f0(m.reach)} l="Reach" e="Different people who saw ads" />);
       if (A.freq) k.push(<Kpi key="f" v={f2(A.freq)} l="Frequency" e="Average views per person" />);
@@ -456,8 +500,8 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
               <div className="basis">Repeat views = impressions − reach.</div>
             </div>
             <div>
-              <div className="ct">Cost to get attention and conversations</div>
-              <HBars items={[{ l: "Cost per 1,000 impressions", v: A.cpm }, { l: "Cost per conversation", v: A.cpr }]} fmt={INR} />
+              <div className="ct">{A.rw.key === "messaging" ? "Cost to get attention and conversations" : `Cost to get attention and ${A.rw.few}`}</div>
+              <HBars items={[{ l: "Cost per 1,000 impressions", v: A.cpm }, { l: `Cost per ${A.rw.one}`, v: A.cpr }].filter((x) => x.v != null)} fmt={INR} />
               <div className="basis">Different units. Compare each figure with next month, not with each other.</div>
             </div>
           </div>
@@ -469,9 +513,9 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
           <Ttl k="camp" def="Campaign performance" />
           <table className="ptbl">
             <tbody>
-              <tr><th>Campaign</th><th>Objective</th><th>Spend</th><th>Results</th><th>Cost / result</th><th>Reach</th><th>Impressions</th><th>Frequency</th><th>CTR</th><th>CPC</th><th>CPM</th></tr>
+              <tr><th>Campaign</th><th>Objective</th><th>Spend</th><th>{A.rw.key === "messaging" || A.rw.key === "other" ? "Results" : A.rw.Title}</th><th>Cost / result</th><th>Reach</th><th>Impressions</th><th>Frequency</th><th>CTR</th><th>CPC</th><th>CPM</th></tr>
               <tr>
-                <td><b>{m.campaign}</b></td><td>{m.objective}</td><td>{INR(m.spend)}</td><td>{f0(m.conv)}</td><td>{INR(A.cpr)}</td>
+                <td><b>{m.campaign}</b></td><td>{m.objective || "—"}</td><td>{INR(m.spend)}</td><td>{f0(m.conv)}</td><td>{INR(A.cpr)}</td>
                 <td>{f0(m.reach)}</td><td>{f0(m.impr)}</td><td>{f2(A.freq)}</td>
                 <td className={A.ctr == null ? "na" : ""}>{A.ctr == null ? "Not in data" : PCT(A.ctr, 2)}</td>
                 <td className={A.cpc == null ? "na" : ""}>{A.cpc == null ? "Not in data" : INR(A.cpc)}</td>
@@ -495,32 +539,27 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
           </div>
         </>
       ));
-    } else {
-      add("paid", "Paid media overview", (
-        <>
-          <Ttl k="paid" def="Paid media" />
-          {note || <div className="empty">No paid media data was included in this report.</div>}
-        </>
-      ));
     }
   }
 
   // Organic and paid together, business impact
-  if (sec.impact || sec.leads) {
+  if ((sec.impact || sec.leads) && (A.hasIG || A.hasMeta)) {
     const st = (l: string, v: number | null) => v != null ? (
       <div className="st" key={l}><span>{l}</span><div className="b" style={{ width: `${Math.max(8, Math.min(100, (v / (ig.views || 1)) * 100))}%` }}>{f0(v)}</div></div>
     ) : (
       <div className="st" key={l}><span>{l}</span><div className="n">Not available in uploaded data</div></div>
     );
-    add("combined", "Organic and paid together", (
+    const both = A.hasMeta && A.hasIG;
+    const actions = [{ l: `Paid ${A.rw.many}`, v: A.hasMeta ? m.conv : null }, { l: "Organic messages", v: ig.messages }, { l: "Website clicks from profile", v: A.rw.focus === "enquiry" ? null : ig.websiteClicks }].filter((x) => x.v != null);
+    add("combined", both ? "Organic and paid together" : "Audience journey", (
       <>
-        <Ttl k="combined" def="Organic and paid together" sub="Platform definitions differ, so figures are placed side by side, not added." />
+        <Ttl k="combined" def={both ? "Organic and paid together" : "Audience journey"} sub={both ? "Platform definitions differ, so figures are placed side by side, not added." : "From first view to enquiry. Stages without data are shown as unavailable."} />
         <div className="cols" style={{ gridTemplateColumns: "1fr 1fr", gap: 44, flex: 1 }}>
           <div>
             <div className="ct">Visibility by source</div>
             <HBars items={[{ l: "Organic: Instagram views", v: ig.views }, { l: "Paid: Meta impressions", v: m.impr }].filter((x) => x.v != null)} />
-            <div className="ct" style={{ marginTop: 22 }}>Direct enquiries</div>
-            <HBars items={[{ l: "Paid messaging conversations", v: m.conv }, { l: "Organic messages", v: ig.messages }].filter((x) => x.v != null)} />
+            <div className="ct" style={{ marginTop: 22 }}>{A.rw.focus === "enquiry" ? "Direct enquiries" : "Actions people took"}</div>
+            {actions.length || A.rw.focus === "enquiry" ? <HBars items={actions} /> : <div className="basis">Not available in uploaded data.</div>}
             <div className="basis">{ig.messages == null ? "Organic messages: not available in uploaded data." : ""}</div>
           </div>
           <div>
@@ -549,9 +588,14 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
       <>
         <Ttl k="impact" def="Business impact" sub="Reach, engagement, enquiries and sales are different things." />
         <div>
-          {tier("Brand visibility", f0(m.impr), "ad impressions", `Paid ad views${ig.views != null ? `, plus ${f0(ig.views)} organic Instagram views` : ""}.`)}
-          {tier("Audience discovery", PCT(ig.nonFol), "of views from non-followers", "How much attention came from people who did not already follow.")}
-          {tier("Direct enquiries", f0(m.conv), "messaging conversations", "People who started a message conversation after seeing an ad.")}
+          {m.impr != null
+            ? tier("Brand visibility", f0(m.impr), "ad impressions", `Paid ad views${ig.views != null ? `, plus ${f0(ig.views)} organic Instagram views` : ""}.`)
+            : tier("Brand visibility", f0(ig.views), "organic Instagram views", "Times the content was seen on Instagram.")}
+          {ig.nonFol != null ? tier("Audience discovery", PCT(ig.nonFol), "of views from non-followers", "How much attention came from people who did not already follow.") : null}
+          {A.hasMeta && m.conv != null
+            ? tier({ enquiry: "Direct enquiries", traffic: "Website visits", sales: "Recorded purchases", other: "Campaign results" }[A.rw.focus], f0(m.conv), A.rw.many,
+              A.rw.key === "messaging" ? "People who started a message conversation after seeing an ad." : `${A.rw.Title} counted by Meta Ads in the period.`)
+            : ig.engaged != null ? tier("Engagement", f0(ig.engaged), "accounts engaged", "People who liked, commented, shared or saved the content.") : null}
           {have ? provided : tier("Sales and revenue", "Not available", "", "Sales attribution not available in current reporting data.", true)}
         </div>
         <Ai id="imp" />
@@ -567,7 +611,7 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
     const rows: [string, string, (n: number | null) => string, boolean][] = [
       ["views", "Instagram views", f0, false], ["unique", "Unique viewers", f0, false], ["followers", "Total followers", f0, false],
       ["net", "Net followers", sgn, false], ["posts", "Posts", f0, false], ["reels", "Reels", f0, false], ["spend", "Ad spend", INR, false],
-      ["conv", "Messaging conversations", f0, false], ["cpr", "Cost per conversation", INR, true], ["impr", "Impressions", f0, false], ["reach", "Ad reach", f0, false],
+      ["conv", A.rw.Title, f0, false], ["cpr", `Cost per ${A.rw.one}`, INR, true], ["impr", "Impressions", f0, false], ["reach", "Ad reach", f0, false],
     ];
     const prevMonth = MONTHS[(parseDay(d.period.start).m + 11) % 12];
     add("mom", "Month over month", (
@@ -664,6 +708,7 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
     <div className="thanks" style={{ position: "absolute", inset: 0 }}>
       <div style={{ fontSize: 34 }}><ClientWord name={doc.client.name} brand={brand} size={40} /></div>
       <h2>Thank you</h2>
+      {contactLine(doc) ? <div style={{ fontSize: 13, color: "var(--rmute)", marginTop: -8 }}>{contactLine(doc)}</div> : null}
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <GbsMark brand={brand} size={30} />
         <div style={{ textAlign: "left" }}>
@@ -677,12 +722,22 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
   return P;
 }
 
+/** The client's company, handles and website for the thank-you page. Empty when none are set. */
+function contactLine(doc: ReportDoc): string {
+  const c = doc.client, bits: string[] = [];
+  if (c.company && c.company !== c.name) bits.push(c.company);
+  if (c.instagram) bits.push(`@${c.instagram}`);
+  if (c.facebook) bits.push(c.facebook.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""));
+  if (c.website) bits.push(c.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""));
+  return bits.join("  ·  ");
+}
+
 /** Placeholder render of the figures, used only for the demo fixture. */
 function MockShot({ doc, A, p }: { doc: ReportDoc; A: Analysis; p: Mock }) {
   const d = doc.data;
   const per = `${fDay(d.period.start)} – ${fLong(d.period.end)}`;
   const rows: [string, string][] = p === "meta"
-    ? [["Amount spent", INR(d.meta.spend)], ["Messaging conversations started", f0(d.meta.conv)], ["Cost per messaging conversation", INR(A.cpr)], ["Impressions", f0(d.meta.impr)], ["Reach", f0(d.meta.reach)], ["Frequency", f2(A.freq)]]
+    ? [["Amount spent", INR(d.meta.spend)], [A.rw.key === "messaging" ? "Messaging conversations started" : A.rw.Title, f0(d.meta.conv)], [`Cost per ${A.rw.key === "messaging" ? "messaging conversation" : A.rw.one}`, INR(A.cpr)], ["Impressions", f0(d.meta.impr)], ["Reach", f0(d.meta.reach)], ["Frequency", f2(A.freq)]]
     : p === "ig2"
       ? [["Followers", f0(d.ig.followers)], ["Net follows", sgn(d.ig.net)], ["Follower growth", PCT(d.ig.growth)], ["Content published", f0(A.c.length)]]
       : [["Views", f0(d.ig.views)], ["Accounts reached (unique viewers)", f0(d.ig.unique)], ["Views from non-followers", PCT(d.ig.nonFol)]];

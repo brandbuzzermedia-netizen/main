@@ -5,6 +5,12 @@
 > (`src/lib/auth/session.ts`). Where this spec says Supabase, Postgres, RLS or signed storage URLs,
 > build on those instead, and ask before adding a database or auth service. README.md has the current state:
 > all five build steps are implemented; Claude features need ANTHROPIC_API_KEY.
+>
+> **Decision (Oct 2026): multi-client.** GBS has many clients in different industries. Nothing may assume
+> Thrishank Doors (sample data only) or a messaging campaign: client details and branding come from the
+> client profile, Meta wording from the result type (`src/lib/report/results.ts`), and pages without data
+> are left out rather than shown empty (this replaces the "one-line note" rule below for new reports).
+> Files live under `data/files/<client>/<month-yyyy>/<platform>/`. Every AI call is scoped to one client.
 
 Production build of a SaaS web app for **Get Bee Seen (GBS)**, a digital marketing agency (owner: Mehul, Bengaluru).
 Agency staff upload raw monthly data (platform screenshots, CSV/XLSX, social URLs, client branding) and the app produces a

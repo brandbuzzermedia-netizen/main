@@ -54,6 +54,7 @@ export function ReportReview({ doc, duplicates, actions, share }: { doc: ReportD
             <StatusChip status={doc.status} />
             <Badge>{doc.template[0].toUpperCase() + doc.template.slice(1)}</Badge>
             {doc.isDemo ? <Badge variant="warn">Contains sample data</Badge> : null}
+            {doc.copiedFrom?.kind === "duplicate" ? <Badge variant="warn">Duplicated from {doc.copiedFrom.id}</Badge> : null}
           </span>
         }
       >
@@ -61,6 +62,7 @@ export function ReportReview({ doc, duplicates, actions, share }: { doc: ReportD
         <Button asChild><Link href={`/reports/${doc.id}/edit`}>Edit data</Link></Button>
         <Button asChild><Link href={`/reports/${doc.id}/text`}>Edit text</Link></Button>
         <Button asChild><Link href={`/create?from=${doc.id}`}>Start next month</Link></Button>
+        <Button asChild><Link href={`/create?duplicate=${doc.id}`}>Duplicate report</Link></Button>
         <PresentButton className={buttonVariants({})}>Present</PresentButton>
         <Button asChild><a href={`/print/reports/${doc.id}`} target="_blank" rel="noreferrer">Print view</a></Button>
         <Button asChild variant="primary"><a href={`/api/reports/${doc.id}/pdf`}>Download PDF</a></Button>

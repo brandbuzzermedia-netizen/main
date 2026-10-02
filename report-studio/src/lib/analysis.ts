@@ -3,6 +3,7 @@
 // Ported from the prototype's analyze().
 import { MONTHS, avg, parseDay, sum } from "./format.ts";
 import type { ContentItem, ContentType, ReportData } from "./report/types.ts";
+import { resultWords } from "./report/results.ts";
 
 export interface FormatStat {
   name: "Reels" | "Posts" | "Carousels";
@@ -77,6 +78,13 @@ export function analyze(d: ReportData) {
   const m = d.meta, ig = d.ig;
   const start = parseDay(d.period.start);
   const reels = by("Reel"), posts = by("Post");
+  const rw = resultWords(m);
+  const hasMeta = m.spend != null;
+  const listed = d.content.length > 0;
+  // Account-level interactions, when Insights reported them.
+  const inter = [ig.likes, ig.comments, ig.shares, ig.saves];
+  const interactions = inter.some((v) => v != null) ? inter.reduce<number>((t, v) => t + (v ?? 0), 0) : null;
+  const hasEngagement = ig.engaged != null || interactions != null;
 
   return {
     data: d,
@@ -88,13 +96,26 @@ export function analyze(d: ReportData) {
     month: MONTHS[start.m] + " " + start.y,
     monthName: MONTHS[start.m],
     hasIG: ig.views != null,
-    hasMeta: m.spend != null,
-    /** Cost per result (messaging conversation). */
+    hasMeta,
+    /** Words for this campaign's results (leads, conversations, clicks…). */
+    rw,
+    /**
+     * What the report leads with: enquiries when paid media produced
+     * enquiry-type results, otherwise reach and engagement.
+     */
+    focus: (hasMeta && m.conv && rw.focus === "enquiry" ? "enquiries" : "engagement") as "enquiries" | "engagement",
+    /** Cost per result, of the campaign's result type. */
     cpr: m.spend != null && m.conv ? m.spend / m.conv : null,
     freq: m.impr && m.reach ? m.impr / m.reach : null,
-    cpm: m.spend != null && m.impr ? (m.spend / m.impr) * 1000 : null,
-    ctr: m.clicks && m.impr ? (m.clicks / m.impr) * 100 : null,
-    cpc: m.clicks && m.spend != null ? m.spend / m.clicks : null,
+    // Calculated where possible; otherwise the rate Ads Manager reported.
+    cpm: m.spend != null && m.impr ? (m.spend / m.impr) * 1000 : m.cpm ?? null,
+    ctr: m.clicks && m.impr ? (m.clicks / m.impr) * 100 : m.ctr ?? null,
+    cpc: m.clicks && m.spend != null ? m.spend / m.clicks : m.cpc ?? null,
+    /** Sum of account-level likes, comments, shares and saves. */
+    interactions,
+    hasEngagement,
+    /** Account engagement rate: interactions ÷ accounts reached. */
+    accountER: interactions != null && ig.unique ? (interactions / ig.unique) * 100 : null,
     /** How many times more views per piece the leading format earned. */
     ratio: fm.length > 1 ? fm[0].avg / fm[1].avg : null,
     /** Views per net new follower. */
@@ -112,7 +133,14 @@ export function analyze(d: ReportData) {
     topReach: topBy(c, (x) => x.reach),
     topComm: topBy(c, (x) => x.comments),
     themes,
-    counts: { reels: reels.length, posts: posts.length, car: by("Carousel").length },
+    // From the content list; from the Insights counts when no posts were listed.
+    counts: listed
+      ? { reels: reels.length, posts: posts.length, car: by("Carousel").length, stories: ig.stories ?? null }
+      : { reels: ig.reels ?? 0, posts: ig.posts ?? 0, car: 0, stories: ig.stories ?? null },
+    /** True when posts were listed one by one. */
+    listed,
+    /** False when neither a post list nor Insights counts were supplied. */
+    countsKnown: listed || ig.posts != null || ig.reels != null,
     rating(x: ContentItem): Rating {
       const v = x.views ?? 0, a = avgV ?? 0;
       return v >= a * 1.25 ? ["Top performing", "top"] : v >= a * 0.85 ? ["On track", "mid"] : ["Below average", "low"];

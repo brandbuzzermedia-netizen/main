@@ -1,12 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { analyze } from "@/lib/analysis";
-import { getReportDoc, getSession } from "@/lib/data/repo";
+import { getReportDoc, getSession, pdfFileName } from "@/lib/data/repo";
 import { renderPdf } from "@/lib/pdf/render";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const fileSafe = (s: string) => s.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 /** GET /api/reports/:id/pdf, the client report as an A4-landscape PDF. */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -24,8 +21,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       url: `${origin}/print/reports/${encodeURIComponent(id)}`,
       cookies: request.cookies.getAll().map(({ name, value }) => ({ name, value })),
     });
-    const month = analyze(doc.data).month.replace(" ", "-");
-    const filename = `${fileSafe(doc.client.name)}_Monthly-Report_${month}_GBS.pdf`;
+    const filename = pdfFileName(doc.client.name, doc.data.period.start);
     return new NextResponse(new Uint8Array(pdf), {
       headers: {
         "Content-Type": "application/pdf",

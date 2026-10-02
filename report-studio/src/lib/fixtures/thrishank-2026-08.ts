@@ -34,6 +34,7 @@ export function thrishankAugust2026(): ReportDoc {
       meta: {
         campaign: "Thrishank – Messaging conversations", objective: "Messages",
         spend: 8474.59, conv: 363, impr: 115004, reach: 39030, clicks: null,
+        resultType: "Messaging conversations",
       },
       outcomes: { qualified: null, bookings: null, sales: null, revenue: null },
       prev: {

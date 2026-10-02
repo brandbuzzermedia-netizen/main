@@ -40,16 +40,40 @@ export interface InstagramData {
   profileVisits: number | null;
   websiteClicks: number | null;
   messages: number | null;
+  /** Followers on the first day of the period. Net change = end − start. */
+  followersStart?: number | null;
+  /** Accounts that interacted with the content. */
+  engaged?: number | null;
+  /** Account-level interaction totals from Insights. */
+  likes?: number | null;
+  comments?: number | null;
+  shares?: number | null;
+  saves?: number | null;
+  /** How many of each were published, as Insights reports them. */
+  posts?: number | null;
+  reels?: number | null;
+  stories?: number | null;
 }
+
+/** What Meta counted as a result. Copy and labels follow it. */
+export const RESULT_TYPES = ["Messaging conversations", "Leads", "Calls", "Link clicks", "Landing page views", "Purchases", "Other results"] as const;
+export type ResultType = (typeof RESULT_TYPES)[number];
 
 export interface MetaAdsData {
   campaign: string;
   objective: string;
   spend: number | null;
+  /** Results, of the kind given by `resultType`. */
   conv: number | null;
   impr: number | null;
   reach: number | null;
   clicks: number | null;
+  /** Missing on reports saved before result types existed: those were messaging campaigns. */
+  resultType?: ResultType | "";
+  /** Rates as Ads Manager reports them. Used only when they cannot be calculated. */
+  ctr?: number | null;
+  cpc?: number | null;
+  cpm?: number | null;
 }
 
 export interface Outcomes {
@@ -141,11 +165,23 @@ export interface InternalNote {
 
 export type ReportStatus = "Draft" | "Pending" | "Ready for review" | "Delivered";
 
+/** The client details a report prints. Always the report's own client. */
+export interface ReportClient {
+  id: string;
+  name: string;
+  industry: string;
+  location: string;
+  company?: string | null;
+  website?: string | null;
+  instagram?: string | null;
+  facebook?: string | null;
+}
+
 export interface ReportDoc {
   id: string;
   status: ReportStatus;
   createdAt: string;
-  client: { id: string; name: string; industry: string; location: string };
+  client: ReportClient;
   brand: Brand;
   template: Template;
   sections: Record<SectionKey, boolean>;
@@ -165,4 +201,6 @@ export interface ReportDoc {
   notes: InternalNote[];
   /** True while any figure is a placeholder rather than extracted data. */
   isDemo: boolean;
+  /** Set when the report was copied from another report of the same client. */
+  copiedFrom?: { id: string; kind: "next-month" | "duplicate" } | null;
 }

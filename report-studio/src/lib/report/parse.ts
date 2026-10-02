@@ -2,7 +2,7 @@
 // the report shows as "not available"; nothing is ever estimated. Values that
 // cannot be true (reach above impressions, a post dated outside the month)
 // are rejected with a message instead of being stored.
-import { SECTION_KEYS, type ContentItem, type ContentType, type ReportData, type SectionKey, type Template } from "./types.ts";
+import { RESULT_TYPES, SECTION_KEYS, type ResultType, type ContentItem, type ContentType, type ReportData, type SectionKey, type Template } from "./types.ts";
 
 export type FormErrors = Record<string, string>;
 
@@ -63,8 +63,23 @@ export function parseReportForm(get: Get, contentJson: string | null, getAll: (n
     profileVisits: count("ig.profileVisits", "Profile visits"),
     websiteClicks: count("ig.websiteClicks", "Website clicks"),
     messages: count("ig.messages", "Organic messages"),
+    followersStart: count("ig.followersStart", "Followers at the start"),
+    engaged: count("ig.engaged", "Accounts engaged"),
+    likes: count("ig.likes", "Likes"),
+    comments: count("ig.comments", "Comments"),
+    shares: count("ig.shares", "Shares"),
+    saves: count("ig.saves", "Saves"),
+    posts: count("ig.posts", "Posts published"),
+    reels: count("ig.reels", "Reels published"),
+    stories: count("ig.stories", "Stories published"),
   };
+  // Net change follows from the start and end follower counts when it was not typed.
+  if (ig.net == null && ig.followersStart != null && ig.followers != null) ig.net = ig.followers - ig.followersStart;
+  else if (ig.net != null && ig.followersStart != null && ig.followers != null && ig.followers - ig.followersStart !== ig.net) {
+    errors["ig.net"] = `Net followers (${ig.net}) does not match the start and end counts (${ig.followers - ig.followersStart}). Check the three figures.`;
+  }
   if (ig.net != null && ig.followers != null && ig.net > ig.followers) errors["ig.net"] = "Net new followers cannot exceed total followers.";
+  if (ig.engaged != null && ig.unique != null && ig.engaged > ig.unique) errors["ig.engaged"] = "Accounts engaged cannot be more than accounts reached.";
 
   const meta = {
     campaign: text("meta.campaign"),
@@ -74,7 +89,12 @@ export function parseReportForm(get: Get, contentJson: string | null, getAll: (n
     impr: count("meta.impr", "Impressions"),
     reach: count("meta.reach", "Reach"),
     clicks: count("meta.clicks", "Link clicks"),
+    resultType: (RESULT_TYPES as readonly string[]).includes(get("meta.resultType") ?? "") ? (get("meta.resultType") as ResultType) : ("" as const),
+    ctr: num("meta.ctr", "CTR", { min: 0, max: 100 }),
+    cpc: count("meta.cpc", "Cost per click"),
+    cpm: count("meta.cpm", "CPM"),
   };
+  if (meta.conv != null && !meta.resultType) errors["meta.resultType"] = "Choose what the results are (leads, calls, conversations…).";
   if (meta.reach != null && meta.impr != null && meta.reach > meta.impr) errors["meta.reach"] = "Reach cannot be more than impressions. Check both figures.";
   if (meta.spend != null && !meta.campaign) errors["meta.campaign"] = "Name the campaign the spend belongs to.";
 

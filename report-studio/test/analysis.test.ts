@@ -26,7 +26,7 @@ test("formats are ranked by average views", () => {
   assert.equal(K(A.lead?.avg), "10.6K");
   assert.equal(K(A.other?.avg), "5K");
   assert.equal(A.ratio?.toFixed(2), "2.11");
-  assert.deepEqual(A.counts, { reels: 4, posts: 3, car: 0 });
+  assert.deepEqual(A.counts, { reels: 4, posts: 3, car: 0, stories: null });
 });
 
 test("top-by metrics pick a separate winner for each metric", () => {
@@ -109,6 +109,8 @@ test("copy is built from the figures and says so when data is missing", () => {
   assert.equal(gen("t.3", analyze(noMeta)), "Meta Ads data was not included in this report.");
   const empty = fixture().data;
   empty.content = [];
+  assert.equal(gen("t.0", analyze(empty)), "Content was seen 81,560 times by 35,217 accounts.");
+  empty.ig.views = null;
   assert.equal(gen("t.0", analyze(empty)), NA);
   assert.equal(gen("unknown", A), "");
 });

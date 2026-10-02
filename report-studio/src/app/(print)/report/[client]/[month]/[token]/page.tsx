@@ -5,7 +5,7 @@ import { UnlockForm } from "@/components/share/unlock-form";
 import { FitPages, PresentButton } from "@/components/studio/fit-pages";
 import { analyze } from "@/lib/analysis";
 import { isShareUnlocked, shareCookieName } from "@/lib/auth/session";
-import { findSharedReport } from "@/lib/data/repo";
+import { findSharedReport, withSignedFiles } from "@/lib/data/repo";
 import "../../../share.css";
 
 type Params = { client: string; month: string; token: string };
@@ -27,7 +27,9 @@ export default async function SharedReport({ params, searchParams }: { params: P
       </main>
     );
   }
-  const { doc, share } = found;
+  const { share } = found;
+  // The client has no staff session, so every image gets its own signed link.
+  const doc = withSignedFiles(found.doc);
   const unlocked = isShareUnlocked((await cookies()).get(shareCookieName(p.token))?.value, p.token, share.passwordHash);
   const title = `${doc.client.name}, ${analyze(doc.data).month}`;
   if (!unlocked) {

@@ -5,6 +5,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { MODEL, anthropic } from "./client";
 import { AiError } from "./write";
+import { RESULT_TYPES } from "../report/types";
 
 export type ExtractPlatform = "instagram" | "meta";
 export type Confidence = "high" | "medium" | "low";
@@ -12,8 +13,17 @@ export type Confidence = "high" | "medium" | "low";
 /** Report form field -> [schema key, label Claude looks for]. */
 const FIELDS: Record<ExtractPlatform, [string, string, string][]> = {
   instagram: [
-    ["ig.views", "views", "Views (Insights overview)"],
+    ["ig.views", "views", "Views (Insights overview; older screenshots call this impressions)"],
     ["ig.unique", "accounts_reached", "Accounts reached"],
+    ["ig.engaged", "accounts_engaged", "Accounts engaged"],
+    ["ig.followersStart", "followers_start", "Followers at the start of the period, only if printed"],
+    ["ig.likes", "likes", "Total likes for the account in the period"],
+    ["ig.comments", "comments", "Total comments for the account in the period"],
+    ["ig.shares", "shares", "Total shares for the account in the period"],
+    ["ig.saves", "saves", "Total saves for the account in the period"],
+    ["ig.posts", "posts_published", "Number of posts published, only if printed"],
+    ["ig.reels", "reels_published", "Number of Reels published, only if printed"],
+    ["ig.stories", "stories_published", "Number of stories published, only if printed"],
     ["ig.nonFol", "non_follower_views_pct", "Percentage of views from non-followers"],
     ["ig.followers", "followers", "Total followers"],
     ["ig.net", "net_follows", "Net follows: follows minus unfollows (can be negative)"],
@@ -24,15 +34,22 @@ const FIELDS: Record<ExtractPlatform, [string, string, string][]> = {
   ],
   meta: [
     ["meta.spend", "amount_spent", "Amount spent"],
-    ["meta.conv", "results", "Results: messaging conversations started"],
+    ["meta.conv", "results", "Results (whatever Ads Manager counts as the result: leads, messaging conversations, calls, link clicks…)"],
     ["meta.impr", "impressions", "Impressions"],
     ["meta.reach", "reach", "Reach"],
     ["meta.clicks", "link_clicks", "Link clicks"],
+    ["meta.ctr", "ctr_pct", "CTR (link click-through rate) percentage, only if printed"],
+    ["meta.cpc", "cpc", "CPC (cost per link click), only if printed"],
+    ["meta.cpm", "cpm", "CPM (cost per 1,000 impressions), only if printed"],
   ],
 };
 const TEXT_FIELDS: Record<ExtractPlatform, [string, string, string][]> = {
   instagram: [],
-  meta: [["meta.campaign", "campaign_name", "Campaign name"], ["meta.objective", "objective", "Objective or result type"]],
+  meta: [
+    ["meta.campaign", "campaign_name", "Campaign name"],
+    ["meta.objective", "objective", "Campaign objective"],
+    ["meta.resultType", "result_type", `What the results are, as one of: ${RESULT_TYPES.join(", ")}`],
+  ],
 };
 
 const nullable = (t: object) => ({ anyOf: [t, { type: "null" }] });
@@ -57,6 +74,7 @@ function schema(p: ExtractPlatform) {
   const props: Record<string, object> = {
     period_start: nullable({ type: "string", format: "date" }),
     period_end: nullable({ type: "string", format: "date" }),
+    account_name: nullable({ type: "string" }),
     notes: { type: "string" },
   };
   for (const [, key] of FIELDS[p]) props[key] = numField;
@@ -77,14 +95,20 @@ export interface ExtractResult {
   posts: ExtractedPost[];
   period: { start: string | null; end: string | null };
   notes: string;
+  /** The account or page name the screenshots show, for the wrong-client check. */
+  account: string | null;
 }
+
+/** Which client and month the screenshots are for. Each request covers one client only. */
+export interface ExtractScope { clientName: string; handle: string | null; month: string | null }
 
 export interface ImageInput { mediaType: "image/png" | "image/jpeg" | "image/webp"; base64: string }
 
-export async function extractFigures(platform: ExtractPlatform, images: ImageInput[]): Promise<ExtractResult> {
+export async function extractFigures(platform: ExtractPlatform, images: ImageInput[], scope?: ExtractScope): Promise<ExtractResult> {
   const label = platform === "instagram" ? "Instagram Insights" : "Meta Ads Manager";
   const wanted = [...FIELDS[platform], ...TEXT_FIELDS[platform]].map(([, key, desc]) => `- ${key}: ${desc}`).join("\n");
-  const instructions = `These are screenshots from ${label} for one client and one reporting period.
+  const who = scope ? ` They should belong to the client "${scope.clientName}"${scope.handle ? ` (Instagram @${scope.handle})` : ""}${scope.month ? `, for ${scope.month}` : ""}.` : "";
+  const instructions = `These are screenshots from ${label} for one client and one reporting period.${who}
 
 Read the figures that are printed in the screenshots:
 ${wanted}${platform === "instagram" ? "\n- posts: one entry per post or Reel whose own insights are shown (date, type, caption, views, reach, likes, comments, shares, saves). Empty if none are shown." : ""}
@@ -94,6 +118,8 @@ Rules:
 - Write numbers as plain numbers: 81560 not "81.5K" unless only "81.5K" is shown, in which case return 81500 and confidence "low". 98.4 for 98.4%. 8474.59 for ₹8,474.59.
 - Confidence: "high" when the value and its label are clearly legible; "medium" when the label is ambiguous or partly cut off; "low" when unsure. Prefer null over a low-confidence guess.
 - period_start and period_end: the date range the screenshots show, as YYYY-MM-DD, or null. If screenshots show different date ranges, set both to null and say so in notes.
+- account_name: the Instagram account, Facebook page or ad account name printed in the screenshots, or null if none is visible.
+- result_type: pick the option that matches the Results column label. Use null if it is not shown.
 - notes: one or two sentences on anything a reviewer should check (different date ranges, cropped figures, screenshots from another account). Empty string if nothing.`;
 
   let response: Anthropic.Beta.BetaMessage;
@@ -127,7 +153,8 @@ Rules:
   const fields: Record<string, ExtractedField> = {};
   for (const [name, key] of [...FIELDS[platform], ...TEXT_FIELDS[platform]]) {
     const f = raw[key] as { value?: unknown; confidence?: unknown } | undefined;
-    const ok = f && (typeof f.value === "number" ? Number.isFinite(f.value) : typeof f.value === "string" && f.value.trim() !== "");
+    let ok = f && (typeof f.value === "number" ? Number.isFinite(f.value) : typeof f.value === "string" && f.value.trim() !== "");
+    if (ok && name === "meta.resultType" && !(RESULT_TYPES as readonly string[]).includes(f!.value as string)) ok = false;
     const c = f?.confidence;
     if (ok && (c === "high" || c === "medium" || c === "low")) fields[name] = { value: f!.value as number | string, confidence: c };
   }
@@ -137,5 +164,6 @@ Rules:
     posts: Array.isArray(raw.posts) ? (raw.posts as ExtractedPost[]).slice(0, 60) : [],
     period: { start: iso(raw.period_start), end: iso(raw.period_end) },
     notes: typeof raw.notes === "string" ? raw.notes.slice(0, 500) : "",
+    account: typeof raw.account_name === "string" && raw.account_name.trim() ? raw.account_name.trim().slice(0, 120) : null,
   };
 }

@@ -24,7 +24,9 @@ export function factsSheet(doc: ReportDoc, A: Analysis) {
   const d = A.data, ig = d.ig, m = d.meta, o = d.outcomes;
   const facts: Record<string, unknown> = {
     client: doc.client.name,
+    report_id: doc.id,
     industry: doc.client.industry || NA,
+    report_focus: A.focus === "enquiries" ? "enquiries from paid media" : "reach and engagement",
     period: `${fLong(d.period.start)} to ${fLong(d.period.end)}`,
     month: A.month,
     instagram: {
@@ -32,6 +34,10 @@ export function factsSheet(doc: ReportDoc, A: Analysis) {
       followers_at_month_end: v(ig.followers, f0), net_follows: v(ig.net, sgn), follower_growth: v(ig.growth, (x) => (x > 0 ? "+" : "") + PCT(x)),
       profile_visits: v(ig.profileVisits, f0), external_link_taps: v(ig.websiteClicks, f0), organic_messages: v(ig.messages, f0),
       views_per_new_follower: v(A.vpf, f0),
+      followers_at_month_start: v(ig.followersStart, f0), accounts_engaged: v(ig.engaged, f0),
+      likes: v(ig.likes, f0), comments: v(ig.comments, f0), shares: v(ig.shares, f0), saves: v(ig.saves, f0),
+      total_interactions: v(A.interactions, f0), account_engagement_rate: v(A.accountER, (x) => PCT(x, 2)),
+      posts_published: v(ig.posts, f0), reels_published: v(ig.reels, f0), stories_published: v(ig.stories, f0),
     },
     content: {
       pieces: A.counts.reels + A.counts.posts + A.counts.car, reels: A.counts.reels, posts: A.counts.posts, carousels: A.counts.car,
@@ -47,8 +53,9 @@ export function factsSheet(doc: ReportDoc, A: Analysis) {
       engagement_rate_definition: "(likes + comments + shares + saves) ÷ reach",
     },
     meta_ads: A.hasMeta ? {
-      campaign: m.campaign || NA, objective: m.objective || NA, amount_spent: INR(m.spend), messaging_conversations: v(m.conv, f0),
-      cost_per_conversation: v(A.cpr, INR), impressions: v(m.impr, f0), reach: v(m.reach, f0), frequency: v(A.freq, f2),
+      campaign: m.campaign || NA, objective: m.objective || NA, amount_spent: INR(m.spend),
+      result_type: A.rw.Title, results: v(m.conv, f0), [A.rw.many.replace(/ /g, "_")]: v(m.conv, f0),
+      [`cost_per_${A.rw.one.replace(/ /g, "_")}`]: v(A.cpr, INR), impressions: v(m.impr, f0), reach: v(m.reach, f0), frequency: v(A.freq, f2),
       cost_per_1000_impressions: v(A.cpm, INR), link_clicks: v(m.clicks, f0), click_through_rate: v(A.ctr, (x) => PCT(x, 2)), cost_per_click: v(A.cpc, INR),
     } : "Meta Ads data was not included in this report.",
     client_reported_results: {
@@ -59,7 +66,7 @@ export function factsSheet(doc: ReportDoc, A: Analysis) {
     const p = d.prev, ch = (c: number | null, pr: number | null, inv = false) => delta(c, pr, inv)?.txt ?? "Not comparable";
     facts.previous_month = {
       instagram_views: v(p.views, f0), change_in_views: ch(ig.views, p.views), followers: v(p.followers, f0),
-      ad_spend: v(p.spend, INR), messaging_conversations: v(p.conv, f0), change_in_conversations: ch(m.conv, p.conv),
+      ad_spend: v(p.spend, INR), ad_results: v(p.conv, f0), change_in_ad_results: ch(m.conv, p.conv),
     };
   }
   return facts;
@@ -70,12 +77,13 @@ const SYSTEM = `You write the commentary in a monthly marketing performance repo
 Rules, all of them strict:
 1. Use only the facts given. Every number you write must appear in FACTS or in that block's draft, written exactly the same way (same rounding, same symbols). Never calculate, round, estimate or invent a figure. Write small counts as numerals only if they appear in FACTS.
 2. When the facts do not support a statement, write exactly: Insufficient data to determine.
-3. Never claim sales, revenue, bookings or leads unless client_reported_results gives them. Messaging conversations are conversations, not leads.
+3. Never claim sales, revenue, bookings or qualified leads unless client_reported_results gives them. Ad results are exactly the kind meta_ads.result_type names (for example messaging conversations are conversations, link clicks are clicks); never describe them as something else.
 4. Never state why content performed as it did. For blocks whose id starts with "why.", begin with "Likely contributing factors based on available data:" and keep visual causes as unknown.
 5. Keep each block to its role. pd_data states data only; pd_obs states an observation; pd_int interprets; pd_act recommends an action. Recommendations (rc.*, ct.*, ig_next, pd_act) are actions for next month.
 6. Public Instagram data is not Insights; never imply private data you were not given.
 7. Plain, warm, specific British English, as in the drafts. About the same length as each draft. No headings, lists, emoji or dashes used as punctuation.
-Improve the drafts' clarity and flow; do not add claims they do not support.`;
+8. The report is for one client only, named in FACTS.client. Never mention any other business, brand, client or account.
+Improve the drafts' clarity and flow; do not add claims they do not support. Where FACTS.report_focus is "reach and engagement", do not frame the month around enquiries.`;
 
 export interface WriteResult {
   accepted: Record<string, string>;
@@ -84,7 +92,11 @@ export interface WriteResult {
 
 export class AiError extends Error {}
 
-export async function writeReportText(doc: ReportDoc): Promise<WriteResult> {
+/**
+ * @param otherClients names of the agency's other clients. A block naming any
+ * of them is rejected, so one client's details never reach another's report.
+ */
+export async function writeReportText(doc: ReportDoc, otherClients: string[] = []): Promise<WriteResult> {
   const data = resolveData(doc).data;
   const A = analyze(data);
   const blocks = reportBlocks(doc);
@@ -139,6 +151,8 @@ export async function writeReportText(doc: ReportDoc): Promise<WriteResult> {
     if (t.length > 1500) { result.rejected.push({ id: b.id, reason: "too long" }); continue; }
     const g = checkGrounding(t, allowed);
     if (!g.ok) { result.rejected.push({ id: b.id, reason: `figures not in the data: ${g.unknown.join(", ")}` }); continue; }
+    const leak = otherClients.find((n) => n.trim().length > 2 && t.toLowerCase().includes(n.trim().toLowerCase()));
+    if (leak) { result.rejected.push({ id: b.id, reason: "mentions another client" }); continue; }
     if (b.id.startsWith("why.") && !t.startsWith("Likely contributing factors based on available data")) {
       result.rejected.push({ id: b.id, reason: "did not hedge the cause" }); continue;
     }
