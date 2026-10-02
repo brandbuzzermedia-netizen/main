@@ -64,7 +64,7 @@ sample client the store starts with.
   - **Start next month** pre-fills the next report, with this month as the
     comparison.
 - **Report**: the prototype's pages, in Premium, Minimal or Dark, with the
-  client's logo and colours. Long months continue onto extra pages.
+  client's logo and colours, set in Poppins (`report-type.css`). Long months continue onto extra pages.
 - **Report text**: edit, shorten, expand or reset any block, with saved
   versions. **Write with Claude** rewrites every block from the report's
   figures only. A block that mentions a figure not in the data, or claims
@@ -168,9 +168,12 @@ business record. It is not shared between servers, and it is not in git
 
 ### PDF fidelity
 
-`npm run compare` exports the prototype through the same Playwright
-pipeline, with the same fonts, and compares pixels at 96 dpi. Current
-result: **21 of 23 pages are pixel-identical** to the prototype, every
+Reports are set in Poppins (`src/components/report/report-type.css`), not
+the prototype's Instrument Serif and Hanken Grotesk. `npm run compare`
+applies the same type styles to the prototype, exports it through the same
+Playwright pipeline, and compares pixels at 96 dpi, so it still checks the
+layout page by page. Current result: **21 of 23 pages are pixel-identical**
+to the prototype, every
 number on every page matches `reference/`, and page count (23) and paper
 size (841.92 × 595.92 pt) match.
 
@@ -179,7 +182,9 @@ The two pages that differ do so on purpose. The prototype gives the
 uses to hide the studio header, so the pill vanishes from its PDF. The port
 shows it (content breakdown, pages 7 and 8).
 
-Against `reference/` itself, the Chromium version decides the result. The
+Against `reference/` itself, pixels now differ by 1.5–7% per page because
+the fonts changed; the numbers still match exactly. Before the font change,
+the Chromium version decided the result. The
 Docker image (Playwright 1.63's Chromium) reproduces it almost exactly:
 0.00–1.15% of pixels per page. An older Chromium (141, used in development
 here) spaces glyphs slightly narrower, giving 0.4–3.3% per page, as it also

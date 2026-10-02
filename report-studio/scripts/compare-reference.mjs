@@ -109,6 +109,12 @@ const protoPdf = join(OUT, "prototype.pdf");
   rmSync(proto);
   await page.click("[data-act=login]");
   await page.click("[data-act=open][data-id=r1]");
+  // Reports now use Poppins (report-type.css). The same styles go onto the
+  // prototype, so the comparison still checks the layout page by page.
+  const typeCss = readFileSync(join(ROOT, "src", "components", "report", "report-type.css"), "utf8")
+    .replace(/url\("\.\.\/\.\.\/fonts\/([^"]+)"\)/g, "url(https://fonts.local/$1)");
+  // The prototype has no next/font variables; point the one the styles use at Poppins.
+  await page.addStyleTag({ content: `:root{--font-poppins:'Poppins'}\n${typeCss}` });
   await page.evaluate(() => document.fonts.ready);
   await page.emulateMedia({ media: "print" });
   await page.evaluate(() => document.querySelector("#pages").style.setProperty("--s", "1"));

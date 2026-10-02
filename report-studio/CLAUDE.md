@@ -44,14 +44,15 @@ report writing (Anthropic API, server-side only).
   Do not stretch the bee; use it small. Prototype trimmed 2 stray top pixel rows off `logo_stacked_white.png`; do the same.
 - **Reports = client brand leads, GBS co-brands.** Client logo/colours dominate (cover, headers, numerals). GBS appears on every
   page: top-right lockup (bee + "Get Bee Seen"), footer "Prepared by Get Bee Seen", cover "Prepared by" credit, thank-you page.
-  Report typography: Instrument Serif (display) + Hanken Grotesk (body). Derive an elegant palette from the client logo if
+  Report typography: **Poppins** throughout (Oct 2026 decision; `src/components/report/report-type.css`, arrows from Baloo 2).
+  The prototype's Instrument Serif + Hanken Grotesk are kept only for the reference comparison. Derive an elegant palette from the client logo if
   none supplied (prototype `derivePalette`). Demo client palette (Thrishank Doors) is a placeholder: walnut `#3B2A21`, brass `#C9974A`.
 - Three templates: Premium (editorial), Minimal (white), Dark. Client colours layer on top.
 
 ## Report format
 Page = **1122x794 px** (A4 landscape at 96dpi), print CSS `@page{size:A4 landscape;margin:0}`, pages 793px tall in print to avoid
 blank pages. Preview scales pages with a CSS var `--s`. Server PDF via Playwright `page.pdf` with `printBackground`,
-`preferCSSPageSize`, embedded fonts (Instrument Serif, Hanken Grotesk, Baloo 2). Document title: "<Client> – Monthly Performance Report – <Month> – Get Bee Seen".
+`preferCSSPageSize`, embedded fonts (Poppins, Baloo 2). Document title: "<Client> – Monthly Performance Report – <Month> – Get Bee Seen".
 Page order (modules toggle on/off): Cover, Executive summary, What we worked on, Content calendar, Instagram performance,
 Content performance matrix (sortable), Content breakdown cards (2/page), Top performing (by views, engagement, shares, saves,
 reach, comments, follower conversion), Content insights (themes, worked/didn't/test), Paid overview, Campaign performance,

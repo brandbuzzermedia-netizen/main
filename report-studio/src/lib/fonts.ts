@@ -21,10 +21,13 @@ export const poppins = localFont({
     { path: "../fonts/Poppins-Bold.ttf", weight: "700" },
   ],
   variable: "--font-poppins",
-  display: "swap",
+  // "block": the PDF renderer must never print a fallback font.
+  display: "block",
 });
 
-// Client reports.
+// Client reports use Poppins (see report-type.css). The two fonts below are
+// the original report design, kept so the reference comparison can still
+// export the prototype as it was made.
 export const instrumentSerif = localFont({
   src: [
     { path: "../fonts/InstrumentSerif-Regular.ttf", weight: "400", style: "normal" },

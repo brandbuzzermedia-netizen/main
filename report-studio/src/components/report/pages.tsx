@@ -12,6 +12,7 @@ import { BarsV, Donut, HBars } from "./charts";
 import { Caption, ContentMatrix, type MatrixRow } from "./interactive";
 import { ClientWord, CoverArt, GbsMark } from "./marks";
 import "./report.css";
+import "./report-type.css";
 import { GBS_TAGLINE } from "@/lib/brand";
 
 export interface PageDef {
