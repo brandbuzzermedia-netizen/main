@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { FormAction, FormState } from "@/lib/forms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ const FIELDS: [keyof ClientInput, string, string][] = [
 
 export function ClientForm({ client, action: save }: { client?: ClientRow; action: FormAction<FormState> }) {
   const [state, action, pending] = useActionState<FormState, FormData>(save, {});
+  const [logoName, setLogoName] = useState<string | null>(null);
   const err = (k: string) => state.fields?.[k as keyof typeof state.fields];
   return (
     <form action={action} className="grid max-w-3xl gap-4" noValidate encType="multipart/form-data">
@@ -55,8 +56,12 @@ export function ClientForm({ client, action: save }: { client?: ClientRow; actio
           <legend className="px-1 font-heading text-[15px] font-bold text-heading">Branding</legend>
           <Label>
             Logo
-            <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" className="text-xs" />
-            <span className="text-[11.5px] font-normal">PNG with a transparent background works best.</span>
+            <span className="inline-flex h-9 w-fit cursor-pointer items-center rounded-full border border-primary bg-primary px-4 text-[13px] font-bold text-gbs-ink hover:border-gbs-ink">
+              {logoName ? "Change logo" : "Upload logo"}
+            </span>
+            {logoName ? <span className="truncate text-xs font-normal">{logoName}</span> : null}
+            <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => setLogoName(e.target.files?.[0]?.name ?? null)} />
+            <span className="text-[11.5px] font-normal">PNG with a transparent background, trimmed close to the logo: about 1200 × 400 px for a wide logo (at least 600 × 200 px), or 600 × 600 px for a square one. Under 1 MB.</span>
           </Label>
           <Label>
             Primary colour
