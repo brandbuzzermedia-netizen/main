@@ -5,7 +5,6 @@
  * shadcn/ui variables are mapped onto them so components pick up the brand.
  * Client reports do not use these: they use src/components/report/report.css.
  */
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
   --gbs-green: #196144;
@@ -45,20 +44,11 @@
   --hex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50V16L28 0l28 16v34zM28 100L0 84V66l28 16 28-16v18z' fill='none' stroke='%23FFF2DC' stroke-opacity='.09'/%3E%3C/svg%3E");
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --background: #191816; --foreground: #fff2dc; --card: #242220; --card-foreground: #fff2dc;
-    --popover: #242220; --popover-foreground: #fff2dc; --secondary: #2d2a26; --secondary-foreground: #fff2dc;
-    --muted: #2d2a26; --muted-foreground: #b9b09c; --accent: #2d2a26; --accent-foreground: #fff2dc;
-    --border: #3a3630; --input: #3a3630; --heading: #ffb933; --ok: #5cc49a; --warn: #f0b14a; --bad: #f0836b; --sidebar: #0f4430;
-  }
-}
-:root[data-theme="dark"] {
-  --background: #191816; --foreground: #fff2dc; --card: #242220; --card-foreground: #fff2dc;
-  --popover: #242220; --popover-foreground: #fff2dc; --secondary: #2d2a26; --secondary-foreground: #fff2dc;
-  --muted: #2d2a26; --muted-foreground: #b9b09c; --accent: #2d2a26; --accent-foreground: #fff2dc;
-  --border: #3a3630; --input: #3a3630; --heading: #ffb933; --ok: #5cc49a; --warn: #f0b14a; --bad: #f0836b; --sidebar: #0f4430;
-}
+/*
+ * The studio always uses the GBS brand, whatever the device's light or dark
+ * setting. Client reports carry the client's own colours instead.
+ */
+:root { color-scheme: light; }
 
 @theme inline {
   --color-background: var(--background);
