@@ -112,7 +112,19 @@ export interface Brand {
   /** Override for the GBS mark; defaults to the bee icon. */
   gbs: string | null;
   cover: string | null;
+  /**
+   * What the logo looks like, measured when it is uploaded: light marks need
+   * a darker backing on light pages, dark marks a white one on dark pages,
+   * and "boxed" logos carry their own background so need none.
+   */
+  logoTone?: LogoTone | null;
+  /** Backing behind the logo: chosen from the tone ("auto"), always white, or never. */
+  logoPlate?: "auto" | "white" | "none" | null;
+  /** Industry drawing for covers and post placeholders; "auto" picks it from the industry. */
+  art?: string | null;
 }
+
+export type LogoTone = "light" | "dark" | "boxed";
 
 export const SECTION_KEYS = [
   "exec", "social", "calendar", "content", "ig", "meta", "google", "linkedin",

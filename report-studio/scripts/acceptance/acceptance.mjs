@@ -122,6 +122,7 @@ await p.goto(B + '/clients/thrishank');
 const thrRows = await p.locator('main table tbody tr').allTextContents();
 check(thrRows.length === 2 && thrRows.every((r) => !/Wudgres|Lykes/.test(r)), `Thrishank history: September and August only (${thrRows.length})`);
 await p.goto(B + '/');
+await p.waitForTimeout(1500); // the stat numbers count up
 const dash = await p.locator('main').textContent();
 check(/3\s*Total clients/.test(dash) && dash.includes('Wudgres') && dash.includes('Lykes') && dash.includes('Thrishank Doors'), 'dashboard lists all three clients with counts');
 

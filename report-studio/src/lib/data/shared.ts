@@ -1,7 +1,7 @@
 // Client and report shapes and pure helpers, shared by the server data
 // layer (repo.ts) and anything that runs in the browser.
 import { MONTHS, parseDay } from "@/lib/format";
-import { SECTION_KEYS, type ReportClient, type ReportStatus, type SectionKey, type Template } from "@/lib/report/types";
+import { SECTION_KEYS, type Brand, type ReportClient, type ReportStatus, type SectionKey, type Template } from "@/lib/report/types";
 
 /** A client's report branding. Logo and cover are stored file URLs. */
 export interface ClientBrand {
@@ -9,6 +9,9 @@ export interface ClientBrand {
   accent: string;
   logo: string | null;
   cover: string | null;
+  logoTone?: Brand["logoTone"];
+  logoPlate?: Brand["logoPlate"];
+  art?: string | null;
 }
 
 /** Palette used until a client's own colours are set (the prototype's placeholder). */

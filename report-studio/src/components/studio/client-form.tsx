@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { ClientInput, ClientRow } from "@/lib/data/repo";
 import { DEFAULT_BRAND } from "@/lib/data/shared";
+import { measureLogo } from "@/lib/logo-tools";
 
 const FIELDS: [keyof ClientInput, string, string][] = [
   ["name", "Client name", "Shown on every report page"],
@@ -24,6 +25,7 @@ export function ClientForm({ client, action: save }: { client?: ClientRow; actio
   const [starting, start] = useTransition();
   const pending = saving || starting;
   const [logoName, setLogoName] = useState<string | null>(null);
+  const [logoTone, setLogoTone] = useState("");
   const err = (k: string) => state.fields?.[k as keyof typeof state.fields];
   return (
     <form
@@ -68,7 +70,13 @@ export function ClientForm({ client, action: save }: { client?: ClientRow; actio
               {logoName ? "Change logo" : "Upload logo"}
             </span>
             {logoName ? <span className="truncate text-xs font-normal">{logoName}</span> : null}
-            <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => setLogoName(e.target.files?.[0]?.name ?? null)} />
+            <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => {
+              const f = e.target.files?.[0];
+              setLogoName(f?.name ?? null);
+              setLogoTone("");
+              if (f) void measureLogo(URL.createObjectURL(f)).then(setLogoTone).catch(() => {});
+            }} />
+            <input type="hidden" name="logoTone" value={logoTone} />
             <span className="text-[11.5px] font-normal">PNG with a transparent background, trimmed close to the logo: about 1200 × 400 px for a wide logo (at least 600 × 200 px), or 600 × 600 px for a square one. Under 1 MB.</span>
           </Label>
           <Label>

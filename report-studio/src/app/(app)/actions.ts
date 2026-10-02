@@ -6,7 +6,7 @@ import { hashPassword, newToken, verifyPassword } from "@/lib/auth/password";
 import { SESSION_COOKIE, checkPassword, createSessionToken, shareCookieName, shareUnlockValue, signInConfigured } from "@/lib/auth/session";
 import { UploadError, brandScope, removeClientFiles, isFile, saveImage, screenshotScope } from "@/lib/data/files";
 import {
-  DEFAULT_BRAND, ReportExistsError, listClients, monthFolder, ownsFile, addInternalNote, createClient, createReport, createShare, deleteClient, findSharedReport, getClient, getReportDoc, getShare, removeShare, setSharePassword,
+  DEFAULT_BRAND, ReportExistsError, type ClientBrand, listClients, monthFolder, ownsFile, addInternalNote, createClient, createReport, createShare, deleteClient, findSharedReport, getClient, getReportDoc, getShare, removeShare, setSharePassword,
   applyTexts, setSettings, getReportRecord, type ReportInput, getSession, reportId, restoreVersion, saveVersion, setBlock, setClientBrand, setReportStatus, setResolution, updateClient, updateReport, type Session,
 } from "@/lib/data/repo";
 import { parseReportForm } from "@/lib/report/parse";
@@ -64,7 +64,7 @@ export async function saveClient(_: FormState, fd: FormData): Promise<FormState>
       target = await createClient(parsed.value);
       // Branding chosen on the form is saved into the new client's own brand folder.
       const brand = { ...DEFAULT_BRAND, primary: HEX.test(primary) ? primary : DEFAULT_BRAND.primary, accent: HEX.test(accent) ? accent : DEFAULT_BRAND.accent };
-      if (isFile(logo)) brand.logo = (await saveImage(brandScope(target), logo)).url;
+      if (isFile(logo)) Object.assign(brand, { logo: (await saveImage(brandScope(target), logo)).url, logoTone: brandOptions(fd).logoTone });
       await setClientBrand(target, brand);
     }
   } catch (e) {
@@ -188,6 +188,16 @@ export async function changeStatus(fd: FormData) {
 
 
 
+/** Logo backing, measured logo tone and report artwork from the branding form. */
+function brandOptions(fd: FormData): Pick<ClientBrand, "logoTone" | "logoPlate" | "art"> {
+  const tone = String(fd.get("logoTone") ?? ""), plate = String(fd.get("logoPlate") ?? "auto"), art = String(fd.get("art") ?? "auto");
+  return {
+    logoTone: tone === "light" || tone === "dark" || tone === "boxed" ? tone : null,
+    logoPlate: plate === "white" || plate === "none" ? plate : "auto",
+    art: /^[a-z]{2,20}$/.test(art) ? art : "auto",
+  };
+}
+
 export async function saveBrand(_: BrandFormState, fd: FormData): Promise<BrandFormState> {
   await requireStaff();
   const id = String(fd.get("clientId"));
@@ -196,11 +206,11 @@ export async function saveBrand(_: BrandFormState, fd: FormData): Promise<BrandF
   const primary = String(fd.get("primary") ?? ""), accent = String(fd.get("accent") ?? "");
   if (!HEX.test(primary) || !HEX.test(accent)) return { error: "Choose both brand colours." };
   const current = client.brand ?? DEFAULT_BRAND;
-  const brand = { ...current, primary, accent };
+  const brand = { ...current, primary, accent, ...brandOptions(fd) };
   try {
     const logo = fd.get("logo"), cover = fd.get("cover");
     if (isFile(logo)) brand.logo = (await saveImage(brandScope(id), logo)).url;
-    else if (fd.get("removeLogo")) brand.logo = null;
+    else if (fd.get("removeLogo")) { brand.logo = null; brand.logoTone = null; }
     if (isFile(cover)) brand.cover = (await saveImage(brandScope(id), cover)).url;
     else if (fd.get("removeCover")) brand.cover = null;
   } catch (e) {

@@ -1,5 +1,35 @@
+import type { CSSProperties } from "react";
 import type { Brand, ContentItem } from "@/lib/report/types";
 import { mix } from "@/lib/format";
+import { ArtShapes, type ArtKey } from "./industry-art";
+
+/** Where a logo sits: the cover's brand colour, or a light or dark page. */
+export type Surface = "cover" | "page" | "page-dark";
+
+const isDark = (hex: string) => {
+  const n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b < 150;
+};
+
+/**
+ * The backing colour behind a logo on a surface, or null for none. Light logos
+ * get a dark backing on light pages, dark logos a white one on dark grounds,
+ * and logos with their own background ("boxed") never need one. Logos saved
+ * before tones were measured keep the original rule: white on the cover only.
+ */
+export function logoPlate(brand: Brand, on: Surface): string | null {
+  if (!brand.logo) return null;
+  const mode = brand.logoPlate ?? "auto";
+  if (mode === "none") return null;
+  if (mode === "white") return "#fff";
+  const ground = on === "cover" ? isDark(brand.primary) : on === "page-dark";
+  switch (brand.logoTone) {
+    case "boxed": return null;
+    case "light": return ground ? null : isDark(brand.primary) ? brand.primary : "#191816";
+    case "dark": return ground ? "#fff" : null;
+    default: return on === "cover" ? "#fff" : null;
+  }
+}
 
 export const GBS_BEE = "/brand/bee.png";
 
@@ -9,18 +39,24 @@ export function GbsMark({ brand, size = 22 }: { brand: Brand; size?: number }) {
   return <img src={brand.gbs || GBS_BEE} alt="Get Bee Seen" style={{ height: size, width: "auto", display: "block" }} />;
 }
 
-/** Client logo, or a door mark plus the client's name when no logo was supplied. */
-function ClientMark({ name, brand, size }: { name: string; brand: Brand; size: number }) {
+/** Client logo, or the industry mark plus the client's name when no logo was supplied. */
+function ClientMark({ name, brand, size, art = "door" }: { name: string; brand: Brand; size: number; art?: ArtKey }) {
   // eslint-disable-next-line @next/next/no-img-element
   if (brand.logo) return <img src={brand.logo} alt={name} style={{ height: size }} />;
   const [first, ...rest] = name.split(" ");
   return (
     <>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
-        <rect x="6" y="2.5" width="12" height="19" />
-        <path d="M6 12h12M12 2.5v19" opacity=".6" />
-        <circle cx="15" cy="12" r=".9" fill="currentColor" />
-      </svg>
+      {art === "door" ? (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+          <rect x="6" y="2.5" width="12" height="19" />
+          <path d="M6 12h12M12 2.5v19" opacity=".6" />
+          <circle cx="15" cy="12" r=".9" fill="currentColor" />
+        </svg>
+      ) : art === "none" ? null : (
+        <svg viewBox="0 0 300 420" fill="none" stroke="currentColor" strokeWidth="20" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <ArtShapes art={art} color="currentColor" />
+        </svg>
+      )}
       <span>
         {first}
         {rest.length ? (
@@ -36,10 +72,13 @@ function ClientMark({ name, brand, size }: { name: string; brand: Brand; size: n
   );
 }
 
-export function ClientWord({ name, brand, size }: { name: string; brand: Brand; size?: number }) {
+export function ClientWord({ name, brand, size, art, on = "page" }: { name: string; brand: Brand; size?: number; art?: ArtKey; on?: Surface }) {
+  const plate = logoPlate(brand, on);
+  const px = size || 22;
+  const style: CSSProperties = { ...(size ? { fontSize: size } : {}), ...(plate ? { background: plate, padding: `${Math.round(px * 0.28)}px ${Math.round(px * 0.4)}px`, borderRadius: 4 } : {}) };
   return (
-    <span className="cw" style={size ? { fontSize: size } : undefined}>
-      <ClientMark name={name} brand={brand} size={Math.round((size || 22) * 1.4)} />
+    <span className="cw" style={size || plate ? style : undefined}>
+      <ClientMark name={name} brand={brand} size={Math.round(px * 1.4)} art={art} />
     </span>
   );
 }
@@ -49,7 +88,7 @@ export function ClientWord({ name, brand, size }: { name: string; brand: Brand; 
  * client palette. The demo keeps the prototype's door drawing; other clients
  * get a neutral frame so no product is implied.
  */
-export function CoverArt({ item, index, brand, motif = "plain" }: { item: ContentItem; index: number; brand: Brand; motif?: "door" | "plain" }) {
+export function CoverArt({ item, index, brand, motif = "plain" }: { item: ContentItem; index: number; brand: Brand; motif?: "door" | "plain" | ArtKey }) {
   // eslint-disable-next-line @next/next/no-img-element
   if (item.img) return <img src={item.img} alt="" />;
   const i = Math.max(0, index), b = brand.primary, a = brand.accent;
@@ -64,6 +103,11 @@ export function CoverArt({ item, index, brand, motif = "plain" }: { item: Conten
           <rect x="31" y="28" width="38" height="34" />
           <rect x="31" y="68" width="38" height="34" />
           <circle cx="66" cy="66" r="1.6" fill={a} />
+        </g>
+      ) : motif !== "plain" && motif !== "none" ? (
+        // The client's industry drawing, small, on the placeholder tile.
+        <g transform={`translate(${23 + dx / 4} 19) scale(.18)`} fill="none" stroke={a} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round">
+          <ArtShapes art={motif} color={a} />
         </g>
       ) : (
         <g fill="none" stroke={a} strokeWidth=".9">

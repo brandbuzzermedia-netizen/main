@@ -10,7 +10,8 @@ import { clientReady } from "@/lib/report/conflicts";
 import { PLATFORM_LABELS, type ContentItem, type Platform, type ReportDoc, type SourceShot } from "@/lib/report/types";
 import { BarsV, Donut, HBars } from "./charts";
 import { Caption, ContentMatrix, type MatrixRow } from "./interactive";
-import { ClientWord, CoverArt, GbsMark } from "./marks";
+import { ClientWord, CoverArt, GbsMark, logoPlate } from "./marks";
+import { IndustryArt, artFor } from "./industry-art";
 import "./report.css";
 import "./report-type.css";
 import { GBS_TAGLINE } from "@/lib/brand";
@@ -79,7 +80,9 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
   const per = `${fLong(d.period.start)} – ${fLong(d.period.end)}`;
   const T = (id: string) => blockText(doc, A, id);
   const idx = (x: ContentItem) => d.content.indexOf(x);
-  const motif = doc.isDemo ? "door" : "plain";
+  // The client's industry drawing (the demo keeps the prototype's door).
+  const artKey = artFor(doc.client.industry, brand.art);
+  const motif = doc.isDemo ? "door" : artKey;
   const art = (x: ContentItem) => <CoverArt item={x} index={idx(x)} brand={brand} motif={motif} />;
 
   const Ai = ({ id, lab }: { id: string; lab?: string }) => (
@@ -108,13 +111,13 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
     <div className="cover">
       <div className="l">
         <div>
-          {brand.logo ? (
-            // The palette comes from the logo, so it sits on a light plate to stay visible on the cover colour.
-            <span style={{ display: "inline-block", background: "#fff", padding: "10px 14px", borderRadius: 4 }}>
-              <ClientWord name={doc.client.name} brand={brand} size={34} />
+          {brand.logo && logoPlate(brand, "cover") ? (
+            // A backing only when the logo would not stand out on the cover colour (see logoPlate).
+            <span style={{ display: "inline-block", background: logoPlate(brand, "cover")!, padding: "10px 14px", borderRadius: 4 }}>
+              <ClientWord name={doc.client.name} brand={{ ...brand, logoPlate: "none" }} size={34} art={artKey} />
             </span>
           ) : (
-            <ClientWord name={doc.client.name} brand={brand} size={34} />
+            <ClientWord name={doc.client.name} brand={brand} size={34} art={artKey} on="cover" />
           )}
         </div>
         <div>
@@ -139,12 +142,17 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
             <path d="M62 119h176M150 44v150M62 296h176M150 214v164" opacity=".35" />
             <circle cx="224" cy="206" r="5" fill="var(--accent)" />
           </svg>
+        ) : artKey !== "none" ? (
+          // No cover image: a drawing of the client's kind of product, in their accent colour.
+          <div style={{ position: "absolute", inset: "56px 56px 56px 0", display: "grid", placeItems: "center" }}>
+            <div style={{ width: "72%", height: "88%" }}><IndustryArt art={artKey} color="var(--accent)" /></div>
+          </div>
         ) : (
-          // No cover image: a framed panel with the client's logo or name.
+          // No cover image and no drawing: a framed panel with the client's logo or name.
           <div style={{ position: "absolute", inset: "64px 64px 64px 0", border: "1.4px solid var(--accent)", display: "grid", placeItems: "center", padding: 48 }}>
             {brand.logo ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <span style={{ background: "#fff", padding: "28px 36px", borderRadius: 6, display: "grid", placeItems: "center", maxWidth: "80%" }}>
+              <span style={{ background: logoPlate(brand, "cover") ?? "transparent", padding: "28px 36px", borderRadius: 6, display: "grid", placeItems: "center", maxWidth: "80%" }}>
                 <img src={brand.logo} alt="" style={{ maxWidth: "100%", maxHeight: 160, objectFit: "contain" }} />
               </span>
             ) : (
@@ -708,7 +716,7 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
 
   add("thanks", "Thank you", (
     <div className="thanks" style={{ position: "absolute", inset: 0 }}>
-      <div style={{ fontSize: 34 }}><ClientWord name={doc.client.name} brand={brand} size={40} /></div>
+      <div style={{ fontSize: 34 }}><ClientWord name={doc.client.name} brand={brand} size={40} art={artKey} on={doc.template === "dark" ? "page-dark" : "page"} /></div>
       <h2>Thank you</h2>
       {contactLine(doc) ? <div style={{ fontSize: 13, color: "var(--rmute)", marginTop: -8 }}>{contactLine(doc)}</div> : null}
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -779,7 +787,7 @@ export function ReportPage({ doc, A, page, i, total, mode, srcIndex = -1 }: { do
       <section className={`page t-${doc.template}`} id={`pg-${i}`} style={brandStyle}>
         {page.bare ? null : (
           <div className="ph">
-            <ClientWord name={doc.client.name} brand={doc.brand} size={15} />
+            <ClientWord name={doc.client.name} brand={doc.brand} size={15} art={artFor(doc.client.industry, doc.brand.art)} on={doc.template === "dark" ? "page-dark" : "page"} />
             <span className="phr">
               <span>{page.title}</span>
               {mode === "screen" && srcIndex >= 0 ? <a className="srcbtn" href={`#pg-${srcIndex}`}>View source screenshot</a> : null}

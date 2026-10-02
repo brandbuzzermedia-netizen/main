@@ -55,6 +55,8 @@ export async function saveClient(_: FormState, fd: FormData): Promise<FormState>
   if (!id) {
     const hex = /^#[0-9a-fA-F]{6}$/, primary = String(fd.get("primary") ?? ""), accent = String(fd.get("accent") ?? ""), logo = fd.get("logo");
     const brand = { ...DEFAULT_BRAND, primary: hex.test(primary) ? primary : DEFAULT_BRAND.primary, accent: hex.test(accent) ? accent : DEFAULT_BRAND.accent };
+    const tone = String(fd.get("logoTone") ?? "");
+    if (tone === "light" || tone === "dark" || tone === "boxed") Object.assign(brand, { logoTone: tone });
     try { if (isFile(logo)) brand.logo = (await readImage(logo)).url; } catch (e) { if (e instanceof UploadError) return { error: e.message }; throw e; }
     db.setClientBrand(target, brand);
   }
@@ -120,10 +122,16 @@ export async function saveBrand(_: BrandFormState, fd: FormData): Promise<BrandF
   if (!client) return { error: "Client not found." };
   const primary = String(fd.get("primary") ?? ""), accent = String(fd.get("accent") ?? "");
   if (!/^#[0-9a-fA-F]{6}$/.test(primary) || !/^#[0-9a-fA-F]{6}$/.test(accent)) return { error: "Choose both brand colours." };
-  const brand = { ...(client.brand ?? DEFAULT_BRAND), primary, accent };
+  const tone = String(fd.get("logoTone") ?? ""), plate = String(fd.get("logoPlate") ?? "auto"), art = String(fd.get("art") ?? "auto");
+  const brand = {
+    ...(client.brand ?? DEFAULT_BRAND), primary, accent,
+    logoTone: tone === "light" || tone === "dark" || tone === "boxed" ? (tone as "light" | "dark" | "boxed") : null,
+    logoPlate: plate === "white" || plate === "none" ? (plate as "white" | "none") : ("auto" as const),
+    art: /^[a-z]{2,20}$/.test(art) ? art : "auto",
+  };
   try {
     const logo = fd.get("logo"), cover = fd.get("cover");
-    if (isFile(logo)) brand.logo = (await readImage(logo)).url; else if (fd.get("removeLogo")) brand.logo = null;
+    if (isFile(logo)) brand.logo = (await readImage(logo)).url; else if (fd.get("removeLogo")) { brand.logo = null; brand.logoTone = null; }
     if (isFile(cover)) brand.cover = (await readImage(cover)).url; else if (fd.get("removeCover")) brand.cover = null;
   } catch (e) {
     if (e instanceof UploadError) return { error: e.message };

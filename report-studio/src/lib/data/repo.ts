@@ -196,7 +196,7 @@ export async function getReportDoc(id: string): Promise<ReportDoc | null> {
     doc.client = reportClient(client);
     if (client.brand) {
       const b = client.brand;
-      doc.brand = { ...doc.brand, primary: b.primary, accent: b.accent, logo: b.logo, cover: b.cover } satisfies Brand;
+      doc.brand = { ...doc.brand, primary: b.primary, accent: b.accent, logo: b.logo, cover: b.cover, logoTone: b.logoTone ?? null, logoPlate: b.logoPlate ?? null, art: b.art ?? null } satisfies Brand;
     }
   }
   return doc;

@@ -175,7 +175,7 @@ function ClientPage({ id }: { id: string }) {
       <Card className="mb-5">
         <CardTitle>Report branding</CardTitle>
         <CardDescription>This client&apos;s logo and colours lead every one of their reports; Get Bee Seen co-brands each page.</CardDescription>
-        <BrandForm action={act.saveBrand} clientId={client.id} brand={client.brand ?? DEFAULT_BRAND} />
+        <BrandForm action={act.saveBrand} clientId={client.id} industry={client.industry} brand={client.brand ?? DEFAULT_BRAND} />
       </Card>
       <Card>
         <CardTitle>Delete client</CardTitle>
