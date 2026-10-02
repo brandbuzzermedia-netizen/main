@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { signOut } from "@/app/(app)/actions";
 import { SidebarNav } from "@/components/studio/sidebar";
 import { getSession } from "@/lib/data/repo";
+import { GBS_TAGLINE } from "@/lib/brand";
 
 export default async function StudioLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -19,7 +20,7 @@ export default async function StudioLayout({ children }: { children: React.React
           <div className="flex items-center gap-2.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/brand/bee.png" alt="" className="h-[34px] w-auto" />
-            <span>Making brands impossible to ignore.</span>
+            <span>{GBS_TAGLINE}</span>
           </div>
           <div className="flex items-center justify-between gap-2">
             <span className="truncate">{session.name}</span>

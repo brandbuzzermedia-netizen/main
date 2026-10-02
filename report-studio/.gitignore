@@ -8,3 +8,4 @@ next-env.d.ts
 test-results/
 compare-output/
 /data/
+/prototype/.compare-prototype.html

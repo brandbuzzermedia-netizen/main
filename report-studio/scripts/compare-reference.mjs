@@ -22,7 +22,8 @@
 // (changes in red) go to compare-output/. Exits non-zero on any failure.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
-import { basename, join, resolve } from "node:path";
+const GBS_TAGLINE = /GBS_TAGLINE = "([^"]+)"/.exec(readFileSync(new URL("../src/lib/brand.ts", import.meta.url), "utf8"))[1];
+import { basename, dirname, join, resolve } from "node:path";
 import { chromium } from "playwright";
 
 const ROOT = resolve(import.meta.dirname, "..");
@@ -101,7 +102,11 @@ const protoPdf = join(OUT, "prototype.pdf");
     if (url.startsWith("file:") || url.startsWith("data:")) return route.continue();
     return route.abort();
   });
-  await page.goto("file://" + PROTOTYPE);
+  // GBS changed its tagline after the prototype was made; the export uses the current one.
+  const proto = join(dirname(PROTOTYPE), ".compare-prototype.html");
+  writeFileSync(proto, readFileSync(PROTOTYPE, "utf8").replaceAll("Making brands impossible to ignore.", GBS_TAGLINE));
+  await page.goto("file://" + proto);
+  rmSync(proto);
   await page.click("[data-act=login]");
   await page.click("[data-act=open][data-id=r1]");
   await page.evaluate(() => document.fonts.ready);

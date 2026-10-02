@@ -12,6 +12,7 @@ import { BarsV, Donut, HBars } from "./charts";
 import { Caption, ContentMatrix, type MatrixRow } from "./interactive";
 import { ClientWord, CoverArt, GbsMark } from "./marks";
 import "./report.css";
+import { GBS_TAGLINE } from "@/lib/brand";
 
 export interface PageDef {
   key: string;
@@ -713,7 +714,7 @@ export function buildPages(doc: ReportDoc, A: Analysis = analyze(doc.data)): Pag
         <GbsMark brand={brand} size={30} />
         <div style={{ textAlign: "left" }}>
           <b style={{ letterSpacing: ".06em" }}>GET BEE SEEN</b>
-          <div style={{ fontSize: 12, color: "var(--rmute)" }}>Making brands impossible to ignore.</div>
+          <div style={{ fontSize: 12, color: "var(--rmute)" }}>{GBS_TAGLINE}</div>
         </div>
       </div>
     </div>
@@ -788,7 +789,7 @@ export function ReportPage({ doc, A, page, i, total, mode, srcIndex = -1 }: { do
         {page.bare ? page.body : <div className="pc">{page.body}</div>}
         {page.bare ? null : (
           <div className="pf">
-            <span className="gbsf"><GbsMark brand={doc.brand} size={16} /> Prepared by Get Bee Seen · Making brands impossible to ignore.</span>
+            <span className="gbsf"><GbsMark brand={doc.brand} size={16} />{` Prepared by Get Bee Seen · ${GBS_TAGLINE}`}</span>
             <span>{doc.client.name} · {A.month} · {i + 1} / {total}</span>
           </div>
         )}

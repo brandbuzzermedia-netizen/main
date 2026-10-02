@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { signIn } from "@/app/(app)/actions";
 import { SignInForm } from "@/components/studio/sign-in-form";
 import { signInOpen } from "@/lib/auth/session";
+import { GBS_TAGLINE } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -15,7 +16,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <img src="/brand/logo-stacked-white.png" alt="Get Bee Seen" className="w-[170px]" />
         <SignInForm next={next ?? "/"} open={open} action={signIn} />
         <p className="text-center text-xs text-gbs-cream/80">
-          Making brands impossible to ignore.
+          {GBS_TAGLINE}
           {open ? (
             <>
               <br />
