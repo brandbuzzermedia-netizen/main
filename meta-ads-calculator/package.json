@@ -1,0 +1,11 @@
+{
+  "name": "meta-ads-business-calculator",
+  "version": "1.0.0",
+  "description": "Meta Ads planning calculator for service, B2B and B2C businesses. Get Bee Seen branding.",
+  "private": true,
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "test": "node test/smoke.test.js",
+    "build": "node build.js"
+  }
+}
