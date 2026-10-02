@@ -10,7 +10,7 @@ export default async function Dashboard() {
   const recent = reports.slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)).slice(0, 8);
   return (
     <>
-      <section className="bg-hex mb-[22px] flex flex-wrap items-center justify-between gap-5 rounded-[26px] px-8 py-[26px] text-gbs-cream">
+      <section className="bg-hex hex-drift mb-[22px] flex flex-wrap items-center justify-between gap-5 rounded-[26px] px-8 py-[26px] text-gbs-cream">
         <div>
           <span className="mb-2.5 inline-block rounded-full bg-gbs-gold px-3.5 py-1 text-xs font-bold text-gbs-ink">Client Report Studio</span>
           <h1 className="m-0 font-heading text-[40px] leading-[1.05] font-extrabold">Monthly reports</h1>
@@ -18,7 +18,7 @@ export default async function Dashboard() {
         </div>
         <div className="flex items-center gap-[18px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/bee.png" alt="" className="h-[92px] w-auto max-[640px]:hidden" />
+          <img src="/brand/bee.png" alt="" className="bee-fly h-[92px] w-auto max-[640px]:hidden" />
           <div className="flex flex-wrap gap-2">
             <Button asChild><Link href="/clients/new">+ Add client</Link></Button>
             <Button asChild variant="primary"><Link href="/create">+ Create report</Link></Button>

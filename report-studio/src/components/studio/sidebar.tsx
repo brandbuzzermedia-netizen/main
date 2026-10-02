@@ -38,11 +38,11 @@ export function SidebarNav() {
             href={href}
             aria-current={on ? "page" : undefined}
             className={cn(
-              "flex items-center gap-[11px] rounded-full px-2.5 py-[9px] font-medium text-sidebar-muted hover:bg-gbs-cream/12 hover:text-sidebar-foreground max-[860px]:px-[9px] max-[860px]:py-[7px]",
-              on && "bg-gbs-cream/18 text-white after:ml-auto after:size-[9px] after:rounded-full after:bg-gbs-gold after:content-[''] max-[860px]:after:hidden",
+              "group flex items-center gap-[11px] rounded-full px-2.5 py-[9px] font-medium text-sidebar-muted transition-colors duration-200 hover:bg-gbs-cream/12 hover:text-sidebar-foreground max-[860px]:px-[9px] max-[860px]:py-[7px]",
+              on && "nav-on bg-gbs-cream/18 text-white after:ml-auto after:size-[9px] after:rounded-full after:bg-gbs-gold after:content-[''] max-[860px]:after:hidden",
             )}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[18px] flex-none fill-none stroke-current" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+            <svg viewBox="0 0 24 24" aria-hidden="true" className="size-[18px] flex-none fill-none stroke-current transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
               {ICONS[icon]}
             </svg>
             <span className="max-[860px]:sr-only">{label}</span>

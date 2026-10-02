@@ -10,8 +10,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { next } = await searchParams;
   const open = signInOpen();
   return (
-    <main className="bg-hex grid min-h-screen place-items-center p-7">
-      <div className="grid w-full max-w-[420px] justify-items-center gap-[22px]">
+    <main className="bg-hex hex-drift grid min-h-screen place-items-center p-7">
+      <div className="page-enter grid w-full max-w-[420px] justify-items-center gap-[22px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/logo-stacked-white.png" alt="Get Bee Seen" className="w-[170px]" />
         <SignInForm next={next ?? "/"} open={open} action={signIn} />

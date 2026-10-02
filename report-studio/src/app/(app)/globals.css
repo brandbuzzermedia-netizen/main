@@ -102,6 +102,57 @@
   background-image: var(--hex);
 }
 
+
+/* ------------------------------------------------------------------ motion
+ * Studio only: client reports and PDFs never animate. Entrance animations
+ * use fill-mode "backwards", so nothing keeps a transform once they finish
+ * (present mode's fixed overlay stays relative to the window). All motion
+ * is switched off for people who ask for reduced motion (rule below).
+ */
+@keyframes gbs-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes gbs-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes gbs-hover {
+  0%, 100% { transform: translate(0, 0) rotate(-2deg); }
+  50% { transform: translate(0, -7px) rotate(3deg); }
+}
+@keyframes gbs-fly-in {
+  0% { opacity: 0; transform: translate(-220px, 60px) rotate(-18deg) scale(.7); }
+  60% { opacity: 1; transform: translate(14px, -10px) rotate(8deg) scale(1.04); }
+  100% { opacity: 1; transform: translate(0, 0) rotate(-2deg) scale(1); }
+}
+@keyframes gbs-hex-drift { from { background-position: 0 0; } to { background-position: 56px 100px; } }
+@keyframes gbs-pop { 0% { transform: scale(0); } 70% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@keyframes gbs-shine { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* Each page's blocks rise in one after another. */
+.page-enter > * { animation: gbs-rise .5s cubic-bezier(.2, .7, .2, 1) backwards; }
+.page-enter > *:nth-child(2) { animation-delay: 70ms; }
+.page-enter > *:nth-child(3) { animation-delay: 140ms; }
+.page-enter > *:nth-child(4) { animation-delay: 210ms; }
+.page-enter > *:nth-child(5) { animation-delay: 280ms; }
+.page-enter > *:nth-child(n+6) { animation-delay: 340ms; }
+
+/* Rows of the first table on a page fade in, top to bottom. */
+.page-enter tbody tr { animation: gbs-fade .4s ease-out backwards; }
+.page-enter tbody tr:nth-child(2) { animation-delay: 60ms; }
+.page-enter tbody tr:nth-child(3) { animation-delay: 120ms; }
+.page-enter tbody tr:nth-child(4) { animation-delay: 180ms; }
+.page-enter tbody tr:nth-child(n+5) { animation-delay: 240ms; }
+
+/* The bee flies in, then hovers. */
+.bee-fly { animation: gbs-fly-in 1.3s cubic-bezier(.3, .8, .3, 1) backwards, gbs-hover 3.4s ease-in-out 1.3s infinite; transform-origin: 60% 60%; }
+.bee-hover { animation: gbs-hover 3.4s ease-in-out infinite; }
+
+/* The honeycomb drifts slowly behind the dashboard banner. */
+.hex-drift { animation: gbs-hex-drift 24s linear infinite; }
+
+/* Gold sheen across the primary buttons on hover. */
+.btn-shine { background-image: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .45) 50%, transparent 65%); background-size: 200% 100%; background-position: 200% 0; }
+.btn-shine:hover { animation: gbs-shine .9s ease-out; }
+
+/* The gold dot on the current page in the sidebar pops in. */
+.nav-on::after { animation: gbs-pop .35s cubic-bezier(.3, 1.6, .5, 1) backwards; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

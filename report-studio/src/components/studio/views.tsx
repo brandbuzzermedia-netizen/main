@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ClientRow, ReportSummary } from "@/lib/data/repo";
 import { fDate } from "@/lib/format";
+import { CountUp } from "./count-up";
 import type { ReportStatus } from "@/lib/report/types";
 
 export function PageHeader({ title, sub, children }: { title: string; sub?: React.ReactNode; children?: React.ReactNode }) {
@@ -24,7 +25,7 @@ export function Stats({ items }: { items: [React.ReactNode, string][] }) {
     <div className="mb-[22px] grid grid-cols-4 rounded-[20px] border border-border bg-card max-[860px]:grid-cols-2">
       {items.map(([v, l], i) => (
         <div key={l} className={`px-[22px] py-[18px] ${i ? "border-l border-border" : ""} max-[860px]:[&:nth-child(3)]:border-l-0 max-[860px]:[&:nth-child(n+3)]:border-t`}>
-          <b className="block font-heading text-[40px] leading-[1.05] font-bold text-heading">{v}</b>
+          <b className="block font-heading text-[40px] leading-[1.05] font-bold text-heading">{typeof v === "number" ? <CountUp value={v} /> : v}</b>
           <span className="text-[12.5px] text-muted-foreground">{l}</span>
         </div>
       ))}

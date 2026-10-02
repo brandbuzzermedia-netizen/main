@@ -10,7 +10,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
 }
 const TableHeader = ({ className, ...props }: React.ComponentProps<"thead">) => <thead className={className} {...props} />;
 const TableBody = ({ className, ...props }: React.ComponentProps<"tbody">) => <tbody className={cn("[&_tr:last-child_td]:border-0", className)} {...props} />;
-const TableRow = ({ className, ...props }: React.ComponentProps<"tr">) => <tr className={className} {...props} />;
+const TableRow = ({ className, ...props }: React.ComponentProps<"tr">) => <tr className={cn("transition-colors duration-150 [tbody>&]:hover:bg-muted", className)} {...props} />;
 const TableHead = ({ className, ...props }: React.ComponentProps<"th">) => (
   <th className={cn("whitespace-nowrap border-b border-border px-2.5 py-2 text-left text-xs font-semibold text-muted-foreground", className)} {...props} />
 );

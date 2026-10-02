@@ -19,7 +19,7 @@ export default async function StudioLayout({ children }: { children: React.React
         <div className="space-y-3 border-t border-gbs-cream/18 p-2.5 text-xs text-sidebar-muted max-[860px]:hidden">
           <div className="flex items-center gap-2.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/bee.png" alt="" className="h-[34px] w-auto" />
+            <img src="/brand/bee.png" alt="" className="bee-hover h-[34px] w-auto" />
             <span>{GBS_TAGLINE}</span>
           </div>
           <div className="flex items-center justify-between gap-2">
