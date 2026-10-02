@@ -6,7 +6,7 @@ import { hashPassword, newToken, verifyPassword } from "@/lib/auth/password";
 import { SESSION_COOKIE, checkPassword, createSessionToken, shareCookieName, shareUnlockValue, signInConfigured } from "@/lib/auth/session";
 import { UploadError, brandScope, removeClientFiles, isFile, saveImage, screenshotScope } from "@/lib/data/files";
 import {
-  DEFAULT_BRAND, ReportExistsError, listClients, monthFolder, addInternalNote, createClient, createReport, createShare, deleteClient, findSharedReport, getClient, getReportDoc, getShare, removeShare, setSharePassword,
+  DEFAULT_BRAND, ReportExistsError, listClients, monthFolder, ownsFile, addInternalNote, createClient, createReport, createShare, deleteClient, findSharedReport, getClient, getReportDoc, getShare, removeShare, setSharePassword,
   applyTexts, setSettings, getReportRecord, type ReportInput, getSession, reportId, restoreVersion, saveVersion, setBlock, setClientBrand, setReportStatus, setResolution, updateClient, updateReport, type Session,
 } from "@/lib/data/repo";
 import { parseReportForm } from "@/lib/report/parse";
@@ -138,6 +138,14 @@ export async function saveReport(_: ReportFormState, fd: FormData): Promise<Repo
         list.push({ name: saved.name, url: saved.url, hash: saved.hash });
       }
       if (list.length) uploads[p] = list;
+    }
+    // Post covers: a new file replaces the cover; a kept cover must be this client's own file.
+    const rowsIn = (() => { try { return JSON.parse(get("content") || "[]") as { key?: string }[]; } catch { return []; } })();
+    for (const [i, c] of parsed.value.data.content.entries()) {
+      const key = rowsIn[i]?.key;
+      const file = key && /^[A-Za-z0-9]{1,40}$/.test(key) ? fd.get(`cover.${key}`) : null;
+      if (isFile(file)) c.img = (await saveImage(screenshotScope(clientId, monthFolder(parsed.value.data.period.start), "covers"), file)).url;
+      else if (c.img && !ownsFile(clientId, id, c.img)) c.img = null;
     }
   } catch (e) {
     if (e instanceof UploadError) return { error: e.message };

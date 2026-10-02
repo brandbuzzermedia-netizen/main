@@ -7,6 +7,10 @@ import { RESULT_TYPES, SECTION_KEYS, type ResultType, type ContentItem, type Con
 export type FormErrors = Record<string, string>;
 
 export interface ContentRowInput {
+  /** Stable id for the row, linking it to its cover file field ("cover.<key>"). */
+  key?: string;
+  /** The row's current cover image URL, if one was uploaded before. */
+  img?: string;
   date?: string; type?: string; theme?: string; caption?: string; tags?: string;
   views?: string; reach?: string; likes?: string; comments?: string; shares?: string; saves?: string;
 }
@@ -145,6 +149,7 @@ export function parseReportForm(get: Get, contentJson: string | null, getAll: (n
       caption: (r.caption ?? "").trim().slice(0, 2200),
       tags: (r.tags ?? "").trim().slice(0, 300),
       views: m.views, reach: m.reach, likes: m.likes, comments: m.comments, shares: m.shares, saves: m.saves,
+      img: typeof r.img === "string" && r.img ? r.img.slice(0, 5_000_000) : null,
       provenance: "manual", brief: [],
     });
   });

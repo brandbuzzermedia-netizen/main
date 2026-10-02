@@ -220,6 +220,9 @@
   .sticky {
     position: sticky;
   }
+  .inset-0 {
+    inset: 0px;
+  }
   .top-0 {
     top: 0px;
   }
@@ -316,6 +319,10 @@
     width: 18px;
     height: 18px;
   }
+  .size-full {
+    width: 100%;
+    height: 100%;
+  }
   .h-7 {
     height: calc(var(--spacing) * 7);
   }
@@ -333,6 +340,9 @@
   }
   .h-\[34px\] {
     height: 34px;
+  }
+  .h-\[52px\] {
+    height: 52px;
   }
   .h-\[92px\] {
     height: 92px;
@@ -363,6 +373,9 @@
   }
   .w-56 {
     width: calc(var(--spacing) * 56);
+  }
+  .w-\[42px\] {
+    width: 42px;
   }
   .w-\[72px\] {
     width: 72px;
@@ -415,8 +428,8 @@
   .min-w-5 {
     min-width: calc(var(--spacing) * 5);
   }
-  .min-w-\[1080px\] {
-    min-width: 1080px;
+  .min-w-\[1160px\] {
+    min-width: 1160px;
   }
   .flex-1 {
     flex: 1;
@@ -847,6 +860,12 @@
   .text-xs {
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
+  }
+  .text-\[10\.5px\] {
+    font-size: 10.5px;
+  }
+  .text-\[10px\] {
+    font-size: 10px;
   }
   .text-\[11\.5px\] {
     font-size: 11.5px;

@@ -22,6 +22,24 @@ async function readImage(file: File) {
   return { hash, url, name: file.name.slice(0, 120) };
 }
 
+/**
+ * A post cover, scaled down to at most 720 x 900 px (twice its largest size in
+ * a report) and saved as JPEG, so covers keep storage and backups small.
+ */
+async function coverImage(file: File): Promise<string> {
+  const { url } = await readImage(file);
+  const img = new Image();
+  img.src = url;
+  await img.decode();
+  const k = Math.min(1, 720 / img.naturalWidth, 900 / img.naturalHeight);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(img.naturalWidth * k); canvas.height = Math.round(img.naturalHeight * k);
+  const ctx = canvas.getContext("2d")!;
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.86);
+}
+
 export async function signIn(_: FormState, fd: FormData): Promise<FormState> {
   db.signInAs(String(fd.get("name") ?? "").trim().slice(0, 60));
   navigate("/");
@@ -71,6 +89,14 @@ export async function saveReport(_: ReportFormState, fd: FormData): Promise<Repo
         list.push({ name: img.name, url: img.url, hash: img.hash });
       }
       if (list.length) uploads[p] = list;
+    }
+    // Post covers: a new file replaces the cover; a kept cover must already be stored in the browser.
+    const rowsIn = (() => { try { return JSON.parse(get("content") || "[]") as { key?: string }[]; } catch { return []; } })();
+    for (const [i, c] of parsed.value.data.content.entries()) {
+      const key = rowsIn[i]?.key;
+      const file = key ? fd.get(`cover.${key}`) : null;
+      if (isFile(file)) c.img = await coverImage(file);
+      else if (c.img && !c.img.startsWith("data:image/")) c.img = null;
     }
   } catch (e) {
     if (e instanceof UploadError) return { error: e.message };

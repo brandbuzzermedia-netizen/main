@@ -72,7 +72,10 @@ export interface ReportFormInitial {
   copyFrom?: { id: string; kind: "next-month" | "duplicate" };
 }
 
-const emptyRow = (): ContentRowInput => ({ date: "", type: "Reel", theme: "", caption: "", tags: "" });
+let rowSeq = 0;
+/** A key per row, so a cover file stays with its post when rows are added or removed. */
+const rowKey = () => `r${Date.now().toString(36)}${(rowSeq++).toString(36)}`;
+const emptyRow = (): ContentRowInput => ({ key: rowKey(), date: "", type: "Reel", theme: "", caption: "", tags: "" });
 const pathValue = (data: ReportData | undefined, name: string) => {
   if (!data) return "";
   const [group, key] = name.split(".");
@@ -130,7 +133,7 @@ export function ReportForm({ clients, initial, action: save, extractEnabled = fa
     const posts = (res.posts ?? []).filter((x) => x.date);
     if (posts.length) {
       setRows((r) => [...r.filter((x) => x.date || x.theme || x.caption), ...posts.map((x) => ({
-        date: x.date ?? "", type: x.type ?? "Post", theme: "", caption: x.caption ?? "", tags: "",
+        key: rowKey(), date: x.date ?? "", type: x.type ?? "Post", theme: "", caption: x.caption ?? "", tags: "",
         ...Object.fromEntries(POST_METRICS.map((k) => [k, x[k] == null ? "" : String(x[k])])),
       }))]);
     }
@@ -153,10 +156,12 @@ export function ReportForm({ clients, initial, action: save, extractEnabled = fa
   const [pending, start] = useTransition();
   const [rows, setRows] = useState<ContentRowInput[]>(() =>
     !initial.id && !initial.data?.content.length ? [emptyRow()] : initial.data!.content.map((c) => ({
-      date: c.date, type: c.type, theme: c.theme, caption: c.caption, tags: c.tags,
+      key: rowKey(), img: c.img ?? "", date: c.date, type: c.type, theme: c.theme, caption: c.caption, tags: c.tags,
       ...Object.fromEntries(POST_METRICS.map((k) => [k, c[k] == null ? "" : String(c[k])])),
     })) ?? [],
   );
+  // Previews of cover files picked but not saved yet, by row key.
+  const [coverPreview, setCoverPreview] = useState<Record<string, string>>({});
   const err = state.errors ?? {};
   const setRow = (i: number, patch: Partial<ContentRowInput>) => setRows((r) => r.map((x, j) => (j === i ? { ...x, ...patch } : x)));
 
@@ -269,12 +274,12 @@ export function ReportForm({ clients, initial, action: save, extractEnabled = fa
 
       <fieldset className="min-w-0 rounded-[20px] border border-border bg-card p-5">
         <legend className="px-1 font-heading text-[17px] font-bold text-heading">Content published</legend>
-        <p className="mb-3.5 text-[13px] text-muted-foreground">One row per post, from each post&apos;s Insights. Theme groups similar posts (e.g. Product showcase, Festival).</p>
+        <p className="mb-3.5 text-[13px] text-muted-foreground">One row per post, from each post&apos;s Insights. Theme groups similar posts (e.g. Product showcase, Festival). Click <b>+ Cover</b> to add the post&apos;s cover image: a screenshot of the Reel cover or post, ideally <b>1080 × 1350 px</b> (4:5). Reel covers of 1080 × 1920 px work too; the report shows the middle of the image.</p>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1080px] border-collapse text-[12.5px]">
+          <table className="w-full min-w-[1160px] border-collapse text-[12.5px]">
             <thead>
               <tr className="text-left text-muted-foreground">
-                {["Date", "Type", "Theme", "Caption", "Hashtags", "Views", "Reach", "Likes", "Comments", "Shares", "Saves", ""].map((h) => (
+                {["Cover", "Date", "Type", "Theme", "Caption", "Hashtags", "Views", "Reach", "Likes", "Comments", "Shares", "Saves", ""].map((h) => (
                   <th key={h} className="border-b border-border px-1 py-1.5 font-semibold">{h}</th>
                 ))}
               </tr>
@@ -284,7 +289,30 @@ export function ReportForm({ clients, initial, action: save, extractEnabled = fa
                 const rowErr = Object.entries(err).filter(([k]) => k.startsWith(`content.${i}.`)).map(([, v]) => v);
                 const cell = "h-8 rounded-lg px-1.5 text-[12.5px]";
                 return (
-                  <tr key={i} className="align-top">
+                  <tr key={r.key ?? i} className="align-top">
+                    <td className="px-1 py-1">
+                      {(() => {
+                        const k = r.key ?? `i${i}`, src = coverPreview[k] || r.img;
+                        return (
+                          <div className="flex items-center gap-1.5">
+                            <label className="relative grid h-[52px] w-[42px] flex-none cursor-pointer place-items-center overflow-hidden rounded-md border border-dashed border-gbs-sage bg-muted text-[10px] font-semibold text-muted-foreground hover:border-gbs-green" title="Upload this post's cover image">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              {src ? <img src={src} alt={`Post ${i + 1} cover`} className="absolute inset-0 size-full object-cover" /> : "+ Cover"}
+                              <input type="file" name={`cover.${k}`} accept="image/png,image/jpeg,image/webp" className="sr-only" aria-label={`Post ${i + 1} cover image`}
+                                onChange={(e) => { const f = e.target.files?.[0]; setCoverPreview((p) => ({ ...p, [k]: f ? URL.createObjectURL(f) : "" })); }} />
+                            </label>
+                            {src ? (
+                              <button type="button" className="text-[10.5px] font-semibold text-bad underline" aria-label={`Remove post ${i + 1} cover`} onClick={(e) => {
+                                const input = (e.currentTarget.previousElementSibling as HTMLElement).querySelector("input");
+                                if (input) (input as HTMLInputElement).value = "";
+                                setCoverPreview((p) => ({ ...p, [k]: "" }));
+                                setRow(i, { img: "" });
+                              }}>Clear</button>
+                            ) : null}
+                          </div>
+                        );
+                      })()}
+                    </td>
                     <td className="px-1 py-1"><Input type="date" aria-label={`Post ${i + 1} date`} value={r.date} onChange={(e) => setRow(i, { date: e.target.value })} className={cn(cell, "w-[132px]")} aria-invalid={!!err[`content.${i}.date`]} /></td>
                     <td className="px-1 py-1">
                       <select aria-label={`Post ${i + 1} type`} value={r.type} onChange={(e) => setRow(i, { type: e.target.value })} className="h-8 rounded-lg border border-input bg-card px-1 text-[12.5px] text-foreground">

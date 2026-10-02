@@ -190,6 +190,7 @@ export async function getReportDoc(id: string): Promise<ReportDoc | null> {
   for (const [p, list] of Object.entries(doc.uploads)) {
     doc.uploads[p as Platform] = list?.filter((f) => ownsFile(r.clientId, r.id, f.url));
   }
+  doc.data.content.forEach((c) => { if (c.img && !c.img.startsWith("data:") && !ownsFile(r.clientId, r.id, c.img)) c.img = null; });
   const client = s.clients.find((c) => c.id === r.clientId);
   if (client) {
     doc.client = reportClient(client);

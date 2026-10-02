@@ -73,3 +73,12 @@ test("a blank theme is labelled rather than left empty", () => {
   const r = form(base, [{ date: "2026-09-04", type: "Post" }]);
   assert.ok(r.ok && r.value.data.content[0].theme === "Uncategorised");
 });
+
+test("a post keeps its cover image URL", () => {
+  const r = parseReportForm((k) => ({ periodStart: "2026-09-01", periodEnd: "2026-09-30" } as Record<string, string>)[k] ?? null,
+    JSON.stringify([{ key: "r1", img: "/api/files/wudgres/september-2026/covers/a.png", date: "2026-09-03", type: "Reel", views: "10" }, { key: "r2", date: "2026-09-04", type: "Post" }]), () => []);
+  assert.ok(r.ok);
+  if (!r.ok) return;
+  assert.equal(r.value.data.content[0].img, "/api/files/wudgres/september-2026/covers/a.png");
+  assert.equal(r.value.data.content[1].img, null);
+});
