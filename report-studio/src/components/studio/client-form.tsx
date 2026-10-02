@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import type { FormAction, FormState } from "@/lib/forms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,17 +14,25 @@ const FIELDS: [keyof ClientInput, string, string][] = [
   ["industry", "Industry", "e.g. Furniture, Fashion retail"],
   ["location", "Location", "City, country"],
   ["contact", "Contact person", "Name of the person who receives reports"],
-  ["website", "Website", "https://"],
+  ["website", "Website", "e.g. lykes.in"],
   ["instagram", "Instagram", "@handle or profile address"],
-  ["facebook", "Facebook page", "https://facebook.com/…"],
+  ["facebook", "Facebook page", "facebook.com/yourpage or page name"],
 ];
 
 export function ClientForm({ client, action: save }: { client?: ClientRow; action: FormAction<FormState> }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(save, {});
+  const [state, action, saving] = useActionState<FormState, FormData>(save, {});
+  const [starting, start] = useTransition();
+  const pending = saving || starting;
   const [logoName, setLogoName] = useState<string | null>(null);
   const err = (k: string) => state.fields?.[k as keyof typeof state.fields];
   return (
-    <form action={action} className="grid max-w-3xl gap-4" noValidate encType="multipart/form-data">
+    <form
+      className="grid max-w-3xl gap-4"
+      noValidate
+      encType="multipart/form-data"
+      // Submitting through a transition keeps every field, and the chosen logo, if something needs fixing.
+      onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget); start(() => action(fd)); }}
+    >
       {client ? <input type="hidden" name="id" value={client.id} /> : null}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(230px,1fr))] gap-3.5">
         {FIELDS.map(([k, label, ph]) => (
@@ -79,6 +87,11 @@ export function ClientForm({ client, action: save }: { client?: ClientRow; actio
         <textarea name="notes" defaultValue={client?.notes ?? ""} rows={3} className="w-full rounded-xl border border-input bg-card px-2.5 py-2 text-sm text-foreground" />
       </Label>
       {state.error ? <p role="alert" className="text-sm text-bad">{state.error}</p> : null}
+      {state.fields && Object.keys(state.fields).length ? (
+        <p role="alert" className="rounded-2xl border border-bad bg-card px-4 py-2.5 text-sm text-bad">
+          The client was not saved yet. Fix the field{Object.keys(state.fields).length > 1 ? "s" : ""} marked in red, then press {client ? "Save changes" : "Add client"} again. Everything else you entered is kept.
+        </p>
+      ) : null}
       <div className="flex gap-2">
         <Button type="submit" variant="primary" disabled={pending}>{pending ? "Saving…" : client ? "Save changes" : "Add client"}</Button>
         <Button asChild variant="ghost"><Link href={client ? `/clients/${client.id}` : "/clients"}>Cancel</Link></Button>

@@ -82,3 +82,15 @@ test("a post keeps its cover image URL", () => {
   assert.equal(r.value.data.content[0].img, "/api/files/wudgres/september-2026/covers/a.png");
   assert.equal(r.value.data.content[1].img, null);
 });
+
+test("client web addresses are accepted without https://", async () => {
+  const { parseClientForm } = await import("../src/lib/validation.ts");
+  const fd = new FormData();
+  fd.set("name", "Lykes"); fd.set("website", "www.lykes.in"); fd.set("facebook", "lykesfashion"); fd.set("instagram", "https://www.instagram.com/lykes.store/");
+  const r = parseClientForm(fd);
+  assert.ok(r.ok);
+  if (!r.ok) return;
+  assert.equal(r.value.website, "https://www.lykes.in");
+  assert.equal(r.value.facebook, "https://facebook.com/lykesfashion");
+  assert.equal(r.value.instagram, "lykes.store");
+});

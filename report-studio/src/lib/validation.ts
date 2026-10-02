@@ -12,6 +12,13 @@ const text = (v: FormDataEntryValue | null, max: number) => {
 const URL_RE = /^https?:\/\/[^\s.]+\.[^\s]+$/i;
 const TEMPLATES: Template[] = ["premium", "minimal", "dark"];
 
+/** "www.brand.in" or "brand.in" -> "https://www.brand.in". Anything else is returned as typed. */
+export function withScheme(v: string | null): string | null {
+  if (!v) return v;
+  const t = v.trim().replace(/\s+/g, "");
+  return /^https?:\/\//i.test(t) ? t : /^[^\s/]+\.[a-z]{2,}(\/.*)?$/i.test(t) ? `https://${t}` : t;
+}
+
 /** Accepts "brand", "@brand" or a profile address and returns the handle. */
 export function instagramHandle(v: string | null): string | null {
   if (!v) return null;
@@ -34,8 +41,12 @@ export function parseClientForm(fd: FormData): { ok: true; value: ClientInput } 
   };
   if (!f.name.value) errors.name = "Enter the client's name.";
   for (const [k, v] of Object.entries(f)) if (v.tooLong) errors[k as keyof ClientInput] = "This is too long.";
-  if (f.website.value && !URL_RE.test(f.website.value)) errors.website = "Use a full address, like https://example.com.";
-  if (f.facebook.value && !/^https?:\/\/([a-z0-9-]+\.)?(facebook|fb)\.com\/\S+$/i.test(f.facebook.value)) errors.facebook = "Use the page address, like https://facebook.com/yourpage.";
+  // People type addresses without https://, or a Facebook page name alone; accept both.
+  f.website.value = withScheme(f.website.value);
+  if (f.facebook.value && !/[./]/.test(f.facebook.value)) f.facebook.value = `https://facebook.com/${f.facebook.value.replace(/^@/, "")}`;
+  f.facebook.value = withScheme(f.facebook.value);
+  if (f.website.value && !URL_RE.test(f.website.value)) errors.website = "This does not look like a web address. Use one like lykes.in or https://lykes.in.";
+  if (f.facebook.value && !/^https?:\/\/([a-z0-9-]+\.)?(facebook|fb)\.com\/\S+$/i.test(f.facebook.value)) errors.facebook = "Use the page address (facebook.com/yourpage) or just the page name.";
   const handle = instagramHandle(f.instagram.value);
   if (handle && !/^[A-Za-z0-9._]{1,30}$/.test(handle)) errors.instagram = "Use the handle or profile address, like @brandname.";
   const t = String(fd.get("template") ?? "");

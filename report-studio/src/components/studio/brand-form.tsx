@@ -2,7 +2,7 @@
 // Client logo, cover image and report colours. Choosing a logo suggests a
 // palette from it (ported from the prototype's derivePalette); the colours
 // can then be adjusted before saving.
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import type { BrandFormState, FormAction } from "@/lib/forms";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,9 @@ function derivePalette(img: HTMLImageElement): string | null {
 }
 
 export function BrandForm({ clientId, brand, action: save }: { clientId: string; brand: ClientBrand; action: FormAction<BrandFormState> }) {
-  const [state, action, pending] = useActionState<BrandFormState, FormData>(save, {});
+  const [state, action, saving] = useActionState<BrandFormState, FormData>(save, {});
+  const [starting, start] = useTransition();
+  const pending = saving || starting;
   const [primary, setPrimary] = useState(brand.primary);
   const [accent, setAccent] = useState(brand.accent);
   const [logo, setLogo] = useState<string | null>(brand.logo);
@@ -61,7 +63,12 @@ export function BrandForm({ clientId, brand, action: save }: { clientId: string;
   };
 
   return (
-    <form action={action} className="grid gap-4">
+    <form
+      className="grid gap-4"
+      // Through a transition, so a chosen file is not cleared if saving fails. The clicked button
+      // (Delete logo / Delete cover image) is passed along as the submitter.
+      onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter); start(() => action(fd)); }}
+    >
       <input type="hidden" name="clientId" value={clientId} />
       <div className="flex flex-wrap items-center gap-4">
         <div className="grid h-24 w-56 place-items-center overflow-hidden rounded-2xl p-3" style={{ background: primary }}>
