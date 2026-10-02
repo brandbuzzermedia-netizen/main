@@ -1,0 +1,9 @@
+node_modules
+.next
+data
+compare-output
+test-results
+.env*
+!.env.example
+prototype
+reference
