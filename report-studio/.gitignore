@@ -9,3 +9,7 @@ test-results/
 compare-output/
 /data/
 /prototype/.compare-prototype.html
+
+# Browser-only build
+/static/node_modules/
+/deliverables/

@@ -98,11 +98,10 @@ export function ReportReview({ doc, duplicates, actions, share }: { doc: ReportD
             </label>
             <Button size="sm" type="submit">Update</Button>
           </form>
+          {actions.share ? (
           <div className="rounded-[20px] border border-border bg-card p-3.5">
             <h2 className="mb-1 text-[13px] font-bold">Share with client</h2>
-            {!actions.share ? (
-              <p className="text-xs text-muted-foreground">Client links need the live server. In the studio you can create a link, add a password and replace or stop it.</p>
-            ) : share ? (
+            {share ? (
               <div className="grid gap-2">
                 <p className="text-xs text-muted-foreground">Anyone with this link can view the report and download its PDF{share.hasPassword ? ", after entering the password" : ""}. Notes and warnings are never shown.</p>
                 <Input id="share-url" readOnly value={share.url} className="h-8 text-xs" aria-label="Client link" />
@@ -132,6 +131,7 @@ export function ReportReview({ doc, duplicates, actions, share }: { doc: ReportD
               </form>
             )}
           </div>
+          ) : null}
 
           {conflicts.map((c) => (
             <div key={c.metric} className={`rounded-[20px] border bg-card p-3.5 ${c.chosen ? "border-border" : "border-warn"}`}>

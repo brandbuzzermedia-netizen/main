@@ -7,6 +7,15 @@ co-branded by Get Bee Seen, exported as a PDF.
 `CLAUDE.md` is the product spec. `prototype/gbs-client-report-studio.html` is
 the visual and behavioural spec, and `reference/` holds the PDF it exports.
 
+## Two ways to run it
+
+- **Browser-only (`static/`)**: plain files for any static host, such as a
+  Hostinger subdomain. No server; reports are saved in the browser, PDFs are
+  built in the browser, and Claude works with an API key saved in Settings.
+  This is the version GBS uses internally. See `static/README.md`.
+- **Server (this Next.js app)**: shared data on one server, Playwright PDFs
+  and client share links. Needs a Node.js host (see Deploy below).
+
 ## Status
 
 All five build steps in `CLAUDE.md` are in place, and the studio is a
