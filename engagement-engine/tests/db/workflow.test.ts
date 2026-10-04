@@ -57,8 +57,9 @@ d("engagement workflow end to end (database)", () => {
 
     await f.asUser(f.users.ownerA, async (db) => enqueuePublishing(db, owner, await access(f.users.ownerA, f.A.id), gen.selectedId));
     const system: DbRunner = (fn) => f.asSystem(fn);
+    const job = await f.asSystem((db) => db.one<{ id: string }>("select id from publishing_jobs where comment_id = $1", [gen.selectedId]));
     const results = await processDueJobs(system, { clientId: f.A.id });
-    const mine = results.find((r) => r.clientId === f.A.id && r.status !== "rescheduled");
+    const mine = results.find((r) => r.jobId === job!.id);
     expect(mine?.status).toBe("manual_required");
     const c = await f.asSystem((db) => db.one<{ status: string; published_at: Date | null }>("select status, published_at from comments where id = $1", [gen.selectedId]));
     expect(c).toMatchObject({ status: "queued", published_at: null });
