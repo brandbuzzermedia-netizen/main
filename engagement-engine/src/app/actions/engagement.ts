@@ -170,9 +170,14 @@ export async function approveSelected(clientId: string, _p: ActionResult, fd: Fo
     if (confirmed !== ids.length) throw new ForbiddenError("Selection changed. Review and confirm again.");
     const results = await withOutbox((o) => inClient(clientId, ({ db, user, access }) => bulkApprove(db, user, access, ids, o)));
     refresh(clientId);
-    const done = results.filter((r) => r.outcome !== "skipped").length;
-    const skipped = results.length - done;
-    return { ok: done > 0, message: `Approved ${done} comment${done === 1 ? "" : "s"}.${skipped ? ` Skipped ${skipped} (not quality-passed or not awaiting your approval).` : ""}` };
+    const full = results.filter((r) => r.outcome === "approved").length;
+    const partial = results.filter((r) => r.outcome === "awaiting_other_side").length;
+    const skipped = results.length - full - partial;
+    const parts = [];
+    if (full) parts.push(`Approved ${full} comment${full === 1 ? "" : "s"} for publication.`);
+    if (partial) parts.push(`Recorded your approval on ${partial} comment${partial === 1 ? "" : "s"}; ${partial === 1 ? "it awaits" : "they await"} the other approver.`);
+    if (skipped) parts.push(`Skipped ${skipped} (not quality-passed or not awaiting your approval).`);
+    return { ok: full + partial > 0, message: parts.join(" ") };
   } catch (e) {
     return toActionError(e);
   }

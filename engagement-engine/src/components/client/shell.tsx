@@ -35,6 +35,11 @@ const CLIENT_SECTIONS: [string, string][] = [
 
 const COOKIE = "gbs_client";
 
+/** Remembers the selected client (a UI preference only; every request re-checks access). */
+function rememberClient(id: string) {
+  document.cookie = `${COOKIE}=${id}; path=/; max-age=${60 * 60 * 24 * 90}; samesite=lax`;
+}
+
 function clientFromPath(pathname: string): { id: string; rest: string } | null {
   const m = pathname.match(/^\/clients\/([0-9a-f-]{36})(\/.*)?$/i);
   return m ? { id: m[1], rest: m[2] ?? "/dashboard" } : null;
@@ -67,10 +72,15 @@ export function AppShell({
 
   // Remember the client in context so global links (Engagement, Approvals…) follow it.
   useEffect(() => {
-    if (fromPath?.id) document.cookie = `${COOKIE}=${fromPath.id}; path=/; max-age=${60 * 60 * 24 * 90}; samesite=lax`;
+    if (fromPath?.id) rememberClient(fromPath.id);
   }, [fromPath?.id]);
 
-  useEffect(() => setOpen(false), [pathname]);
+  // Close the mobile drawer whenever the route changes.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
+    setOpen(false);
+  }
 
   const base = selected ? `/clients/${selected.id}` : null;
   const gbsNav: NavItem[] = [
@@ -206,7 +216,7 @@ export function ClientSwitcher({ clients, selectedId }: { clients: ShellClient[]
   }, [clients, q]);
 
   function choose(id: string) {
-    document.cookie = `${COOKIE}=${id}; path=/; max-age=${60 * 60 * 24 * 90}; samesite=lax`;
+    rememberClient(id);
     const cur = clientFromPath(pathname);
     // Keep the same screen when switching clients (approvals → approvals). Detail pages fall back to the list.
     const section = cur ? cur.rest.split("/").slice(0, 2).join("/") : "/dashboard";

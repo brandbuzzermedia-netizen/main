@@ -157,7 +157,7 @@ export default async function OpportunityPage({ params }: { params: Promise<{ cl
             {o.publish_capability === "manual" && (
               <div className="px-5 pt-4">
                 <Notice tone="warn">
-                  {caps.publishOnThirdPartyPost.note ?? "This platform's API can't publish here."} Once approved, the comment is posted manually from the client&apos;s account
+                  {(caps.publishOnThirdPartyPost.note ?? "This platform's API can't publish here").replace(/\.?$/, ".")} Once approved, the comment is posted manually from the client&apos;s account
                   and the link recorded.
                 </Notice>
               </div>

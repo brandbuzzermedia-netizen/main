@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { audit } from "@/lib/audit";
 import { toActionError, type ActionResult } from "@/lib/action-result";
@@ -20,46 +21,73 @@ const LIST_FIELDS = [
   "hashtags",
 ] as const;
 
+const TEXT_FIELDS: Record<string, number> = {
+  website: 300,
+  industry: 120,
+  description: 3000,
+  usp: 1000,
+  target_market: 1000,
+  location: 300,
+};
+const ENUMS = {
+  business_model: z.enum(["b2b", "b2c", "both"]),
+  comment_length: z.enum(["short", "medium", "long"]),
+  cta_style: z.enum(["none", "soft", "direct"]),
+  emoji_policy: z.enum(["none", "sparing", "allowed"]),
+};
+
+/**
+ * Saves the brand fields present in the form (so wizard steps can save a subset).
+ * With an `onboarding_step` field, marks that step complete and moves to the next.
+ */
 export async function saveBrand(clientId: string, _p: ActionResult, fd: FormData): Promise<ActionResult> {
+  let nextStep: number | null = null;
   try {
-    const website = optStr(fd.get("website"), 300);
-    if (website) z.string().url().parse(website);
-    const enums = {
-      business_model: z.enum(["b2b", "b2c", "both"]).parse(fd.get("business_model") ?? "b2b"),
-      comment_length: z.enum(["short", "medium", "long"]).parse(fd.get("comment_length") ?? "medium"),
-      cta_style: z.enum(["none", "soft", "direct"]).parse(fd.get("cta_style") ?? "none"),
-      emoji_policy: z.enum(["none", "sparing", "allowed"]).parse(fd.get("emoji_policy") ?? "sparing"),
-    };
-    const lists = Object.fromEntries(LIST_FIELDS.map((k) => [k, parseList(fd.get(k))]));
-    lists.hashtags = lists.hashtags.map((h) => h.replace(/^#/, ""));
+    const values: Record<string, unknown> = {};
+    if (fd.has("company_name")) values.company_name = z.string().min(1, "Company name is required").max(120).parse(str(fd.get("company_name"), 120));
+    if (fd.has("language")) values.language = str(fd.get("language"), 60) || "English";
+    for (const [k, max] of Object.entries(TEXT_FIELDS)) if (fd.has(k)) values[k] = optStr(fd.get(k), max);
+    if (values.website) z.string().url("Website must be a full URL, e.g. https://example.com").parse(values.website);
+    for (const [k, schema] of Object.entries(ENUMS)) if (fd.has(k)) values[k] = schema.parse(fd.get(k));
+    for (const k of LIST_FIELDS) {
+      if (!fd.has(k)) continue;
+      const xs = parseList(fd.get(k));
+      values[k] = k === "hashtags" ? xs.map((h) => h.replace(/^#/, "")) : xs;
+    }
+    const step = fd.has("onboarding_step") ? z.coerce.number().int().min(1).max(12).parse(fd.get("onboarding_step")) : null;
     await inClient(clientId, async ({ db, user, access }) => {
       if (!access.canManage) throw new ForbiddenError("Only GBS and the client owner can edit the brand profile.");
-      const values = {
-        company_name: z.string().min(1).max(120).parse(str(fd.get("company_name"), 120)),
-        website,
-        industry: optStr(fd.get("industry"), 120),
-        description: optStr(fd.get("description"), 3000),
-        usp: optStr(fd.get("usp"), 1000),
-        target_market: optStr(fd.get("target_market"), 1000),
-        location: optStr(fd.get("location"), 200),
-        language: str(fd.get("language"), 60) || "English",
-        ...enums,
-        ...lists,
-      };
       const cols = Object.keys(values);
-      await db.query(
-        `insert into brand_profiles (organization_id, client_id, ${cols.join(", ")}, updated_by)
-         values ($1, $2, ${cols.map((_, i) => `$${i + 3}`).join(", ")}, $${cols.length + 3})
-         on conflict (client_id) do update set ${cols.map((c) => `${c} = excluded.${c}`).join(", ")}, updated_by = excluded.updated_by, updated_at = now()`,
-        [user.organizationId, clientId, ...Object.values(values), user.id],
-      );
-      await audit(db, { organizationId: user.organizationId, clientId, actorId: user.id, actorName: user.fullName, action: "brand.updated", entityType: "brand_profile", entityId: clientId });
+      if (cols.length) {
+        await db.query(
+          `insert into brand_profiles (organization_id, client_id, company_name, updated_by)
+           values ($1, $2, (select name from clients where id = $2), $3) on conflict (client_id) do nothing`,
+          [user.organizationId, clientId, user.id],
+        );
+        await db.query(
+          `update brand_profiles set ${cols.map((c, i) => `${c} = $${i + 2}`).join(", ")}, updated_by = $${cols.length + 2}, updated_at = now()
+           where client_id = $1`,
+          [clientId, ...Object.values(values), user.id],
+        );
+        if (fd.has("industry")) await db.query("update clients set industry = $2 where id = $1 and app.can_manage_client($1)", [clientId, values.industry]);
+        await audit(db, { organizationId: user.organizationId, clientId, actorId: user.id, actorName: user.fullName, action: "brand.updated", entityType: "brand_profile", entityId: clientId, details: { fields: cols } });
+      }
+      if (step) {
+        nextStep = Math.min(12, step + 1);
+        await db.query(
+          `update clients set onboarding_step = greatest(onboarding_step, $2),
+             onboarding_completed_steps = case when $3 = any(onboarding_completed_steps) then onboarding_completed_steps else array_append(onboarding_completed_steps, $3) end
+           where id = $1`,
+          [clientId, nextStep, step],
+        );
+      }
     });
-    revalidatePath(`/clients/${clientId}/brand`);
-    return { ok: true, message: "Brand profile saved. New comments will use it." };
   } catch (e) {
     return toActionError(e);
   }
+  revalidatePath(`/clients/${clientId}`, "layout");
+  if (nextStep) redirect(`/clients/${clientId}/onboarding?step=${nextStep}`);
+  return { ok: true, message: "Brand profile saved. New comments will use it." };
 }
 
 const ALLOWED_TYPES = ["text/plain", "text/markdown", "text/csv", "application/json"];

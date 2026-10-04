@@ -56,11 +56,14 @@ export function ApprovalQueue({
   const [confirming, setConfirming] = useState(false);
   const [state, action, pending] = useActionState(approveSelected.bind(null, clientId), null);
 
+  // After a successful bulk approval, clear the selection (once per result) and refresh the queue.
+  const [handled, setHandled] = useState(state);
+  if (state !== handled) {
+    setHandled(state);
+    if (state?.ok) setSelected(new Set());
+  }
   useEffect(() => {
-    if (state?.ok) {
-      setSelected(new Set());
-      router.refresh();
-    }
+    if (state?.ok) router.refresh();
   }, [state, router]);
 
   const toggle = (id: string) =>
@@ -93,7 +96,6 @@ export function ApprovalQueue({
           <button type="button" disabled={selected.size === 0 || pending} className={cx(buttonClass("primary"), "ml-auto")} onClick={() => setConfirming(true)}>
             {pending ? "Approving…" : `Approve selected (${selected.size})`}
           </button>
-          {state?.message && <p className={cx("w-full text-sm", state.ok ? "text-good" : "text-bad")}>{state.message}</p>}
           <ConfirmDialog
             open={confirming}
             title="Confirm approval"
@@ -110,6 +112,11 @@ export function ApprovalQueue({
         </form>
       )}
 
+      {state?.message && (
+        <p role="status" className={cx("mb-4 rounded-lg border px-4 py-2 text-sm", state.ok ? "border-good/25 bg-good-soft text-good" : "border-bad/25 bg-bad-soft text-bad")}>
+          {state.message}
+        </p>
+      )}
       <ul className="flex flex-col gap-4">
         {items.map((it) => (
           <ApprovalCard

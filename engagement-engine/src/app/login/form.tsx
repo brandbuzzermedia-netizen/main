@@ -11,7 +11,7 @@ export function LoginForm({ next }: { next?: string }) {
       <input type="hidden" name="next" value={next ?? ""} />
       <label className="flex flex-col gap-1.5 text-xs font-medium text-ink-2">
         Email
-        <input name="email" type="email" autoComplete="username" required className={inputClass} />
+        <input name="email" type="email" autoComplete="username" required defaultValue={typeof state?.data?.email === "string" ? state.data.email : ""} key={String(state?.data?.email ?? "")} className={inputClass} />
       </label>
       <label className="flex flex-col gap-1.5 text-xs font-medium text-ink-2">
         Password

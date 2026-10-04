@@ -30,12 +30,12 @@ export async function login(_prev: ActionResult, formData: FormData): Promise<Ac
       [email],
     );
   });
-  if (user === "limited") return { ok: false, message: "Too many sign-in attempts. Try again in 15 minutes." };
+  if (user === "limited") return { ok: false, message: "Too many sign-in attempts. Try again in 15 minutes.", data: { email } };
 
   const valid = await verifyPassword(password, user?.password_hash ?? DUMMY_PASSWORD_HASH);
-  if (!user || !valid || user.status !== "active") return { ok: false, message: "Email or password is incorrect." };
+  if (!user || !valid || user.status !== "active") return { ok: false, message: "Email or password is incorrect.", data: { email } };
 
   await createSession(user.id);
-  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  const safeNext = next && /^\/(?![\/\\])/.test(next) && !/[\r\n]/.test(next) ? next : "/";
   redirect(safeNext);
 }

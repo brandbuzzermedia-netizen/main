@@ -42,6 +42,7 @@ Standalone tools for GBS, each self-contained with its own README and tests.
 | `meta-ads-calculator/` | Meta Ads Business Calculator — 37 industry calculators, a custom funnel builder and a modular multi platform Marketing Planner (vanilla JS; `npm test`, `npm run build`) |
 | `report-studio/` | GBS Client Report Studio — monthly client reports as branded A4 PDFs (Next.js, Playwright; `npm test`, `npm run build`) |
 | `point-vision-lead-engine/` | Point Vision Lead Engine: internal B2B outbound pipeline (15 researched prospects a day, personalised drafts, founder review, manual sending, tracking). Vanilla JS; optional `node server.js` shared workspace; `npm test`, `npm run build` |
+| `engagement-engine/` | GBS Engagement Engine — multi-client, AI-assisted social engagement with human approval: per-client brand voice and audiences, Claude comment drafts, quality checks, approval queue, publishing through official APIs, analytics. Next.js + PostgreSQL with Row Level Security; `npm test`, `npm run build`. Docs in `engagement-engine/docs/` |
 
 ## Editing
 

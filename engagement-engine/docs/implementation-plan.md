@@ -14,7 +14,7 @@ they can be enabled later without changing the engine.
 
 ## Sequence and status
 
-| # | Module | Delivered in this iteration | Verification |
+| # | Module | Delivered (all modules built) | Verification |
 | --- | --- | --- | --- |
 | 1 | Authentication | Email/password (scrypt), DB sessions, secure cookies, login rate limit, `proxy.ts` redirect | unit: password hashing, session token hashing |
 | 2 | Multi-tenant database | `0001_schema.sql`, composite FKs, immutability triggers | db tests: migrations apply cleanly on an empty DB |
@@ -35,6 +35,13 @@ they can be enabled later without changing the engine.
 | 17 | Security hardening | CSP + headers, CSRF origin checks, rate limits, audit log | unit |
 | 18 | Testing | `npm test` (unit), `npm run test:db` (needs `TEST_DATABASE_URL`) | CI-ready |
 
+Verified at the end of this iteration: `npm run typecheck` and `npm run lint` clean,
+60 tests passing (40 unit, 20 database), `next build` succeeding, every page loaded as
+each role (super admin, two account managers, client owner, team member, another
+client's owner) with the expected 200/404 matrix, and a browser run through sign-in,
+manual intake, generation, submission, bulk approval with confirmation, dual approval
+and the phone-width layout.
+
 ## After each module
 
 `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:db`
@@ -46,6 +53,9 @@ they can be enabled later without changing the engine.
   in organisation branding is ready; plug in a provider).
 * PDF/DOCX text extraction for brand documents. The MVP accepts `.txt`,
   `.md`, `.csv` and `.json`, and pasted text.
+* Live verification of the platform adapters against real Meta, LinkedIn and
+  Google apps. They are built from the documented endpoints and tested with mocked
+  responses; they need real app credentials and approved permissions to exercise.
 * Billing. `usage_events` is the meter; connect a billing provider later.
 * SSO / Supabase Auth. Sessions are behind `lib/auth/session.ts` (see
   `architecture.md` §9).
