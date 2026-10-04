@@ -14,6 +14,14 @@ Claude (`claude-opus-5-5` by default) · Tailwind 4.
 | [docs/platform-capabilities.md](docs/platform-capabilities.md) | What each platform's official API allows, and the limits |
 | [docs/implementation-plan.md](docs/implementation-plan.md) | MVP scope, module order, what's deferred |
 
+## Clickable demo
+
+`demo/index.html` is a standalone, browser-only demo of the main flows with sample data
+(no server or database): pick a role, switch clients, generate comments, edit, approve,
+reject, bulk-approve and publish. Open the file in a browser. It mirrors the real app's
+screens and rules but is not connected to it; the real application is everything else
+in this folder.
+
 ## Run it locally
 
 Needs Node 22+ and PostgreSQL 15+.

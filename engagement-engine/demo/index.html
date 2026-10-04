@@ -1,0 +1,838 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GBS Engagement Engine Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: the real app's shell — dark green sidebar with client switcher, cream workspace, cards and queues. Tokens mirror engagement-engine/src/app/globals.css. */
+:root {
+  --bg: #f6f4ee; --surface: #ffffff; --surface-2: #faf8f3; --sunken: #f1eee6;
+  --line: #e4e0d5; --line-strong: #cfc9ba;
+  --ink: #191816; --ink-2: #4f4c45; --ink-3: #7c786e;
+  --brand: #196144; --brand-ink: #ffffff; --brand-soft: #e6f0eb;
+  --accent: #ffb933; --accent-ink: #191816; --accent-soft: #fff2dc; --accent-text: #7a4b00;
+  --sidebar: #0f3a29; --sidebar-2: #154a35; --sidebar-ink: #e9efe9; --sidebar-ink-2: #a9bdb1;
+  --good: #1a7f4b; --good-soft: #e3f3e9; --warn: #9a6200; --warn-soft: #fff1d6;
+  --bad: #b42318; --bad-soft: #fde8e6; --info: #2a5bd7; --info-soft: #e7eefc;
+  --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a;
+  --overlay: rgba(0,0,0,.42);
+  --font: "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121412; --surface: #1a1c1a; --surface-2: #202320; --sunken: #161816; --line: #2d312d; --line-strong: #3e443e;
+  --ink: #f2f1ec; --ink-2: #c3c2b7; --ink-3: #8f8d84; --brand: #3fa57a; --brand-ink: #0d1f17; --brand-soft: #18342a;
+  --accent-soft: #3a2f17; --accent-text: #ffcf70; --sidebar: #0b1f17; --sidebar-2: #12301f;
+  --good: #4cc387; --good-soft: #143424; --warn: #f0b44c; --warn-soft: #3a2c12; --bad: #f07a6e; --bad-soft: #3d1a17;
+  --info: #7aa2f7; --info-soft: #1b2440; --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --overlay: rgba(0,0,0,.6);
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121412; --surface: #1a1c1a; --surface-2: #202320; --sunken: #161816; --line: #2d312d; --line-strong: #3e443e;
+  --ink: #f2f1ec; --ink-2: #c3c2b7; --ink-3: #8f8d84; --brand: #3fa57a; --brand-ink: #0d1f17; --brand-soft: #18342a;
+  --accent-soft: #3a2f17; --accent-text: #ffcf70; --sidebar: #0b1f17; --sidebar-2: #12301f;
+  --good: #4cc387; --good-soft: #143424; --warn: #f0b44c; --warn-soft: #3a2c12; --bad: #f07a6e; --bad-soft: #3d1a17;
+  --info: #7aa2f7; --info-soft: #1b2440; --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --overlay: rgba(0,0,0,.6);
+  color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+.tab { font-variant-numeric: tabular-nums; }
+a { color: var(--brand); }
+
+/* demo ribbon */
+.ribbon { background: var(--accent); color: var(--accent-ink); font-size: 12.5px; padding: 6px 16px; display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; text-align: center; }
+.ribbon button { background: rgba(0,0,0,.12); border: 0; border-radius: 6px; padding: 2px 8px; font-size: 12px; font-weight: 600; color: var(--accent-ink); }
+
+/* login */
+.login { min-height: calc(100% - 32px); display: grid; grid-template-columns: 1fr 1fr; }
+.login .pitch { background: var(--sidebar); color: var(--sidebar-ink); padding: 48px; display: flex; flex-direction: column; justify-content: space-between; gap: 32px; }
+.login .pitch h1 { font-size: clamp(26px, 3.2vw, 38px); line-height: 1.15; margin: 0; color: #fff; text-wrap: balance; font-weight: 700; }
+.login .pitch p { color: var(--sidebar-ink-2); max-width: 46ch; }
+.login .pick { padding: 48px 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.login .pick > div { width: min(100%, 440px); }
+.persona { width: 100%; text-align: left; display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--line-strong); background: var(--surface); border-radius: 10px; margin-top: 10px; }
+.persona:hover { border-color: var(--brand); }
+.persona .av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; background: var(--brand-soft); color: var(--brand); flex: none; }
+.persona b { display: block; font-size: 14px; }
+.persona span { font-size: 12.5px; color: var(--ink-3); }
+@media (max-width: 820px) { .login { grid-template-columns: 1fr; } .login .pitch { padding: 28px 20px; } }
+
+/* shell */
+.shell { display: grid; grid-template-columns: 252px minmax(0, 1fr); min-height: calc(100% - 32px); }
+aside.side { background: var(--sidebar); color: var(--sidebar-ink); padding: 16px 12px 20px; display: flex; flex-direction: column; gap: 18px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.brandmark { display: flex; gap: 10px; align-items: center; padding: 0 6px; }
+.brandmark .g { width: 32px; height: 32px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 800; }
+.brandmark b { display: block; font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; }
+.brandmark span { font-size: 11px; color: var(--sidebar-ink-2); }
+.switcher { background: rgba(255,255,255,.06); border-radius: 10px; padding: 8px; }
+.switcher .lbl, .navlbl { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; font-weight: 600; color: var(--sidebar-ink-2); padding: 0 6px 6px; }
+.switcher input { width: 100%; height: 32px; border-radius: 7px; border: 1px solid rgba(255,255,255,.12); background: rgba(0,0,0,.22); color: var(--sidebar-ink); padding: 0 8px; margin-bottom: 6px; }
+.switcher input::placeholder { color: var(--sidebar-ink-2); }
+.cl { width: 100%; display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 0; background: none; color: var(--sidebar-ink-2); border-radius: 7px; text-align: left; font-size: 13px; }
+.cl:hover { background: rgba(255,255,255,.06); color: var(--sidebar-ink); }
+.cl.on { background: rgba(255,185,51,.16); color: #fff; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: #4cc387; }
+.dot.onboarding { background: rgba(255,255,255,.35); }
+.cl .n { margin-left: auto; color: var(--accent); font-size: 11.5px; }
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav button { display: flex; justify-content: space-between; align-items: center; background: none; border: 0; color: var(--sidebar-ink-2); padding: 7px 10px; border-radius: 8px; font-size: 13px; text-align: left; }
+.nav button:hover { background: rgba(255,255,255,.06); color: var(--sidebar-ink); }
+.nav button.on { background: var(--sidebar-2); color: #fff; font-weight: 600; }
+.pill { background: var(--accent); color: var(--accent-ink); border-radius: 999px; font-size: 10.5px; font-weight: 700; padding: 0 6px; line-height: 17px; }
+.who { margin-top: auto; background: var(--sidebar-2); border-radius: 10px; padding: 10px 12px; font-size: 12px; }
+.who b { display: block; font-size: 13px; color: var(--sidebar-ink); }
+.who span { color: var(--sidebar-ink-2); }
+.who button { margin-top: 8px; background: none; border: 0; color: var(--sidebar-ink-2); text-decoration: underline; padding: 0; font-size: 12px; }
+.top { position: sticky; top: 0; z-index: 20; height: 54px; display: flex; align-items: center; gap: 12px; padding: 0 24px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(8px); }
+.top .ctx { flex: 1; min-width: 0; font-size: 13.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.top .ctx b { color: var(--ink); }
+.iconbtn { position: relative; width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; }
+.iconbtn .badge { position: absolute; top: -5px; right: -5px; background: var(--bad); color: #fff; font-size: 10px; border-radius: 999px; min-width: 17px; line-height: 17px; padding: 0 4px; }
+.menu { display: none; }
+main.page { padding: 24px; max-width: 1360px; width: 100%; }
+@media (max-width: 960px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  aside.side { position: fixed; inset: 0 auto 0 0; width: 280px; max-width: 86vw; z-index: 50; transform: translateX(-100%); transition: transform .2s; height: 100%; }
+  aside.side.open { transform: none; box-shadow: 0 0 40px rgba(0,0,0,.4); }
+  .scrim { position: fixed; inset: 0; background: var(--overlay); z-index: 40; }
+  .menu { display: grid; }
+  .top { padding: 0 16px; }
+  main.page { padding: 18px 16px 40px; }
+}
+
+/* building blocks */
+.ph { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
+.ph h1 { margin: 0; font-size: 23px; letter-spacing: -.01em; text-wrap: balance; }
+.ph p { margin: 4px 0 0; color: var(--ink-2); max-width: 70ch; }
+.eyebrow { font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; margin-bottom: 4px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; min-width: 0; }
+.card > .hd { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.card > .hd h2 { margin: 0; font-size: 14px; }
+.card > .hd p { margin: 2px 0 0; font-size: 12px; color: var(--ink-3); }
+.card > .bd { padding: 16px 18px; }
+.grid { display: grid; gap: 16px; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); }
+.g31 { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+@media (max-width: 1100px) { .g31 { grid-template-columns: minmax(0, 1fr); } }
+.stats { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); margin-bottom: 20px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; text-align: left; }
+button.stat:hover { border-color: var(--line-strong); }
+.stat .l { font-size: 12px; color: var(--ink-3); }
+.stat .v { font-size: 24px; font-weight: 700; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.stat .h { font-size: 11.5px; color: var(--ink-3); }
+.btn { display: inline-flex; align-items: center; gap: 6px; justify-content: center; height: 34px; padding: 0 13px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); font-weight: 600; font-size: 13px; white-space: nowrap; }
+.btn:hover { background: var(--surface-2); }
+.btn.sm { height: 29px; padding: 0 10px; font-size: 12px; }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.accent { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.danger { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 35%, transparent); }
+.btn.ghost { border-color: transparent; background: none; color: var(--ink-2); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.badge2 { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 1px 8px; font-size: 11.5px; font-weight: 600; white-space: nowrap; background: var(--sunken); color: var(--ink-2); }
+.t-good { background: var(--good-soft); color: var(--good); }
+.t-warn { background: var(--warn-soft); color: var(--warn); }
+.t-bad { background: var(--bad-soft); color: var(--bad); }
+.t-info { background: var(--info-soft); color: var(--info); }
+.t-brand { background: var(--brand-soft); color: var(--brand); }
+.t-accent { background: var(--accent-soft); color: var(--accent-text); }
+.pf { width: 20px; height: 20px; border-radius: 5px; display: inline-grid; place-items: center; font-weight: 800; font-size: 9px; color: #fff; flex: none; }
+.pf.instagram { background: linear-gradient(135deg,#f58529,#dd2a7b 55%,#8134af); }
+.pf.facebook { background: #1877f2; } .pf.linkedin { background: #0a66c2; } .pf.youtube { background: #e00; }
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 620px; }
+th { text-align: left; font-size: 11.5px; color: var(--ink-3); font-weight: 600; padding: 9px 14px; border-bottom: 1px solid var(--line); }
+td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--ink-2); vertical-align: middle; }
+tr.click { cursor: pointer; } tr.click:hover td { background: var(--surface-2); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.muted { color: var(--ink-3); } .small { font-size: 12px; }
+.clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.quote { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; color: var(--ink-2); white-space: pre-line; }
+.ctext { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 15px; line-height: 1.55; color: var(--ink); white-space: pre-line; }
+textarea, input.inp, select.inp { width: 100%; border: 1px solid var(--line-strong); background: var(--surface); border-radius: 8px; padding: 8px 10px; }
+input.inp, select.inp { height: 36px; padding-block: 0; }
+textarea:focus, input.inp:focus, select.inp:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 20%, transparent); }
+label.f { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.notice { border-radius: 8px; padding: 10px 14px; font-size: 13px; border: 1px solid; }
+.n-warn { background: var(--warn-soft); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 25%, transparent); }
+.n-info { background: var(--info-soft); color: var(--info); border-color: color-mix(in srgb, var(--info) 22%, transparent); }
+.n-good { background: var(--good-soft); color: var(--good); border-color: color-mix(in srgb, var(--good) 25%, transparent); }
+.empty { padding: 40px 20px; text-align: center; color: var(--ink-3); }
+.empty b { display: block; color: var(--ink); margin-bottom: 4px; font-size: 14px; }
+.list > * + * { border-top: 1px solid var(--line); }
+.item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 18px; width: 100%; background: none; border: 0; text-align: left; }
+button.item:hover { background: var(--surface-2); }
+.grow { flex: 1; min-width: 0; }
+.bar { height: 6px; border-radius: 999px; background: var(--sunken); }
+.bar > i { display: block; height: 100%; border-radius: 999px; background: var(--series-1); }
+.checks { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.issue { font-size: 12px; margin-top: 4px; }
+.issue.fail { color: var(--bad); } .issue.warn { color: var(--warn); }
+
+/* approval card */
+.acard { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.acard.sel { border-color: var(--brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 14%, transparent); }
+.acard .head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 11px 16px; border-bottom: 1px solid var(--line); }
+.acard .body { display: grid; gap: 16px; padding: 16px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 860px) { .acard .body { grid-template-columns: minmax(0, 1fr); } }
+.acard .foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 16px; border-top: 1px solid var(--line); background: var(--surface-2); border-radius: 0 0 12px 12px; }
+.bulkbar { position: sticky; top: 62px; z-index: 10; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(6px); margin-bottom: 14px; }
+input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--brand); }
+
+/* modal + toast */
+.modal-wrap { position: fixed; inset: 0; background: var(--overlay); display: grid; place-items: center; z-index: 100; padding: 16px; }
+.modal { background: var(--surface); border-radius: 12px; width: min(100%, 460px); border: 1px solid var(--line); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+.modal h3 { margin: 0; font-size: 16px; padding: 18px 20px 0; }
+.modal .mb { padding: 8px 20px 18px; color: var(--ink-2); }
+.modal .mf { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--line); background: var(--surface-2); border-radius: 0 0 12px 12px; }
+.toast { position: fixed; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 120; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 13.5px; box-shadow: 0 10px 30px rgba(0,0,0,.25); max-width: calc(100% - 32px); }
+.spin { display: inline-block; width: 13px; height: 13px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: s .7s linear infinite; }
+@keyframes s { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } aside.side { transition: none; } }
+svg text { fill: var(--ink-3); font-size: 11px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--ink-2); margin-bottom: 8px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+</style>
+
+<div id="app"></div>
+
+<script>
+(() => {
+"use strict";
+// ───────────────────────── Demo data ─────────────────────────
+const USERS = {
+  admin: { id: "admin", name: "GBS Admin", role: "super_admin", label: "GBS Super Admin", desc: "Sees every client, analytics, team and settings." },
+  mehul: { id: "mehul", name: "Mehul", role: "account_manager", label: "GBS Account Manager", clients: ["wudgres", "thrishank", "bharatwood"], desc: "Assigned to Wudgres, Thrishank and Bharatwood only." },
+  arjun: { id: "arjun", name: "Arjun (Wudgres)", role: "client_owner", label: "Client owner · Wudgres", client: "wudgres", desc: "Client portal: approves Wudgres comments. Sees no other client." },
+  kavya: { id: "kavya", name: "Kavya (Wudgres)", role: "client_member", label: "Client team member · Wudgres", client: "wudgres", desc: "Reviews and suggests edits. Can't approve." },
+};
+const MODE = { manual: ["client"], gbs: ["gbs"], dual: ["gbs", "client"] };
+const MODE_LABEL = { manual: "Client approval", gbs: "GBS approval", dual: "Dual approval" };
+const PLAT = { instagram: "Instagram", facebook: "Facebook", linkedin: "LinkedIn", youtube: "YouTube" };
+const PF = { instagram: "IG", facebook: "f", linkedin: "in", youtube: "▶" };
+
+function seed() {
+  const clients = [
+    { id: "wudgres", name: "Wudgres", industry: "Luxury wooden doors", status: "active", mode: "dual", am: "Mehul", platforms: ["instagram", "facebook"],
+      brand: { voice: ["Professional", "Technical", "Insight-driven"], length: "Short", cta: "None", avoid: ["cheap", "best price"], competitors: ["DoorKing"], claims: ["termite-proof", "lifetime warranty"], products: ["Wooden doors", "Main doors", "Pivot doors"], keywords: ["luxury villa", "wooden door", "entrance", "elevation", "interior design"] },
+      segments: [{ name: "Architects Bangalore", titles: ["Architect", "Principal Architect", "Interior Designer"], locations: ["Bangalore"], keywords: ["luxury villa", "interior design", "wooden door"] }, { name: "Builders Karnataka", titles: ["Builder", "Developer", "Contractor"], locations: ["Karnataka", "Mysore"], keywords: ["villa project", "handover"] }],
+      campaigns: [{ name: "Architect Engagement Bangalore", platforms: ["instagram"], status: "active", opp: 30, pub: 5 }, { name: "Builders Karnataka", platforms: ["instagram", "facebook"], status: "paused", opp: 20, pub: 3 }] },
+    { id: "thrishank", name: "Thrishank", industry: "Real estate developer", status: "active", mode: "manual", am: "Mehul", platforms: ["instagram", "linkedin"],
+      brand: { voice: ["Warm", "Trustworthy"], length: "Medium", cta: "None", avoid: ["guaranteed returns"], competitors: [], claims: ["RERA approved"], products: ["Premium apartments", "Villas"], keywords: ["first home", "home buying", "gated community"] },
+      segments: [{ name: "Home buyers Bangalore", titles: ["Engineer", "Manager", "Founder"], locations: ["Bangalore"], keywords: ["first home", "gated community"] }],
+      campaigns: [{ name: "First-home buyers", platforms: ["instagram", "linkedin"], status: "active", opp: 30, pub: 5 }] },
+    { id: "lykes", name: "Lykes", industry: "Furniture", status: "active", mode: "gbs", am: "Priya", platforms: ["instagram"],
+      brand: { voice: ["Friendly", "Casual", "Conversational"], length: "Short", cta: "Soft", avoid: ["cheap"], competitors: [], claims: [], products: ["Sofas", "Dining tables"], keywords: ["living room", "sofa", "small spaces"] },
+      segments: [{ name: "Home decor enthusiasts", titles: ["Interior Designer", "Stylist"], locations: ["Bangalore", "Chennai"], keywords: ["living room", "sofa"] }],
+      campaigns: [{ name: "Living room conversations", platforms: ["instagram"], status: "active", opp: 30, pub: 5 }] },
+    { id: "bharatwood", name: "Bharatwood", industry: "Plywood & laminates", status: "active", mode: "manual", am: "Mehul", platforms: ["instagram", "linkedin"],
+      brand: { voice: ["Professional", "Practical"], length: "Medium", cta: "None", avoid: [], competitors: [], claims: ["BWP grade"], products: ["Plywood", "Laminates"], keywords: ["modular kitchen", "plywood", "carpentry"] },
+      segments: [{ name: "Carpenters & contractors", titles: ["Contractor", "Carpenter"], locations: ["Karnataka"], keywords: ["plywood", "modular kitchen"] }],
+      campaigns: [{ name: "Kitchen projects", platforms: ["instagram"], status: "active", opp: 25, pub: 4 }] },
+    { id: "assetz", name: "Assetz", industry: "Real estate", status: "onboarding", mode: "manual", am: "Priya", platforms: [], setup: 25,
+      brand: { voice: [], length: "Medium", cta: "None", avoid: [], competitors: [], claims: [], products: [], keywords: [] }, segments: [], campaigns: [] },
+  ];
+
+  let n = 0;
+  const id = (p) => `${p}${++n}`;
+  const opp = (o) => ({ id: id("o"), status: "analyzed", comments: [], gen: 0, ...o });
+  const variants = (insight, conversation, expert) => [
+    { type: "insight", text: insight }, { type: "conversation", text: conversation }, { type: "expert", text: expert }];
+
+  const opps = [
+    opp({ client: "wudgres", campaign: "Architect Engagement Bangalore", platform: "instagram", author: "ar.meera.rao", bio: "Principal Architect · Bangalore · luxury residences", followers: 4200, ageH: 3, comments_n: 18,
+      content: "5 things architects should consider when designing luxury villas: entrance proportion, natural light, door scale, material palette and how the elevation reads from the street. What would you add?",
+      score: 94, factors: { a: 92, c: 100, v: 85, b: 81, au: 80, f: 100 }, explanation: "Post discusses luxury villa entrance design and the author matches the Architects Bangalore audience (Principal Architect in Bangalore).", capability: "manual",
+      pool: variants(
+        "The entrance proportion is often overlooked. In larger villas, getting the door scale right can completely change how premium the elevation feels.",
+        "Great list. Where do you usually land on door height for a double-height foyer — do you scale the door to the volume or to the human?",
+        "From a joinery point of view, the door's stile and rail widths matter as much as its height. Thin profiles on a 3m door can make even solid wood read as lightweight."),
+      initial: { status: "pending_approval", pick: 0 } }),
+    opp({ client: "wudgres", campaign: "Architect Engagement Bangalore", platform: "instagram", author: "studio.kanva", bio: "Interior Designer studio · Bengaluru", followers: 12800, ageH: 8, comments_n: 31,
+      content: "Teak or engineered wood for a main door in Bangalore's climate? We've been comparing finishes for a villa project in Whitefield.",
+      score: 86, factors: { a: 85, c: 82, v: 90, b: 95, au: 100, f: 96 }, explanation: "Post discusses wooden main doors for a villa, the author is on the target profile list and matches the Architects Bangalore audience (Interior Designer).", capability: "manual",
+      pool: variants(
+        "In Bangalore's humidity swings, how the finish is sealed on all six faces of the shutter usually matters more than teak versus engineered wood.",
+        "What finish are you leaning towards for the Whitefield project? A matte PU and an oil finish age very differently on a west-facing entrance.",
+        "Engineered cores with a solid wood veneer tend to stay flatter on tall main doors. Teak is beautiful, but on a 2.7m leaf it needs careful grain selection to avoid movement."),
+      initial: { status: "pending_approval", pick: 2 } }),
+    opp({ client: "wudgres", campaign: "Architect Engagement Bangalore", platform: "instagram", author: "elevation.daily", bio: "Architecture inspiration", followers: 88000, ageH: 20, comments_n: 120,
+      content: "Double-height entrance with a pivot door. The proportion of the door to the facade is everything in a luxury villa.",
+      score: 71, factors: { a: 40, c: 95, v: 35, b: 90, au: 45, f: 90 }, explanation: "Post discusses pivot doors and villa entrances; the author is a large inspiration account, so the audience match is weaker.", capability: "manual",
+      pool: variants(
+        "Pivot doors at this scale only work when the pivot point is set back from the edge. It keeps the swing clear of the frame and the door feels lighter than it is.",
+        "Love how this reads from the street. Is the pivot centred, or offset to keep the opening wider on one side?",
+        "We make pivot doors exactly like this — check out our collection and DM us for prices!"),
+      initial: { status: "comment_generated" } }),
+    opp({ client: "wudgres", campaign: "Architect Engagement Bangalore", platform: "instagram", author: "builtbyraj", bio: "Builder & Developer · Mysore", followers: 2300, ageH: 30, comments_n: 9,
+      content: "Handover day for our villa project in Mysore. Clients loved the wooden door at the entrance — took us three months to get the finish right.",
+      score: 78, factors: { a: 70, c: 85, v: 55, b: 90, au: 75, f: 82 }, explanation: "Post discusses a wooden entrance door on a villa handover; the author matches the Builders Karnataka audience (Builder, Mysore).", capability: "manual",
+      pool: variants(
+        "Three months on a finish shows. A wooden entrance door is the first thing clients touch at handover, so that patience pays off every day they live there.",
+        "Congratulations on the handover. What was the hardest part of the finish to get right — colour consistency or the protective coat?",
+        "A finish that's built up slowly in thin coats ages far more evenly on an entrance door than one rushed for handover. Good call taking the time."),
+      initial: { status: "analyzed" } }),
+    opp({ client: "wudgres", campaign: "Architect Engagement Bangalore", platform: "instagram", author: "ar.vikram.s", bio: "Architect · Bangalore", followers: 3100, ageH: 50, comments_n: 12,
+      content: "Client asked for a 'grand' entrance on a 40ft plot. We used a single tall door with a glass side panel instead of double doors.",
+      score: 83, factors: { a: 90, c: 80, v: 60, b: 85, au: 75, f: 70 }, explanation: "Post discusses entrance design on a compact plot and the author matches the Architects Bangalore audience.", capability: "manual",
+      pool: variants("A single tall leaf with a glass side panel often feels grander than double doors on a narrow plot, because the eye reads height before width.", "", ""),
+      initial: { status: "manual_required", pick: 0, approvedBy: "Mehul + Arjun" } }),
+    opp({ client: "wudgres", campaign: "Architect Engagement Bangalore", platform: "facebook", author: "Prestige Homes Owners Group", bio: "Community", followers: null, ageH: 70, comments_n: 4, own: true,
+      content: "Comment on Wudgres India's post: 'Do your doors come with soft-close hinges?'",
+      score: 76, factors: { a: 50, c: 70, v: 95, b: 100, au: 40, f: 60 }, explanation: "A question left on the client's own Facebook Page post. Replies here can be published through the API.", capability: "api",
+      pool: variants("Yes — soft-close hinges can be specified on our doors, along with the hinge finish to match your hardware.", "", ""),
+      initial: { status: "published", pick: 0, approvedBy: "Mehul + Arjun", likes: 3, replies: 1 } }),
+
+    opp({ client: "thrishank", campaign: "First-home buyers", platform: "linkedin", author: "ananya-k", bio: "Engineering Manager, Bangalore", followers: 3100, ageH: 5, comments_n: 22,
+      content: "Buying my first home in Bangalore — what questions should I ask a developer about a gated community before booking?",
+      score: 88, factors: { a: 85, c: 95, v: 100, b: 80, au: 70, f: 98 }, explanation: "Post discusses first home buying in a gated community and the author matches the Home buyers Bangalore audience.", capability: "manual",
+      pool: variants(
+        "Ask how maintenance is handled after handover and who manages the association fund. It shapes your monthly costs for years, and it's rarely in the brochure.",
+        "Good question to ask publicly. Are you comparing projects that are ready to move in, or under construction? The questions differ quite a bit.",
+        "Check the approved plan against what's being built, especially open spaces and amenity areas. Changes after booking are where most disputes start."),
+      initial: { status: "pending_approval", pick: 0 } }),
+    opp({ client: "thrishank", campaign: "First-home buyers", platform: "instagram", author: "blr.homehunt", bio: "First-time buyer diaries", followers: 950, ageH: 26, comments_n: 6,
+      content: "Visited three gated communities this weekend. The clubhouse looked great everywhere but nobody could tell me the maintenance cost.",
+      score: 74, factors: { a: 60, c: 90, v: 70, b: 70, au: 55, f: 85 }, explanation: "Post discusses gated community visits and maintenance costs, a topic for the Home buyers Bangalore audience.", capability: "manual",
+      pool: variants(
+        "Maintenance cost is the right thing to push on. Ask for the per-square-foot estimate in writing, and what it covers once the developer hands over.",
+        "Did any of them show you the amenity running costs? That's usually what drives maintenance up later.",
+        "A clubhouse is an easy sell; a sinking fund isn't. It's worth asking how much of the maintenance goes into one."),
+      initial: { status: "analyzed" } }),
+
+    opp({ client: "lykes", campaign: "Living room conversations", platform: "instagram", author: "nest.and.nook", bio: "Interior stylist · Chennai", followers: 15400, ageH: 4, comments_n: 40,
+      content: "Small living room, big sofa? Here's how we made a three-seater work in a 10x12 room. Would you try this layout?",
+      score: 82, factors: { a: 80, c: 90, v: 100, b: 85, au: 60, f: 98 }, explanation: "Post discusses fitting a sofa in a small living room and the author matches the Home decor enthusiasts audience.", capability: "manual",
+      pool: variants(
+        "Raised legs make such a difference in a 10x12 room. Seeing floor under the sofa makes the whole space feel bigger.",
+        "Would totally try this! Did you go for a lower back to keep the window view open?",
+        "A three-seater with slim arms gives you nearly a whole extra seat in the same footprint. Arms are where small rooms lose the most space."),
+      initial: { status: "pending_approval", pick: 0 } }),
+    opp({ client: "bharatwood", campaign: "Kitchen projects", platform: "instagram", author: "kitchenworks.blr", bio: "Modular kitchen contractor · Bangalore", followers: 5200, ageH: 10, comments_n: 15,
+      content: "Sink cabinet swelling after two years again. What grade of plywood are you all using under the sink?",
+      score: 90, factors: { a: 90, c: 95, v: 100, b: 95, au: 75, f: 95 }, explanation: "Post asks about plywood grade for sink cabinets and the author matches the Carpenters & contractors audience.", capability: "manual",
+      pool: variants(
+        "Under the sink, edge sealing matters as much as the board grade. Unsealed cut edges are usually where water gets in first.",
+        "Is the swelling starting at the base panel or the side panels? That usually tells you whether it's a leak or condensation.",
+        "Boiling-water-resistant grades hold up far better in sink units, but only if the edges are banded or sealed after cutting."),
+      initial: { status: "pending_approval", pick: 0 } }),
+  ];
+  return { clients, opps, notes: [], audit: [], seq: 1000 };
+}
+
+// ───────────────────────── Quality checks (mirrors src/lib/engine/quality.ts) ─────────────────────────
+const GENERIC = ["great post", "nice post", "nice information", "great information", "great content", "love this", "well said", "so true", "amazing post", "thanks for sharing", "very informative", "nice one", "good one", "keep it up", "great list"];
+const PROMO = [[/\b(dm|message|inbox) us\b/i, "asks people to DM"], [/\bcheck (out )?our (profile|page|website|site|feed|collection|products?)\b/i, "points to the brand's profile"], [/\b(visit|see) our (website|site|page|store|showroom)\b/i, "asks people to visit the website"], [/\bcontact us\b/i, "says \"contact us\""], [/\blink in (our )?bio\b/i, "mentions link in bio"], [/\b(shop|buy|order|book) now\b/i, "hard sell"], [/\bprices?\b|\bdiscount\b|\b\d{1,2}\s?% off\b|\boffer\b/i, "talks about price or offers"], [/https?:\/\/|www\./i, "contains a link"], [/\bwe make\b/i, "pitches the brand's products"]];
+const FAB = [/\bi (once|recently|remember|visited|installed|designed|built)\b/i, /\bmy (client|clients|home|house|family)\b/i, /\bwe (recently |just )?(installed|delivered|completed|fitted) [^.]{0,60}\bfor\b/i];
+const STOP = new Set("the a an and or but if of to in on for with at by from is are was were be this that these those it its as your you our we they their there here about into than then so very just can will would should could how what when where which who why not more most much many".split(" "));
+const words = (s) => new Set(s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ").split(/\s+/).map((w) => w.replace(/(ing|ed|es|s)$/, "")).filter((w) => w.length > 3 && !STOP.has(w)));
+const jacc = (a, b) => { const A = words(a), B = words(b); let i = 0; A.forEach((w) => B.has(w) && i++); return A.size + B.size ? i / (A.size + B.size - i) : 0; };
+
+function quality(text, o, client, selfId) {
+  const t = text.trim(), checks = [];
+  const pw = words(o.content), cw = words(t); let ov = 0; cw.forEach((w) => pw.has(w) && ov++);
+  const kw = client.brand.keywords.some((k) => t.toLowerCase().includes(k.toLowerCase()));
+  checks.push(ov === 0 && !kw ? ["relevance", "fail", "Comment doesn't reference anything specific from the post."] : ov < 2 && !kw ? ["relevance", "warn", "Comment only loosely connects to the post."] : ["relevance", "pass", ""]);
+  const generic = GENERIC.find((g) => t.toLowerCase().includes(g));
+  const spam = []; let spamFail = false;
+  if (generic && t.length < 90) { spam.push(`generic praise ("${generic}")`); spamFail = true; } else if (generic) spam.push(`opens with generic praise ("${generic}")`);
+  if (t.length < 25) { spam.push("too short to add value"); spamFail = true; }
+  if ((t.match(/#\w+/g) || []).length > 3) { spam.push("hashtag stuffing"); spamFail = true; }
+  checks.push(spam.length ? ["spam", spamFail ? "fail" : "warn", `Looks spammy: ${spam.join(", ")}.`] : ["spam", "pass", ""]);
+  let dup = 0;
+  for (const x of DATA.opps) if (x.client === o.client) for (const c of x.comments) if (c.id !== selfId && ["pending_approval", "approved", "queued", "manual_required", "published"].includes(c.status)) dup = Math.max(dup, jacc(c.text, t));
+  checks.push(dup >= 0.6 ? ["duplicate", "fail", `${Math.round(dup * 100)}% similar to another ${client.name} comment.`] : ["duplicate", "pass", ""]);
+  const avoid = client.brand.avoid.filter((w) => t.toLowerCase().includes(w)); const comp = client.brand.competitors.filter((w) => t.toLowerCase().includes(w.toLowerCase()));
+  checks.push(avoid.length || comp.length ? ["brand voice", "fail", `Brand voice: ${[avoid.length && `uses words to avoid (${avoid.join(", ")})`, comp.length && `mentions a competitor (${comp.join(", ")})`].filter(Boolean).join("; ")}.`] : t.length > 360 ? ["brand voice", "warn", `Longer than the preferred ${client.brand.length.toLowerCase()} length.`] : ["brand voice", "pass", ""]);
+  const promo = PROMO.filter(([re]) => re.test(t)).map(([, w]) => w);
+  checks.push(promo.length ? ["promotional", client.brand.cta === "None" ? "fail" : "warn", `Comment is too promotional: ${promo.join(", ")}.`] : ["promotional", "pass", ""]);
+  const claims = client.brand.claims.filter((c) => t.toLowerCase().includes(c.toLowerCase()));
+  checks.push(FAB.some((re) => re.test(t)) ? ["safety", "fail", "Describes a personal experience the brand may not have had."] : claims.length ? ["safety", "warn", `Makes a claim that needs approval (${claims.join(", ")}).`] : ["safety", "pass", ""]);
+  checks.push(o.platform === "instagram" && /https?:\/\/|www\./i.test(t) ? ["platform policy", "fail", "Links aren't clickable in Instagram comments."] : t.length > (o.platform === "linkedin" ? 1250 : 2200) ? ["platform policy", "fail", "Exceeds the platform's length limit."] : ["platform policy", "pass", ""]);
+  const fails = checks.filter((c) => c[1] === "fail").length, warns = checks.filter((c) => c[1] === "warn").length;
+  return { score: Math.max(0, 100 - fails * 30 - warns * 8), passed: fails === 0, checks };
+}
+
+// ───────────────────────── State ─────────────────────────
+const KEY = "gbs-engagement-demo-v1";
+let DATA = null;
+const S = { user: null, client: null, route: "login", opp: null, sel: new Set(), modal: null, toast: null, drawer: false, editing: null, rejecting: null, q: "", busy: null, oppFilter: "open" };
+function save() { try { localStorage.setItem(KEY, JSON.stringify(DATA)); } catch { /* storage may be unavailable */ } }
+
+function mkComment(o, v, i) {
+  const c = { id: `c${++DATA.seq}`, type: v.type, text: v.text, original: v.text, status: "generated", selected: false, approvals: {}, edits: [], suggestions: [], likes: 0, replies: 0 };
+  const cl = client(o.client); c.q = quality(c.text, o, cl, c.id); return c;
+}
+function generate(o, fromPool = o.pool) {
+  o.comments.forEach((c) => { if (["generated", "pending_approval"].includes(c.status)) c.status = "superseded"; });
+  const fresh = fromPool.filter((v) => v.text).map((v, i) => mkComment(o, v, i));
+  const best = [...fresh].sort((a, b) => Number(b.q.passed) - Number(a.q.passed) || b.q.score - a.q.score)[0];
+  if (best) best.selected = true;
+  o.comments.push(...fresh); o.gen++; o.status = "comment_generated";
+  return fresh;
+}
+function materialize() {
+  for (const o of DATA.opps) {
+    const init = o.initial || {}; delete o.initial;
+    if (init.status === "analyzed") continue;
+    const fresh = generate(o);
+    if (init.status === "comment_generated") continue;
+    const c = fresh[init.pick ?? 0]; fresh.forEach((x) => { x.selected = x === c; if (x !== c) x.status = "superseded"; });
+    if (init.status === "pending_approval") { c.status = "pending_approval"; o.status = "pending_approval"; }
+    else { c.status = init.status; c.approvals = { gbs: true, client: true }; c.approvedBy = init.approvedBy; c.likes = init.likes || 0; c.replies = init.replies || 0; o.status = init.status === "published" ? "published" : "queued"; if (init.status === "published") c.url = "https://facebook.com/wudgres/posts/1#c"; }
+  }
+}
+
+// ───────────────────────── Helpers ─────────────────────────
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const client = (id) => DATA.clients.find((c) => c.id === id);
+const me = () => USERS[S.user];
+const isStaff = () => ["super_admin", "account_manager"].includes(me()?.role);
+function visibleClients() {
+  const u = me(); if (!u) return [];
+  if (u.role === "super_admin") return DATA.clients;
+  if (u.role === "account_manager") return DATA.clients.filter((c) => u.clients.includes(c.id));
+  return DATA.clients.filter((c) => c.id === u.client);
+}
+function mySide(cl) {
+  const u = me(), need = MODE[cl.mode];
+  if ((u.role === "super_admin" || u.role === "account_manager") && need.includes("gbs")) return "gbs";
+  if (u.role === "client_owner" && need.includes("client")) return "client";
+  return null;
+}
+const canManage = () => ["super_admin", "account_manager", "client_owner"].includes(me().role);
+const canEdit = () => me().role !== "client_member";
+const pendingCount = (cid) => DATA.opps.filter((o) => o.client === cid).flatMap((o) => o.comments).filter((c) => c.status === "pending_approval").length;
+const clientOpps = (cid) => DATA.opps.filter((o) => o.client === cid);
+const ago = (h) => (h < 1 ? "just now" : h < 48 ? `${Math.round(h)}h ago` : `${Math.round(h / 24)}d ago`);
+const pf = (p) => `<span class="pf ${p}" title="${PLAT[p]}" aria-label="${PLAT[p]}">${PF[p]}</span>`;
+const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString("en-IN"));
+const TYPE = { insight: "Insight", conversation: "Conversation", expert: "Expert perspective" };
+const ST = { generated: ["", "○", "Generated"], pending_approval: ["t-warn", "◔", "Pending approval"], approved: ["t-good", "✓", "Approved"], rejected: ["t-bad", "✕", "Rejected"], queued: ["t-info", "◷", "Queued"], manual_required: ["t-accent", "✋", "Manual action"], published: ["t-brand", "●", "Published"], analyzed: ["t-info", "◑", "Analyzed"], comment_generated: ["t-info", "✎", "Comments ready"], dismissed: ["", "–", "Dismissed"], active: ["t-good", "●", "Active"], paused: ["t-warn", "❚❚", "Paused"], onboarding: ["t-info", "◔", "Onboarding"], superseded: ["", "–", "Superseded"] };
+const st = (s) => { const [t, i, l] = ST[s] || ["", "○", s]; return `<span class="badge2 ${t}"><span aria-hidden="true">${i}</span>${l}</span>`; };
+const scoreB = (s, label) => `<span class="badge2 tab ${s >= 80 ? "t-good" : s >= 60 ? "t-brand" : s >= 40 ? "t-warn" : ""}">${s}/100</span>${label ? ` <span class="small muted">${label}</span>` : ""}`;
+const label = (s) => (s >= 80 ? "Strong opportunity" : s >= 60 ? "Good opportunity" : s >= 40 ? "Moderate opportunity" : "Weak opportunity");
+const qB = (q) => `<span class="badge2 tab ${q.passed ? (q.score >= 85 ? "t-good" : "t-warn") : "t-bad"}">${q.passed ? "✓" : "!"} Quality ${q.score}</span>`;
+function note(cid, title, body) { DATA.notes.unshift({ id: ++DATA.seq, client: cid, title, body, at: Date.now(), read: false }); }
+function audit(action, cid, detail) { DATA.audit.unshift({ at: Date.now(), who: me().name, action, client: client(cid)?.name || "—", detail: detail || "" }); }
+function toast(msg) { S.toast = msg; clearTimeout(toast.t); toast.t = setTimeout(() => { S.toast = null; render(); }, 3200); }
+function go(route, extra = {}) { Object.assign(S, { route, drawer: false, editing: null, rejecting: null }, extra); if (route !== "approvals") S.sel = new Set(); render(); window.scrollTo(0, 0); }
+function findComment(id) { for (const o of DATA.opps) for (const c of o.comments) if (c.id === id) return { o, c }; return {}; }
+
+// ───────────────────────── Actions ─────────────────────────
+const A = {
+  login(u) { S.user = u; const vc = visibleClients(); S.client = vc[0]?.id ?? null; if (u === "mehul") S.client = "wudgres"; go(isStaff() ? "dashboard" : "client"); },
+  logout() { S.user = null; go("login"); },
+  reset() { DATA = seed(); materialize(); save(); S.sel = new Set(); toast("Demo data reset."); render(); },
+  nav(r) { go(r); },
+  client(id) { S.client = id; const keep = ["client", "opps", "approvals", "comments", "publishing", "campaigns", "brand", "canalytics"]; go(keep.includes(S.route) ? S.route : "client"); },
+  open(id) { go("opp", { opp: id }); },
+  drawer() { S.drawer = !S.drawer; render(); },
+  generate(id) {
+    const o = DATA.opps.find((x) => x.id === id); S.busy = id; render();
+    setTimeout(() => {
+      const pool = o.gen % 2 === 1 && o.pool2 ? o.pool2 : o.pool;
+      generate(o, pool); S.busy = null; audit("Generated comments", o.client, `@${o.author}`); save();
+      toast("Generated three comments and ran the quality checks."); render();
+    }, 1100);
+  },
+  regenerate(id) {
+    const o = DATA.opps.find((x) => x.id === id);
+    o.pool2 = o.pool.map((v) => ({ ...v, text: v.text ? rephrase(v.text) : v.text }));
+    A.generate(id);
+  },
+  submit(cid) {
+    const { o, c } = findComment(cid);
+    o.comments.forEach((x) => { if (x !== c && ["generated", "pending_approval"].includes(x.status)) x.status = "superseded"; x.selected = x === c; });
+    c.status = "pending_approval"; o.status = "pending_approval";
+    note(o.client, `${client(o.client).name}: a comment needs approval`, c.text.slice(0, 120)); audit("Submitted for approval", o.client, `@${o.author}`);
+    save(); toast("Sent for approval."); render();
+  },
+  edit(cid) { S.editing = cid; S.rejecting = null; render(); document.getElementById(`ed-${cid}`)?.focus(); },
+  cancel() { S.editing = null; S.rejecting = null; render(); },
+  saveEdit(cid) {
+    const { o, c } = findComment(cid); const v = document.getElementById(`ed-${cid}`).value.trim();
+    if (v.length < 2) return toast("The comment is empty.");
+    if (!canEdit()) { c.suggestions.push({ by: me().name, text: v }); S.editing = null; audit("Suggested an edit", o.client); save(); toast("Suggestion sent to the approvers."); return render(); }
+    if (v !== c.text) { c.edits.push({ by: me().name, from: c.text, to: v, at: Date.now() }); c.text = v; c.approvals = {}; c.q = quality(v, o, client(o.client), c.id); audit("Edited comment", o.client, `quality ${c.q.score}`); }
+    S.editing = null; save(); toast(c.q.passed ? `Saved. Quality ${c.q.score}/100.` : `Saved, but it fails ${c.q.checks.filter((x) => x[1] === "fail").map((x) => x[0]).join(", ")}.`); render();
+  },
+  applySug(cid, i) { const { o, c } = findComment(cid); const s = c.suggestions.splice(i, 1)[0]; c.edits.push({ by: me().name, from: c.text, to: s.text }); c.text = s.text; c.approvals = {}; c.q = quality(c.text, o, client(o.client), c.id); save(); toast("Suggestion applied."); render(); },
+  rejectStart(cid) { S.rejecting = cid; S.editing = null; render(); document.getElementById(`rj-${cid}`)?.focus(); },
+  reject(cid) {
+    const { o, c } = findComment(cid); c.status = "rejected"; c.reason = document.getElementById(`rj-${cid}`)?.value || ""; o.status = "rejected"; S.rejecting = null;
+    audit("Rejected comment", o.client, c.reason); save(); toast("Rejected. The reason is kept as feedback for future drafts."); render();
+  },
+  approve(cid, silent) {
+    const { o, c } = findComment(cid); const cl = client(o.client); const side = mySide(cl);
+    if (!side || c.status !== "pending_approval") return false;
+    c.approvals[side] = true;
+    audit("Approved comment", o.client, `${side === "gbs" ? "GBS" : "Client"} side`);
+    const done = MODE[cl.mode].every((s) => c.approvals[s]);
+    if (done) { c.status = "approved"; o.status = "approved"; c.approvedBy = me().name; }
+    else note(o.client, `${cl.name}: approved by ${side === "gbs" ? "GBS" : "client"}, awaiting ${side === "gbs" ? "client" : "GBS"}`, c.text.slice(0, 100));
+    save(); if (!silent) { toast(done ? "Approved. It's ready to queue for publishing." : `Your approval is recorded. Waiting for ${side === "gbs" ? "the client" : "GBS"}.`); render(); }
+    return done ? "full" : "partial";
+  },
+  toggle(cid) { S.sel.has(cid) ? S.sel.delete(cid) : S.sel.add(cid); render(); },
+  toggleAll() { const ids = bulkable().map((x) => x.c.id); const all = ids.every((i) => S.sel.has(i)); S.sel = new Set(all ? [] : ids); render(); },
+  bulkAsk() { if (!S.sel.size) return; S.modal = { title: "Confirm approval", body: `You are approving <b>${S.sel.size}</b> comment${S.sel.size === 1 ? "" : "s"} for publication. Only comments that passed every quality check are included.`, ok: `Approve ${S.sel.size}`, act: "bulkGo" }; render(); },
+  bulkGo() { let full = 0, part = 0; for (const id of S.sel) { const r = A.approve(id, true); if (r === "full") full++; else if (r === "partial") part++; } S.sel = new Set(); S.modal = null; toast([full && `Approved ${full} for publication.`, part && `Recorded your approval on ${part}; waiting for the other approver.`].filter(Boolean).join(" ")); render(); },
+  closeModal() { S.modal = null; render(); },
+  queue(cid) { const { o, c } = findComment(cid); c.status = o.capability === "api" ? "queued" : "manual_required"; o.status = "queued"; audit("Queued for publishing", o.client); save(); toast(o.capability === "api" ? "Queued. The worker publishes it through the platform's API." : "Queued. This platform's API can't post here, so it's waiting for someone to post it manually."); render(); },
+  process() {
+    let n = 0; for (const o of DATA.opps) if (o.client === S.client) for (const c of o.comments) if (c.status === "queued") { c.status = "published"; c.url = "#"; o.status = "published"; n++; note(o.client, `${client(o.client).name}: comment published on ${PLAT[o.platform]}`, c.text.slice(0, 100)); }
+    save(); toast(n ? `Published ${n} comment${n === 1 ? "" : "s"} (simulated in this demo).` : "Nothing is due right now."); render();
+  },
+  posted(cid) { const { o, c } = findComment(cid); const url = document.getElementById(`url-${cid}`)?.value.trim(); if (!/^https?:\/\/\S+/.test(url || "")) return toast("Paste the link to the posted comment first."); c.status = "published"; c.url = url; o.status = "published"; audit("Recorded manual publication", o.client); save(); toast("Recorded as published."); render(); },
+  copy(cid) { const { c } = findComment(cid); navigator.clipboard?.writeText(c.text).then(() => toast("Comment copied."), () => toast("Copy isn't available here. Select the text instead.")); },
+  dismiss(id) { const o = DATA.opps.find((x) => x.id === id); o.status = "dismissed"; save(); go("opps"); toast("Opportunity dismissed."); },
+  filter(v) { S.oppFilter = v; render(); },
+  addManual() {
+    const g = (i) => document.getElementById(i)?.value.trim() || "";
+    const url = g("mi-url"), content = g("mi-text"), author = g("mi-author").replace(/^@/, ""), bio = g("mi-bio"), platform = g("mi-plat") || "instagram";
+    if (!/^https?:\/\//.test(url)) return toast("Add the post's link (starting with https://).");
+    if (content.length < 15) return toast("Paste what the post says.");
+    const cl = client(S.client); const lc = content.toLowerCase();
+    const kw = cl.brand.keywords.filter((k) => lc.includes(k.toLowerCase())).length;
+    const seg = cl.segments.find((s) => s.titles.some((t) => bio.toLowerCase().includes(t.toLowerCase())));
+    const f = { a: seg ? 85 : 35, c: Math.min(100, 10 + kw * 30), v: /\?/.test(content) ? 85 : 40, b: Math.min(100, 15 + kw * 25), au: seg ? 70 : 30, f: 100 };
+    const score = Math.round(f.a * .25 + f.c * .25 + f.v * .15 + f.b * .15 + f.au * .1 + f.f * .1);
+    const o = { id: `o${++DATA.seq}`, client: S.client, campaign: cl.campaigns[0]?.name || "—", platform, author: author || "unknown", bio, followers: null, ageH: 0, comments_n: 0, content, score, factors: f,
+      explanation: `${kw ? "Post mentions campaign keywords" : "Post has limited overlap with campaign keywords"}${seg ? ` and the author matches the ${seg.name} audience` : ""}.`, capability: platform === "youtube" ? "api" : "manual", status: "analyzed", comments: [], gen: 0, manual: true,
+      pool: [{ type: "insight", text: `The point about ${firstTerm(content)} is the part people tend to underestimate. Getting it right early shapes how everything else comes together.` }, { type: "conversation", text: `Interesting take on ${firstTerm(content)}. What made you settle on this approach?` }, { type: "expert", text: `From a ${cl.industry.toLowerCase()} point of view, ${firstTerm(content)} decisions work best when they're made alongside proportion and finish, not after.` }] };
+    DATA.opps.unshift(o); audit("Added opportunity manually", S.client, url); save(); go("opp", { opp: o.id }); toast(`Added and scored ${score}/100.`);
+  },
+  read() { DATA.notes.forEach((n) => (n.read = true)); save(); render(); },
+};
+function firstTerm(s) { const w = s.toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((x) => x.length > 5 && !STOP.has(x)); return w[0] || "this"; }
+function rephrase(t) { return t.replace(/often /, "regularly ").replace(/usually /, "often ").replace(/matters/, "counts").replace(/can completely change/, "changes").replace(/^Yes — /, "Yes, "); }
+function bulkable() { return clientOpps(S.client).flatMap((o) => o.comments.map((c) => ({ o, c }))).filter(({ o, c }) => c.status === "pending_approval" && c.q.passed && mySide(client(o.client)) && !c.approvals[mySide(client(o.client))]); }
+
+// ───────────────────────── Views ─────────────────────────
+function shell(content) {
+  const u = me(), vc = visibleClients(), cl = client(S.client), staff = isStaff();
+  const q = S.q.toLowerCase();
+  const gNav = [["dashboard", "Dashboard"], ["clients", "Clients"], ["opps", "Engagement"], ["approvals", "Approvals", cl && pendingCount(cl.id)], ["publishing", "Publishing"], ["analytics", "Analytics"], ["integrations", "Integrations"], ...(u.role === "super_admin" ? [["audit", "Audit log"]] : [])];
+  const cNav = [["client", "Dashboard"], ["opps", "Opportunities"], ["approvals", "Approvals", cl && pendingCount(cl.id)], ["comments", "Comments"], ["publishing", "Publishing"], ["campaigns", "Campaigns"], ["brand", "Brand & audience"], ["canalytics", "Analytics"]];
+  const navBtn = ([r, l, b]) => `<button class="${S.route === r || (r === "opps" && S.route === "opp") ? "on" : ""}" data-a="nav" data-v="${r}"><span>${l}</span>${b ? `<span class="pill tab">${b}</span>` : ""}</button>`;
+  const unread = DATA.notes.filter((n) => !n.read && vc.some((c) => c.id === n.client)).length;
+  return `
+  <div class="shell">
+    ${S.drawer ? `<div class="scrim" data-a="drawer"></div>` : ""}
+    <aside class="side ${S.drawer ? "open" : ""}" aria-label="Navigation">
+      <div class="brandmark"><span class="g" aria-hidden="true">G</span><span><b>Get Bee Seen</b><span>Engagement Engine</span></span></div>
+      ${staff ? `<div class="switcher"><div class="lbl">Clients</div>
+        <input id="cs" placeholder="Search clients…" aria-label="Search clients" value="${esc(S.q)}">
+        ${vc.filter((c) => !q || c.name.toLowerCase().includes(q)).map((c) => `<button class="cl ${c.id === S.client ? "on" : ""}" data-a="client" data-v="${c.id}"><span class="dot ${c.status}"></span>${esc(c.name)}${pendingCount(c.id) ? `<span class="n tab">${pendingCount(c.id)}</span>` : ""}</button>`).join("")}</div>` : ""}
+      ${staff ? `<nav class="nav">${gNav.map(navBtn).join("")}</nav>` : ""}
+      ${cl ? `<div><div class="navlbl">${staff ? esc(cl.name) : "Workspace"}</div><nav class="nav">${cNav.map(navBtn).join("")}</nav></div>` : ""}
+      <div class="who"><b>${esc(u.name)}</b><span>${esc(u.label)}</span><br><button data-a="logout">Switch role / sign out</button></div>
+    </aside>
+    <div style="min-width:0">
+      <header class="top">
+        <button class="iconbtn menu" data-a="drawer" aria-label="Open navigation">☰</button>
+        <div class="ctx">${cl ? `${staff ? "Client · " : ""}<b>${esc(cl.name)}</b> · ${MODE_LABEL[cl.mode]}` : "<b>Get Bee Seen</b>"}</div>
+        <button class="iconbtn" data-a="nav" data-v="notes" aria-label="Notifications, ${unread} unread">🔔${unread ? `<span class="badge tab">${unread}</span>` : ""}</button>
+      </header>
+      <main class="page">${content}</main>
+    </div>
+  </div>`;
+}
+
+function vLogin() {
+  return `<div class="login">
+    <div class="pitch">
+      <div class="brandmark"><span class="g" aria-hidden="true">G</span><span><b>Get Bee Seen</b><span>Engagement Engine</span></span></div>
+      <div><h1>Engagement that sounds like each brand, approved by people.</h1>
+      <p>Find relevant conversations through official platform APIs, draft thoughtful comments with AI, and publish only what your team and clients approve.</p></div>
+      <p class="small">Every client's accounts, voice, comments and analytics are kept separate.</p>
+    </div>
+    <div class="pick"><div>
+      <h2 style="margin:0;font-size:20px">Choose a role to explore</h2>
+      <p class="muted" style="margin:4px 0 6px">Each role sees a different part of the platform. You can switch at any time.</p>
+      ${Object.values(USERS).map((u) => `<button class="persona" data-a="login" data-v="${u.id}"><span class="av">${u.name[0]}</span><span><b>${esc(u.name)} · ${esc(u.label)}</b><span>${esc(u.desc)}</span></span></button>`).join("")}
+    </div></div>
+  </div>`;
+}
+
+function vDashboard() {
+  const vc = visibleClients(), all = DATA.opps.filter((o) => vc.some((c) => c.id === o.client)), cm = all.flatMap((o) => o.comments.map((c) => ({ o, c })));
+  const needs = vc.map((c) => ({ c, p: pendingCount(c.id), m: clientOpps(c.id).flatMap((o) => o.comments).filter((x) => x.status === "manual_required").length })).filter((x) => x.p || x.m);
+  return `<div class="ph"><div><h1>Good to see you, ${esc(me().name.split(" ")[0])}</h1><p>${me().role === "super_admin" ? "Everything across GBS clients." : "Your assigned clients only."}</p></div></div>
+  <div class="stats">
+    ${stat("Clients", vc.length, "", "clients")}${stat("Active campaigns", vc.flatMap((c) => c.campaigns).filter((c) => c.status === "active").length)}
+    ${stat("Connected accounts", vc.reduce((n, c) => n + c.platforms.length, 0))}${stat("Today's opportunities", all.filter((o) => o.ageH < 24).length)}
+    ${stat("Pending approvals", cm.filter((x) => x.c.status === "pending_approval").length)}${stat("Published", cm.filter((x) => x.c.status === "published").length + 24, "last 30 days")}
+  </div>
+  <div class="grid g31">
+    <div class="card"><div class="hd"><div><h2>Activity across clients</h2><p>Last 14 days</p></div></div><div class="bd">${chart(series(vc.length), [["opp", "Opportunities", "--series-1"], ["app", "Approved", "--series-2"], ["pub", "Published", "--series-3"]])}</div></div>
+    <div class="card"><div class="hd"><h2>Needs attention</h2></div>
+      ${needs.length ? `<div class="list">${needs.map(({ c, p, m }) => `<button class="item" data-a="client" data-v="${c.id}"><span class="grow"><b>${esc(c.name)}</b><br><span class="small muted">${[p && `${p} pending approval`, m && `${m} to post manually`].filter(Boolean).join(" · ")}</span></span></button>`).join("")}</div>` : `<div class="empty"><b>All clear</b>No pending approvals or manual posts.</div>`}
+    </div>
+  </div>
+  ${me().role === "super_admin" ? `<div class="card" style="margin-top:16px"><div class="hd"><h2>Account manager workload</h2></div><div class="tablewrap"><table><thead><tr><th>Account manager</th><th class="num">Clients</th><th class="num">Pending</th><th class="num">Publishing queue</th></tr></thead><tbody>
+    ${["Mehul", "Priya"].map((am) => { const cs = DATA.clients.filter((c) => c.am === am); const cm2 = cs.flatMap((c) => clientOpps(c.id).flatMap((o) => o.comments)); return `<tr><td><b>${am}</b></td><td class="num">${cs.length}</td><td class="num">${cm2.filter((c) => c.status === "pending_approval").length}</td><td class="num">${cm2.filter((c) => ["queued", "manual_required"].includes(c.status)).length}</td></tr>`; }).join("")}
+  </tbody></table></div></div>` : ""}`;
+}
+function stat(l, v, h, route) { return route ? `<button class="stat" data-a="nav" data-v="${route}"><div class="l">${l}</div><div class="v">${fmt(v)}</div>${h ? `<div class="h">${h}</div>` : ""}</button>` : `<div class="stat"><div class="l">${l}</div><div class="v">${fmt(v)}</div>${h ? `<div class="h">${h}</div>` : ""}</div>`; }
+
+function vClients() {
+  const vc = visibleClients();
+  return `<div class="ph"><div><h1>Clients</h1><p>Every client is isolated: its own accounts, brand voice, audiences, comments and analytics.</p></div></div>
+  <div class="card"><div class="tablewrap"><table><thead><tr><th>Client</th><th>Industry</th><th>Account manager</th><th>Connected platforms</th><th class="num">Pending</th><th class="num">Published</th><th>Status</th></tr></thead><tbody>
+  ${vc.map((c) => { const cm = clientOpps(c.id).flatMap((o) => o.comments); return `<tr class="click" data-a="client" data-v="${c.id}"><td><b>${esc(c.name)}</b>${c.setup ? `<div class="small muted">Setup ${c.setup}%</div>` : ""}</td><td>${esc(c.industry)}</td><td>${esc(c.am)}</td><td><span class="row">${c.platforms.map(pf).join("") || '<span class="muted">None</span>'} <span class="small">${c.platforms.map((p) => PLAT[p]).join(" + ")}</span></span></td><td class="num">${pendingCount(c.id)}</td><td class="num">${cm.filter((x) => x.status === "published").length + (c.id === "wudgres" ? 41 : c.id === "thrishank" ? 34 : c.id === "lykes" ? 18 : c.id === "bharatwood" ? 27 : 0)}</td><td>${st(c.status)}</td></tr>`; }).join("")}
+  </tbody></table></div></div>`;
+}
+
+function vClient() {
+  const cl = client(S.client); if (!cl) return `<div class="empty"><b>No client selected</b></div>`;
+  if (cl.status === "onboarding") return `<div class="ph"><div><div class="eyebrow">${esc(cl.name)}</div><h1>Client setup in progress</h1><p>Onboarding runs through 12 steps: company, industry, products, audience, locations, keywords, competitors, brand voice, social accounts, approval users, limits and completion.</p></div></div><div class="card"><div class="bd"><div class="row" style="justify-content:space-between"><b>Client setup</b><span class="tab">${cl.setup}%</span></div><div class="bar" style="margin-top:8px;height:8px"><i style="width:${cl.setup}%;background:var(--brand)"></i></div><p class="muted small" style="margin-top:12px">This demo starts Assetz part-way through onboarding. Open Wudgres for a fully set-up client.</p></div></div>`;
+  const os = clientOpps(cl.id), cm = os.flatMap((o) => o.comments);
+  const open = os.filter((o) => ["analyzed", "comment_generated", "pending_approval"].includes(o.status)).sort((a, b) => b.score - a.score);
+  return `<div class="ph"><div><div class="eyebrow">${esc(cl.name)} · ${MODE_LABEL[cl.mode]}</div><h1>${esc(cl.name)} dashboard</h1><p>Last 30 days unless noted.</p></div>
+    <div class="row"><button class="btn primary" data-a="nav" data-v="approvals">Review approvals${pendingCount(cl.id) ? ` (${pendingCount(cl.id)})` : ""}</button><button class="btn" data-a="nav" data-v="opps">Opportunities</button></div></div>
+  <div class="stats">${stat("Today's opportunities", os.filter((o) => o.ageH < 24).length)}${stat("Pending approval", pendingCount(cl.id), "", "approvals")}${stat("Comments generated", cm.length + 20)}${stat("Approved", cm.filter((c) => c.approvals.gbs || c.approvals.client).length + 14)}${stat("Published", cm.filter((c) => c.status === "published").length + 9)}${stat("Replies received", 6, "21 likes")}</div>
+  <div class="grid g31">
+    <div class="card"><div class="hd"><div><h2>Engagement trend</h2><p>Last 14 days</p></div></div><div class="bd">${chart(series(1), [["opp", "Opportunities", "--series-1"], ["app", "Approved", "--series-2"], ["pub", "Published", "--series-3"]])}</div></div>
+    <div class="card"><div class="hd"><h2>Social accounts</h2></div><div class="list">${cl.platforms.map((p) => `<div class="item">${pf(p)}<span class="grow">${esc(cl.name)}${p === "linkedin" ? "" : " India"}<br><span class="small muted">${PLAT[p]} ${p === "facebook" ? "Page" : p === "linkedin" ? "organisation" : "business account"}</span></span>${st("active").replace("Active", "Connected")}</div>`).join("") || `<div class="empty">No accounts connected.</div>`}</div>
+      <div class="bd small muted">Login tokens are encrypted and tied to this client, so they can't be used for any other client.</div></div>
+  </div>
+  <div class="card" style="margin-top:16px"><div class="hd"><h2>Top open opportunities</h2><button class="btn sm ghost" data-a="nav" data-v="opps">View all</button></div>
+    <div class="list">${open.slice(0, 4).map(oppItem).join("") || `<div class="empty">Nothing open.</div>`}</div></div>`;
+}
+function oppItem(o) { return `<button class="item" data-a="open" data-v="${o.id}">${pf(o.platform)}<span class="grow"><b>@${esc(o.author)}</b> <span class="small muted">${ago(o.ageH)}${o.own ? " · reply on own post" : ""}</span><span class="clamp2" style="display:-webkit-box">${esc(o.content)}</span><span class="small muted clamp2" style="display:-webkit-box">${esc(o.explanation)}</span></span><span style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">${scoreB(o.score)}${st(o.status)}</span></button>`; }
+
+function vOpps() {
+  const cl = client(S.client), f = S.oppFilter;
+  const os = clientOpps(cl.id).filter((o) => f === "all" || (f === "open" ? ["analyzed", "comment_generated"].includes(o.status) : o.status === f)).sort((a, b) => b.score - a.score);
+  return `<div class="ph"><div><h1>Opportunities</h1><p>Conversations found through official platform APIs or added manually, scored for ${esc(cl.name)}'s audience.</p></div></div>
+  <div class="grid g31">
+    <div class="card"><div class="hd"><div class="row">${[["open", "Open (needs action)"], ["pending_approval", "Pending approval"], ["published", "Published"], ["all", "All"]].map(([v, l]) => `<button class="btn sm ${f === v ? "primary" : ""}" data-a="filter" data-v="${v}">${l}</button>`).join("")}</div></div>
+      <div class="list">${os.map(oppItem).join("") || `<div class="empty"><b>Nothing here</b>Run discovery on a campaign, or add a post manually.</div>`}</div>
+      <div class="bd small muted">Scores estimate how relevant a conversation is to this client. They do not predict or guarantee engagement.</div></div>
+    ${canManage() ? `<div class="card" style="align-self:start"><div class="hd"><div><h2>Add a post manually</h2><p>For LinkedIn and Instagram posts the API can't search. Paste the post you found.</p></div></div><div class="bd" style="display:grid;gap:10px">
+      <label class="f">Platform<select class="inp" id="mi-plat">${cl.platforms.map((p) => `<option value="${p}">${PLAT[p]}</option>`).join("")}</select></label>
+      <label class="f">Post URL<input class="inp" id="mi-url" placeholder="https://…"></label>
+      <label class="f">Post text<textarea id="mi-text" rows="3" placeholder="Paste what the post says"></textarea></label>
+      <label class="f">Author handle<input class="inp" id="mi-author" placeholder="@handle"></label>
+      <label class="f">Author bio / title<input class="inp" id="mi-bio" placeholder="e.g. Principal Architect, Bangalore"></label>
+      <button class="btn primary" data-a="addManual">Add and score</button></div></div>` : ""}
+  </div>`;
+}
+
+function vOpp() {
+  const o = DATA.opps.find((x) => x.id === S.opp); if (!o) return vOpps();
+  const cl = client(o.client), cs = o.comments.filter((c) => c.status !== "superseded"), drafts = cs.filter((c) => c.status === "generated"), active = cs.find((c) => !["generated", "rejected"].includes(c.status));
+  const F = [["a", "Audience match", 25], ["c", "Content relevance", 25], ["v", "Conversation potential", 15], ["b", "Brand relevance", 15], ["au", "Author relevance", 10], ["f", "Freshness", 10]];
+  return `<div class="ph"><div><div class="eyebrow">Opportunity · ${esc(o.campaign)}</div><h1 class="row">${pf(o.platform)} @${esc(o.author)}</h1></div><div class="row">${st(o.status)}${canManage() && ["analyzed", "comment_generated"].includes(o.status) ? `<button class="btn ghost" data-a="dismiss" data-v="${o.id}">Dismiss</button>` : ""}<button class="btn" data-a="nav" data-v="opps">Back</button></div></div>
+  <div class="grid g31">
+    <div class="grid" style="align-content:start">
+      <div class="card"><div class="hd"><div><h2>Post</h2><p>${ago(o.ageH)} · ${o.comments_n} comments${o.manual ? " · added manually" : ""}</p></div></div><div class="bd"><p style="margin:0;font-size:15px;white-space:pre-line">${esc(o.content)}</p>${o.bio ? `<p class="small muted" style="margin:12px 0 0">Author: ${esc(o.bio)}${o.followers ? ` · ${fmt(o.followers)} followers` : ""}</p>` : ""}</div></div>
+      <div class="card"><div class="hd"><div><h2>Comments</h2><p>Three options per run: insight, conversation and expert perspective, each in ${esc(cl.name)}'s voice (${esc(cl.brand.voice.join(", "))}).</p></div>
+        ${canManage() && !cs.length ? (S.busy === o.id ? `<button class="btn primary" disabled><span class="spin"></span> Generating…</button>` : `<button class="btn primary" data-a="generate" data-v="${o.id}">✦ Generate comments</button>`) : ""}</div>
+        ${o.capability === "manual" ? `<div class="bd" style="padding-bottom:0"><div class="notice n-warn">${PLAT[o.platform]}'s API can't comment on posts owned by other accounts. Once approved, someone posts the comment from ${esc(cl.name)}'s account and records the link.</div></div>` : ""}
+        ${cs.length ? `<div class="list">${cs.map((c) => variant(o, c, !!active)).join("")}</div>` : `<div class="empty"><b>No comments yet</b>${canManage() ? "Generate three options grounded in this client's brand voice and audience." : "GBS hasn't drafted comments for this post yet."}</div>`}
+        ${canManage() && cs.length && !active ? `<div class="bd" style="border-top:1px solid var(--line)">${S.busy === o.id ? `<button class="btn" disabled><span class="spin"></span> Regenerating…</button>` : `<button class="btn" data-a="regenerate" data-v="${o.id}">↻ Regenerate</button>`}</div>` : ""}
+      </div>
+    </div>
+    <div class="card" style="align-self:start"><div class="hd"><h2>Opportunity score</h2></div><div class="bd">
+      <div class="row" style="align-items:baseline"><span class="tab" style="font-size:38px;font-weight:700">${o.score}</span><span class="muted">/100</span><b style="margin-left:6px">${label(o.score)}</b></div>
+      <p style="color:var(--ink-2)">“${esc(o.explanation)}”</p>
+      <div style="display:grid;gap:10px">${F.map(([k, l, w]) => `<div><div class="row small" style="justify-content:space-between"><span>${l} <span class="muted">· ${w}%</span></span><b class="tab">${o.factors[k]}</b></div><div class="bar" style="margin-top:4px"><i style="width:${o.factors[k]}%"></i></div></div>`).join("")}</div>
+      <p class="small muted" style="margin-top:14px">Scores estimate how relevant a conversation is to this client. They do not predict or guarantee engagement.</p></div></div>
+  </div>`;
+}
+function checksHTML(q) {
+  return `<div class="checks">${q.checks.map(([n, s]) => `<span class="badge2 ${s === "pass" ? "" : s === "warn" ? "t-warn" : "t-bad"}">${s === "pass" ? "✓" : s === "warn" ? "!" : "✕"} ${n[0].toUpperCase() + n.slice(1)}</span>`).join("")}</div>${q.checks.filter((c) => c[1] !== "pass").map(([, s, m]) => `<div class="issue ${s}">${esc(m)}</div>`).join("")}`;
+}
+function variant(o, c, locked) {
+  const editing = S.editing === c.id;
+  return `<div class="bd" ${c.selected && c.status === "generated" ? 'style="background:var(--brand-soft)"' : ""}>
+    <div class="row" style="margin-bottom:8px"><span class="badge2 t-brand">${TYPE[c.type]}</span>${c.selected && c.status === "generated" ? '<span class="badge2 t-good">Recommended</span>' : ""}${c.edits.length ? '<span class="badge2 t-info">Edited</span>' : ""}${st(c.status)}<span style="margin-left:auto">${qB(c.q)}</span></div>
+    ${editing ? editor(c) : `<div style="font-size:15px;white-space:pre-line">${esc(c.text)}</div>`}
+    ${checksHTML(c.q)}
+    <div class="row" style="margin-top:10px">
+      ${c.status === "generated" && canManage() && !locked && !editing ? `<button class="btn sm primary" data-a="submit" data-v="${c.id}">Submit for approval</button><button class="btn sm" data-a="edit" data-v="${c.id}">✎ Edit first</button>` : ""}
+      ${c.status === "pending_approval" ? `<button class="btn sm" data-a="nav" data-v="approvals">Open in approvals →</button>` : ""}
+      ${c.status === "approved" && (mySide(client(o.client)) || me().role === "super_admin") ? `<button class="btn sm primary" data-a="queue" data-v="${c.id}">Queue for publishing</button>` : ""}
+    </div></div>`;
+}
+function editor(c) {
+  return `<label class="f" for="ed-${c.id}">${canEdit() ? "Edit comment" : "Suggest a change"}</label><textarea id="ed-${c.id}" rows="4" style="margin-top:4px">${esc(c.text)}</textarea>
+  <div class="row" style="margin-top:8px"><button class="btn sm primary" data-a="saveEdit" data-v="${c.id}">${canEdit() ? "Save edit" : "Send suggestion"}</button><button class="btn sm ghost" data-a="cancel">Cancel</button><span class="small muted">${canEdit() ? "The original AI version is kept. Edits are re-checked and used as feedback for this client." : "Approvers can apply your suggestion."}</span></div>`;
+}
+
+function vApprovals() {
+  const cl = client(S.client), side = mySide(cl);
+  const items = clientOpps(cl.id).flatMap((o) => o.comments.filter((c) => c.status === "pending_approval").map((c) => ({ o, c }))).sort((a, b) => Number(b.c.q.passed) - Number(a.c.q.passed) || b.o.score - a.o.score);
+  const bk = bulkable(), all = bk.length && bk.every((x) => S.sel.has(x.c.id));
+  return `<div class="ph"><div><h1>Approvals</h1><p>Nothing is published without approval. ${esc(cl.name)} uses <b>${MODE_LABEL[cl.mode].toLowerCase()}</b>${cl.mode === "dual" ? ": GBS and the client both approve" : cl.mode === "manual" ? ": the client approves" : ": a GBS account manager approves"}.</p></div><button class="btn" data-a="nav" data-v="publishing">Publishing queue →</button></div>
+  ${!side ? `<div class="notice n-info" style="margin-bottom:14px">${me().role === "client_member" ? "You can review comments and suggest edits. Approval is done by Wudgres's approvers." : `In this approval mode, ${me().role === "client_owner" ? "GBS" : "the client"} approves.`}</div>` : ""}
+  ${bk.length ? `<div class="bulkbar"><label class="row"><input type="checkbox" data-a="toggleAll" ${all ? "checked" : ""}> Select all that passed quality checks (${bk.length})</label><span class="muted tab">${S.sel.size} selected</span><button class="btn primary" style="margin-left:auto" data-a="bulkAsk" ${S.sel.size ? "" : "disabled"}>Approve selected (${S.sel.size})</button></div>` : ""}
+  ${items.length ? `<div class="grid">${items.map(({ o, c }) => acard(o, c, cl, side, bk.some((x) => x.c.id === c.id))).join("")}</div>` : `<div class="card"><div class="empty"><b>Nothing waiting for approval</b>Generated comments appear here once they're submitted.</div></div>`}`;
+}
+function acard(o, c, cl, side, selectable) {
+  const need = MODE[cl.mode], iDid = side && c.approvals[side];
+  return `<article class="acard ${S.sel.has(c.id) ? "sel" : ""}">
+    <div class="head">${selectable ? `<input type="checkbox" aria-label="Select for bulk approval" data-a="toggle" data-v="${c.id}" ${S.sel.has(c.id) ? "checked" : ""}>` : ""}${pf(o.platform)}<b>@${esc(o.author)}</b><span class="small muted">· ${esc(o.campaign)} · ${ago(o.ageH)}</span><span style="margin-left:auto" class="row">${scoreB(o.score, label(o.score))}${qB(c.q)}</span></div>
+    <div class="body">
+      <div style="min-width:0"><div class="small muted" style="margin-bottom:4px">Post</div><div class="quote">${esc(o.content)}</div>${o.bio ? `<p class="small muted">Author: ${esc(o.bio)}</p>` : ""}<p class="small" style="color:var(--ink-2)"><span class="muted">Why this opportunity:</span> ${esc(o.explanation)}</p></div>
+      <div style="min-width:0"><div class="row small muted" style="margin-bottom:4px">Suggested comment <span class="badge2 t-brand">${TYPE[c.type]}</span>${c.edits.length ? '<span class="badge2 t-info">Edited</span>' : ""}${o.capability === "manual" ? '<span class="badge2 t-accent">Posted manually</span>' : ""}</div>
+        ${S.editing === c.id ? editor(c) : `<div class="ctext">${esc(c.text)}</div>`}
+        ${c.edits.length && S.editing !== c.id ? `<details class="small muted" style="margin-top:6px"><summary>Original AI version</summary><p>${esc(c.original)}</p></details>` : ""}
+        ${checksHTML(c.q)}
+        ${c.suggestions.length ? `<div class="notice n-info" style="margin-top:10px"><b>Suggested edits from the team</b>${c.suggestions.map((s, i) => `<div style="margin-top:6px;color:var(--ink)">${esc(s.text)}<div class="small muted">— ${esc(s.by)}</div>${canEdit() ? `<button class="btn sm" style="margin-top:4px" data-a="applySug" data-v="${c.id}" data-i="${i}">Apply</button>` : ""}</div>`).join("")}</div>` : ""}
+      </div>
+    </div>
+    <div class="foot"><span class="row small muted">Approvals: ${need.map((s) => `<span class="badge2 ${c.approvals[s] ? "t-good" : ""}">${c.approvals[s] ? "✓" : "○"} ${s === "gbs" ? "GBS" : "Client"}</span>`).join("")}</span>
+      <span class="row" style="margin-left:auto">${S.rejecting === c.id ? `<input class="inp" id="rj-${c.id}" placeholder="Reason (helps future drafts)" style="width:220px"><button class="btn sm danger" data-a="reject" data-v="${c.id}">Reject</button><button class="btn sm ghost" data-a="cancel">Cancel</button>` : S.editing === c.id ? "" : `
+        ${canManage() ? `<button class="btn sm ghost" data-a="regenerate" data-v="${o.id}">↻ Regenerate</button>` : ""}
+        <button class="btn sm" data-a="edit" data-v="${c.id}">✎ ${canEdit() ? "Edit" : "Suggest edit"}</button>
+        ${side ? `<button class="btn sm danger" data-a="rejectStart" data-v="${c.id}">✕ Reject</button>` : ""}
+        ${side && !iDid ? `<button class="btn sm primary" data-a="approve" data-v="${c.id}">✓ Approve</button>` : ""}
+        ${iDid ? `<span class="badge2 t-good">✓ You approved · awaiting ${need.filter((s) => !c.approvals[s]).map((s) => (s === "gbs" ? "GBS" : "client")).join(" & ")}</span>` : ""}`}</span></div>
+  </article>`;
+}
+
+function vPublishing() {
+  const cl = client(S.client), rows = clientOpps(cl.id).flatMap((o) => o.comments.map((c) => ({ o, c })));
+  const ready = rows.filter((x) => x.c.status === "approved"), jobs = rows.filter((x) => ["queued", "manual_required", "published"].includes(x.c.status));
+  const canQ = mySide(cl) || me().role === "super_admin";
+  return `<div class="ph"><div><h1>Publishing queue</h1><p>Only approved comments appear here. The worker publishes through official APIs, respecting daily limits and spacing between comments.</p></div>${isStaff() ? `<button class="btn" data-a="process">Process due jobs now</button>` : ""}</div>
+  ${ready.length ? `<div class="card" style="margin-bottom:16px"><div class="hd"><h2>Approved, not yet queued (${ready.length})</h2></div><div class="list">${ready.map(({ o, c }) => `<div class="item">${pf(o.platform)}<span class="grow">${esc(c.text)}<br><span class="small muted">@${esc(o.author)} · approved by ${esc(c.approvedBy || "")}</span></span>${canQ ? `<button class="btn sm primary" data-a="queue" data-v="${c.id}">Queue for publishing</button>` : ""}</div>`).join("")}</div></div>` : ""}
+  <div class="card"><div class="tablewrap"><table><thead><tr><th>Client</th><th>Platform</th><th>Author</th><th>Comment</th><th>Approved by</th><th>Status</th><th></th></tr></thead><tbody>
+  ${jobs.map(({ o, c }) => `<tr><td class="small">${esc(cl.name)}</td><td>${pf(o.platform)}</td><td>@${esc(o.author)}</td><td style="max-width:340px"><span class="clamp2" style="display:-webkit-box;color:var(--ink)">${esc(c.text)}</span></td><td class="small">${esc(c.approvedBy || "—")}</td><td>${st(c.status)}</td>
+    <td>${c.status === "manual_required" ? `<div style="display:grid;gap:6px;min-width:210px"><button class="btn sm" data-a="copy" data-v="${c.id}">Copy comment</button><input class="inp" id="url-${c.id}" placeholder="Link to the posted comment"><button class="btn sm accent" data-a="posted" data-v="${c.id}">Mark as posted</button></div>` : c.status === "published" ? `<span class="small muted">${c.likes} likes · ${c.replies} replies</span>` : `<span class="small muted">Waiting for the worker</span>`}</td></tr>`).join("") || `<tr><td colspan="7"><div class="empty"><b>The queue is empty</b>Approved comments you queue appear here.</div></td></tr>`}
+  </tbody></table></div></div>`;
+}
+
+function vComments() {
+  const cl = client(S.client), rows = clientOpps(cl.id).flatMap((o) => o.comments.filter((c) => c.status !== "superseded").map((c) => ({ o, c })));
+  return `<div class="ph"><div><h1>Comment history</h1><p>Every comment for ${esc(cl.name)}, with the original AI version kept alongside any edits.</p></div></div>
+  <div class="card"><div class="tablewrap"><table><thead><tr><th>Comment</th><th>Author</th><th>Status</th><th>Quality</th><th class="num">Likes</th><th class="num">Replies</th></tr></thead><tbody>
+  ${rows.map(({ o, c }) => `<tr class="click" data-a="open" data-v="${o.id}"><td style="max-width:420px"><span class="row" style="align-items:flex-start;flex-wrap:nowrap">${pf(o.platform)}<span class="clamp2" style="display:-webkit-box;color:var(--ink)">${esc(c.text)}</span></span></td><td>@${esc(o.author)}</td><td>${st(c.status)}${c.edits.length ? ' <span class="small" style="color:var(--info)">Edited</span>' : ""}</td><td>${qB(c.q)}</td><td class="num">${c.likes}</td><td class="num">${c.replies}</td></tr>`).join("")}
+  </tbody></table></div></div>`;
+}
+
+function vCampaigns() {
+  const cl = client(S.client);
+  return `<div class="ph"><div><h1>Campaigns</h1><p>Each campaign belongs to ${esc(cl.name)} only and runs on its audience segments, platforms and daily limits.</p></div></div>
+  <div class="card"><div class="tablewrap"><table><thead><tr><th>Campaign</th><th>Platforms</th><th>Audience</th><th class="num">Opportunities / day</th><th class="num">Published / day</th><th>Status</th></tr></thead><tbody>
+  ${cl.campaigns.map((c) => `<tr><td><b>${esc(c.name)}</b></td><td><span class="row">${c.platforms.map(pf).join("")}</span></td><td class="small">${esc(cl.segments.map((s) => s.name).join(", "))}</td><td class="num">${c.opp}</td><td class="num">${c.pub}</td><td>${st(c.status)}</td></tr>`).join("") || `<tr><td colspan="6"><div class="empty">No campaigns yet.</div></td></tr>`}
+  </tbody></table></div></div>
+  <p class="small muted" style="margin-top:12px">Approval is always required. A campaign can only change who approves (client, GBS, or both).</p>`;
+}
+
+function vBrand() {
+  const cl = client(S.client), b = cl.brand;
+  const chips = (xs, t = "") => xs.length ? xs.map((x) => `<span class="badge2 ${t}">${esc(x)}</span>`).join(" ") : '<span class="muted">—</span>';
+  return `<div class="ph"><div><h1>Brand voice and audience</h1><p>${esc(cl.name)}'s own AI personality. It is used only for ${esc(cl.name)}'s comments, never for another client.</p></div></div>
+  <div class="grid g2">
+    <div class="card"><div class="hd"><h2>Brand voice</h2></div><div class="bd" style="display:grid;gap:10px">
+      <div><div class="small muted">Personality</div>${chips(b.voice, "t-brand")}</div>
+      <div><div class="small muted">Preferred length · call to action</div>${esc(b.length)} · ${esc(b.cta)}</div>
+      <div><div class="small muted">Products</div>${chips(b.products)}</div>
+      <div><div class="small muted">Words to avoid</div>${chips(b.avoid, "t-bad")}</div>
+      <div><div class="small muted">Competitors (never mentioned)</div>${chips(b.competitors, "t-bad")}</div>
+      <div><div class="small muted">Claims that need approval</div>${chips(b.claims, "t-warn")}</div></div></div>
+    <div class="card"><div class="hd"><h2>Audience segments</h2></div><div class="list">${cl.segments.map((s) => `<div class="bd"><b>${esc(s.name)}</b><div class="small" style="margin-top:6px;display:grid;gap:4px"><span><span class="muted">Job titles:</span> ${esc(s.titles.join(", "))}</span><span><span class="muted">Locations:</span> ${esc(s.locations.join(", "))}</span><span><span class="muted">Keywords:</span> ${esc(s.keywords.join(", "))}</span></div></div>`).join("") || `<div class="empty">No segments yet.</div>`}</div></div>
+  </div>
+  <div class="notice n-info" style="margin-top:16px">Try it: open an opportunity, edit a comment to include “cheap” or “DM us”, and watch the quality checks flag it.</div>`;
+}
+
+function vCAnalytics() {
+  const cl = client(S.client), cm = clientOpps(cl.id).flatMap((o) => o.comments.map((c) => ({ o, c })));
+  const by = (p) => cm.filter((x) => x.o.platform === p);
+  return `<div class="ph"><div><h1>Analytics</h1><p>${esc(cl.name)}'s engagement only. Sample history for the demo.</p></div></div>
+  <div class="stats">${stat("Opportunities", 46)}${stat("Comments generated", 38)}${stat("Approved", 21, "Approval rate 81%")}${stat("Published", 17)}${stat("Replies", 6, "Reply rate 35%")}${stat("Profile visits", 212, "Where the platform reports it")}</div>
+  <div class="grid g2">
+    <div class="card"><div class="hd"><h2>Engagement trend</h2></div><div class="bd">${chart(series(1), [["pub", "Published", "--series-1"], ["rep", "Replies", "--series-2"]])}</div></div>
+    <div class="card"><div class="hd"><h2>Platform performance</h2></div><div class="bd">${cl.platforms.map((p, i) => { const pub = by(p).filter((x) => x.c.status === "published").length + (i ? 4 : 13); return `<div style="margin-bottom:12px"><div class="row small" style="justify-content:space-between"><span class="row">${pf(p)} ${PLAT[p]}</span><b class="tab">${pub} published</b></div><div class="bar" style="margin-top:5px;height:10px"><i style="width:${Math.min(100, pub * 6)}%"></i></div></div>`; }).join("")}</div></div>
+  </div>`;
+}
+
+function vAnalytics() {
+  const vc = visibleClients();
+  const base = { wudgres: [46, 21, 17, 6], thrishank: [38, 18, 15, 4], lykes: [29, 12, 10, 5], bharatwood: [31, 14, 12, 3], assetz: [0, 0, 0, 0] };
+  return `<div class="ph"><div><h1>GBS analytics</h1><p>Operational performance across clients. Comparing clients here is for GBS only; client data is never mixed into any client's AI context.</p></div></div>
+  <div class="stats">${stat("Total clients", vc.length)}${stat("Active campaigns", vc.flatMap((c) => c.campaigns).filter((c) => c.status === "active").length)}${stat("Opportunities", 144)}${stat("Comments generated", 118)}${stat("Published", 54)}${stat("Replies", 18)}${stat("AI usage", 61, "generation runs")}${stat("Publishing errors", 1)}</div>
+  <div class="card" style="margin-bottom:16px"><div class="hd"><h2>Trend across clients</h2></div><div class="bd">${chart(series(vc.length), [["opp", "Opportunities", "--series-1"], ["pub", "Published", "--series-2"], ["rep", "Replies", "--series-3"]])}</div></div>
+  <div class="card"><div class="hd"><h2>Client comparison</h2></div><div class="tablewrap"><table><thead><tr><th>Client</th><th class="num">Opportunities</th><th class="num">Approved</th><th class="num">Published</th><th class="num">Replies</th><th class="num">Approval rate</th></tr></thead><tbody>
+  ${vc.map((c) => { const [o, a, p, r] = base[c.id]; return `<tr><td><b>${esc(c.name)}</b></td><td class="num">${o}</td><td class="num">${a}</td><td class="num">${p}</td><td class="num">${r}</td><td class="num">${o ? Math.round((a / (a + 4)) * 100) + "%" : "—"}</td></tr>`; }).join("")}
+  </tbody></table></div></div>`;
+}
+
+function vIntegrations() {
+  const rows = [["Connect account", ["y", "y", "y", "y"]], ["Find posts by hashtag", ["l", "n", "n", "l"]], ["Find posts by keyword", ["n", "n", "n", "y"]], ["Monitor target profiles", ["l", "n", "n", "y"]], ["Reply on own posts", ["y", "y", "y", "y"]], ["Reply to mentions", ["y", "m", "m", "n"]], ["Comment on others' posts", ["m", "m", "m", "y"]], ["Comment metrics", ["y", "y", "l", "y"]]];
+  const B = { y: ["t-good", "Yes"], l: ["t-warn", "Limited"], m: ["t-accent", "Manual"], n: ["", "No"] };
+  return `<div class="ph"><div><h1>Integrations</h1><p>What each platform's official API allows. The engine never works around a “No” or “Manual”: no scraping, browser automation or unofficial endpoints.</p></div></div>
+  <div class="card"><div class="tablewrap"><table><thead><tr><th>Capability</th>${["instagram", "facebook", "linkedin", "youtube"].map((p) => `<th><span class="row">${pf(p)} ${PLAT[p]}</span></th>`).join("")}</tr></thead><tbody>
+  ${rows.map(([l, v]) => `<tr><td><b>${l}</b></td>${v.map((x) => `<td><span class="badge2 ${B[x][0]}">${B[x][1]}</span></td>`).join("")}</tr>`).join("")}
+  </tbody></table></div><div class="bd small muted">Instagram hashtag search: 30 unique hashtags per account per 7 days, last 24 hours only, no author names. LinkedIn has no post search. X prohibits automated unsolicited replies; TikTok has no API for this, so both are off.</div></div>`;
+}
+
+function vNotes() {
+  const vc = visibleClients(), ns = DATA.notes.filter((n) => vc.some((c) => c.id === n.client));
+  return `<div class="ph"><div><h1>Notifications</h1><p>${ns.filter((n) => !n.read).length ? `${ns.filter((n) => !n.read).length} unread` : "You're all caught up."} You only receive notifications for clients you can access.</p></div>${ns.some((n) => !n.read) ? `<button class="btn" data-a="read">Mark all as read</button>` : ""}</div>
+  <div class="card">${ns.length ? `<div class="list">${ns.map((n) => `<div class="item" ${n.read ? "" : 'style="background:var(--accent-soft)"'}><span class="grow"><b>${esc(n.title)}</b><br><span class="small muted">${esc(n.body || "")}</span></span></div>`).join("")}</div>` : `<div class="empty"><b>No notifications yet</b>Submit or approve a comment to see them arrive.</div>`}</div>`;
+}
+
+function vAudit() {
+  return `<div class="ph"><div><h1>Audit log</h1><p>Append-only: who generated, edited, approved, rejected and published comments.</p></div></div>
+  <div class="card"><div class="tablewrap"><table><thead><tr><th>When</th><th>Who</th><th>Action</th><th>Client</th><th>Detail</th></tr></thead><tbody>
+  ${DATA.audit.map((a) => `<tr><td class="small">${new Date(a.at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}</td><td><b>${esc(a.who)}</b></td><td>${esc(a.action)}</td><td>${esc(a.client)}</td><td class="small">${esc(a.detail)}</td></tr>`).join("") || `<tr><td colspan="5"><div class="empty">Actions you take in this demo appear here.</div></td></tr>`}
+  </tbody></table></div></div>`;
+}
+
+// ───────────────────────── Charts ─────────────────────────
+function series(k) {
+  const out = []; const today = new Date();
+  for (let i = 13; i >= 0; i--) { const d = new Date(today - i * 864e5); const s = 13 - i; out.push({ d: d.toLocaleDateString("en-IN", { day: "numeric", month: "short" }), opp: Math.round(k * (4 + (s % 5) + s * 0.4)), app: Math.round(k * (2 + (s % 3) + s * 0.2)), pub: Math.round(k * (1 + (s % 3 === 0 ? 2 : 1) + s * 0.15)), rep: Math.round(k * ((s % 4 === 0 ? 2 : 0) + s * 0.08)) }); }
+  return out;
+}
+function chart(data, ser) {
+  const W = 640, H = 210, L = 34, R = 12, T = 10, B = 26, iw = W - L - R, ih = H - T - B;
+  const max = Math.max(4, ...data.flatMap((d) => ser.map(([k]) => d[k]))); const nice = Math.ceil(max / 4) * 4;
+  const x = (i) => L + (i / (data.length - 1)) * iw, y = (v) => T + ih - (v / nice) * ih;
+  const grid = [0, nice / 2, nice].map((v) => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join("");
+  const xl = data.map((d, i) => (i % 3 === 0 || i === data.length - 1 ? `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${d.d}</text>` : "")).join("");
+  const lines = ser.map(([k, , c]) => `<polyline fill="none" stroke="var(${c})" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" points="${data.map((d, i) => `${x(i)},${y(d[k])}`).join(" ")}"/>${data.map((d, i) => `<circle cx="${x(i)}" cy="${y(d[k])}" r="${i === data.length - 1 ? 4 : 7}" fill="${i === data.length - 1 ? `var(${c})` : "transparent"}" stroke="${i === data.length - 1 ? "var(--surface)" : "none"}" stroke-width="2"><title>${d.d} · ${ser.find((s) => s[0] === k)[1]}: ${d[k]}</title></circle>`).join("")}`).join("");
+  return `<div class="legend">${ser.map(([, l, c]) => `<span><i style="background:var(${c})"></i>${l}</span>`).join("")}</div><svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${ser.map((s) => s[1]).join(", ")} per day">${grid}${xl}${lines}</svg>`;
+}
+
+// ───────────────────────── Render ─────────────────────────
+const VIEWS = { dashboard: vDashboard, clients: vClients, client: vClient, opps: vOpps, opp: vOpp, approvals: vApprovals, publishing: vPublishing, comments: vComments, campaigns: vCampaigns, brand: vBrand, canalytics: vCAnalytics, analytics: vAnalytics, integrations: vIntegrations, notes: vNotes, audit: vAudit };
+try { DATA = JSON.parse(localStorage.getItem(KEY) || "null"); } catch { DATA = null; }
+if (!DATA || !DATA.opps) { DATA = seed(); materialize(); }
+const app = document.getElementById("app");
+function render() {
+  const ribbon = `<div class="ribbon"><span><b>Demo</b> with sample data. Nothing is posted anywhere. Your changes stay in this browser.</span><button data-a="reset">Reset demo</button></div>`;
+  let body;
+  if (!S.user) body = vLogin();
+  else {
+    const needsClient = ["client", "opps", "opp", "approvals", "publishing", "comments", "campaigns", "brand", "canalytics"].includes(S.route);
+    if (needsClient && (!S.client || client(S.client)?.status === "onboarding") && S.route !== "client") S.route = "client";
+    body = shell((VIEWS[S.route] || vDashboard)());
+  }
+  const modal = S.modal ? `<div class="modal-wrap" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="modal"><h3 id="mt">${S.modal.title}</h3><div class="mb">${S.modal.body}</div><div class="mf"><button class="btn" data-a="closeModal">Cancel</button><button class="btn primary" data-a="${S.modal.act}">${S.modal.ok}</button></div></div></div>` : "";
+  const focusId = document.activeElement?.id; const caret = document.activeElement?.selectionStart;
+  app.innerHTML = ribbon + body + modal + (S.toast ? `<div class="toast" role="status">${esc(S.toast)}</div>` : "");
+  if (focusId === "cs") { const el = document.getElementById("cs"); el?.focus(); try { el.setSelectionRange(caret, caret); } catch { /* ignore */ } }
+  if (S.modal) app.querySelector(".modal .btn.primary")?.focus();
+}
+app.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-a]"); if (!t) return;
+  const a = t.dataset.a; if (!A[a]) return;
+  if (t.tagName === "INPUT" && t.type === "checkbox") e.preventDefault();
+  A[a](t.dataset.v, t.dataset.i !== undefined ? Number(t.dataset.i) : undefined);
+});
+app.addEventListener("input", (e) => { if (e.target.id === "cs") { S.q = e.target.value; render(); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && (S.modal || S.drawer)) { S.modal = null; S.drawer = false; render(); } });
+render();
+})();
+</script>
