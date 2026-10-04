@@ -102,14 +102,14 @@ export function AppShell({
   const isActive = (href: string) => pathname === href || (href !== "/dashboard" && href !== "/clients" && pathname.startsWith(href + "/"));
 
   const sidebar = (
-    <nav aria-label="Main" className="flex h-full flex-col gap-5 overflow-y-auto px-3 pb-6 pt-4">
-      <Link href={isStaff ? "/dashboard" : base ? `${base}/dashboard` : "/"} className="flex items-center gap-2.5 px-2">
-        <span className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-sm font-black text-[#191816]" aria-hidden>
-          G
-        </span>
-        <span className="leading-tight">
-          <span className="block text-[13px] font-bold uppercase tracking-wide text-sidebar-ink">{brandName}</span>
-          <span className="block text-[11px] text-sidebar-ink-2">Engagement Engine</span>
+    <nav aria-label="Main" className="gbs-dots flex h-full flex-col gap-5 overflow-y-auto px-3 pb-6 pt-5">
+      <Link href={isStaff ? "/dashboard" : base ? `${base}/dashboard` : "/"} className="flex items-center gap-3 px-2" aria-label={`${brandName} Engagement Engine`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/badge.svg" alt="" className="h-11 w-11 shrink-0" />
+        <span className="min-w-0 leading-tight">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/wordmark-cream.svg" alt={brandName} className="h-[22px] w-auto max-w-[150px]" />
+          <span className="mt-1 block text-[10.5px] font-semibold uppercase tracking-[0.14em] text-accent">Engagement Engine</span>
         </span>
       </Link>
 
@@ -120,14 +120,14 @@ export function AppShell({
       {selected && (
         <div>
           <div className="mb-1.5 flex items-center justify-between px-2">
-            <span className="truncate text-[11px] font-semibold uppercase tracking-wider text-sidebar-ink-2">{isStaff ? selected.name : "Workspace"}</span>
+            <span className="truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-accent">{isStaff ? selected.name : "Workspace"}</span>
           </div>
           <NavGroup items={clientNav} isActive={isActive} />
         </div>
       )}
 
-      <div className="mt-auto rounded-lg bg-sidebar-2 px-3 py-2.5 text-xs">
-        <div className="truncate font-medium text-sidebar-ink">{user.name}</div>
+      <div className="mt-auto rounded-2xl border-2 border-sidebar-ink/15 bg-sidebar-2 px-3 py-3 text-xs">
+        <div className="truncate text-[13px] font-bold text-sidebar-ink">{user.name}</div>
         <div className="truncate text-sidebar-ink-2">{user.role}</div>
         <Link href="/account" className="mt-2 inline-block text-sidebar-ink-2 underline-offset-2 hover:text-sidebar-ink hover:underline">
           Your account
@@ -151,9 +151,9 @@ export function AppShell({
       )}
 
       <div className="flex min-w-0 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line bg-surface/90 px-4 backdrop-blur sm:px-6">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b-2 border-brand bg-surface/95 px-4 backdrop-blur sm:px-6">
           <button
-            className="grid h-9 w-9 place-items-center rounded-lg border border-line text-ink-2 lg:hidden"
+            className="gbs-press grid h-10 w-10 place-items-center rounded-full border-2 border-brand bg-accent text-brand shadow-hard-sm lg:hidden"
             aria-label="Open navigation"
             onClick={() => setOpen(true)}
           >
@@ -163,13 +163,13 @@ export function AppShell({
             {selected ? (
               <span>
                 <span className="text-ink-3">{isStaff ? "Client · " : ""}</span>
-                <span className="font-medium text-ink">{selected.name}</span>
+                <span className="font-display text-[18px] text-brand">{selected.name}</span>
               </span>
             ) : (
               <span className="font-medium text-ink">{brandName}</span>
             )}
           </div>
-          <Link href="/notifications" className="relative grid h-9 w-9 place-items-center rounded-lg text-ink-2 hover:bg-sunken" aria-label={`Notifications (${unread} unread)`}>
+          <Link href="/notifications" className="gbs-press relative grid h-10 w-10 place-items-center rounded-full border-2 border-brand bg-surface shadow-hard-sm" aria-label={`Notifications (${unread} unread)`}>
             <span aria-hidden>🔔</span>
             {unread > 0 && (
               <span className="tabular absolute -right-0.5 -top-0.5 min-w-[18px] rounded-full bg-bad px-1 text-center text-[10px] font-semibold leading-[18px] text-white">
@@ -195,12 +195,14 @@ function NavGroup({ items, isActive }: { items: NavItem[]; isActive: (href: stri
               href={it.href}
               aria-current={active ? "page" : undefined}
               className={cx(
-                "flex items-center justify-between rounded-lg px-2.5 py-1.5 text-[13px] transition",
-                active ? "bg-sidebar-2 font-medium text-white" : "text-sidebar-ink-2 hover:bg-sidebar-2/60 hover:text-sidebar-ink",
+                "flex items-center justify-between rounded-full px-3 py-1.5 text-[13.5px] transition",
+                active ? "bg-accent font-bold text-green-ink shadow-[2px_2px_0_rgba(0,0,0,0.25)]" : "text-sidebar-ink-2 hover:bg-white/10 hover:text-sidebar-ink",
               )}
             >
               <span>{it.label}</span>
-              {!!it.badge && <span className="tabular rounded-full bg-accent px-1.5 text-[10px] font-semibold leading-[16px] text-[#191816]">{it.badge}</span>}
+              {!!it.badge && (
+                <span className={cx("tabular rounded-full px-1.5 text-[10px] font-bold leading-[17px]", active ? "bg-brand text-accent" : "bg-accent text-green-ink")}>{it.badge}</span>
+              )}
             </Link>
           </li>
         );
@@ -227,7 +229,7 @@ export function ClientSwitcher({ clients, selectedId }: { clients: ShellClient[]
   }
 
   return (
-    <div className="rounded-lg bg-sidebar-2/70 p-2">
+    <div className="rounded-2xl border-2 border-white/10 bg-sidebar-2/80 p-2">
       <div className="mb-1.5 px-1 text-[11px] font-semibold uppercase tracking-wider text-sidebar-ink-2">Clients</div>
       <input
         type="search"
@@ -235,7 +237,7 @@ export function ClientSwitcher({ clients, selectedId }: { clients: ShellClient[]
         onChange={(e) => setQ(e.target.value)}
         placeholder="Search clients…"
         aria-label="Search clients"
-        className="mb-1.5 h-8 w-full rounded-md border border-white/10 bg-black/20 px-2 text-[13px] text-sidebar-ink placeholder:text-sidebar-ink-2 focus:border-accent focus:outline-none"
+        className="mb-1.5 h-9 w-full rounded-full border-2 border-white/15 bg-black/20 px-3 text-[13px] text-sidebar-ink placeholder:text-sidebar-ink-2 focus:border-accent focus:outline-none"
       />
       <ul className="max-h-56 overflow-y-auto" role="listbox" aria-label="Select client">
         {shown.map((c) => (
@@ -246,7 +248,7 @@ export function ClientSwitcher({ clients, selectedId }: { clients: ShellClient[]
               onClick={() => choose(c.id)}
               className={cx(
                 "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px]",
-                c.id === selectedId ? "bg-accent/15 text-white" : "text-sidebar-ink-2 hover:bg-white/5 hover:text-sidebar-ink",
+                c.id === selectedId ? "bg-white/10 font-semibold text-accent ring-1 ring-accent/50" : "text-sidebar-ink-2 hover:bg-white/5 hover:text-sidebar-ink",
               )}
             >
               <span aria-hidden className={cx("h-2 w-2 shrink-0 rounded-full", c.status === "active" ? "bg-[#4cc387]" : c.status === "paused" ? "bg-accent" : "bg-white/30")} />

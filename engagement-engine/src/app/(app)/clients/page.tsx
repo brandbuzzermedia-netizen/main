@@ -47,16 +47,16 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         actions={isSuperAdmin(user) && <LinkButton href="/clients/new" variant="primary">+ New client</LinkButton>}
       />
       <Card>
-        <form className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3" role="search">
-          <input name="q" defaultValue={q} placeholder="Search by name or industry" aria-label="Search clients" className="h-9 min-w-[200px] flex-1 rounded-lg border border-line-strong bg-surface px-3 text-sm" />
-          <select name="status" defaultValue={status} aria-label="Status" className="h-9 rounded-lg border border-line-strong bg-surface px-2 text-sm">
+        <form className="flex flex-wrap items-center gap-2 border-b-2 border-line px-4 py-3" role="search">
+          <input name="q" defaultValue={q} placeholder="Search by name or industry" aria-label="Search clients" className="h-9 min-w-[200px] flex-1 rounded-full border-2 border-brand/30 bg-surface-2 px-4 text-sm" />
+          <select name="status" defaultValue={status} aria-label="Status" className="h-9 rounded-full border-2 border-brand/30 bg-surface-2 px-3 text-sm">
             <option value="">All except archived</option>
             <option value="active">Active</option>
             <option value="onboarding">Onboarding</option>
             <option value="paused">Paused</option>
             <option value="archived">Archived</option>
           </select>
-          <button className="h-9 rounded-lg border border-line-strong px-3 text-sm">Filter</button>
+          <button className="gbs-press h-9 rounded-full border-2 border-brand bg-surface px-4 text-sm font-semibold text-brand shadow-hard-sm">Filter</button>
         </form>
         {rows.length === 0 ? (
           <EmptyState title="No clients match" description={isSuperAdmin(user) ? "Create a client to start onboarding." : "You haven't been assigned to any clients yet."} />

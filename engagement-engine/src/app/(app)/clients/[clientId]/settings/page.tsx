@@ -68,7 +68,7 @@ export default async function ClientSettings({ params }: { params: Promise<{ cli
                   </Field>
                 </div>
                 {(Object.keys(APPROVAL_MODE_LABELS) as ApprovalMode[]).map((m) => (
-                  <label key={m} className="flex items-start gap-3 rounded-lg border border-line-strong px-3 py-2.5">
+                  <label key={m} className="flex items-start gap-3 rounded-2xl border-2 border-brand/25 bg-surface-2 px-3 py-2.5">
                     <input type="radio" name="approval_mode" value={m} defaultChecked={d.client.approval_mode === m} className="mt-1 accent-[var(--brand)]" />
                     <span>
                       <span className="block text-sm font-medium text-ink">{APPROVAL_MODE_LABELS[m].label}</span>
@@ -123,7 +123,7 @@ export default async function ClientSettings({ params }: { params: Promise<{ cli
                       <span className="text-xs text-ink-3">{m.email}</span>
                     </span>
                     <fieldset disabled={!gbs} className="flex flex-wrap items-center gap-3">
-                      <select name="role" defaultValue={m.role} aria-label="Role" className="h-8 rounded-lg border border-line-strong px-2 text-xs">
+                      <select name="role" defaultValue={m.role} aria-label="Role" className="h-8 rounded-full border-2 border-brand/30 bg-surface-2 px-2 text-xs">
                         <option value="owner">Owner</option>
                         <option value="member">Team member</option>
                       </select>

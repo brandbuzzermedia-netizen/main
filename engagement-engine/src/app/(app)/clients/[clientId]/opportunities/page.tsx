@@ -70,14 +70,14 @@ export default async function OpportunitiesPage({
       <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
         <Card>
           <form className="flex flex-wrap gap-2 border-b border-line px-4 py-3">
-            <select name="status" defaultValue={status} aria-label="Status" className="h-9 rounded-lg border border-line-strong px-2 text-sm">
+            <select name="status" defaultValue={status} aria-label="Status" className="h-9 rounded-full border-2 border-brand/30 bg-surface-2 px-3 text-sm">
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {s === "open" ? "Open (needs action)" : s === "all" ? "All statuses" : s.replace(/_/g, " ")}
                 </option>
               ))}
             </select>
-            <select name="campaign" defaultValue={sp.campaign ?? ""} aria-label="Campaign" className="h-9 rounded-lg border border-line-strong px-2 text-sm">
+            <select name="campaign" defaultValue={sp.campaign ?? ""} aria-label="Campaign" className="h-9 rounded-full border-2 border-brand/30 bg-surface-2 px-3 text-sm">
               <option value="">All campaigns</option>
               {campaigns.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -85,7 +85,7 @@ export default async function OpportunitiesPage({
                 </option>
               ))}
             </select>
-            <select name="platform" defaultValue={sp.platform ?? ""} aria-label="Platform" className="h-9 rounded-lg border border-line-strong px-2 text-sm">
+            <select name="platform" defaultValue={sp.platform ?? ""} aria-label="Platform" className="h-9 rounded-full border-2 border-brand/30 bg-surface-2 px-3 text-sm">
               <option value="">All platforms</option>
               {["instagram", "facebook", "linkedin", "youtube"].map((p) => (
                 <option key={p} value={p}>
@@ -93,7 +93,7 @@ export default async function OpportunitiesPage({
                 </option>
               ))}
             </select>
-            <button className="h-9 rounded-lg border border-line-strong px-3 text-sm">Apply</button>
+            <button className="gbs-press h-9 rounded-full border-2 border-brand bg-surface px-4 text-sm font-semibold text-brand shadow-hard-sm">Apply</button>
           </form>
           {rows.length === 0 ? (
             <EmptyState title="No opportunities here" description="Activate a campaign and run discovery, or add a post you found manually." />

@@ -1,71 +1,62 @@
 @import "tailwindcss";
 
-/* GBS brand tokens, expressed as roles so light/dark swap in one place. */
+/*
+  GBS brand system for the Engagement Engine, from the Get Bee Seen brand kit
+  (root styles.css): cream ground, deep green, bee yellow, thick green outlines,
+  hard offset shadows, pill buttons, Bunga display type (Alfa Slab One fallback)
+  and Neue Leiden body type (Archivo fallback). Brand character is strongest on
+  chrome — titles, buttons, cards, navigation — and quieter inside dense tables.
+  The brand is a light identity, so the app commits to it in every theme.
+*/
 :root {
   color-scheme: light;
-  --bg: #f6f4ee;
-  --surface: #ffffff;
-  --surface-2: #faf8f3;
-  --surface-sunken: #f1eee6;
-  --border: #e4e0d5;
-  --border-strong: #cfc9ba;
+  /* brand palette */
+  --cream: #fff2dc;
+  --cream-lift: #fffaf0;
+  --yellow: #ffb933;
+  --yellow-deep: #ff9600;
+  --green: #196144;
+  --green-2: #3e5d48;
+  --green-ink: #0f3d2b;
   --ink: #191816;
-  --ink-2: #4f4c45;
-  --ink-3: #7c786e;
-  --brand: #196144;
-  --brand-ink: #ffffff;
-  --brand-soft: #e6f0eb;
-  --accent: #ffb933;
-  --accent-soft: #fff2dc;
-  --sidebar: #0f3a29;
-  --sidebar-2: #154a35;
-  --sidebar-ink: #e9efe9;
-  --sidebar-ink-2: #a9bdb1;
-  --good: #1a7f4b;
-  --good-soft: #e3f3e9;
-  --warn: #9a6200;
-  --warn-soft: #fff1d6;
-  --bad: #b42318;
-  --bad-soft: #fde8e6;
-  --info: #2a5bd7;
-  --info-soft: #e7eefc;
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --series-3: #1baf7a;
-  --focus: #2a78d6;
-}
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #121412;
-    --surface: #1a1c1a;
-    --surface-2: #202320;
-    --surface-sunken: #161816;
-    --border: #2d312d;
-    --border-strong: #3e443e;
-    --ink: #f2f1ec;
-    --ink-2: #c3c2b7;
-    --ink-3: #8f8d84;
-    --brand: #3fa57a;
-    --brand-ink: #0d1f17;
-    --brand-soft: #18342a;
-    --accent: #ffb933;
-    --accent-soft: #3a2f17;
-    --sidebar: #0b1f17;
-    --sidebar-2: #12301f;
-    --good: #4cc387;
-    --good-soft: #143424;
-    --warn: #f0b44c;
-    --warn-soft: #3a2c12;
-    --bad: #f07a6e;
-    --bad-soft: #3d1a17;
-    --info: #7aa2f7;
-    --info-soft: #1b2440;
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-  }
+  /* roles */
+  --bg: var(--cream);
+  --surface: var(--cream-lift);
+  --surface-2: #ffffff;
+  --surface-sunken: #fbecd2;
+  --border: rgba(25, 97, 68, 0.16);
+  --border-strong: var(--green);
+  --ink-2: #4a4639;
+  --ink-3: #7a7360;
+  --brand: var(--green);
+  --brand-ink: var(--cream);
+  --brand-soft: #e3eee4;
+  --accent: var(--yellow);
+  --accent-soft: #ffe7b8;
+  --sidebar: var(--green);
+  --sidebar-2: #12503a;
+  --sidebar-ink: var(--cream);
+  --sidebar-ink-2: #b9d1c2;
+  --good: #16804f;
+  --good-soft: #dcefe2;
+  --warn: #8a5300;
+  --warn-soft: #ffe9c2;
+  --bad: #b42318;
+  --bad-soft: #fde4df;
+  --info: #2a6fd6;
+  --info-soft: #e3ecfb;
+  /* charts: brand green, brand orange, blue — validated for colour-blind separation */
+  --series-1: #16804f;
+  --series-2: #ee8a00;
+  --series-3: #2a6fd6;
+  --focus: var(--yellow-deep);
+
+  --shadow-hard: 4px 5px 0 rgba(25, 97, 68, 0.9);
+  --shadow-hard-sm: 3px 3px 0 rgba(25, 97, 68, 0.9);
+  --shadow-hard-lg: 7px 8px 0 rgba(25, 97, 68, 0.9);
+  --font-display: "Bunga", "Alfa Slab One", "Cooper Black", Georgia, serif;
+  --font-body: "Neue Leiden", "Archivo", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
 @theme inline {
@@ -82,6 +73,7 @@
   --color-brand-ink: var(--brand-ink);
   --color-brand-soft: var(--brand-soft);
   --color-accent: var(--accent);
+  --color-accent-deep: var(--yellow-deep);
   --color-accent-soft: var(--accent-soft);
   --color-sidebar: var(--sidebar);
   --color-sidebar-2: var(--sidebar-2);
@@ -95,7 +87,14 @@
   --color-bad-soft: var(--bad-soft);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
-  --font-sans: "Inter", "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --color-green-ink: var(--green-ink);
+  --color-green-2: var(--green-2);
+  --color-cream-disc: var(--cream);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --shadow-hard: var(--shadow-hard);
+  --shadow-hard-sm: var(--shadow-hard-sm);
+  --shadow-hard-lg: var(--shadow-hard-lg);
 }
 
 @layer base {
@@ -105,27 +104,51 @@
     color: var(--ink);
   }
 
+  body {
+    font-family: var(--font-body);
+    font-size: 14.5px;
+    -webkit-font-smoothing: antialiased;
+  }
+
   input,
   select,
   textarea {
     color: var(--ink);
-    background: var(--surface);
+    background: var(--surface-2);
+  }
+
+  ::selection {
+    background: var(--yellow);
+    color: var(--green-ink);
   }
 }
 
-body {
-  font-family: var(--font-sans);
-  font-feature-settings: "cv11", "ss01";
-  -webkit-font-smoothing: antialiased;
-}
-
 :focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* Dot texture from the GBS badge, used on green brand surfaces. */
+.gbs-dots {
+  background-image: radial-gradient(rgba(255, 242, 220, 0.09) 1.6px, transparent 1.6px);
+  background-size: 26px 26px;
+}
+
+/* The brand's tactile press: lift on hover, settle on press. */
+.gbs-press {
+  transition: transform 0.16s cubic-bezier(0.22, 0.68, 0.3, 1), box-shadow 0.16s cubic-bezier(0.22, 0.68, 0.3, 1), background-color 0.16s;
+}
+.gbs-press:hover:not(:disabled) {
+  transform: translate(-1px, -2px);
+  box-shadow: 4px 5px 0 rgba(25, 97, 68, 0.9);
+}
+.gbs-press:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(25, 97, 68, 0.9);
 }
 
 @media (prefers-reduced-motion: reduce) {

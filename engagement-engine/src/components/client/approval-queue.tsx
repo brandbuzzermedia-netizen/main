@@ -78,7 +78,7 @@ export function ApprovalQueue({
   return (
     <div>
       {bulkable.length > 0 && (
-        <form id="bulk-approve" action={action} className="sticky top-14 z-20 mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface/95 px-4 py-3 backdrop-blur">
+        <form id="bulk-approve" action={action} className="sticky top-[72px] z-20 mb-5 flex flex-wrap items-center gap-3 rounded-[20px] border-2 border-brand bg-surface/95 px-4 py-3 shadow-hard-sm backdrop-blur">
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -155,8 +155,8 @@ function ApprovalCard({
   const [mode, setMode] = useState<"view" | "edit" | "reject" | "regenerate">("view");
   const issues = it.checks.filter((c) => c.status !== "pass");
   return (
-    <li className={cx("rounded-xl border bg-surface", selected ? "border-brand ring-2 ring-brand/15" : "border-line")}>
-      <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+    <li className={cx("overflow-hidden rounded-[20px] border-2 border-brand bg-surface shadow-hard", selected && "ring-4 ring-accent/60")}>
+      <div className="flex flex-wrap items-center gap-2 border-b-2 border-line px-4 py-3">
         {selectable ? (
           <input type="checkbox" checked={selected} onChange={onToggle} aria-label="Select for bulk approval" className="h-4 w-4 accent-[var(--brand)]" />
         ) : (
@@ -175,7 +175,7 @@ function ApprovalCard({
       <div className="grid gap-4 p-4 lg:grid-cols-2">
         <div className="min-w-0">
           <div className="mb-1 text-xs font-medium text-ink-3">Post</div>
-          <blockquote className="max-h-40 overflow-y-auto whitespace-pre-line rounded-lg bg-surface-2 px-3 py-2 text-sm text-ink-2">{it.postContent}</blockquote>
+          <blockquote className="max-h-40 overflow-y-auto whitespace-pre-line rounded-2xl bg-sunken/70 px-4 py-3 text-sm text-ink-2">{it.postContent}</blockquote>
           {it.replyToText && (
             <div className="mt-2 rounded-lg border-l-2 border-accent bg-accent-soft/50 px-3 py-2 text-sm text-ink-2">
               <span className="text-xs font-medium text-ink-3">Replying to comment: </span>
@@ -205,7 +205,7 @@ function ApprovalCard({
           {mode === "edit" ? (
             <CommentEditor clientId={clientId} commentId={it.id} text={it.text} canEdit={canEdit} onDone={() => setMode("view")} />
           ) : (
-            <p className="whitespace-pre-line rounded-lg border border-line px-3 py-2 text-[15px] leading-relaxed text-ink">{it.text}</p>
+            <p className="whitespace-pre-line rounded-2xl border-2 border-brand/20 bg-surface-2 px-4 py-3 text-[15px] leading-relaxed text-ink">{it.text}</p>
           )}
           {it.isEdited && mode === "view" && (
             <details className="mt-1 text-xs text-ink-3">
@@ -230,7 +230,7 @@ function ApprovalCard({
           </div>
 
           {it.suggestions.length > 0 && (
-            <div className="mt-3 rounded-lg border border-info/20 bg-info-soft/60 p-3">
+            <div className="mt-3 rounded-2xl border-2 border-info/25 bg-info-soft/60 p-3">
               <div className="mb-1 text-xs font-medium text-info">Suggested edits from the team</div>
               {it.suggestions.map((s) => (
                 <div key={s.id} className="mt-2 text-sm">
@@ -251,7 +251,7 @@ function ApprovalCard({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-start gap-2 border-t border-line bg-surface-2 px-4 py-3">
+      <div className="flex flex-wrap items-start gap-2 border-t-2 border-line bg-sunken/50 px-4 py-3">
         <ApprovalProgress required={it.requiredSides} approved={it.approvedSides} />
         <div className="ml-auto flex flex-wrap items-start gap-2">
           {mode === "reject" ? (

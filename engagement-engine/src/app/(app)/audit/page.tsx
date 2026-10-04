@@ -18,7 +18,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
       [sp.client ?? "", sp.action ?? ""],
     ),
   }));
-  const sel = "h-9 rounded-lg border border-line-strong bg-surface px-2 text-sm";
+  const sel = "h-9 rounded-full border-2 border-brand/30 bg-surface-2 px-3 text-sm";
   return (
     <>
       <PageHeader title="Audit log" description="Append-only. Who created clients, connected accounts, generated, edited, approved, rejected and published comments, and changed campaigns." />
@@ -32,7 +32,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
             <option value="">All actions</option>
             {Object.entries(AUDIT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
-          <button className="h-9 rounded-lg border border-line-strong px-3 text-sm">Filter</button>
+          <button className="gbs-press h-9 rounded-full border-2 border-brand bg-surface px-4 text-sm font-semibold text-brand shadow-hard-sm">Filter</button>
         </form>
         <Table>
           <thead><tr><Th>When</Th><Th>Who</Th><Th>Action</Th><Th>Client</Th><Th>Campaign</Th><Th>Details</Th></tr></thead>

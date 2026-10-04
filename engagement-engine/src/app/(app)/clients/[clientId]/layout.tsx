@@ -18,10 +18,10 @@ export default async function ClientLayout({ children, params }: { children: Rea
   return (
     <div>
       {c.status === "onboarding" && access.canManage && (
-        <Link href={`/clients/${clientId}/onboarding`} className="mb-5 block rounded-xl border border-info/20 bg-info-soft px-4 py-3 hover:border-info/40">
+        <Link href={`/clients/${clientId}/onboarding`} className="gbs-press mb-5 block rounded-[20px] border-2 border-brand bg-accent-soft px-4 py-3 shadow-hard-sm">
           <div className="mb-2 flex items-center justify-between text-sm">
-            <span className="font-medium text-info">Client setup in progress</span>
-            <span className="text-xs text-info">Continue onboarding →</span>
+            <span className="font-bold text-brand">Client setup in progress</span>
+            <span className="text-xs font-semibold text-brand">Continue onboarding →</span>
           </div>
           <ProgressBar value={setup} label="Client setup" />
         </Link>

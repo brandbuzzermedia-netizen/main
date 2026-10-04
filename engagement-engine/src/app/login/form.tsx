@@ -22,7 +22,7 @@ export function LoginForm({ next }: { next?: string }) {
           {state.message}
         </p>
       )}
-      <button className={buttonClass("primary") + " h-10"} disabled={pending}>
+      <button className={buttonClass("primary") + " mt-2 h-11 w-full"} disabled={pending}>
         {pending ? "Signing in…" : "Sign in"}
       </button>
     </form>

@@ -29,7 +29,7 @@ export default async function ConnectPage({ params, searchParams }: { params: Pr
           </div>
           <ActionForm action={attachAccounts.bind(null, clientId, state)} className="flex flex-col gap-3">
             {options.map((a) => (
-              <label key={a.externalAccountId} className="flex items-center gap-3 rounded-lg border border-line-strong px-3 py-2.5">
+              <label key={a.externalAccountId} className="flex items-center gap-3 rounded-2xl border-2 border-brand/25 bg-surface-2 px-3 py-2.5">
                 <input type="checkbox" name="account" value={a.externalAccountId} className="h-4 w-4 accent-[var(--brand)]" />
                 <PlatformIcon platform={a.platform} />
                 <span className="flex-1">

@@ -37,7 +37,7 @@ export default async function NotificationsPage() {
         description={unread ? `${unread} unread` : "You're all caught up."}
         actions={unread > 0 && (
           <form action={markAllNotificationsRead}>
-            <button className="h-9 rounded-lg border border-line-strong px-3 text-sm">Mark all as read</button>
+            <button className="gbs-press h-9 rounded-full border-2 border-brand bg-surface px-4 text-sm font-semibold text-brand shadow-hard-sm">Mark all as read</button>
           </form>
         )}
       />

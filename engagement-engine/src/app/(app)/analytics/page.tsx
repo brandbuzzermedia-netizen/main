@@ -36,7 +36,7 @@ export default async function MasterAnalytics({ searchParams }: { searchParams: 
     managers: await db.query<{ id: string; full_name: string }>("select id, full_name from users where platform_role = 'account_manager' order by full_name"),
     errors: (await db.one<{ n: number }>("select count(*)::int as n from publishing_results where success = false and created_at >= $1::date and created_at < $2::date + 1", [range.from, range.to]))!.n,
   }));
-  const sel = "h-9 rounded-lg border border-line-strong bg-surface px-2 text-sm";
+  const sel = "h-9 rounded-full border-2 border-brand/30 bg-surface-2 px-3 text-sm";
 
   return (
     <>
@@ -62,7 +62,7 @@ export default async function MasterAnalytics({ searchParams }: { searchParams: 
             <option value="">All account managers</option>
             {d.managers.map((m) => <option key={m.id} value={m.id}>{m.full_name}</option>)}
           </select>
-          <button className="h-9 rounded-lg bg-brand px-3 text-sm font-medium text-brand-ink">Apply</button>
+          <button className="gbs-press h-9 rounded-full border-2 border-brand bg-brand px-4 text-sm font-semibold text-brand-ink shadow-hard-sm">Apply</button>
         </form>
       </Card>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-6">

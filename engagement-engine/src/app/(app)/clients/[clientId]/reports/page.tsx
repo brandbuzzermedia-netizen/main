@@ -26,8 +26,8 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
         description={formatDate(date)}
         actions={
           <form className="flex gap-2">
-            <input type="date" name="date" defaultValue={date} aria-label="Report date" className="h-9 rounded-lg border border-line-strong px-2 text-sm" />
-            <button className="h-9 rounded-lg border border-line-strong px-3 text-sm">View</button>
+            <input type="date" name="date" defaultValue={date} aria-label="Report date" className="h-9 rounded-full border-2 border-brand/30 bg-surface-2 px-3 text-sm" />
+            <button className="gbs-press h-9 rounded-full border-2 border-brand bg-surface px-4 text-sm font-semibold text-brand shadow-hard-sm">View</button>
           </form>
         }
       />

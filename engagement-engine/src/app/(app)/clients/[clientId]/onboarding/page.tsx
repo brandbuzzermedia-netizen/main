@@ -143,7 +143,7 @@ export default async function Onboarding({ params, searchParams }: { params: Pro
             <input type="hidden" name="name" value={d.client.name} />
             <input type="hidden" name="industry" value={b?.industry ?? ""} />
             {(Object.keys(APPROVAL_MODE_LABELS) as ApprovalMode[]).map((m) => (
-              <label key={m} className="flex items-start gap-3 rounded-lg border border-line-strong px-3 py-2">
+              <label key={m} className="flex items-start gap-3 rounded-2xl border-2 border-brand/25 bg-surface-2 px-3 py-2">
                 <input type="radio" name="approval_mode" value={m} defaultChecked={d.client.approval_mode === m} className="mt-1" />
                 <span className="text-sm"><span className="font-medium">{APPROVAL_MODE_LABELS[m].label}</span> <span className="text-xs text-ink-3">— {APPROVAL_MODE_LABELS[m].description}</span></span>
               </label>
@@ -219,9 +219,9 @@ export default async function Onboarding({ params, searchParams }: { params: Pro
               <Link
                 href={`?step=${i + 1}`}
                 aria-current={step === i + 1 ? "step" : undefined}
-                className={cx("flex items-center gap-2 rounded-lg px-3 py-2 text-sm", step === i + 1 ? "bg-surface font-medium text-ink shadow-sm ring-1 ring-line" : "text-ink-2 hover:bg-surface")}
+                className={cx("flex items-center gap-2 rounded-full px-3 py-2 text-sm", step === i + 1 ? "border-2 border-brand bg-surface font-semibold text-brand shadow-hard-sm" : "border-2 border-transparent text-ink-2 hover:bg-surface")}
               >
-                <span className={cx("tabular grid h-6 w-6 place-items-center rounded-full text-xs", d.client.done.includes(i + 1) ? "bg-good text-white" : step === i + 1 ? "bg-brand text-brand-ink" : "bg-sunken text-ink-3")}>
+                <span className={cx("tabular grid h-6 w-6 place-items-center rounded-full text-xs", d.client.done.includes(i + 1) ? "bg-brand text-accent" : step === i + 1 ? "bg-accent text-green-ink" : "bg-sunken text-ink-3")}>
                   {d.client.done.includes(i + 1) ? "✓" : i + 1}
                 </span>
                 {s}

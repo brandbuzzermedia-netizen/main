@@ -21,7 +21,7 @@ export default async function SettingsPage() {
           <CardHeader title="White-label" description="Prepared for offering the platform under another brand. Logo, colour and name show in the app shell; email sender and domain are used when email delivery and custom domains are enabled." />
           <CardBody className="grid gap-4 md:grid-cols-2">
             <Field label="Brand name"><input name="brand_name" required defaultValue={b.brand_name ?? org?.name} className={inputClass} /></Field>
-            <Field label="Primary colour"><input name="primary_color" type="color" defaultValue={b.primary_color ?? "#196144"} className="h-9 w-20 rounded-lg border border-line-strong" /></Field>
+            <Field label="Primary colour"><input name="primary_color" type="color" defaultValue={b.primary_color ?? "#196144"} className="h-9 w-20 rounded-xl border-2 border-brand" /></Field>
             <Field label="Logo URL"><input name="logo_url" type="url" defaultValue={b.logo_url ?? ""} className={inputClass} /></Field>
             <Field label="Email sender"><input name="email_sender" type="email" defaultValue={b.email_sender ?? ""} className={inputClass} /></Field>
             <Field label="Custom domain"><input name="custom_domain" defaultValue={b.custom_domain ?? ""} placeholder="engage.example.com" className={inputClass} /></Field>

@@ -46,7 +46,7 @@ export function CampaignForm({
         <legend className="mb-1.5 text-xs font-medium text-ink-2">Platforms</legend>
         <div className="flex flex-wrap gap-3">
           {platforms.map((p) => (
-            <label key={p} className="flex items-center gap-2 rounded-lg border border-line-strong px-3 py-2 text-sm">
+            <label key={p} className="flex items-center gap-2 rounded-2xl border-2 border-brand/25 bg-surface-2 px-3 py-2 text-sm">
               <input type="checkbox" name="platforms" value={p} defaultChecked={campaign?.platforms.includes(p)} className="accent-[var(--brand)]" />
               {PLATFORM_LABELS[p]}
             </label>
@@ -60,7 +60,7 @@ export function CampaignForm({
         ) : (
           <div className="flex flex-wrap gap-3">
             {segments.map((s) => (
-              <label key={s.id} className="flex items-center gap-2 rounded-lg border border-line-strong px-3 py-2 text-sm">
+              <label key={s.id} className="flex items-center gap-2 rounded-2xl border-2 border-brand/25 bg-surface-2 px-3 py-2 text-sm">
                 <input type="checkbox" name="segments" value={s.id} defaultChecked={campaign?.segment_ids.includes(s.id)} className="accent-[var(--brand)]" />
                 {s.name}
               </label>

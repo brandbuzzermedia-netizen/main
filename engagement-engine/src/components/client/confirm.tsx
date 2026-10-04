@@ -34,14 +34,14 @@ export function ConfirmDialog({
     <dialog
       ref={ref}
       onClose={onClose}
-      className="m-auto w-[min(92vw,460px)] rounded-xl border border-line bg-surface p-0 text-ink shadow-2xl backdrop:bg-black/40"
+      className="m-auto w-[min(92vw,460px)] overflow-hidden rounded-[22px] border-2 border-brand bg-surface p-0 text-ink shadow-hard-lg backdrop:bg-[rgba(15,61,43,0.55)]"
     >
       <div className="px-5 pt-5">
-        <h2 className="text-base font-semibold">{title}</h2>
+        <h2 className="font-display text-[22px] font-normal leading-tight text-brand">{title}</h2>
         {body && <div className="mt-2 text-sm text-ink-2">{body}</div>}
         {children}
       </div>
-      <div className="mt-5 flex justify-end gap-2 border-t border-line bg-surface-2 px-5 py-3">
+      <div className="mt-5 flex justify-end gap-2 border-t-2 border-line bg-sunken/50 px-5 py-3">
         <button type="button" className={buttonClass("secondary")} onClick={onClose}>
           Cancel
         </button>

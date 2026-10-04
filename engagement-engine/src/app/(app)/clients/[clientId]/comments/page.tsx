@@ -63,7 +63,7 @@ export default async function CommentsPage({
     return { rows, campaigns };
   });
 
-  const sel = "h-9 rounded-lg border border-line-strong px-2 text-sm";
+  const sel = "h-9 rounded-full border-2 border-brand/30 bg-surface-2 px-3 text-sm";
   return (
     <>
       <PageHeader title="Comment history" description="Every comment for this client, with the original AI version kept alongside any edits." />
@@ -99,7 +99,7 @@ export default async function CommentsPage({
             <option value="">Newest first</option>
             <option value="performance">Best performing</option>
           </select>
-          <button className="h-9 rounded-lg border border-line-strong px-3 text-sm">Apply</button>
+          <button className="gbs-press h-9 rounded-full border-2 border-brand bg-surface px-4 text-sm font-semibold text-brand shadow-hard-sm">Apply</button>
         </form>
         {rows.length === 0 ? (
           <EmptyState title="No comments match these filters" />

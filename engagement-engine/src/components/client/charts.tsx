@@ -97,7 +97,7 @@ export function LineChart({ data, series, xKey, title }: { data: Record<string, 
         </svg>
         {hover != null && (
           <div
-            className="pointer-events-none absolute top-2 z-10 min-w-[140px] rounded-lg border border-line bg-surface px-3 py-2 text-xs shadow-lg"
+            className="pointer-events-none absolute top-2 z-10 min-w-[150px] rounded-2xl border-2 border-brand bg-surface px-3 py-2 text-xs shadow-hard-sm"
             style={{ left: Math.min(Math.max(x(hover) / width, 0.12), 0.78) * 100 + "%", transform: "translateX(-50%)" }}
           >
             <div className="mb-1 font-medium text-ink">{shortDate(String(data[hover][xKey]))}</div>
