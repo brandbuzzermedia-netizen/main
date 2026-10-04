@@ -35,15 +35,15 @@ const startOfTomorrow = () => {
  * through the official API of its platform. Runs on the SYSTEM connection; every query in a
  * job is scoped to that job's client_id, and credentials are bound to that client + account.
  */
-export async function processDueJobs(system: DbRunner, opts: { limit?: number; workerId?: string } = {}): Promise<PublishOutcome[]> {
+export async function processDueJobs(system: DbRunner, opts: { limit?: number; workerId?: string; clientId?: string } = {}): Promise<PublishOutcome[]> {
   const jobs = await system((db) =>
     db.query<ClaimedJob>(
       `update publishing_jobs j set status = 'publishing', locked_at = now(), locked_by = $2, attempts = attempts + 1, updated_at = now()
        where j.id in (
-         select id from publishing_jobs where status = 'queued' and scheduled_for <= now()
+         select id from publishing_jobs where status = 'queued' and scheduled_for <= now() and ($3::uuid is null or client_id = $3)
          order by scheduled_for for update skip locked limit $1)
        returning j.id, j.organization_id, j.client_id, j.comment_id, j.social_account_id, j.platform, j.attempts, j.max_attempts, j.approved_by`,
-      [opts.limit ?? 10, opts.workerId ?? "worker"],
+      [opts.limit ?? 10, opts.workerId ?? "worker", opts.clientId ?? null],
     ),
   );
   const out: PublishOutcome[] = [];

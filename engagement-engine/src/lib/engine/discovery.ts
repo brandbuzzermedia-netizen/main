@@ -205,8 +205,9 @@ export async function runDiscovery(
   if (campaign.status !== "active") throw new Error("Campaign is paused. Activate it to run discovery.");
 
   const accounts = await run((db) =>
-    db.query<{ id: string; platform: Platform }>(
-      `select id, platform from social_accounts where client_id = $1 and status = 'connected' and platform = any($2)`,
+    db.query<{ id: string; platform: Platform; demo: boolean }>(
+      `select id, platform, coalesce((metadata->>'demo')::boolean, false) as demo
+       from social_accounts where client_id = $1 and status = 'connected' and platform = any($2)`,
       [p.clientId, campaign.platforms],
     ),
   );
@@ -215,6 +216,10 @@ export async function runDiscovery(
 
   for (const account of accounts) {
     if (!enabled.has(account.platform)) continue;
+    if (account.demo) {
+      report.errors.push(`${account.platform}: demo account — connect the real account to discover content`);
+      continue;
+    }
     const counts = await run((db) => todaysOpportunityCount(db, p.clientId, p.campaignId, account.platform));
     const remaining = Math.min(
       campaign.daily_opportunity_limit - (counts?.campaign_count ?? 0),

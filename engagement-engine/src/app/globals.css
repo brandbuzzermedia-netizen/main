@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/* GBS brand tokens, expressed as roles so light/dark swap in one place. */
+:root {
+  color-scheme: light;
+  --bg: #f6f4ee;
+  --surface: #ffffff;
+  --surface-2: #faf8f3;
+  --surface-sunken: #f1eee6;
+  --border: #e4e0d5;
+  --border-strong: #cfc9ba;
+  --ink: #191816;
+  --ink-2: #4f4c45;
+  --ink-3: #7c786e;
+  --brand: #196144;
+  --brand-ink: #ffffff;
+  --brand-soft: #e6f0eb;
+  --accent: #ffb933;
+  --accent-soft: #fff2dc;
+  --sidebar: #0f3a29;
+  --sidebar-2: #154a35;
+  --sidebar-ink: #e9efe9;
+  --sidebar-ink-2: #a9bdb1;
+  --good: #1a7f4b;
+  --good-soft: #e3f3e9;
+  --warn: #9a6200;
+  --warn-soft: #fff1d6;
+  --bad: #b42318;
+  --bad-soft: #fde8e6;
+  --info: #2a5bd7;
+  --info-soft: #e7eefc;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --focus: #2a78d6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121412;
+    --surface: #1a1c1a;
+    --surface-2: #202320;
+    --surface-sunken: #161816;
+    --border: #2d312d;
+    --border-strong: #3e443e;
+    --ink: #f2f1ec;
+    --ink-2: #c3c2b7;
+    --ink-3: #8f8d84;
+    --brand: #3fa57a;
+    --brand-ink: #0d1f17;
+    --brand-soft: #18342a;
+    --accent: #ffb933;
+    --accent-soft: #3a2f17;
+    --sidebar: #0b1f17;
+    --sidebar-2: #12301f;
+    --good: #4cc387;
+    --good-soft: #143424;
+    --warn: #f0b44c;
+    --warn-soft: #3a2c12;
+    --bad: #f07a6e;
+    --bad-soft: #3d1a17;
+    --info: #7aa2f7;
+    --info-soft: #1b2440;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-sunken: var(--surface-sunken);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-2: var(--sidebar-2);
+  --color-sidebar-ink: var(--sidebar-ink);
+  --color-sidebar-ink-2: var(--sidebar-ink-2);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --font-sans: "Inter", "Archivo", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@layer base {
+  html,
+  body {
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  input,
+  select,
+  textarea {
+    color: var(--ink);
+    background: var(--surface);
+  }
+}
+
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

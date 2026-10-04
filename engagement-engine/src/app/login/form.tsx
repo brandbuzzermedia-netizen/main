@@ -1,0 +1,30 @@
+"use client";
+
+import { useActionState } from "react";
+import { login } from "./actions";
+import { inputClass, buttonClass } from "@/components/ui";
+
+export function LoginForm({ next }: { next?: string }) {
+  const [state, action, pending] = useActionState(login, null);
+  return (
+    <form action={action} className="mt-6 flex flex-col gap-4">
+      <input type="hidden" name="next" value={next ?? ""} />
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-ink-2">
+        Email
+        <input name="email" type="email" autoComplete="username" required className={inputClass} />
+      </label>
+      <label className="flex flex-col gap-1.5 text-xs font-medium text-ink-2">
+        Password
+        <input name="password" type="password" autoComplete="current-password" required className={inputClass} />
+      </label>
+      {state?.message && (
+        <p role="alert" className="text-sm text-bad">
+          {state.message}
+        </p>
+      )}
+      <button className={buttonClass("primary") + " h-10"} disabled={pending}>
+        {pending ? "Signing in…" : "Sign in"}
+      </button>
+    </form>
+  );
+}
