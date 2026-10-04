@@ -8,6 +8,8 @@ import { processDueJobs } from "../src/lib/engine/publisher";
 import { runDiscovery } from "../src/lib/engine/discovery";
 import { collectMetrics } from "../src/lib/engine/metrics";
 import { generateDailyReports } from "../src/lib/engine/reports";
+import { processEmailOutbox } from "../src/lib/engine/email-outbox";
+import { emailEnabled, resendSender } from "../src/lib/email";
 
 const once = process.argv.includes("--once");
 const workerId = `worker-${process.pid}`;
@@ -37,6 +39,10 @@ export async function discoveryPass() {
 async function tick(n: number) {
   const published = await processDueJobs(systemRunner, { limit: 10, workerId });
   if (published.length) console.log(`[publish] ${published.map((p) => `${p.jobId}:${p.status}`).join(", ")}`);
+  if (emailEnabled()) {
+    const mail = await processEmailOutbox(systemRunner, resendSender);
+    if (mail.sent || mail.failed) console.log("[email]", mail);
+  }
   if (n % 60 === 0) await discoveryPass(); // every ~30 minutes
   if (n % 360 === 0) console.log("[metrics]", await collectMetrics(systemRunner)); // every ~3 hours
   // Daily reports once a day after 20:00 IST (14:30 UTC).

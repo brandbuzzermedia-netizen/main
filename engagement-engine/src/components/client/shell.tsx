@@ -129,6 +129,9 @@ export function AppShell({
       <div className="mt-auto rounded-lg bg-sidebar-2 px-3 py-2.5 text-xs">
         <div className="truncate font-medium text-sidebar-ink">{user.name}</div>
         <div className="truncate text-sidebar-ink-2">{user.role}</div>
+        <Link href="/account" className="mt-2 inline-block text-sidebar-ink-2 underline-offset-2 hover:text-sidebar-ink hover:underline">
+          Your account
+        </Link>
         <form action="/logout" method="post" className="mt-2">
           <button className="text-sidebar-ink-2 underline-offset-2 hover:text-sidebar-ink hover:underline">Sign out</button>
         </form>

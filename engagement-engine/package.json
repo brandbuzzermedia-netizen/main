@@ -14,15 +14,18 @@
     "test:db": "vitest run tests/db",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
-    "worker": "tsx scripts/worker.ts"
+    "worker": "tsx scripts/worker.ts",
+    "bootstrap": "tsx scripts/bootstrap.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
+    "mammoth": "^1.13.0",
     "next": "^16.3.8",
     "pg": "^8.23.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "server-only": "^0.0.1",
+    "unpdf": "^1.8.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -38,5 +41,8 @@
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

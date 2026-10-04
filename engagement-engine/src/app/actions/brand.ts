@@ -6,6 +6,7 @@ import { z } from "zod";
 import { audit } from "@/lib/audit";
 import { toActionError, type ActionResult } from "@/lib/action-result";
 import { ForbiddenError, inClient, optStr, parseList, str } from "@/lib/server-action";
+import { extractDocumentText, normalizeText } from "@/lib/documents";
 
 const LIST_FIELDS = [
   "products",
@@ -90,29 +91,23 @@ export async function saveBrand(clientId: string, _p: ActionResult, fd: FormData
   return { ok: true, message: "Brand profile saved. New comments will use it." };
 }
 
-const ALLOWED_TYPES = ["text/plain", "text/markdown", "text/csv", "application/json"];
-const ALLOWED_EXT = /\.(txt|md|markdown|csv|json)$/i;
-const MAX_BYTES = 1_000_000;
-
 export async function uploadDocument(clientId: string, _p: ActionResult, fd: FormData): Promise<ActionResult> {
   try {
     const kind = z.enum(["brand_guidelines", "company_profile", "product_catalog", "marketing"]).parse(fd.get("kind"));
     const title = z.string().min(1).max(160).parse(str(fd.get("title"), 160));
     const file = fd.get("file");
-    const pasted = str(fd.get("content"), 200_000);
-    let content = pasted;
+    let content = normalizeText(str(fd.get("content"), 200_000));
     let fileName = "pasted.txt";
     let mime = "text/plain";
+    let note = "";
     if (file instanceof File && file.size > 0) {
-      if (file.size > MAX_BYTES) throw new ForbiddenError("Files must be under 1 MB.");
-      if (!ALLOWED_EXT.test(file.name) && !ALLOWED_TYPES.includes(file.type)) {
-        throw new ForbiddenError("Upload .txt, .md, .csv or .json. For PDFs or Word files, paste the text instead.");
-      }
-      content = (await file.text()).replace(/\u0000/g, "");
+      const doc = await extractDocumentText(file);
+      content = doc.text;
       fileName = file.name.slice(0, 200);
-      mime = file.type || "text/plain";
+      mime = doc.mime;
+      if (doc.truncated) note = " It was long, so only the first 200,000 characters are kept.";
     }
-    if (content.trim().length < 20) throw new ForbiddenError("The document is empty. Upload a file or paste at least a paragraph.");
+    if (content.length < 20) throw new ForbiddenError("The document is empty. Upload a file or paste at least a paragraph.");
     await inClient(clientId, async ({ db, user, access }) => {
       if (!access.canManage) throw new ForbiddenError();
       const row = await db.one<{ id: string }>(
@@ -128,11 +123,11 @@ export async function uploadDocument(clientId: string, _p: ActionResult, fd: For
         action: "document.uploaded",
         entityType: "brand_document",
         entityId: row!.id,
-        details: { title, kind },
+        details: { title, kind, file: fileName },
       });
     });
     revalidatePath(`/clients/${clientId}/brand`);
-    return { ok: true, message: "Document added. It's used as AI context for this client only." };
+    return { ok: true, message: `Document added (${content.length.toLocaleString("en-IN")} characters of text). It's used as AI context for this client only.${note}` };
   } catch (e) {
     return toActionError(e);
   }

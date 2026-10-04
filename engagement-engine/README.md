@@ -38,6 +38,9 @@ Demo logins after seeding (password = `SEED_DEMO_PASSWORD`):
 | `team@wudgres.example` | Client team member (Wudgres) — suggests edits only |
 | `owner@lykes.example` | Client owner (Lykes) — sees nothing of Wudgres |
 
+Brand documents can be PDF, Word (.docx) or text files; their text is extracted on
+upload and used as AI context for that client only.
+
 Seeded social accounts are marked **demo**: they have no tokens, so discovery skips
 them and their comments go to "manual action" in the publishing queue. Connect real
 accounts from a client's **Social accounts** page once the platform apps are set up.
@@ -61,22 +64,39 @@ across clients, that cross-client foreign keys are rejected, that secrets are
 invisible to request queries, that tokens are bound to their client, and that the
 approval rules are enforced by the database itself.
 
-## Deploying
+## Deploying (Render + Supabase)
 
-* **Database** — Supabase or any Postgres 15+. Run `npm run db:migrate` with a role
-  that owns the schema. The app's `DATABASE_URL` role must be able to
-  `SET ROLE gbs_app` (the migration grants this to the migrating role); use a
-  dedicated login role rather than a superuser. On Supabase use the session-mode pooler.
-* **Web** — any Node host (`npm run build && npm start`). Set `APP_URL` to the public
-  URL; OAuth redirect URIs are `${APP_URL}/api/oauth/{platform}/callback`.
-* **Background work** — either run `npm run worker` as a long-lived process, or call
-  `POST /api/cron/{publish|discovery|metrics|reports}` with
-  `Authorization: Bearer $CRON_SECRET` from a scheduler (publish every minute,
-  discovery hourly, metrics every few hours, reports daily).
-* **Platform apps** — create a Meta app (Facebook Login for Business + Instagram API),
-  a LinkedIn app (Community Management API for company pages) and optionally a Google
-  project (YouTube Data API v3), get the permissions in
-  `docs/platform-capabilities.md` approved, and set their keys.
+The repository's `render.yaml` defines the engine as a **web service** and a
+**background worker** sharing one environment group.
+
+1. **Database.** Create a Supabase project (or any PostgreSQL 15+ whose user can create
+   roles). Copy the connection string (session-mode pooler) — that's `DATABASE_URL`.
+   Optionally download its CA certificate and set `DATABASE_CA_CERT` to verify TLS.
+2. **Render.** New → Blueprint → this repository. Fill in `DATABASE_URL` and `APP_URL`
+   (the web service's public URL, e.g. `https://gbs-engagement-engine.onrender.com`).
+   `TOKEN_ENCRYPTION_KEY` is generated for you. **Never change it once accounts are
+   connected** — stored tokens could no longer be decrypted.
+3. **First deploy.** Migrations run automatically before each deploy
+   (`preDeployCommand`). Then open the web service's **Shell** and create the first login:
+   ```bash
+   ADMIN_EMAIL=you@getbeeseen.com ADMIN_NAME="Your Name" npm run bootstrap
+   ```
+   It prints a one-time password; change it under **Your account** after signing in.
+4. **AI.** Set `ANTHROPIC_API_KEY`. Model and effort are chosen under Settings.
+5. **Platforms.** Create the Meta app (Facebook Login for Business + Instagram API) and a
+   LinkedIn app (Community Management API for company pages), get the permissions in
+   `docs/platform-capabilities.md` approved, set their keys, and register the redirect
+   URIs `${APP_URL}/api/oauth/instagram/callback`, `…/facebook/callback` and
+   `…/linkedin/callback`.
+6. **Email (optional).** Set `RESEND_API_KEY` and `EMAIL_FROM` (a sender on a domain
+   verified in Resend). The worker then emails approvals waiting, publishing failures,
+   expired connections and daily reports; users can opt out under Your account.
+
+Other hosts: any Node 22 host works (`npm run build && npm start`, plus `npm run worker`).
+On serverless hosts without a long-running worker, call
+`POST /api/cron/{publish|email|discovery|metrics|reports}` with
+`Authorization: Bearer $CRON_SECRET` on a schedule (publish and email every minute,
+discovery hourly, metrics every few hours, reports daily).
 
 ## Layout
 

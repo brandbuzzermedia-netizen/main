@@ -17,10 +17,10 @@ const csp = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  serverExternalPackages: ["pg"],
+  serverExternalPackages: ["pg", "unpdf", "mammoth"],
   experimental: {
     serverActions: {
-      bodySizeLimit: "2mb",
+      bodySizeLimit: "11mb",
       allowedOrigins: process.env.APP_ALLOWED_ORIGINS?.split(",").filter(Boolean),
     },
   },

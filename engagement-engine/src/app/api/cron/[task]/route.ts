@@ -5,6 +5,8 @@ import { processDueJobs } from "@/lib/engine/publisher";
 import { collectMetrics } from "@/lib/engine/metrics";
 import { generateDailyReports } from "@/lib/engine/reports";
 import { runDiscovery } from "@/lib/engine/discovery";
+import { processEmailOutbox } from "@/lib/engine/email-outbox";
+import { emailEnabled, resendSender } from "@/lib/email";
 
 /** For serverless deployments: call with `Authorization: Bearer $CRON_SECRET`. */
 function authorized(req: Request): boolean {
@@ -22,6 +24,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ task: s
       return NextResponse.json(await processDueJobs(systemRunner, { limit: 20, workerId: "cron" }));
     case "metrics":
       return NextResponse.json(await collectMetrics(systemRunner));
+    case "email":
+      if (!emailEnabled()) return NextResponse.json({ skipped: "RESEND_API_KEY not set" });
+      return NextResponse.json(await processEmailOutbox(systemRunner, resendSender));
     case "reports":
       return NextResponse.json({ clients: await generateDailyReports(systemRunner) });
     case "discovery": {

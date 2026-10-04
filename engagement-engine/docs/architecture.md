@@ -40,6 +40,8 @@ Nothing existing could host a multi-tenant app, and the repo convention is
 | AI | Anthropic Claude via `@anthropic-ai/sdk`, structured outputs (Zod) | Comment generation and post analysis. Default model `claude-opus-5-5`, configurable per organisation. |
 | Embeddings | Pluggable: Voyage AI (`VOYAGE_API_KEY`) or a built-in local hashed n-gram embedder | Semantic duplicate detection without leaking text to any service when no key is configured. |
 | Background work | Postgres-backed queue + `npm run worker` (long-running) or `/api/cron/*` (serverless cron) | No extra infrastructure. |
+| Email | Outbox on `notifications` (`email_status`), sent by the worker through Resend | Notifications are written inside transactions; email goes out afterwards, once, and never slows a request. |
+| Documents | `unpdf` (PDF) and `mammoth` (.docx) text extraction | Brand documents become plain text for that client's AI context. |
 
 ## 3. Tenancy model
 

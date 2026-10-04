@@ -185,10 +185,10 @@ export default async function BrandPage({ params }: { params: Promise<{ clientId
                   ))}
                 </select>
               </Field>
-              <Field label="File (.txt, .md, .csv, .json — up to 1 MB)">
-                <input name="file" type="file" accept=".txt,.md,.markdown,.csv,.json,text/plain,text/markdown,text/csv,application/json" className="text-sm" />
+              <Field label="File" hint="PDF or Word (.docx) up to 10 MB, or .txt, .md, .csv, .json up to 1 MB. Text is extracted; scanned PDFs need converting first.">
+                <input name="file" type="file" accept=".pdf,.docx,.txt,.md,.markdown,.csv,.json,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown,text/csv,application/json" className="text-sm" />
               </Field>
-              <Field label="…or paste the text" hint="For PDFs and Word files, paste the relevant text">
+              <Field label="…or paste the text">
                 <textarea name="content" rows={3} className={textareaClass} />
               </Field>
               <div>

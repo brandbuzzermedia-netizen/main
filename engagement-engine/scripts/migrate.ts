@@ -5,9 +5,10 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { Client } from "pg";
+import { connectionString, sslOptions } from "../src/lib/db/ssl";
 
 export async function migrate(databaseUrl: string, log = console.log) {
-  const client = new Client({ connectionString: databaseUrl });
+  const client = new Client({ connectionString: connectionString(databaseUrl), ssl: sslOptions() });
   await client.connect();
   try {
     await client.query(`create table if not exists schema_migrations (

@@ -1,5 +1,6 @@
 import { Pool, type PoolClient, type QueryResultRow } from "pg";
 import { env } from "@/lib/env";
+import { connectionString, sslOptions } from "./ssl";
 
 /**
  * Two ways to talk to the database:
@@ -20,7 +21,8 @@ const globalForPool = globalThis as unknown as { __gbsPool?: Pool };
 export function getPool(): Pool {
   if (!globalForPool.__gbsPool) {
     globalForPool.__gbsPool = new Pool({
-      connectionString: env().DATABASE_URL,
+      connectionString: connectionString(env().DATABASE_URL),
+      ssl: sslOptions(),
       max: Number(process.env.DATABASE_POOL_MAX ?? 10),
       idleTimeoutMillis: 30_000,
     });

@@ -49,10 +49,6 @@ and the phone-width layout.
 
 ## Deliberately deferred
 
-* Email delivery of notifications and daily reports (the `email_sender` field
-  in organisation branding is ready; plug in a provider).
-* PDF/DOCX text extraction for brand documents. The MVP accepts `.txt`,
-  `.md`, `.csv` and `.json`, and pasted text.
 * Live verification of the platform adapters against real Meta, LinkedIn and
   Google apps. They are built from the documented endpoints and tested with mocked
   responses; they need real app credentials and approved permissions to exercise.
@@ -62,6 +58,15 @@ and the phone-width layout.
 * Platform app review. Meta and LinkedIn permissions listed in
   `platform-capabilities.md` must be approved for the GBS developer apps before
   production use.
+
+## Added after the MVP
+
+| Module | What | Verification |
+| --- | --- | --- |
+| Deployment | `render.yaml` web service + worker with a shared env group; migrations before deploy; `npm run bootstrap` creates the first super admin; optional `DATABASE_CA_CERT` for verified TLS | bootstrap run against a fresh database, including a safe re-run |
+| Your account | Name, email-notification preference, password change (signs out other devices), signed-in devices | browser: wrong current password keeps input; old password stops working |
+| Brand documents | PDF and Word (.docx) text extraction, type checked by content | unit tests with real PDF/DOCX fixtures; browser upload |
+| Email | Notification outbox emailed by the worker through Resend: each notification once, recipients from that client only, opt-outs honoured | database tests |
 
 ## Running hundreds of clients
 
