@@ -127,6 +127,10 @@ Scaling: each doubling of budget multiplies CPM (and CPL) by `1 + drop%`. Goals 
 - Niche presets and the door market reference are illustrative starting points, not verified benchmarks. Market reference text must always say it is indicative and that actual prices vary by supplier, quality, size and finish. Door forecasts must show ranges and say they are projections, not guaranteed Meta Ads results. Keep the footer disclaimer. When Mehul has real GBS client averages, replace the preset numbers.
 - Never invent contact details, URLs or claims about results. There is no contact button yet because no URL or number was provided.
 
+## Claude skill (skill/)
+
+`skill/` is the source of the `gbs-ads-planner` Claude skill: `SKILL.md`, `references/metrics.md` and `scripts/gbs.js`, a Node CLI that loads the real engine files with a DOM stub (the same approach as the tests) and exposes `list`, `fields`, `calc` and `plan`, with optional `--html` reports. `npm run build:skill` builds the tool and assembles `dist/skill/gbs-ads-planner` (git ignored), copying `js/*.js` into `scripts/engine` and the single file tool into `assets`. Rebuild and repackage the skill after engine changes so its numbers stay identical to the web tool.
+
 ## Publishing
 
 The current live version is a Claude artifact built from the single-file output of `npm run build`. In a published page, external scripts are limited to a few CDNs and there is no network access to other sites, which is why images and code are inlined. localStorage works but must stay wrapped in try/catch.

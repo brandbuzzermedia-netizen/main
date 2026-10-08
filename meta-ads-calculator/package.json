@@ -6,6 +6,7 @@
   "scripts": {
     "start": "python3 -m http.server 8080",
     "test": "node test/smoke.test.js",
-    "build": "node build.js"
+    "build": "node build.js",
+    "build:skill": "npm run build && node skill/build-skill.js"
   }
 }
