@@ -1,0 +1,106 @@
+# Render Blueprint for GBS tools in this repository.
+# In Render: New > Blueprint > pick this repository.
+#
+# GBS Report Studio (report-studio/): asks for STUDIO_PASSWORD; SESSION_SECRET
+# is generated. The disk keeps clients, reports and screenshots across deploys,
+# so run a single instance.
+#
+# GBS Engagement Engine (engagement-engine/): a web service and a background
+# worker sharing one environment group. Needs a PostgreSQL 15+ database whose
+# user can create roles (Supabase works): put its connection string in
+# DATABASE_URL. Migrations run before each deploy. After the first deploy, open
+# the web service's Shell and run:
+#   ADMIN_EMAIL=you@getbeeseen.com ADMIN_NAME="Your Name" npm run bootstrap
+# to create the first super admin. See engagement-engine/README.md.
+envVarGroups:
+  - name: gbs-engagement-engine
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      # Optional: the database's CA certificate (PEM or base64) to verify TLS.
+      - key: DATABASE_CA_CERT
+        sync: false
+      # 32 random bytes, base64 — encrypts OAuth tokens. Never change it after
+      # accounts are connected, or stored tokens can't be decrypted.
+      - key: TOKEN_ENCRYPTION_KEY
+        generateValue: true
+      # The public URL of the web service, e.g. https://gbs-engagement-engine.onrender.com
+      - key: APP_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: AI_MODEL
+        value: claude-opus-5-5
+      - key: ENABLED_PLATFORMS
+        value: instagram,facebook,linkedin
+      - key: META_APP_ID
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: LINKEDIN_CLIENT_ID
+        sync: false
+      - key: LINKEDIN_CLIENT_SECRET
+        sync: false
+      - key: LINKEDIN_ALLOW_THIRD_PARTY_COMMENTS
+        value: "false"
+      # Optional: email delivery of notifications and daily reports (Resend).
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      # Optional: Voyage embeddings for duplicate detection.
+      - key: VOYAGE_API_KEY
+        sync: false
+
+services:
+  - type: web
+    name: gbs-report-studio
+    runtime: docker
+    rootDir: report-studio
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    numInstances: 1
+    healthCheckPath: /login
+    disk:
+      name: studio-data
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: STUDIO_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      # Optional: Claude reads screenshots and writes report text.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # Optional: the address used in client share links.
+      - key: PUBLIC_URL
+        sync: false
+
+  - type: web
+    name: gbs-engagement-engine
+    runtime: node
+    rootDir: engagement-engine
+    plan: starter
+    buildCommand: npm ci --include=dev && npm run build
+    preDeployCommand: npm run db:migrate
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - fromGroup: gbs-engagement-engine
+
+  # Publishing queue, scheduled discovery, metrics and daily reports.
+  - type: worker
+    name: gbs-engagement-worker
+    runtime: node
+    rootDir: engagement-engine
+    plan: starter
+    buildCommand: npm ci --include=dev
+    startCommand: npm run worker
+    envVars:
+      - fromGroup: gbs-engagement-engine
