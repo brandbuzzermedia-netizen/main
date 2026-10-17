@@ -101,3 +101,8 @@ To change the rotating status lines, edit the `messages` array in `script.js`.
 - Content, figures and client work all come from the 2026 agency portfolio.
 - Respects `prefers-reduced-motion`.
 - Responsive at 1000px and 640px. Wide tables scroll inside their own container.
+
+## Finance OS
+
+`finance-os/` holds the internal billing and collections app. It is a separate project
+and isn't part of the site build. See [`finance-os/README.md`](finance-os/README.md).
