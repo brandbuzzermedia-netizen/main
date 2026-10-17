@@ -36,6 +36,12 @@ The brand tokens (yellow and ink, the bee mark) are reused from `styles.css`.
  Outbound: Resend (email) · WhatsApp Cloud API / BSP · Swipe API (if enabled) · Razorpay (if used)
 ```
 
+**Implementation notes (Phase 2).** Next.js 16.4 with `cacheComponents: false`: every page is
+rendered per request, because finance figures must never come from a stale cache. Auth uses
+`@supabase/ssr` cookies refreshed in `src/proxy.ts` (Next 16 renamed `middleware` to `proxy`).
+Ledger columns (`amount_received_minor`, `credited_minor`, `allocated_minor`) are maintained by
+triggers, and direct writes to them are rejected.
+
 **Where the logic lives.** Every business rule (eligibility, balances, stage selection,
 de-duplication) lives in the Next.js `domain/` layer and in Postgres constraints. n8n is
 used **only as a durable scheduler and retry orchestrator**: it calls signed job endpoints
@@ -180,7 +186,7 @@ dashboard filters need: due date, status, client, and partial indexes on open in
 | Phase | Scope | Exit check |
 | --- | --- | --- |
 | 1 ✅ | Repo inspection, Swipe research, this plan | Founder answers the Swipe checklist |
-| 2 | Next.js + Supabase scaffold, migrations + RLS, auth, clients, invoice ledger, CSV import + manual entry | Migrations apply on local Supabase. RLS tests pass. CSV re-import creates 0 duplicates |
+| 2 ✅ | Next.js + Supabase scaffold, migrations + RLS, auth, clients, invoice ledger, CSV import + manual entry | Migrations apply on local Supabase. RLS tests pass. CSV re-import creates 0 duplicates |
 | 3 | Payments, allocations, reconciliation, balance views | Scenarios 4–7 pass as automated tests |
 | 4 | Dashboard, expenses, forecast | Every figure is traced to a SQL query in tests |
 | 5 | Reminder engine, Resend, WhatsApp, n8n workflows | Scenarios 1–3 and 8–12 pass with mocked providers, then a sandbox send |

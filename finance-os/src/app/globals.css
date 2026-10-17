@@ -1,26 +1,80 @@
 @import "tailwindcss";
 
+/* Get Bee Seen brand tokens, adapted for a dense financial UI. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --bg: #faf7f0;
+  --surface: #ffffff;
+  --surface-2: #f4efe3;
+  --ink: #191816;
+  --muted: #6b665c;
+  --line: #e6dfcf;
+  --brand: #196144;
+  --brand-ink: #ffffff;
+  --brand-soft: #e3efe8;
+  --accent: #ffb933;
+  --accent-soft: #fff2dc;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --warn: #9a5b00;
+  --warn-soft: #fff4dd;
+  --ok: #196144;
+  --ok-soft: #e3efe8;
+  --info: #1d4ed8;
+  --info-soft: #e8efff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #12110f;
+    --surface: #1b1a17;
+    --surface-2: #24221e;
+    --ink: #f3efe6;
+    --muted: #a39d90;
+    --line: #34312b;
+    --brand: #4fb184;
+    --brand-ink: #0d1f17;
+    --brand-soft: #173326;
+    --accent: #ffb933;
+    --accent-soft: #3a2c10;
+    --danger: #ff8a7a;
+    --danger-soft: #3b1714;
+    --warn: #ffc56b;
+    --warn-soft: #362710;
+    --ok: #6fd3a3;
+    --ok-soft: #173326;
+    --info: #9db7ff;
+    --info-soft: #1a2340;
   }
 }
 
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
