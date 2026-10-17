@@ -59,7 +59,7 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
                   {invoices.map((inv) => (
                     <tr key={inv.id}>
                       <Td>
-                        <Link href={`/invoices/${inv.id}`} className="font-medium hover:underline">{inv.invoice_number}</Link>
+                        <Link href={`/invoices/${inv.id}`} className="font-medium whitespace-nowrap hover:underline">{inv.invoice_number}</Link>
                         <div className="text-xs text-muted">{formatDate(inv.invoice_date)}</div>
                       </Td>
                       <Td>{formatDate(inv.effective_due_date)}</Td>

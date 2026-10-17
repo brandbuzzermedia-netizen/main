@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 !.env.example
+
+# supabase cli local state
+/supabase/.branches
+/supabase/.temp

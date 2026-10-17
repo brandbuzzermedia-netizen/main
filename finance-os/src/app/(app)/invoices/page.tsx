@@ -88,16 +88,18 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
         })}
       </nav>
 
-      <form className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-6" role="search">
+      <form className="mb-4 grid items-end gap-2 sm:grid-cols-2 lg:grid-cols-6" role="search">
         <input type="hidden" name="view" value={view} />
-        <Input name="q" defaultValue={q} placeholder="Invoice number" aria-label="Invoice number" />
-        <Select name="client" defaultValue={client} aria-label="Client">
-          <option value="">All clients</option>
-          {(clients ?? []).map((c) => <option key={c.id} value={c.id}>{c.trading_name || c.legal_name}</option>)}
-        </Select>
-        <Input name="period" type="month" defaultValue={period} aria-label="Billing period" title="Billing period" />
-        <Input name="from" type="date" defaultValue={from} aria-label="Due from" title="Due from" />
-        <Input name="to" type="date" defaultValue={to} aria-label="Due to" title="Due to" />
+        <FilterField label="Invoice number"><Input name="q" defaultValue={q} placeholder="e.g. 26-27/041" /></FilterField>
+        <FilterField label="Client">
+          <Select name="client" defaultValue={client}>
+            <option value="">All clients</option>
+            {(clients ?? []).map((c) => <option key={c.id} value={c.id}>{c.trading_name || c.legal_name}</option>)}
+          </Select>
+        </FilterField>
+        <FilterField label="Billing month"><Input name="period" type="month" defaultValue={period} /></FilterField>
+        <FilterField label="Due from"><Input name="from" type="date" defaultValue={from} /></FilterField>
+        <FilterField label="Due to"><Input name="to" type="date" defaultValue={to} /></FilterField>
         <Button variant="secondary" type="submit">Apply</Button>
       </form>
 
@@ -113,7 +115,7 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
             {invoices.map((inv) => (
               <tr key={inv.id} className="hover:bg-surface-2/60">
                 <Td>
-                  <Link href={`/invoices/${inv.id}`} className="font-medium hover:underline">{inv.invoice_number}</Link>
+                  <Link href={`/invoices/${inv.id}`} className="font-medium whitespace-nowrap hover:underline">{inv.invoice_number}</Link>
                   <div className="text-xs text-muted">{formatDate(inv.invoice_date)}</div>
                 </Td>
                 <Td><Link href={`/clients/${inv.client_id}`} className="hover:underline">{inv.client_trading_name || inv.client_legal_name}</Link></Td>
@@ -141,5 +143,14 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
         </>
       )}
     </>
+  );
+}
+
+function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1 text-xs font-medium text-muted">
+      {label}
+      {children}
+    </label>
   );
 }

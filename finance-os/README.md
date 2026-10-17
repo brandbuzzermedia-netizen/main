@@ -42,6 +42,22 @@ What works today:
 - **Integrations**: what is and isn't connected, plus the run history. A stale-data warning shows
   whenever Swipe data is old or the last import failed.
 
+## Verification done for Phase 2
+
+- 61 unit tests and 4 SQL suites (`npm test`, `npm run test:db`).
+- Migrations applied to a real local Supabase stack (Postgres 17, GoTrue, PostgREST) with
+  `supabase start` and `supabase db reset`.
+- A scripted browser walkthrough against that stack:
+  1. Sign in, create the workspace, create two clients.
+  2. Import a Swipe-style CSV that has an unknown customer and an invalid date.
+  3. Re-import the same file: nothing is duplicated.
+  4. Add a manual invoice, then dispute it and resolve the dispute.
+  5. Create the demo workspace and confirm cross-tenant isolation.
+  6. Check at a 390 px mobile width (no horizontal scroll).
+  7. No browser console errors.
+- **Not yet tested against Swipe itself.** No Swipe account or API key was available. The CSV
+  importer accepts common header variants, so check your real export's preview before the first import.
+
 ## Local development
 
 Requirements: Node 20.9+, Docker (for the local Supabase stack), and the Supabase CLI (`npx supabase`).
@@ -107,7 +123,10 @@ date, it is set from the client's payment terms and marked "(from terms)".
 ## Security model
 
 - Every table has RLS keyed on organization membership and role. Account managers see only
-  the clients they own, and viewers cannot write. Anonymous users have no table privileges.
+  the clients they own, and viewers cannot write.
+- The `anon` role holds no grants on any table, view or function, and default privileges
+  stop later migrations from granting it any. This was checked against a real local Supabase
+  stack: anonymous REST calls get `permission denied`.
 - Balances are computed by database triggers from verified payment allocations and credit
   notes. Typing them in directly is rejected by the database.
 - The service-role key is read only in `src/lib/supabase/admin.ts`, which imports

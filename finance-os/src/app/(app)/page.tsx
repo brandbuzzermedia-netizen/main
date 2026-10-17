@@ -74,7 +74,7 @@ export default async function OverviewPage() {
                   <Td><Link className="font-medium hover:underline" href={`/clients/${c.client_id}`}>{c.trading_name || c.legal_name}</Link></Td>
                   <Td numeric className="text-danger">{formatMoney(c.overdue_minor)}</Td>
                   <Td numeric>{formatMoney(c.outstanding_minor)}</Td>
-                  <Td numeric>{c.oldest_days_overdue} days</Td>
+                  <Td numeric>{c.oldest_days_overdue} day{c.oldest_days_overdue === 1 ? "" : "s"}</Td>
                   <Td numeric>{c.missed_commitments_count || "—"}</Td>
                 </tr>
               ))}

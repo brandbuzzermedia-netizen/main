@@ -59,7 +59,16 @@ select pg_temp.logout();
 -- Anonymous role has no table privileges at all.
 set local role anon;
 select pg_temp.assert_raises('select * from public.clients', 'permission denied', 'anon cannot read clients');
+select pg_temp.assert_raises('select * from public.invoice_balances', 'permission denied', 'anon cannot read balance views');
+select pg_temp.assert_raises($$select public.create_organization('x')$$, 'permission denied', 'anon cannot create organizations');
 reset role;
+select pg_temp.assert(
+  not exists (select 1 from information_schema.role_table_grants where grantee = 'anon' and table_schema = 'public'),
+  'anon holds no table or view grants');
+select pg_temp.assert(
+  not exists (select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+              where n.nspname in ('public', 'app') and has_function_privilege('anon', p.oid, 'execute')),
+  'anon can execute no app functions');
 
 -- Audit log captured the founder's inserts with the actor.
 select pg_temp.assert(

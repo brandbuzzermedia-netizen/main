@@ -62,7 +62,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clients"
               <Td numeric>{c.open_invoice_count}</Td>
               <Td numeric>{formatMoney(c.outstanding_minor)}</Td>
               <Td numeric className={c.overdue_minor > 0 ? "text-danger" : ""}>{formatMoney(c.overdue_minor)}</Td>
-              <Td numeric>{c.oldest_days_overdue > 0 ? `${c.oldest_days_overdue} days` : "—"}</Td>
+              <Td numeric>{c.oldest_days_overdue > 0 ? `${c.oldest_days_overdue} day${c.oldest_days_overdue === 1 ? "" : "s"}` : "—"}</Td>
             </tr>
           ))}
         </Table>
