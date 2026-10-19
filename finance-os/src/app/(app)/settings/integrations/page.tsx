@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { getContext } from "@/lib/auth";
-import { swipeApiConfig } from "@/lib/env";
+import { appUrl, razorpayConfig, swipeApiConfig } from "@/lib/env";
 import type { SyncRun } from "@/lib/db-types";
 import { Badge, Card, Dl, PageHeader, Table, Td } from "@/components/ui";
 import { getSyncHealth } from "@/components/sync-health";
@@ -23,6 +23,15 @@ export default async function IntegrationsPage() {
     .order("started_at", { ascending: false })
     .limit(25);
   const runs = (data ?? []) as SyncRun[];
+  const rzp = razorpayConfig();
+  const { data: lastEvent } = await ctx.supabase
+    .from("integration_events")
+    .select("event_type, status, received_at")
+    .eq("organization_id", ctx.org.id)
+    .eq("provider", "razorpay")
+    .order("received_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   return (
     <>
@@ -47,7 +56,13 @@ export default async function IntegrationsPage() {
             items={[
               ["Email (Resend)", <NotConnected key="e">Phase 5</NotConnected>],
               ["WhatsApp Business Platform", <NotConnected key="w">Phase 5</NotConnected>],
-              ["Payment gateway (Razorpay)", <NotConnected key="p">awaiting your decision on payment links</NotConnected>],
+              ["Razorpay payment links", rzp.enabled
+                ? <Badge key="p" tone={rzp.mode === "live" ? "ok" : "warn"}>{rzp.mode === "live" ? "Connected (live)" : "Connected (test mode)"}</Badge>
+                : <NotConnected key="p">keys not set</NotConnected>],
+              ["Razorpay webhook", rzp.webhookSecret
+                ? (lastEvent ? `Last event ${lastEvent.event_type} · ${new Date(lastEvent.received_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}` : <Badge key="w" tone="warn">Secret set · no event received yet</Badge>)
+                : <NotConnected key="w">webhook secret not set</NotConnected>],
+              ["Webhook URL", <code key="u" className="text-xs break-all">{appUrl()}/api/webhooks/razorpay</code>],
               ["Bank statement import", <Badge key="b" tone="ok">Available: CSV upload</Badge>],
             ]}
           />

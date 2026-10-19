@@ -21,7 +21,9 @@ export function BankWizard() {
     for (const [k, v] of Object.entries(extra ?? {})) fd.set(k, v);
     startTransition(() => dispatch(fd));
   };
-  const rows = preview.rows ?? [];
+  const allRows = preview.rows ?? [];
+  const rows = allRows.filter((r) => !r.gatewaySettlement);
+  const settlements = allRows.filter((r) => r.gatewaySettlement);
 
   return (
     <div className="flex flex-col gap-6">
@@ -50,7 +52,10 @@ export function BankWizard() {
           {(preview.issues ?? []).length > 0 && (
             <div className="mb-4"><Alert tone="warn" title="Rows skipped">{preview.issues!.map((i) => `Row ${i.rowNumber}: ${i.message}`).join(" · ")}</Alert></div>
           )}
-          <p className="mb-3 text-xs text-muted">{preview.skippedDebits ?? 0} debit row(s) ignored. Expenses arrive in Phase 4.</p>
+          <p className="mb-3 text-xs text-muted">
+            {preview.skippedDebits ?? 0} debit row(s) ignored. Expenses arrive in Phase 4.
+            {settlements.length > 0 && <> {settlements.length} Razorpay settlement(s) of {formatMoney(settlements.reduce((s, r) => s + r.amount_minor, 0))} skipped: those client payments are already recorded individually from Razorpay.</>}
+          </p>
           <div className="-mx-4">
             <Table head={["Row", "Date", "Narration", "Reference", "Amount", "Match"]}>
               {rows.map((r) => (

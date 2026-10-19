@@ -7,7 +7,9 @@ import { formatMoney } from "@/domain/money";
 import { formatDate } from "@/domain/dates";
 import { Alert, Badge, Card, Dl, PageHeader, Stat } from "@/components/ui";
 import { AgeingBadge, PaymentStateBadge, SyncBadge } from "@/components/status";
-import { addCreditNoteAction, approveExtensionAction, cancelCommitmentAction, logCommitmentAction, revokeExtensionAction, setDisputeAction } from "../actions";
+import { razorpayConfig } from "@/lib/env";
+import { PaymentLinkCard, type LinkRow } from "@/components/payment-link-card";
+import { addCreditNoteAction, approveExtensionAction, cancelPaymentLinkAction, createPaymentLinkAction, cancelCommitmentAction, logCommitmentAction, revokeExtensionAction, setDisputeAction } from "../actions";
 import { DisputeForm } from "./dispute-form";
 import { CommitmentForm, CreditNoteForm, ExtensionForm } from "@/components/collections-forms";
 import { CommitmentList } from "@/components/commitment-list";
@@ -17,7 +19,7 @@ export const metadata: Metadata = { title: "Invoice" };
 export default async function InvoicePage({ params }: PageProps<"/invoices/[id]">) {
   const { id } = await params;
   const ctx = await getContext();
-  const [{ data }, { data: allocations }, { data: reminders }, { data: tasks }, { data: commitments }, { data: extensions }, { data: creditNotes }] = await Promise.all([
+  const [{ data }, { data: allocations }, { data: reminders }, { data: tasks }, { data: commitments }, { data: extensions }, { data: creditNotes }, { data: links }] = await Promise.all([
     ctx.supabase.from("invoice_balances").select("*").eq("id", id).maybeSingle(),
     ctx.supabase.from("payment_allocations").select("id, amount_minor, created_at, payment:payments(id, transaction_reference, payment_date, method, verification_status)").eq("invoice_id", id),
     ctx.supabase.from("reminder_events").select("id, stage, channel, status, created_at, error").eq("invoice_id", id).order("created_at", { ascending: false }),
@@ -25,7 +27,9 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
     ctx.supabase.from("payment_commitments").select("*").eq("invoice_id", id).order("created_at", { ascending: false }),
     ctx.supabase.from("payment_extensions").select("id, new_due_date, reason, status, approved_at").eq("invoice_id", id).order("approved_at", { ascending: false }),
     ctx.supabase.from("credit_notes").select("id, credit_note_number, issued_on, amount_minor, reason").eq("invoice_id", id).order("issued_on"),
+    ctx.supabase.from("payment_links").select("id, short_url, status, amount_minor, amount_paid_minor, expire_by, created_at").eq("invoice_id", id).order("created_at", { ascending: false }),
   ]);
+  const rzp = razorpayConfig();
   if (!data) notFound();
   const inv = data as InvoiceBalance;
   const allocs = (allocations ?? []) as unknown as { id: string; amount_minor: number; payment: { id: string; transaction_reference: string; payment_date: string; method: string; verification_status: string } }[];
@@ -124,6 +128,18 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
                 ["Last synced", inv.last_synced_at ? new Date(inv.last_synced_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }) : "—"],
                 ["Swipe document ID", inv.external_id ?? "—"],
               ]}
+            />
+          </Card>
+          <Card title="Razorpay payment link">
+            <PaymentLinkCard
+              links={(links ?? []) as LinkRow[]}
+              configured={rzp.enabled}
+              mode={rzp.mode}
+              canWrite={ctx.canWrite}
+              canCreate={open && inv.status === "issued"}
+              outstandingMinor={inv.outstanding_minor}
+              onCreate={createPaymentLinkAction.bind(null, id)}
+              onCancel={cancelPaymentLinkAction.bind(null, id)}
             />
           </Card>
           <Card title="Extension">

@@ -1,6 +1,7 @@
 import { normalizeName, type MatchableClient } from "@/integrations/swipe/match";
 import type { OpenInvoice } from "@/domain/allocation";
 import type { BankCredit } from "./statement";
+import { isGatewaySettlement } from "@/integrations/razorpay/webhook";
 
 export type BankImportRow = {
   row_number: number;
@@ -14,7 +15,7 @@ export type BankImportRow = {
   allocate_invoice_id: string | null;
 };
 
-export type BankMatch = BankImportRow & { clientLabel: string | null; matchNote: string };
+export type BankMatch = BankImportRow & { clientLabel: string | null; matchNote: string; gatewaySettlement: boolean };
 
 /**
  * Attach a client when exactly one client's name, trading name, alias or code appears in
@@ -32,6 +33,14 @@ export function matchBankCredits(
   }));
 
   return credits.map((cr) => {
+    if (isGatewaySettlement(cr.narration)) {
+      return {
+        row_number: cr.rowNumber, transaction_reference: cr.reference, payment_date: cr.date, amount_minor: cr.amountMinor,
+        narration: cr.narration, payer_name: cr.payerGuess, method: cr.method, client_id: null, allocate_invoice_id: null,
+        clientLabel: null, gatewaySettlement: true,
+        matchNote: "Razorpay settlement. Skipped: each client payment is already recorded from Razorpay's webhook",
+      };
+    }
     const hay = ` ${normalizeName(cr.narration)} `;
     const hits = needles.filter((n) => n.names.some((name) => hay.includes(` ${name} `)));
     let client_id: string | null = null;
@@ -64,6 +73,7 @@ export function matchBankCredits(
       allocate_invoice_id,
       clientLabel,
       matchNote,
+      gatewaySettlement: false,
     };
   });
 }

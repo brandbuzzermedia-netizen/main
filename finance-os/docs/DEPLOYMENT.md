@@ -40,6 +40,7 @@ auth) and a Vercel project (the app). Nothing in Phase 2 sends email or WhatsApp
    | `APP_URL` | `https://<your-vercel-domain>` |
    | `AUTH_ALLOWED_EMAILS` | optional, e.g. `founder@getbeeseen.com` |
    | `SWIPE_API_ENABLED` | `false` until the Swipe checklist passes |
+   | `RAZORPAY_*` | optional. See `docs/RAZORPAY.md` (start with test keys) |
 
 3. Deploy, open the site, sign in with your email, and create the **Get Bee Seen** workspace.
    The first person to create it becomes its owner.

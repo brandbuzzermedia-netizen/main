@@ -104,3 +104,12 @@ describe("matchBankCredits", () => {
     expect(m[0].allocate_invoice_id).toBe("I-41");
   });
 });
+
+describe("Razorpay settlements in bank statements", () => {
+  it("are skipped so gateway payments are not counted twice", () => {
+    const csv = "Date,Narration,Chq./Ref.No.,Withdrawal Amt.,Deposit Amt.\n20/10/26,NEFT-UTIB0000001-RAZORPAY SOFTWARE PVT LTD-setl_ABC,UTIB12345678901,,\"1,15,640.00\"";
+    const m = matchBankCredits(parseBankStatement(csv).credits, [], new Map());
+    expect(m[0].gatewaySettlement).toBe(true);
+    expect(m[0].client_id).toBeNull();
+  });
+});

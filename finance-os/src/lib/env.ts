@@ -35,3 +35,22 @@ export function swipeApiConfig() {
 }
 
 export const isDevelopment = process.env.NODE_ENV === "development";
+
+/**
+ * Razorpay. Use TEST-mode keys (rzp_test_…) until a test payment has gone through end to end.
+ * The webhook secret is the one you type when adding the webhook in the Razorpay Dashboard;
+ * it is different from the API key secret.
+ */
+export function razorpayConfig() {
+  const keyId = process.env.RAZORPAY_KEY_ID ?? "";
+  const keySecret = process.env.RAZORPAY_KEY_SECRET ?? "";
+  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET ?? "";
+  return {
+    enabled: process.env.RAZORPAY_ENABLED === "true" && Boolean(keyId && keySecret),
+    keyId,
+    keySecret,
+    webhookSecret,
+    mode: keyId.startsWith("rzp_live_") ? ("live" as const) : keyId.startsWith("rzp_test_") ? ("test" as const) : ("unknown" as const),
+    linkValidityDays: Number(process.env.RAZORPAY_LINK_VALIDITY_DAYS ?? 30),
+  };
+}

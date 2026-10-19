@@ -12,6 +12,7 @@ and its own Vercel project (Root Directory = `finance-os`).
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | System design, ledger invariants, reminder engine, phases |
 | [`docs/SWIPE_INTEGRATION.md`](docs/SWIPE_INTEGRATION.md) | What Swipe's API documents, what is unverified, and the founder checklist |
 | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Supabase + Vercel setup, step by step |
+| [`docs/RAZORPAY.md`](docs/RAZORPAY.md) | Razorpay payment links and webhook: setup, test mode, what is verified |
 
 ## Status
 
@@ -61,13 +62,19 @@ What works today:
     superseding the promise, and is safe to run repeatedly. Phase 5 schedules it daily.
 - **Extensions** (only one active per invoice, history kept) and **credit notes** (recorded
   after issuing them in Swipe).
+- **Razorpay payment links**:
+  - Create, replace or cancel a link for an invoice's outstanding balance.
+  - A signature-verified webhook records the payment as a verified receipt and settles the invoice.
+    Duplicate deliveries are ignored.
+  - Razorpay settlements in bank statements are skipped so nothing is counted twice.
+  - Swipe reconciliation tasks close automatically once the ledger matches. See `docs/RAZORPAY.md`.
 - **Tasks**: exceptions that need a person: reconciliation differences and missed promises.
 - **Integrations**: what is and isn't connected, plus the run history. A stale-data warning shows
   whenever Swipe data is old or the last import failed.
 
 ## Verification done for Phase 2
 
-- 77 unit tests and 5 SQL suites (`npm test`, `npm run test:db`). Together they cover
+- 85 unit tests and 6 SQL suites (`npm test`, `npm run test:db`). Together they cover
   test scenarios 4–10 from the brief: full, partial and unmatched payments, duplicate events,
   missed promises, extensions and disputes.
 - Migrations applied to a real local Supabase stack (Postgres 17, GoTrue, PostgREST) with

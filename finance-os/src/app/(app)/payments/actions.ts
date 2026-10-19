@@ -189,10 +189,11 @@ export async function commitBankImportAction(_prev: BankPreviewState, formData: 
   if (formData.get("sha256") !== upload.sha256) return { error: "The file changed since the preview. Check it again." };
   try {
     const { parsed, rows } = await planBankImport(ctx, upload.text);
-    if (rows.length === 0) return { error: "The statement has no credits to import." };
+    const importable = rows.filter((r) => !r.gatewaySettlement);
+    if (importable.length === 0) return { error: "The statement has no client credits to import." };
     const { data, error } = await ctx.supabase.rpc("import_bank_receipts", {
       p_org: ctx.org.id,
-      p_rows: rows.map(toImportRow),
+      p_rows: importable.map(toImportRow),
       p_file_name: upload.fileName,
       p_file_sha256: upload.sha256,
     });
