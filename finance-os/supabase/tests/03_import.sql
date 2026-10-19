@@ -92,5 +92,15 @@ update t set r = public.import_invoices(org, 'manual', jsonb_build_array(
                      'due_date', '2026-10-15', 'total_minor', 1180000, 'tax_minor', 180000, 'source_status', 'issued')));
 select pg_temp.assert((select source_channel from public.invoices where invoice_number = 'INV-102') = 'csv', 'manual does not downgrade channel');
 
+-- Swipe "Unpaid" (0) after a local credit note is not a mismatch: Swipe keeps credit notes separately.
+insert into public.invoices (organization_id, client_id, source_channel, invoice_number, invoice_date, due_date, total_minor)
+select org, c1, 'csv', 'INV-200', '2026-10-01', '2026-10-08', 10000 from t;
+insert into public.credit_notes (organization_id, invoice_id, credit_note_number, issued_on, amount_minor)
+select org, (select id from public.invoices where invoice_number = 'INV-200'), 'CN-1', '2026-10-02', 500 from t;
+update t set r = public.import_invoices(org, 'csv', jsonb_build_array(
+  jsonb_build_object('row_number', 9, 'invoice_number', 'INV-200', 'client_id', c1, 'invoice_date', '2026-10-01',
+                     'due_date', '2026-10-08', 'total_minor', 10000, 'source_status', 'issued', 'source_reported_paid_minor', 0)));
+select pg_temp.assert((select (r->>'reconciliation_tasks')::int from t) = 0, 'credit note alone does not trigger reconciliation');
+
 select pg_temp.logout();
 rollback;

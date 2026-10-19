@@ -2,13 +2,17 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getContext } from "@/lib/auth";
-import type { BillingContact, Client, ClientBalance, Contract, InvoiceBalance } from "@/lib/db-types";
+import type { BillingContact, Client, ClientBalance, Commitment, Contract, InvoiceBalance, PaymentRow } from "@/lib/db-types";
 import { formatMoney } from "@/domain/money";
 import { formatDate } from "@/domain/dates";
 import { Badge, ButtonLink, Card, Dl, EmptyState, PageHeader, Stat, Table, Td } from "@/components/ui";
 import { AgeingBadge, PaymentStateBadge, ServiceStatusBadge } from "@/components/status";
 import { addContactAction, removeContactAction } from "../actions";
 import { ContactForm } from "./contact-form";
+import { cancelCommitmentAction, logCommitmentAction } from "../../invoices/actions";
+import { CommitmentForm } from "@/components/collections-forms";
+import { CommitmentList } from "@/components/commitment-list";
+import { VerificationBadge } from "@/components/payment-status";
 
 export const metadata: Metadata = { title: "Client" };
 
@@ -17,12 +21,16 @@ const FREQ: Record<string, string> = { monthly: "Monthly", quarterly: "Quarterly
 export default async function ClientPage({ params }: PageProps<"/clients/[id]">) {
   const { id } = await params;
   const ctx = await getContext();
-  const [clientRes, balanceRes, contactsRes, contractsRes, invoicesRes] = await Promise.all([
+  const [clientRes, balanceRes, contactsRes, contractsRes, invoicesRes, commitmentsRes, paymentsRes] = await Promise.all([
     ctx.supabase.from("clients").select("*").eq("id", id).maybeSingle(),
     ctx.supabase.from("client_balances").select("*").eq("client_id", id).maybeSingle(),
     ctx.supabase.from("billing_contacts").select("*").eq("client_id", id).order("is_primary", { ascending: false }).order("name"),
     ctx.supabase.from("contracts").select("*").eq("client_id", id).order("start_date", { ascending: false }),
     ctx.supabase.from("invoice_balances").select("*").eq("client_id", id).order("invoice_date", { ascending: false }).limit(50),
+    ctx.supabase.from("payment_commitments").select("*").eq("client_id", id).order("created_at", { ascending: false }).limit(20),
+    ctx.role === "account_manager"
+      ? Promise.resolve({ data: [] })
+      : ctx.supabase.from("payment_list").select("*").eq("client_id", id).order("payment_date", { ascending: false }).limit(20),
   ]);
   if (!clientRes.data) notFound();
   const client = clientRes.data as Client;
@@ -31,6 +39,9 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
   const contracts = (contractsRes.data ?? []) as Contract[];
   const invoices = (invoicesRes.data ?? []) as InvoiceBalance[];
   const contract = contracts.find((c) => c.status === "active") ?? contracts[0];
+  const commitments = (commitmentsRes.data ?? []) as Commitment[];
+  const payments = (paymentsRes.data ?? []) as PaymentRow[];
+  const openInvoices = invoices.filter((i) => i.status !== "cancelled" && i.outstanding_minor > 0);
 
   return (
     <>
@@ -77,6 +88,38 @@ export default async function ClientPage({ params }: PageProps<"/clients/[id]">)
               </div>
             )}
           </Card>
+
+          <Card title="Payment promises">
+            <CommitmentList items={commitments} cancelAction={ctx.canWrite ? (cid) => cancelCommitmentAction.bind(null, cid, `/clients/${id}`) : undefined} />
+            {ctx.role !== "viewer" && openInvoices.length > 0 && (
+              <div className="mt-4 border-t border-line pt-4">
+                <CommitmentForm
+                  action={logCommitmentAction.bind(null, id, null)}
+                  invoices={openInvoices.map((i) => ({ id: i.id, label: `${i.invoice_number} · ${formatMoney(i.outstanding_minor, i.currency)} open` }))}
+                />
+              </div>
+            )}
+          </Card>
+
+          {ctx.role !== "account_manager" && (
+            <Card title="Payments" actions={ctx.canWrite && <Link className="text-sm text-brand hover:underline" href={`/payments/new?client=${id}`}>Record payment</Link>}>
+              {payments.length === 0 ? (
+                <p className="text-sm text-muted">No payments recorded.</p>
+              ) : (
+                <ul className="divide-y divide-line text-sm">
+                  {payments.map((p) => (
+                    <li key={p.id} className="flex items-center justify-between gap-2 py-2">
+                      <span>
+                        <Link className="font-medium hover:underline" href={`/payments/${p.id}`}>{p.transaction_reference}</Link> · {formatDate(p.payment_date)}{" "}
+                        <VerificationBadge status={p.verification_status} />
+                      </span>
+                      <span className={`tabular ${p.kind === "refund" ? "text-danger" : ""}`}>{p.kind === "refund" ? "−" : ""}{formatMoney(p.amount_minor, p.currency)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
+          )}
 
           <Card title="Billing contacts">
             {contacts.length === 0 ? (

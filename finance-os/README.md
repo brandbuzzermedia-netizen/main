@@ -18,9 +18,9 @@ and its own Vercel project (Root Directory = `finance-os`).
 | Phase | Scope | State |
 | --- | --- | --- |
 | 1 | Architecture, Swipe research | Done |
-| 2 | Schema + RLS, auth, clients, invoice ledger, Swipe CSV import, manual entry | **Done** (this build) |
-| 3 | Payments, allocations, reconciliation UI | Next. The ledger tables and integrity triggers already exist |
-| 4 | Dashboard completion, expenses, ad budgets, cash-flow forecast | Planned |
+| 2 | Schema + RLS, auth, clients, invoice ledger, Swipe CSV import, manual entry | Done |
+| 3 | Payments, allocations, bank statement reconciliation, promises, extensions, credit notes | **Done** (this build) |
+| 4 | Dashboard completion, expenses, ad budgets, cash-flow forecast | Next |
 | 5 | Reminder engine, Resend email, WhatsApp, n8n | Planned |
 | 6 | Escalations, retries, alerting | Planned |
 | 7 | Full scenario suite, deployment hardening | Planned |
@@ -38,13 +38,38 @@ What works today:
 - **Manual entry**: for invoices raised in Swipe that you are not importing. It uses the same import path.
 - **Overview**: contracted MRR, invoiced this month, verified cash, outstanding and overdue,
   due in 7/14/30 days (labelled unconfirmed), overdue clients. Every figure comes from the database.
-- **Tasks**: exceptions that need a person, starting with reconciliation.
+- **Payments** (Phase 3):
+  - Record receipts and refunds with a mandatory UTR, UPI RRN or cheque reference.
+  - A payment stays *awaiting verification*, and doesn't reduce any balance, until someone
+    records where they saw the money.
+  - The allocation editor splits one payment across invoices, suggests an exact match first
+    and then oldest-due-first, and keeps any remainder as an unallocated advance.
+- **Bank statement import**:
+  - Reads HDFC, ICICI and SBI style CSVs, including preamble lines and single-amount Dr/Cr
+    columns. It imports credits only.
+  - Pulls the UTR or RRN out of the narration and matches clients by name or alias.
+  - Allocates automatically only when exactly one open invoice has exactly that amount.
+  - A statement line verifies a matching *pending* manual entry instead of duplicating it.
+  - References are unique across sources, so overlapping statements never double-count.
+- **Payment promises**:
+  - Logged against an invoice or the whole account. Account managers can log them for their
+    own clients.
+  - A promise is marked kept automatically when verified money dated on or after the promise
+    covers it.
+  - `process_missed_commitments` marks overdue promises as missed. It creates exactly one
+    founder task, counts the client's missed promises, treats an approved extension as
+    superseding the promise, and is safe to run repeatedly. Phase 5 schedules it daily.
+- **Extensions** (only one active per invoice, history kept) and **credit notes** (recorded
+  after issuing them in Swipe).
+- **Tasks**: exceptions that need a person: reconciliation differences and missed promises.
 - **Integrations**: what is and isn't connected, plus the run history. A stale-data warning shows
   whenever Swipe data is old or the last import failed.
 
 ## Verification done for Phase 2
 
-- 61 unit tests and 4 SQL suites (`npm test`, `npm run test:db`).
+- 77 unit tests and 5 SQL suites (`npm test`, `npm run test:db`). Together they cover
+  test scenarios 4–10 from the brief: full, partial and unmatched payments, duplicate events,
+  missed promises, extensions and disputes.
 - Migrations applied to a real local Supabase stack (Postgres 17, GoTrue, PostgREST) with
   `supabase start` and `supabase db reset`.
 - A scripted browser walkthrough against that stack:
@@ -53,8 +78,13 @@ What works today:
   3. Re-import the same file: nothing is duplicated.
   4. Add a manual invoice, then dispute it and resolve the dispute.
   5. Create the demo workspace and confirm cross-tenant isolation.
-  6. Check at a 390 px mobile width (no horizontal scroll).
-  7. No browser console errors.
+  6. Phase 3: record a pending payment and confirm the invoice stays open. Import an HDFC-style
+     statement; it verifies that payment, auto-allocates an exact UPI match and leaves a cash
+     deposit unmatched. Assign the deposit and allocate it with *Suggest*. Then log a promise,
+     approve an extension and record a credit note. The final database balances were checked
+     by hand.
+  7. Check at a 390 px mobile width (no horizontal scroll).
+  8. No browser console errors and no duplicate element ids on any page.
 - **Not yet tested against Swipe itself.** No Swipe account or API key was available. The CSV
   importer accepts common header variants, so check your real export's preview before the first import.
 
@@ -119,6 +149,14 @@ Accepted headers include common Swipe/Tally variants such as *Invoice No.*, *Inv
 *Due Date*, *Customer Name*, *GSTIN*, *Taxable Amount*, *Total Tax* and *Grand Total*. Download the
 exact template from the import page. Dates are read day-first (DD-MM-YYYY). If there is no due
 date, it is set from the client's payment terms and marked "(from terms)".
+
+## Recording payments
+
+- **Bank statement (preferred).** *Payments → Import bank statement*. Download the current
+  account statement as CSV from net banking. Re-import overlapping periods freely.
+- **One-off.** *Payments → Record payment*. Tick *verified* only if you have seen the money in
+  the bank or a settlement report. A client's screenshot or message is not proof.
+- Unmatched credits wait under *Payments → Needs attention*. Assign the client, then allocate.
 
 ## Security model
 

@@ -139,3 +139,46 @@ export type FieldErrors = Record<string, string[] | undefined>;
 export function fieldErrors(error: z.ZodError): FieldErrors {
   return z.flattenError(error).fieldErrors as FieldErrors;
 }
+
+export const PAYMENT_METHODS = ["upi", "neft", "rtgs", "imps", "cheque", "card", "cash", "gateway", "other"] as const;
+
+export const paymentSchema = z
+  .object({
+    client_id: z.preprocess((v) => (v === "" ? undefined : v), z.uuid().optional()),
+    kind: z.enum(["receipt", "refund"]),
+    transaction_reference: requiredText("Transaction reference (UTR / cheque no.)", 64),
+    payment_date: dateField("Payment date"),
+    amount_minor: moneyField("Amount"),
+    method: z.enum(PAYMENT_METHODS),
+    payer_name: text(200),
+    reconciliation_notes: text(2000),
+    verified: checkbox,
+    verification_note: text(500),
+    auto_allocate: checkbox,
+  })
+  .superRefine((v, ctx) => {
+    if (v.amount_minor <= 0) ctx.addIssue({ code: "custom", path: ["amount_minor"], message: "Amount must be more than zero" });
+    if (v.verified && (!v.verification_note || v.verification_note.length < 3))
+      ctx.addIssue({ code: "custom", path: ["verification_note"], message: "Say where you saw the money, e.g. HDFC statement 18 Oct" });
+    if (v.kind === "refund" && !v.client_id) ctx.addIssue({ code: "custom", path: ["client_id"], message: "A refund must belong to a client" });
+  });
+
+export const commitmentSchema = z.object({
+  invoice_id: z.preprocess((v) => (v === "" ? undefined : v), z.uuid().optional()),
+  promised_amount_minor: moneyField("Promised amount"),
+  commitment_date: dateField("Promised payment date"),
+  promised_by: requiredText("Who made the promise", 200),
+  notes: text(2000),
+});
+
+export const extensionSchema = z.object({
+  new_due_date: dateField("New due date"),
+  reason: requiredText("Reason", 1000),
+});
+
+export const creditNoteSchema = z.object({
+  credit_note_number: requiredText("Credit note number", 64),
+  issued_on: dateField("Issue date"),
+  amount_minor: moneyField("Amount"),
+  reason: text(1000),
+});

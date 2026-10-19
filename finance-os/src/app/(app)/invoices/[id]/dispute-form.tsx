@@ -8,8 +8,8 @@ export function DisputeForm({ action, disputed }: { action: (prev: { error?: str
   return (
     <form action={formAction} className="flex flex-col gap-3">
       {!disputed && (
-        <Field label="Reason" name="reason" hint="Disputed invoices get no automated reminders and are excluded from expected collections.">
-          <Input name="reason" required minLength={3} />
+        <Field label="Reason" name="dispute_reason" hint="Disputed invoices get no automated reminders and are excluded from expected collections.">
+          <Input name="dispute_reason" required minLength={3} />
         </Field>
       )}
       {state.error && <Alert tone="danger">{state.error}</Alert>}

@@ -4,8 +4,8 @@ import { createHash } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { requireWriter, type AppContext } from "@/lib/auth";
-import { fieldErrors, manualInvoiceSchema, type FieldErrors } from "@/domain/schemas";
+import { getContext, requireWriter, type AppContext } from "@/lib/auth";
+import { commitmentSchema, creditNoteSchema, extensionSchema, fieldErrors, manualInvoiceSchema, type FieldErrors } from "@/domain/schemas";
 import { addDays } from "@/domain/dates";
 import { MAX_IMPORT_BYTES, planCsvImport, type ImportPlan } from "@/integrations/swipe/csv-import";
 import type { ImportRow, MatchableClient } from "@/integrations/swipe/match";
@@ -136,7 +136,7 @@ export async function setDisputeAction(invoiceId: string, disputed: boolean, _pr
   const ctx = await requireWriter();
   let reason: string | null = null;
   if (disputed) {
-    const parsed = disputeSchema.safeParse({ reason: formData.get("reason") });
+    const parsed = disputeSchema.safeParse({ reason: formData.get("dispute_reason") });
     if (!parsed.success) return { error: parsed.error.issues[0].message };
     reason = parsed.data.reason;
   }
@@ -148,4 +148,88 @@ export async function setDisputeAction(invoiceId: string, disputed: boolean, _pr
   if (error) return { error: error.message };
   revalidatePath(`/invoices/${invoiceId}`);
   return {};
+}
+
+// ---------------------------------------------------------------------------
+// Collections: commitments, extensions, credit notes
+// ---------------------------------------------------------------------------
+
+export type SimpleState = { error?: string; fieldErrors?: FieldErrors; ok?: boolean };
+
+/** Log a payment promise. Account managers may do this for their own clients (RLS enforces it). */
+export async function logCommitmentAction(clientId: string, invoiceId: string | null, _prev: SimpleState, formData: FormData): Promise<SimpleState> {
+  const ctx = await getContext();
+  if (ctx.role === "viewer") return { error: "Your role cannot log commitments." };
+  const parsed = commitmentSchema.safeParse({ ...Object.fromEntries(formData), invoice_id: invoiceId ?? formData.get("invoice_id") ?? "" });
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const v = parsed.data;
+  const { error } = await ctx.supabase.from("payment_commitments").insert({
+    organization_id: ctx.org.id,
+    client_id: clientId,
+    invoice_id: v.invoice_id ?? null,
+    promised_amount_minor: v.promised_amount_minor,
+    commitment_date: v.commitment_date,
+    promised_by: v.promised_by,
+    notes: v.notes ?? null,
+    recorded_by: ctx.userId,
+  });
+  if (error) return { error: error.message };
+  if (invoiceId) revalidatePath(`/invoices/${invoiceId}`);
+  revalidatePath(`/clients/${clientId}`);
+  return { ok: true };
+}
+
+export async function cancelCommitmentAction(commitmentId: string, path: string) {
+  const ctx = await requireWriter();
+  const { error } = await ctx.supabase
+    .from("payment_commitments")
+    .update({ status: "cancelled", resolved_at: new Date().toISOString() })
+    .eq("id", commitmentId)
+    .eq("status", "open");
+  if (error) throw new Error(error.message);
+  revalidatePath(path);
+}
+
+export async function approveExtensionAction(invoiceId: string, _prev: SimpleState, formData: FormData): Promise<SimpleState> {
+  const ctx = await requireWriter();
+  const parsed = extensionSchema.safeParse({ new_due_date: formData.get("new_due_date"), reason: formData.get("extension_reason") });
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const { error } = await ctx.supabase.rpc("approve_extension", {
+    p_invoice_id: invoiceId,
+    p_new_due_date: parsed.data.new_due_date,
+    p_reason: parsed.data.reason,
+  });
+  if (error) return { error: error.message };
+  revalidatePath(`/invoices/${invoiceId}`);
+  return { ok: true };
+}
+
+export async function revokeExtensionAction(invoiceId: string, extensionId: string) {
+  const ctx = await requireWriter();
+  const { error } = await ctx.supabase.from("payment_extensions").update({ status: "revoked" }).eq("id", extensionId).eq("invoice_id", invoiceId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/invoices/${invoiceId}`);
+}
+
+export async function addCreditNoteAction(invoiceId: string, _prev: SimpleState, formData: FormData): Promise<SimpleState> {
+  const ctx = await requireWriter();
+  const parsed = creditNoteSchema.safeParse({ ...Object.fromEntries(formData), reason: formData.get("credit_reason") });
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const v = parsed.data;
+  const { error } = await ctx.supabase.from("credit_notes").insert({
+    organization_id: ctx.org.id,
+    invoice_id: invoiceId,
+    credit_note_number: v.credit_note_number,
+    issued_on: v.issued_on,
+    amount_minor: v.amount_minor,
+    reason: v.reason ?? null,
+    created_by: ctx.userId,
+  });
+  if (error) {
+    if (/check constraint|violates check/i.test(error.message)) return { error: "The credit note is larger than the invoice's open balance." };
+    if (/duplicate key/.test(error.message)) return { error: "That credit note number is already recorded." };
+    return { error: error.message };
+  }
+  revalidatePath(`/invoices/${invoiceId}`);
+  return { ok: true };
 }

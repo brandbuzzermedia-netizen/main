@@ -47,8 +47,8 @@ export default async function IntegrationsPage() {
             items={[
               ["Email (Resend)", <NotConnected key="e">Phase 5</NotConnected>],
               ["WhatsApp Business Platform", <NotConnected key="w">Phase 5</NotConnected>],
-              ["Payment gateway", <NotConnected key="p">Phase 3</NotConnected>],
-              ["Bank statement import", <NotConnected key="b">Phase 3</NotConnected>],
+              ["Payment gateway (Razorpay)", <NotConnected key="p">awaiting your decision on payment links</NotConnected>],
+              ["Bank statement import", <Badge key="b" tone="ok">Available: CSV upload</Badge>],
             ]}
           />
           <p className="mt-4 text-sm text-muted">No reminders are sent until a provider is configured and tested. Unconfigured channels fall back to dashboard tasks.</p>
@@ -68,7 +68,9 @@ export default async function IntegrationsPage() {
                 <Td>{r.channel ?? r.trigger}</Td>
                 <Td><Badge tone={r.status === "succeeded" ? "ok" : r.status === "partial" ? "warn" : r.status === "failed" ? "danger" : "info"}>{r.status}</Badge></Td>
                 <Td className="tabular text-xs">
-                  {s.rows !== undefined ? `${s.inserted} new · ${s.updated} updated · ${s.unchanged} unchanged · ${s.errors} failed` : "—"}
+                  {s.rows === undefined ? "—" : r.integration === "bank"
+                    ? `${s.inserted} new · ${s.verified_existing} verified existing · ${s.duplicates} already recorded · ${s.errors} failed`
+                    : `${s.inserted} new · ${s.updated} updated · ${s.unchanged} unchanged · ${s.errors} failed`}
                   {r.error && <div className="text-danger">{r.error}</div>}
                 </Td>
                 <Td className="text-xs">{r.file_name ?? "—"}</Td>

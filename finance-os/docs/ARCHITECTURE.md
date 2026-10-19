@@ -42,6 +42,12 @@ rendered per request, because finance figures must never come from a stale cache
 Ledger columns (`amount_received_minor`, `credited_minor`, `allocated_minor`) are maintained by
 triggers, and direct writes to them are rejected.
 
+**Implementation notes (Phase 3).** Payment references are unique per organization across all
+sources (case- and space-insensitive), so a manual UTR and the same line in a bank statement can
+never become two receipts. A statement line that matches a pending entry verifies it instead.
+Commitment fulfilment is re-evaluated by trigger whenever verified money for the client changes.
+`process_missed_commitments(org)` is the job entry point that Phase 5's scheduler will call.
+
 **Where the logic lives.** Every business rule (eligibility, balances, stage selection,
 de-duplication) lives in the Next.js `domain/` layer and in Postgres constraints. n8n is
 used **only as a durable scheduler and retry orchestrator**: it calls signed job endpoints
@@ -187,7 +193,7 @@ dashboard filters need: due date, status, client, and partial indexes on open in
 | --- | --- | --- |
 | 1 ✅ | Repo inspection, Swipe research, this plan | Founder answers the Swipe checklist |
 | 2 ✅ | Next.js + Supabase scaffold, migrations + RLS, auth, clients, invoice ledger, CSV import + manual entry | Migrations apply on local Supabase. RLS tests pass. CSV re-import creates 0 duplicates |
-| 3 | Payments, allocations, reconciliation, balance views | Scenarios 4–7 pass as automated tests |
+| 3 ✅ | Payments, allocations, reconciliation, balance views | Scenarios 4–7 pass as automated tests |
 | 4 | Dashboard, expenses, forecast | Every figure is traced to a SQL query in tests |
 | 5 | Reminder engine, Resend, WhatsApp, n8n workflows | Scenarios 1–3 and 8–12 pass with mocked providers, then a sandbox send |
 | 6 | Escalations, logs, retries, alerting, hardening | A rerun of every job is a no-op (tested) |

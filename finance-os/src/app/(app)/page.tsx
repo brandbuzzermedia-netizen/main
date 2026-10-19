@@ -14,7 +14,7 @@ export default async function OverviewPage() {
   const ctx = await getContext();
   const today = todayInBusinessTz();
   const monthStart = `${today.slice(0, 7)}-01`;
-  const [invoicesRes, clientsRes, mrrRes, cashRes, tasksRes] = await Promise.all([
+  const [invoicesRes, clientsRes, mrrRes, cashRes, tasksRes, pendingRes, commitmentsRes] = await Promise.all([
     ctx.supabase
       .from("invoice_balances")
       .select("status, outstanding_minor, ageing_bucket, effective_due_date, invoice_date, total_minor")
@@ -26,6 +26,10 @@ export default async function OverviewPage() {
     ctx.supabase.from("payments").select("amount_minor, kind").eq("organization_id", ctx.org.id)
       .eq("verification_status", "verified").gte("payment_date", monthStart),
     ctx.supabase.from("escalation_tasks").select("id", { count: "exact", head: true }).eq("organization_id", ctx.org.id).in("status", ["open", "in_progress"]),
+    ctx.supabase.from("payments").select("amount_minor, unallocated_minor, verification_status, kind").eq("organization_id", ctx.org.id)
+      .neq("verification_status", "rejected").eq("kind", "receipt").or("verification_status.eq.pending_verification,unallocated_minor.gt.0"),
+    ctx.supabase.from("payment_commitments").select("status, promised_amount_minor, commitment_date").eq("organization_id", ctx.org.id)
+      .in("status", ["open", "missed"]),
   ]);
 
   const loadError = invoicesRes.error ?? clientsRes.error ?? mrrRes.error ?? cashRes.error;
@@ -33,6 +37,11 @@ export default async function OverviewPage() {
   const mrr = (mrrRes.data ?? []).reduce((s, c) => s + (c.monthly_retainer_minor as number), 0);
   const verifiedCash = (cashRes.data ?? []).reduce((s, p) => s + (p.kind === "refund" ? -1 : 1) * (p.amount_minor as number), 0);
   const overdueClients = (clientsRes.data ?? []) as ClientBalance[];
+  const pendingPayments = (pendingRes.data ?? []).filter((p) => p.verification_status === "pending_verification");
+  const unallocated = (pendingRes.data ?? []).filter((p) => p.verification_status === "verified" && (p.unallocated_minor as number) > 0);
+  const openPromises = (commitmentsRes.data ?? []).filter((c) => c.status === "open");
+  const missedPromises = (commitmentsRes.data ?? []).filter((c) => c.status === "missed");
+  const sum = (rows: Record<string, unknown>[], key: string) => rows.reduce((s, r) => s + (r[key] as number), 0);
 
   return (
     <>
@@ -63,6 +72,18 @@ export default async function OverviewPage() {
         ))}
       </div>
 
+      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Collections</h2>
+      <div className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Stat label="Payments awaiting verification" value={formatMoney(sum(pendingPayments, "amount_minor"), "INR", { compact: true })}
+          hint={<Link className="underline" href="/payments?view=pending">{pendingPayments.length} to verify</Link>} tone={pendingPayments.length ? "warn" : "default"} />
+        <Stat label="Verified, unallocated" value={formatMoney(sum(unallocated, "unallocated_minor"), "INR", { compact: true })}
+          hint={<Link className="underline" href="/payments?view=unallocated">{unallocated.length} to match</Link>} tone={unallocated.length ? "warn" : "default"} />
+        <Stat label="Open payment promises" value={formatMoney(sum(openPromises, "promised_amount_minor"), "INR", { compact: true })}
+          hint={`${openPromises.length} promise(s). Expected, not cash`} />
+        <Stat label="Missed promises" value={missedPromises.length} tone={missedPromises.length ? "danger" : "default"}
+          hint={missedPromises.length ? <Link className="underline" href="/tasks">Founder tasks open</Link> : "None outstanding"} />
+      </div>
+
       <Card title="Overdue clients" actions={<Link className="text-sm text-brand hover:underline" href="/invoices?view=overdue">All overdue invoices</Link>}>
         {overdueClients.length === 0 ? (
           <EmptyState title="Nothing overdue" action={ctx.canWrite && summary.outstandingMinor === 0 && <ButtonLink variant="secondary" href="/invoices/import">Import Swipe invoices</ButtonLink>} />
@@ -84,7 +105,7 @@ export default async function OverviewPage() {
       </Card>
 
       <p className="mt-6 text-xs text-muted">
-        Not yet on this page: payment commitments (Phase 3), ad funding, expenses and cash forecast (Phase 4), and automation failures (Phase 5).
+        Not yet on this page: ad funding, expenses and the cash forecast (Phase 4), and automation failures (Phase 5).
         Those figures will appear here once their ledgers exist, rather than as estimates.
       </p>
     </>

@@ -2,29 +2,39 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getContext } from "@/lib/auth";
-import type { InvoiceBalance } from "@/lib/db-types";
+import type { Commitment, InvoiceBalance } from "@/lib/db-types";
 import { formatMoney } from "@/domain/money";
 import { formatDate } from "@/domain/dates";
 import { Alert, Badge, Card, Dl, PageHeader, Stat } from "@/components/ui";
 import { AgeingBadge, PaymentStateBadge, SyncBadge } from "@/components/status";
-import { setDisputeAction } from "../actions";
+import { addCreditNoteAction, approveExtensionAction, cancelCommitmentAction, logCommitmentAction, revokeExtensionAction, setDisputeAction } from "../actions";
 import { DisputeForm } from "./dispute-form";
+import { CommitmentForm, CreditNoteForm, ExtensionForm } from "@/components/collections-forms";
+import { CommitmentList } from "@/components/commitment-list";
 
 export const metadata: Metadata = { title: "Invoice" };
 
 export default async function InvoicePage({ params }: PageProps<"/invoices/[id]">) {
   const { id } = await params;
   const ctx = await getContext();
-  const [{ data }, { data: allocations }, { data: reminders }, { data: tasks }] = await Promise.all([
+  const [{ data }, { data: allocations }, { data: reminders }, { data: tasks }, { data: commitments }, { data: extensions }, { data: creditNotes }] = await Promise.all([
     ctx.supabase.from("invoice_balances").select("*").eq("id", id).maybeSingle(),
-    ctx.supabase.from("payment_allocations").select("id, amount_minor, created_at, payment:payments(transaction_reference, payment_date, method, verification_status)").eq("invoice_id", id),
+    ctx.supabase.from("payment_allocations").select("id, amount_minor, created_at, payment:payments(id, transaction_reference, payment_date, method, verification_status)").eq("invoice_id", id),
     ctx.supabase.from("reminder_events").select("id, stage, channel, status, created_at, error").eq("invoice_id", id).order("created_at", { ascending: false }),
     ctx.supabase.from("escalation_tasks").select("id, title, status, kind").eq("invoice_id", id).in("status", ["open", "in_progress"]),
+    ctx.supabase.from("payment_commitments").select("*").eq("invoice_id", id).order("created_at", { ascending: false }),
+    ctx.supabase.from("payment_extensions").select("id, new_due_date, reason, status, approved_at").eq("invoice_id", id).order("approved_at", { ascending: false }),
+    ctx.supabase.from("credit_notes").select("id, credit_note_number, issued_on, amount_minor, reason").eq("invoice_id", id).order("issued_on"),
   ]);
   if (!data) notFound();
   const inv = data as InvoiceBalance;
-  const allocs = (allocations ?? []) as unknown as { id: string; amount_minor: number; payment: { transaction_reference: string; payment_date: string; method: string; verification_status: string } }[];
-  const swipePaidMismatch = inv.source_reported_paid_minor !== null && inv.source_reported_paid_minor !== inv.amount_received_minor + inv.credited_minor;
+  const allocs = (allocations ?? []) as unknown as { id: string; amount_minor: number; payment: { id: string; transaction_reference: string; payment_date: string; method: string; verification_status: string } }[];
+  const open = inv.status !== "cancelled" && inv.outstanding_minor > 0;
+  const canLog = ctx.role !== "viewer";
+  const swipePaidMismatch =
+    inv.source_reported_paid_minor !== null &&
+    inv.source_reported_paid_minor !== inv.amount_received_minor &&
+    inv.source_reported_paid_minor !== inv.amount_received_minor + inv.credited_minor;
 
   return (
     <>
@@ -57,18 +67,29 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
         <div className="flex flex-col gap-6 lg:col-span-2">
           <Card title="Payments allocated">
             {allocs.length === 0 ? (
-              <p className="text-sm text-muted">No payments allocated. Payment recording and reconciliation arrive in Phase 3.</p>
+              <p className="text-sm text-muted">
+                No payments allocated.{" "}
+                {ctx.canWrite && open && <Link className="text-brand underline" href={`/payments/new?client=${inv.client_id}`}>Record a payment</Link>}
+              </p>
             ) : (
               <ul className="divide-y divide-line text-sm">
                 {allocs.map((a) => (
                   <li key={a.id} className="flex justify-between py-2">
-                    <span>{a.payment.transaction_reference} · {formatDate(a.payment.payment_date)} · {a.payment.method.toUpperCase()}{" "}
+                    <span><Link className="underline" href={`/payments/${a.payment.id}`}>{a.payment.transaction_reference}</Link> · {formatDate(a.payment.payment_date)} · {a.payment.method.toUpperCase()}{" "}
                       <Badge tone={a.payment.verification_status === "verified" ? "ok" : a.payment.verification_status === "rejected" ? "danger" : "warn"}>{a.payment.verification_status.replace("_", " ")}</Badge>
                     </span>
                     <span className="tabular">{formatMoney(a.amount_minor, inv.currency)}</span>
                   </li>
                 ))}
               </ul>
+            )}
+          </Card>
+          <Card title="Payment promises">
+            <CommitmentList items={(commitments ?? []) as Commitment[]} cancelAction={ctx.canWrite ? (cid) => cancelCommitmentAction.bind(null, cid, `/invoices/${id}`) : undefined} />
+            {canLog && open && (
+              <div className="mt-4 border-t border-line pt-4">
+                <CommitmentForm action={logCommitmentAction.bind(null, inv.client_id, inv.id)} defaultAmountMinor={inv.outstanding_minor} />
+              </div>
             )}
           </Card>
           <Card title="Reminder history">
@@ -104,6 +125,38 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
                 ["Swipe document ID", inv.external_id ?? "—"],
               ]}
             />
+          </Card>
+          <Card title="Extension">
+            {(extensions ?? []).length === 0 ? (
+              <p className="text-sm text-muted">No extension. Due {formatDate(inv.due_date)}.</p>
+            ) : (
+              <ul className="mb-3 divide-y divide-line text-sm">
+                {(extensions ?? []).map((x) => (
+                  <li key={x.id} className="py-2">
+                    <span className={x.status === "revoked" ? "text-muted line-through" : "font-medium"}>To {formatDate(x.new_due_date)}</span>{" "}
+                    {x.status === "active" && <Badge tone="info">Active</Badge>}
+                    <div className="text-xs text-muted">{x.reason}</div>
+                    {x.status === "active" && ctx.canWrite && (
+                      <form action={revokeExtensionAction.bind(null, id, x.id)}><button className="text-xs text-danger hover:underline">Revoke</button></form>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {ctx.canWrite && open && <div className="mt-3"><ExtensionForm action={approveExtensionAction.bind(null, id)} minDate={inv.due_date} /></div>}
+          </Card>
+          <Card title="Credit notes">
+            {(creditNotes ?? []).length > 0 && (
+              <ul className="mb-3 divide-y divide-line text-sm">
+                {(creditNotes ?? []).map((c) => (
+                  <li key={c.id} className="flex justify-between py-2">
+                    <span>{c.credit_note_number} · {formatDate(c.issued_on)}{c.reason && <span className="block text-xs text-muted">{c.reason}</span>}</span>
+                    <span className="tabular">{formatMoney(c.amount_minor, inv.currency)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {ctx.canWrite && open ? <CreditNoteForm action={addCreditNoteAction.bind(null, id)} /> : (creditNotes ?? []).length === 0 && <p className="text-sm text-muted">None.</p>}
           </Card>
           {ctx.canWrite && inv.status !== "cancelled" && (
             <Card title="Dispute">

@@ -15,7 +15,7 @@ const NAV: { heading?: string; items: Item[] }[] = [
     items: [
       { href: "/clients", label: "Clients" },
       { href: "/invoices", label: "Invoices" },
-      { href: "/payments", label: "Payments", phase: 3 },
+      { href: "/payments", label: "Payments" },
       { href: "/tasks", label: "Tasks" },
     ],
   },

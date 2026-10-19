@@ -154,3 +154,48 @@ export function asMinor(v: unknown): number {
   if (!Number.isSafeInteger(n)) throw new Error(`Unsafe money value from database: ${String(v)}`);
   return n;
 }
+
+export type VerificationStatus = "pending_verification" | "verified" | "rejected";
+export type PaymentMethod = "upi" | "neft" | "rtgs" | "imps" | "cheque" | "card" | "cash" | "gateway" | "other";
+
+export type PaymentRow = {
+  id: string;
+  organization_id: string;
+  client_id: string | null;
+  client_code: string | null;
+  client_legal_name: string | null;
+  client_trading_name: string | null;
+  source: "gateway" | "bank_import" | "swipe" | "manual";
+  transaction_reference: string;
+  payment_date: string;
+  amount_minor: number;
+  currency: string;
+  method: PaymentMethod;
+  kind: "receipt" | "refund";
+  payer_name: string | null;
+  verification_status: VerificationStatus;
+  verified_by: string | null;
+  verified_at: string | null;
+  verification_note: string | null;
+  bank_narration: string | null;
+  allocated_minor: number;
+  unallocated_minor: number;
+  reconciliation_notes: string | null;
+  allocation_count: number;
+  created_at: string;
+};
+
+export type Commitment = {
+  id: string;
+  client_id: string;
+  invoice_id: string | null;
+  promised_amount_minor: number;
+  commitment_date: string;
+  promised_on: string;
+  promised_by: string;
+  notes: string | null;
+  status: "open" | "fulfilled" | "missed" | "cancelled";
+  missed_at: string | null;
+  resolved_at: string | null;
+  created_at: string;
+};
