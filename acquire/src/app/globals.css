@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/* Acquire design tokens: restrained neutrals, one brand hue, semantic tones. */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f1f3f6;
+  --ink: #0f172a;
+  --muted: #5b6474;
+  --line: #e3e7ee;
+  --brand: #3b4fd8;
+  --brand-ink: #ffffff;
+  --brand-soft: #eceffd;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --warn: #8a5300;
+  --warn-soft: #fff4dd;
+  --ok: #10734a;
+  --ok-soft: #e4f4ec;
+  --info: #1d5fbf;
+  --info-soft: #e7f0fd;
+  --chart-1: #3b4fd8;
+  --chart-2: #9aa6ef;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0e14;
+    --surface: #121620;
+    --surface-2: #1a1f2b;
+    --ink: #e8ebf2;
+    --muted: #98a1b3;
+    --line: #262c3a;
+    --brand: #8c9bff;
+    --brand-ink: #0b0e14;
+    --brand-soft: #1d2340;
+    --danger: #ff8a7a;
+    --danger-soft: #3b1714;
+    --warn: #ffc56b;
+    --warn-soft: #362710;
+    --ok: #6fd3a3;
+    --ok-soft: #12301f;
+    --info: #9dc1ff;
+    --info-soft: #172640;
+    --chart-1: #8c9bff;
+    --chart-2: #3b4580;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

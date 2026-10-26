@@ -106,3 +106,9 @@ To change the rotating status lines, edit the `messages` array in `script.js`.
 
 `finance-os/` holds the internal billing and collections app. It is a separate project
 and isn't part of the site build. See [`finance-os/README.md`](finance-os/README.md).
+
+## Acquire
+
+`acquire/` holds a multi-tenant real estate client acquisition SaaS: leads, consent and
+pipeline today, with AI qualification and outreach in later phases. It is a separate project
+with its own database and isn't part of the site build. See [`acquire/README.md`](acquire/README.md).
