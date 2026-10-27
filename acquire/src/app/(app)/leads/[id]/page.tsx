@@ -3,7 +3,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getContext } from "@/lib/auth";
 import { loadLeadContext, memberName } from "@/lib/leads";
-import type { Activity, ConsentRecord, Lead, OrgSettings, Suppression } from "@/lib/db-types";
+import type { Activity, Appointment, ConsentRecord, Deal, Lead, OrgSettings, Suppression, Task } from "@/lib/db-types";
+import { DEAL_COLUMNS, loadDealStages } from "@/lib/crm";
+import { AppointmentForm, AppointmentStatusMenu, InteractionForm, TaskForm, TaskToggle } from "@/components/crm/controls";
+import { appointmentKindLabel, appointmentStatusLabel, appointmentStatusTone, dealCategoryTone } from "@/domain/labels";
+import { formatMoney } from "@/domain/money";
 import { CHANNELS, evaluateEligibility, type Channel, type Decision } from "@/domain/eligibility";
 import { basisLabel, categoryTone, channelLabel, segmentLabel, suppressionReasonLabel, timelineLabel } from "@/domain/labels";
 import { formatBudget } from "@/domain/money";
@@ -29,13 +33,23 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
     lead.phone_e164 && `and(value_type.eq.phone,value.eq.${lead.phone_e164})`,
   ].filter(Boolean) as string[];
 
-  const [ref, activities, consents, suppressions, settings] = await Promise.all([
+  const [ref, activities, consents, suppressions, settings, deals, tasks, appts, dealStages] = await Promise.all([
     loadLeadContext(ctx),
     ctx.supabase.from("lead_activities").select("id, kind, summary, data, actor_id, occurred_at").eq("lead_id", id).order("occurred_at", { ascending: false }).limit(100),
     ctx.supabase.from("consent_records").select("id, channel, status, basis, source, evidence_url, captured_at, expires_at, recorded_by").eq("lead_id", id).order("captured_at", { ascending: false }),
     ctx.supabase.from("suppression_entries").select("id, value_type, value, channel, reason, source, created_at").eq("organization_id", ctx.org.id).or(valueFilters.join(",")),
     ctx.supabase.from("organization_settings").select("*").eq("organization_id", ctx.org.id).single(),
+    ctx.supabase.from("deals").select(DEAL_COLUMNS).eq("lead_id", id).order("created_at", { ascending: false }),
+    ctx.supabase.from("tasks").select("id, lead_id, deal_id, title, notes, due_at, priority, status, assignee_id, completed_at, created_at").eq("lead_id", id)
+      .neq("status", "cancelled").order("status").order("due_at", { ascending: true, nullsFirst: false }).limit(50),
+    ctx.supabase.from("appointments").select("id, lead_id, deal_id, kind, title, starts_at, ends_at, location, status, assigned_to, source, notes").eq("lead_id", id).order("starts_at", { ascending: false }).limit(20),
+    loadDealStages(ctx),
   ]);
+  for (const r of [deals, tasks, appts]) if (r.error) throw new Error(r.error.message);
+  const leadDeals = (deals.data ?? []) as unknown as Deal[];
+  const leadTasks = (tasks.data ?? []) as Task[];
+  const leadAppts = (appts.data ?? []) as Appointment[];
+  const dealStageById = new Map(dealStages.map((s) => [s.id, s]));
   for (const r of [activities, consents, suppressions, settings]) if (r.error) throw new Error(r.error.message);
   const timeline = (activities.data ?? []) as Activity[];
   const consentRows = (consents.data ?? []) as ConsentRecord[];
@@ -46,6 +60,7 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
   const memberById = new Map(ref.members.map((m) => [m.user_id, m]));
   const source = ref.sources.find((s) => s.id === lead.source_id);
   const canEdit = ctx.can.assignLeads || (ctx.role === "sales_rep" && lead.owner_id === ctx.userId);
+  const memberOptions = ref.members.map((m) => ({ id: m.user_id, label: memberName(m) }));
   const now = new Date();
 
   const eligibility = CHANNELS.map((channel) => {
@@ -136,6 +151,69 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
             </Card>
           )}
 
+          {canEdit && (
+            <Card title="Log an interaction">
+              <InteractionForm leadId={lead.id} blockedChannels={eligibility.filter((x) => x.result.decision === "block").map((x) => x.channel)} />
+            </Card>
+          )}
+
+          <Card title="Deals" actions={canEdit ? <ButtonLink variant="secondary" href={`/deals/new?lead=${lead.id}`}>Open a deal</ButtonLink> : undefined}>
+            {leadDeals.length === 0 ? <p className="text-sm text-muted">No deals yet.</p> : (
+              <ul className="flex flex-col divide-y divide-line text-sm">
+                {leadDeals.map((d) => {
+                  const ds = dealStageById.get(d.stage_id);
+                  return (
+                    <li key={d.id} className="flex items-center justify-between gap-3 py-2">
+                      <Link href={`/deals/${d.id}`} className="font-medium hover:text-brand">{d.title}</Link>
+                      <span className="flex items-center gap-2">
+                        <span className="tabular text-muted">{formatMoney(d.value_minor, d.currency, { compact: true })}</span>
+                        {ds && <Badge tone={dealCategoryTone[ds.category]}>{ds.name}</Badge>}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </Card>
+
+          <Card title="Tasks">
+            {leadTasks.length === 0 ? <p className="mb-3 text-sm text-muted">No tasks.</p> : (
+              <ul className="mb-4 flex flex-col divide-y divide-line text-sm">
+                {leadTasks.map((t) => (
+                  <li key={t.id} className="flex items-start gap-3 py-2">
+                    {canEdit ? <TaskToggle taskId={t.id} done={t.status === "done"} title={t.title} /> : null}
+                    <div className="min-w-0 flex-1">
+                      <div className={t.status === "done" ? "text-muted line-through" : undefined}>{t.title}</div>
+                      <div className="text-xs text-muted">
+                        {t.due_at && <span className={t.status === "open" && new Date(t.due_at) < now ? "text-danger" : undefined}>Due {formatDateTime(t.due_at, ctx.org.timezone)} · </span>}
+                        {t.assignee_id ? memberName(memberById.get(t.assignee_id)) : "Unassigned"}
+                      </div>
+                    </div>
+                    {t.priority === "high" && <Badge tone="danger">High</Badge>}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {canEdit && <TaskForm leadId={lead.id} members={memberOptions} canAssign={ctx.can.assignLeads} />}
+          </Card>
+
+          <Card title="Appointments">
+            {leadAppts.length === 0 ? <p className="mb-3 text-sm text-muted">None booked.</p> : (
+              <ul className="mb-4 flex flex-col divide-y divide-line text-sm">
+                {leadAppts.map((a) => (
+                  <li key={a.id} className="flex items-center justify-between gap-3 py-2">
+                    <div>
+                      <div className="font-medium">{a.title} <span className="font-normal text-muted">· {appointmentKindLabel[a.kind]}</span></div>
+                      <div className="text-xs text-muted">{formatDateTime(a.starts_at, ctx.org.timezone)}{a.location && ` · ${a.location}`}</div>
+                    </div>
+                    {canEdit ? <AppointmentStatusMenu appointmentId={a.id} status={a.status} /> : <Badge tone={appointmentStatusTone[a.status]}>{appointmentStatusLabel[a.status]}</Badge>}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {canEdit && <AppointmentForm leadId={lead.id} members={memberOptions} canAssign={ctx.can.assignLeads} defaultTitle={`Viewing with ${lead.full_name}`} />}
+          </Card>
+
           <Card title="Activity">
             {canEdit && <NoteForm leadId={lead.id} />}
             <ol className="mt-4 flex flex-col gap-3">
@@ -147,6 +225,9 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
                     <div className="text-xs text-muted">
                       {formatDateTime(a.occurred_at, ctx.org.timezone)} · {a.actor_id ? memberName(memberById.get(a.actor_id)) : "System"}
                       {a.kind === "note" && " · note"}
+                      {["call", "email", "sms", "whatsapp", "meeting"].includes(a.kind) && (
+                        <> · {a.kind}{typeof a.data.direction === "string" && ` ${a.data.direction}`}{typeof a.data.outcome === "string" && ` · ${a.data.outcome.replaceAll("_", " ")}`}</>
+                      )}
                     </div>
                   </div>
                 </li>

@@ -73,6 +73,8 @@ export async function updateLeadAction(leadId: string, _prev: FormState, formDat
 export async function setStageAction(leadId: string, formData: FormData) {
   const ctx = await requirePermission("createLeads");
   const stageId = String(formData.get("stage_id") ?? "");
+  const { data: stage } = await ctx.supabase.from("pipeline_stages").select("category").eq("id", stageId).eq("organization_id", ctx.org.id).maybeSingle();
+  if (stage?.category === "opted_out") throw new Error("To opt someone out, use “Record an opt-out” on this page so it applies to every channel.");
   const { error } = await ctx.supabase.from("leads").update({ stage_id: stageId }).eq("id", leadId).eq("organization_id", ctx.org.id);
   if (error) throw new Error(friendly(error.message));
   revalidatePath(`/leads/${leadId}`);

@@ -3,7 +3,7 @@
  * Once a Supabase project exists, `npm run db:types` can generate a full Database type.
  */
 import type { Basis, Channel } from "@/domain/eligibility";
-import type { Role, Segment, SourceKind, StageCategory, Timeline } from "@/domain/labels";
+import type { AppointmentKind, AppointmentStatus, DealCategory, DealType, Role, Segment, SourceKind, StageCategory, TaskPriority, TaskStatus, Timeline } from "@/domain/labels";
 
 export type Organization = {
   id: string;
@@ -85,4 +85,56 @@ export type Suppression = {
   reason: string;
   source: string | null;
   created_at: string;
+};
+
+
+export type DealStage = { id: string; name: string; category: DealCategory; probability: number; position: number };
+
+export type Deal = {
+  id: string;
+  organization_id: string;
+  lead_id: string;
+  title: string;
+  deal_type: DealType;
+  value_minor: number | null;
+  commission_minor: number | null;
+  currency: string;
+  stage_id: string;
+  owner_id: string | null;
+  expected_close_date: string | null;
+  closed_at: string | null;
+  lost_reason: string | null;
+  property_ref: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Task = {
+  id: string;
+  lead_id: string | null;
+  deal_id: string | null;
+  title: string;
+  notes: string | null;
+  due_at: string | null;
+  priority: TaskPriority;
+  status: TaskStatus;
+  assignee_id: string | null;
+  completed_at: string | null;
+  created_at: string;
+};
+
+export type Appointment = {
+  id: string;
+  lead_id: string;
+  deal_id: string | null;
+  kind: AppointmentKind;
+  title: string;
+  starts_at: string;
+  ends_at: string;
+  location: string | null;
+  status: AppointmentStatus;
+  assigned_to: string | null;
+  source: "manual" | "calendar";
+  notes: string | null;
 };

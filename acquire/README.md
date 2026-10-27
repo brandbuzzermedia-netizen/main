@@ -22,6 +22,7 @@ database and Vercel project (Root Directory = `acquire`).
 | 1 | Audit, workflow analysis, architecture, plan | Done |
 | 2 | Auth, onboarding with market, tenants, roles, RLS, plans and limits, audit, app shell, settings, team | Done |
 | 3 | Leads, import/export, dedupe, consent, suppression, erasure, eligibility panel, pipeline, overview | Done |
+| 3b | Built-in CRM: deals, tasks, appointments, logged interactions, drag-and-drop boards, CRM dashboard | Done |
 | 4 | AI qualification, templates, email and SMS, usage metering | Next |
 | 5–7 | Workflow engine; voice, calendar, GoHighLevel; analytics, billing, hardening | Planned |
 
@@ -54,12 +55,17 @@ What works today:
   - Opt-outs and suppressions.
   - Admin-only erasure, which deletes the lead, redacts the audit log and keeps a suppression entry.
   - **"Can we contact them?"** panel: for each channel, allowed, not now, needs review or blocked, with reasons, under the rules for the lead's country.
-- **Pipeline board.** 13 default stages. Rename, reorder, recategorise or add stages in Settings.
-- **Overview.**
-  - Total, new today, qualified, appointment-stage, converted, overdue follow-ups, unassigned and opted out.
-  - Stage distribution, and sources with qualification rate for 7, 30 or 90 days.
-  - All figures come from stored data, and each calculation is explained on the page.
-  - Spend and outreach metrics are labelled "phase 4" instead of being estimated.
+- **Built-in CRM.** The internal CRM is the system of record; GoHighLevel will sync to it later.
+  - **Deals**: property value, expected commission, type, owner, expected close date and property reference. Seven default stages with win probabilities (editable in Settings → Pipeline). Closing a deal records when it closed; reopening clears it.
+  - **Lead and deal boards** with drag and drop, plus a "Move to" menu on every card for keyboard and touch. Moves show instantly and roll back if the server refuses. Leads cannot be dragged into Opted out; that must go through a recorded opt-out.
+  - **Tasks**: due date, priority and assignee, grouped into overdue, today, upcoming and no date. Completing a task on a lead adds it to the lead's timeline.
+  - **Appointments**: viewings, valuations, calls and meetings, entered by your team. Booking one moves an early-stage lead to Appointment booked (never backwards). Record the outcome (held, no-show, cancelled) afterwards. Calendar sync is phase 6.
+  - **Interaction log**: record calls, emails, SMS, WhatsApp and meetings with direction and outcome. Outbound contact sets "last contacted" and moves a new lead to Contacted. The form warns when that channel is blocked for the lead.
+- **Dashboard.**
+  - Six headline figures for the chosen range: new leads, leads contacted, appointments booked, appointments held (with no-show rate), deals won (with commission) and open pipeline (with weighted commission).
+  - New leads per day chart, conversion (new leads reaching an appointment, win rate, days to close, won value).
+  - My tasks due, upcoming appointments, leads by stage, deal value by stage, contact activity by type, lead sources, team leaderboard and items needing attention.
+  - Every figure comes from stored data, the calculations are explained on the page, and money totals use the workspace currency only.
 - **Settings.** Workspace and contact window, team, pipeline, lead sources with provenance, audit log.
 - **Billing** shows the plan and its enforced limits. **Integrations** lists what is not connected yet.
 - **Platform admin console** (`/admin`). Lists organizations and lets you suspend them, with no access to their leads.
@@ -69,12 +75,13 @@ disabled and labelled with their phase.
 
 ## Verification done
 
-- **39 unit tests** (`npm test`) on eligibility rules, normalisation, money, labels and import planning.
-- **2 SQL suites, 87 assertions** (`npm run test:db`), run against PostgreSQL 16 with all migrations applied. They cover:
+- **40 unit tests** (`npm test`) on eligibility rules, normalisation, money, labels and import planning.
+- **3 SQL suites, 126 assertions** (`npm run test:db`), run against PostgreSQL 16 with all migrations applied. They cover:
   - isolation and permissions: tenant isolation, each role, platform admins, anon;
   - plan limits: seats and contacts;
   - lead data: dedupe, triggers, consent immutability, suppression;
-  - workflows: import idempotency and erasure.
+  - workflows: import idempotency and erasure;
+  - CRM: deal close dates, appointment and interaction stage moves, rep visibility of deals, tasks and appointments, and dashboard figures.
 - `npm run lint`, `npm run typecheck` and `npm run build` are clean.
 - Production server smoke test:
   - every app route redirects to `/login` when signed out;
@@ -114,3 +121,4 @@ npm run lint && npm run typecheck && npm run build
 4. Record an opt-out. The lead moves to *Opted out* and every channel shows *Blocked*.
 5. Invite a second user as a sales rep, assign them one lead, and sign in as them: they see only that lead.
 6. Erase a lead and check that the audit log shows it as redacted.
+7. Log a call on a new lead (it moves to Contacted), book a viewing (it moves to Appointment booked), open a deal, drag it to Closed won, and check the dashboard.

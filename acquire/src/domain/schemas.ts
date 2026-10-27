@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { BASES, CHANNELS } from "./eligibility";
-import { ROLES, SEGMENTS, SOURCE_KINDS, STAGE_CATEGORIES, SUPPRESSION_REASONS, TIMELINES } from "./labels";
+import { APPOINTMENT_KINDS, DEAL_TYPES, INTERACTION_KINDS, ROLES, SEGMENTS, SOURCE_KINDS, STAGE_CATEGORIES, SUPPRESSION_REASONS, TASK_PRIORITIES, TIMELINES } from "./labels";
 import { parseAmount } from "./money";
 import { normalizeCountry, normalizeEmail, normalizePhone, normalizeTags } from "./normalize";
 import { isValidTimeZone } from "./eligibility";
@@ -144,4 +144,53 @@ export const savedViewSchema = z.object({
   name: z.string().trim().min(1, "Name the view").max(60),
   query: z.string().max(1000),
   is_shared: z.preprocess((v) => v === "on" || v === "true", z.boolean()),
+});
+
+// ---------------------------------------------------------------------------
+// CRM
+// ---------------------------------------------------------------------------
+
+export const dealSchema = z.object({
+  title: z.string().trim().min(1, "Name the deal").max(200),
+  deal_type: z.enum(DEAL_TYPES),
+  value: optionalText(30),
+  commission: optionalText(30),
+  currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/, "Use a 3-letter currency code"),
+  stage_id: z.uuid("Choose a stage"),
+  owner_id: uuidOrEmpty,
+  expected_close_date: z.preprocess((v) => (v === "" ? undefined : v), z.iso.date("Use a valid date").optional()),
+  lost_reason: optionalText(300),
+  property_ref: optionalText(300),
+  notes: optionalText(5000),
+});
+
+export const taskSchema = z.object({
+  title: z.string().trim().min(1, "Describe the task").max(200),
+  due_at: optionalText(30),
+  priority: z.enum(TASK_PRIORITIES),
+  assignee_id: uuidOrEmpty,
+  notes: optionalText(2000),
+});
+
+export const appointmentSchema = z.object({
+  kind: z.enum(APPOINTMENT_KINDS),
+  title: z.string().trim().min(1, "Give it a title").max(200),
+  starts_at: z.string().min(1, "Choose a start time"),
+  duration_minutes: z.coerce.number().int().min(5).max(24 * 60),
+  location: optionalText(300),
+  assigned_to: uuidOrEmpty,
+  notes: optionalText(2000),
+});
+
+export const interactionSchema = z.object({
+  kind: z.enum(INTERACTION_KINDS),
+  direction: z.enum(["outbound", "inbound"]),
+  outcome: optionalText(60),
+  summary: z.string().trim().min(1, "Summarise what happened").max(5000),
+  occurred_at: optionalText(30),
+});
+
+export const dealStageSchema = z.object({
+  name: z.string().trim().min(1).max(60),
+  probability: z.coerce.number().int().min(0).max(100),
 });

@@ -44,6 +44,7 @@ human review, book calls, and sync interested leads to GoHighLevel.**
 | 1 | Audit, workflow interpretation, architecture, data model, compliance design, plan | **Done** |
 | 2 | Foundation: auth, onboarding with market, organizations, four roles + platform admin, RLS, plans and limits, audit, app shell, settings, team invites | **Done** |
 | 3 | Leads: CRUD, dedupe, CSV import (preview → commit, consent columns, custom fields, problem report), export, search/filter/sort/saved views, bulk assign, timeline, notes, consent, suppression, erasure, eligibility panel, pipeline board, overview metrics | **Done** |
+| 3b | Built-in CRM: deals with stages and probabilities, tasks, manual appointments, interaction log, drag-and-drop boards, CRM dashboard | **Done** |
 | 4 | AI qualification + messaging: provider interfaces; Claude tasks with schema output and run logging; templates with approval; Resend email and Twilio SMS with webhooks (delivery, replies, STOP/unsubscribe → suppression); usage metering; `contact_decisions`; web-form capture endpoint; conversations inbox | Next |
 | 5 | Workflow engine: versioned sequence definitions, Postgres job queue, waits, branches, stop conditions, retries with idempotency keys, frequency caps, pause/cancel, execution log UI, failure alerts | Planned |
 | 6 | Voice, calendar, CRM: AI voice calls (consent-gated, disclosure, transcript, handoff), Google/Microsoft calendars, GoHighLevel OAuth + sync + webhooks + reconciliation, DNC screening, properties and listing videos | Planned |
@@ -66,7 +67,7 @@ CI run before the next phase starts.
 2. **Launch market.** US, UK, UAE, Canada and Australia each need different registries, sender
    registrations and counsel review. Recommendation: launch in one market first. The US has the
    largest market but the strictest calling rules; the UK or UAE may be faster.
-3. **GoHighLevel's role.** Options:
+3. **GoHighLevel's role.** *Decided: the built-in CRM is the system of record; GoHighLevel is an optional sync.* Options were:
    - optional sync, where the internal CRM is the system of record (current design);
    - GHL as the system of record, which would make this a GHL Marketplace app.
    This changes onboarding and pricing.

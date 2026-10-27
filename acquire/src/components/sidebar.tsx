@@ -9,21 +9,23 @@ import { cx } from "./ui";
 type Item = { href: string; label: string; phase?: number };
 
 const NAV: { heading?: string; items: Item[] }[] = [
-  { items: [{ href: "/", label: "Overview" }] },
+  { items: [{ href: "/", label: "Dashboard" }] },
   {
-    heading: "Acquisition",
+    heading: "CRM",
     items: [
       { href: "/leads", label: "Leads" },
-      { href: "/pipeline", label: "Pipeline" },
-      { href: "/campaigns", label: "Campaigns", phase: 4 },
-      { href: "/conversations", label: "Conversations", phase: 4 },
-      { href: "/appointments", label: "Appointments", phase: 6 },
+      { href: "/pipeline", label: "Lead pipeline" },
+      { href: "/deals", label: "Deals" },
+      { href: "/tasks", label: "Tasks" },
+      { href: "/appointments", label: "Appointments" },
       { href: "/properties", label: "Properties", phase: 6 },
     ],
   },
   {
-    heading: "Automation",
+    heading: "Outreach",
     items: [
+      { href: "/campaigns", label: "Campaigns", phase: 4 },
+      { href: "/conversations", label: "Conversations", phase: 4 },
       { href: "/agents", label: "AI agents", phase: 4 },
       { href: "/workflows", label: "Workflows", phase: 5 },
       { href: "/analytics", label: "Analytics", phase: 7 },

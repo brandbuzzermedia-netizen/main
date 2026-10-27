@@ -85,3 +85,50 @@ export function parseTimeline(raw: string | null | undefined): Timeline | null {
   if (/^(unknown|not sure|unsure|n\/a)$/.test(v)) return "unknown";
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// CRM
+// ---------------------------------------------------------------------------
+
+export const DEAL_TYPES = ["purchase", "sale", "rental", "lease", "investment", "other"] as const;
+export type DealType = (typeof DEAL_TYPES)[number];
+export const dealTypeLabel: Record<DealType, string> = {
+  purchase: "Purchase", sale: "Sale", rental: "Rental", lease: "Lease", investment: "Investment", other: "Other",
+};
+
+export const DEAL_CATEGORIES = ["open", "won", "lost"] as const;
+export type DealCategory = (typeof DEAL_CATEGORIES)[number];
+export const dealCategoryTone: Record<DealCategory, "info" | "ok" | "warn"> = { open: "info", won: "ok", lost: "warn" };
+
+export const TASK_PRIORITIES = ["low", "normal", "high"] as const;
+export type TaskPriority = (typeof TASK_PRIORITIES)[number];
+export const TASK_STATUSES = ["open", "done", "cancelled"] as const;
+export type TaskStatus = (typeof TASK_STATUSES)[number];
+
+export const APPOINTMENT_KINDS = ["viewing", "valuation", "call", "meeting", "other"] as const;
+export type AppointmentKind = (typeof APPOINTMENT_KINDS)[number];
+export const appointmentKindLabel: Record<AppointmentKind, string> = {
+  viewing: "Viewing", valuation: "Valuation", call: "Call", meeting: "Meeting", other: "Other",
+};
+export const APPOINTMENT_STATUSES = ["scheduled", "completed", "no_show", "cancelled"] as const;
+export type AppointmentStatus = (typeof APPOINTMENT_STATUSES)[number];
+export const appointmentStatusLabel: Record<AppointmentStatus, string> = {
+  scheduled: "Scheduled", completed: "Held", no_show: "No-show", cancelled: "Cancelled",
+};
+export const appointmentStatusTone: Record<AppointmentStatus, "info" | "ok" | "danger" | "neutral"> = {
+  scheduled: "info", completed: "ok", no_show: "danger", cancelled: "neutral",
+};
+
+export const INTERACTION_KINDS = ["call", "email", "sms", "whatsapp", "meeting"] as const;
+export type InteractionKind = (typeof INTERACTION_KINDS)[number];
+export const interactionLabel: Record<InteractionKind, string> = {
+  call: "Call", email: "Email", sms: "SMS", whatsapp: "WhatsApp", meeting: "Meeting",
+};
+/** Suggested outcomes per kind; free text is also accepted. */
+export const INTERACTION_OUTCOMES: Record<InteractionKind, string[]> = {
+  call: ["connected", "voicemail", "no_answer", "wrong_number", "call_back_requested", "not_interested"],
+  email: ["sent", "replied"],
+  sms: ["sent", "replied"],
+  whatsapp: ["sent", "replied"],
+  meeting: ["held", "positive", "needs_follow_up", "not_interested"],
+};

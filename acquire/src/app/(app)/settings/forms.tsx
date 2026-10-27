@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { addSourceAction, addStageAction, inviteMemberAction, updateSettingsAction, type FormState } from "./actions";
+import { addDealStageAction, type CrmFormState } from "../crm-actions";
 import { ROLES, SOURCE_KINDS, STAGE_CATEGORIES, roleLabel, sourceKindLabel } from "@/domain/labels";
 import { Alert, Button, Field, Input, Select, Textarea } from "@/components/ui";
 
@@ -92,6 +93,21 @@ export function AddSourceForm() {
       </div>
       {state.error && <div className="sm:col-span-2"><Alert tone="danger">{state.error}</Alert></div>}
       <div><Button type="submit" variant="secondary" disabled={pending}>Add source</Button></div>
+    </form>
+  );
+}
+
+export function AddDealStageForm() {
+  const [state, action, pending] = useActionState<CrmFormState, FormData>(addDealStageAction, {});
+  const ref = useRef<HTMLFormElement>(null);
+  useEffect(() => { if (state.ok) ref.current?.reset(); }, [state]);
+  const e = state.fieldErrors ?? {};
+  return (
+    <form ref={ref} action={action} className="flex flex-col gap-3 sm:flex-row sm:items-start">
+      <div className="flex-1"><Field label="New deal stage" name="name" error={e.name}><Input name="name" required maxLength={60} placeholder="Mortgage approved" /></Field></div>
+      <div className="sm:w-36"><Field label="Probability %" name="probability" error={e.probability}><Input name="probability" type="number" min={0} max={100} defaultValue={50} required /></Field></div>
+      <div className="sm:pt-6"><Button type="submit" variant="secondary" disabled={pending}>Add stage</Button></div>
+      {state.error && <Alert tone="danger">{state.error}</Alert>}
     </form>
   );
 }

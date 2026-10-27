@@ -9,6 +9,9 @@ export function permissionsFor(role: Role) {
   return {
     /** Create leads (reps: only assigned to themselves). */
     createLeads: role !== "read_only",
+    /** Log interactions, manage tasks, deals and appointments (reps: on their own leads). */
+    workCrm: role !== "read_only",
+    configureDeals: manager,
     importLeads: manager,
     exportLeads: manager,
     assignLeads: manager,

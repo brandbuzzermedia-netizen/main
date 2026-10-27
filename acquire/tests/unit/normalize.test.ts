@@ -64,3 +64,10 @@ describe("labels", () => {
     expect(parseTimeline("whenever")).toBeNull();
   });
 });
+
+import { niceMax } from "@/components/charts";
+describe("chart axis", () => {
+  it("rounds the axis maximum to a readable number", () => {
+    expect([0, 3, 7, 13, 48, 120, 999].map(niceMax)).toEqual([1, 3, 10, 20, 50, 200, 1000]);
+  });
+});
