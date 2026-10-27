@@ -68,12 +68,12 @@ CRM update (internal pipeline, and GoHighLevel when connected) → notify the as
 | Chart element | Module | Status |
 |---------------|--------|--------|
 | Data scrape → database | B. Lead acquisition: CSV import, licensed-provider adapters | Import **built** (phase 3). Provider adapters in phase 6. |
-| Landing form (Step 2), sheet (Step 3) | B. Lead acquisition: web-form capture with consent text | Phase 4 (form endpoint). Today: CSV import. |
+| Landing form (Step 2), sheet (Step 3) | B. Lead acquisition: web-form capture with consent text | **Built**: hosted and embeddable lead forms, plus CSV import. |
 | Cold calls with AI agents | D. AI calling: consent-gated | Phase 6 |
-| SMS / Email | E. Messaging, F. Email | Phase 4 |
-| Listing / property video | J. Property and listing engagement | Phase 6. Asset links only at first. |
-| Follow-up sequence, "if they say no do the same" | G. Workflow engine: sequences, stop conditions, retry limits | Phase 5 |
-| Decision diamond (positive response) | C. Qualification: intent classification plus a human override | Phase 4 |
+| SMS / Email | E. Messaging, F. Email | **Built** (needs Twilio / Resend keys) |
+| Listing / property video | J. Property and listing engagement | **Built**: properties with video links, shared via tracked per-lead links. |
+| Follow-up sequence, "if they say no do the same" | G. Workflow engine: sequences, stop conditions, retry limits | **Built** (sequences) |
+| Decision diamond (positive response) | C. Qualification: intent classification plus a human override | **Built** (replies stop sequences; AI assessment with human apply) |
 | Interested | Pipeline stage "Interested" (category *qualified*) | **Built** (phase 3) |
 | CRM on GoHighLevel | H. GoHighLevel integration. Internal CRM works without it. | Internal CRM **built**. GHL sync in phase 6. |
 | Calendly links in templates | I. Appointments: calendar-confirmed bookings | Phase 6 |

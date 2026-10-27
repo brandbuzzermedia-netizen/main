@@ -18,7 +18,7 @@ const NAV: { heading?: string; items: Item[] }[] = [
       { href: "/deals", label: "Deals" },
       { href: "/tasks", label: "Tasks" },
       { href: "/appointments", label: "Appointments" },
-      { href: "/properties", label: "Properties", phase: 6 },
+      { href: "/properties", label: "Properties" },
     ],
   },
   {

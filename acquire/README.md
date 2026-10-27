@@ -25,7 +25,8 @@ database and Vercel project (Root Directory = `acquire`).
 | 3b | Built-in CRM: deals, tasks, appointments, logged interactions, drag-and-drop boards, CRM dashboard | Done |
 | 4 | Outreach: templates with approval, email (Resend) and SMS (Twilio), conversations, opt-out handling, usage quotas, AI lead assessment (Claude) | Done (needs provider keys) |
 | 5 | Follow-up sequences with a scheduled runner (Day 0/1/3/5/7 style) | Done (sequences); visual workflow builder planned |
-| 6–7 | Voice agents, calendar sync, GoHighLevel, licensed data, Stripe billing, analytics | Planned |
+| 6 (part) | Web lead forms (hosted + embeddable, consent evidence, spam and rate limits); properties with tracked video-tour links | Done |
+| 6–7 | Voice agents, calendar sync, GoHighLevel, licensed data, Stripe billing, analytics | Planned (need accounts) |
 
 What works today:
 
@@ -81,18 +82,22 @@ What works today:
   - **Usage is metered** per message and the plan quota is enforced before the provider is called.
 - **AI lead assessment** (Claude): intent, readiness, financing, a 0–100 score from a fixed rubric, a summary, questions still to ask, and exact quotes as evidence. It sees no email or phone, treats lead text as data, and changes nothing until a person clicks Apply. Every run is logged with model and tokens.
 
+- **Lead forms** (Settings → Lead forms) for the inbound funnel: a hosted page per form for ads, QR codes and social posts, plus an embeddable HTML/JSON endpoint. Submissions create or update the lead, assign it, add a timeline note, and record consent only for ticked boxes, with the exact wording, its version hash and the submission id. Honeypot, per-IP and per-form rate limits; IPs are stored only as a daily-salted hash.
+- **Properties** with price, details, photo, listing link and video tour. **Share a property** from a lead's page by email or SMS (through the same eligibility check): the message carries a personal signed link, and the lead page shows when they opened it. Mark interested or not.
+
 Each provider stays off until its keys are set; Integrations shows what is connected. Voice agents,
 calendar sync and GoHighLevel are still to come and are visibly labelled with their phase.
 
 ## Verification done
 
-- **49 unit tests** (`npm test`) on eligibility rules, normalisation, money, labels, import planning, templates, opt-out keywords, webhook signatures (Twilio, Resend/Svix), unsubscribe tokens and sequence decisions.
-- **4 SQL suites, 146 assertions** (`npm run test:db`), run against PostgreSQL 16 with all migrations applied. They cover:
+- **56 unit tests** (`npm test`) on eligibility rules, normalisation, money, labels, import planning, templates, opt-out keywords, webhook signatures (Twilio, Resend/Svix), unsubscribe tokens, sequence decisions, form validation, signed property links and IP hashing.
+- **5 SQL suites, 167 assertions** (`npm run test:db`), run against PostgreSQL 16 with all migrations applied. They cover:
   - isolation and permissions: tenant isolation, each role, platform admins, anon;
   - plan limits: seats and contacts;
   - lead data: dedupe, triggers, consent immutability, suppression;
   - workflows: import idempotency and erasure;
   - outreach: template approval, the no-send-without-allow guard, duplicate webhooks, replies stopping sequences, quotas and metering idempotency;
+  - forms and properties: exact-wording consent, suppression, rate limits, view tracking, catalogue permissions;
   - CRM: deal close dates, appointment and interaction stage moves, rep visibility of deals, tasks and appointments, and dashboard figures.
 - `npm run lint`, `npm run typecheck` and `npm run build` are clean.
 - Production server smoke test:

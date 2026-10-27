@@ -10,6 +10,7 @@ import { appointmentKindLabel, appointmentStatusLabel, appointmentStatusTone, de
 import { formatMoney } from "@/domain/money";
 import { anthropicConfig } from "@/lib/env";
 import type { Qualification } from "@/integrations/ai/qualify";
+import { InterestButtons, ShareProperty } from "@/components/properties";
 import { ApplyQualification, EnrollForm, EnrollmentButton, MarkReadButton, MessageComposer, QualifyButton } from "@/components/outreach";
 import { CHANNELS, evaluateEligibility, type Channel, type Decision } from "@/domain/eligibility";
 import { basisLabel, categoryTone, channelLabel, segmentLabel, suppressionReasonLabel, timelineLabel } from "@/domain/labels";
@@ -36,7 +37,7 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
     lead.phone_e164 && `and(value_type.eq.phone,value.eq.${lead.phone_e164})`,
   ].filter(Boolean) as string[];
 
-  const [ref, activities, consents, suppressions, settings, deals, tasks, appts, dealStages, msgs, templates, campaigns, enrollments, aiRuns] = await Promise.all([
+  const [ref, activities, consents, suppressions, settings, deals, tasks, appts, dealStages, msgs, templates, campaigns, enrollments, aiRuns, interests, availableProps] = await Promise.all([
     loadLeadContext(ctx),
     ctx.supabase.from("lead_activities").select("id, kind, summary, data, actor_id, occurred_at").eq("lead_id", id).order("occurred_at", { ascending: false }).limit(100),
     ctx.supabase.from("consent_records").select("id, channel, status, basis, source, evidence_url, captured_at, expires_at, recorded_by").eq("lead_id", id).order("captured_at", { ascending: false }),
@@ -52,6 +53,8 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
     ctx.supabase.from("campaigns").select("id, name").eq("organization_id", ctx.org.id).eq("status", "active").order("name"),
     ctx.supabase.from("campaign_enrollments").select("id, campaign_id, status, current_step, next_run_at, stop_reason").eq("lead_id", id),
     ctx.supabase.from("ai_runs").select("id, status, output, error, model, created_at, applied_at").eq("lead_id", id).order("created_at", { ascending: false }).limit(1),
+    ctx.supabase.from("lead_property_interests").select("id, status, view_count, shared_at, last_viewed_at, property:properties(id, title)").eq("lead_id", id).order("shared_at", { ascending: false }),
+    ctx.supabase.from("properties").select("id, title").eq("organization_id", ctx.org.id).in("status", ["available", "under_offer"]).order("title").limit(300),
   ]);
   for (const r of [deals, tasks, appts]) if (r.error) throw new Error(r.error.message);
   const leadDeals = (deals.data ?? []) as unknown as Deal[];
@@ -186,6 +189,25 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
                 })) as Record<"email" | "sms", { decision: string; note: string }>}
               />
             )}
+          </Card>
+
+          <Card title="Properties">
+            {(interests.data ?? []).length > 0 && (
+              <ul className="mb-4 flex flex-col divide-y divide-line text-sm">
+                {((interests.data ?? []) as unknown as { id: string; status: string; view_count: number; last_viewed_at: string | null; property: { id: string; title: string } | null }[]).map((i) => (
+                  <li key={i.id} className="flex items-center justify-between gap-3 py-2">
+                    <div>
+                      <Link className="hover:text-brand" href={`/properties/${i.property?.id}`}>{i.property?.title ?? "Property"}</Link>
+                      <div className="text-xs text-muted">
+                        {i.status.replace("_", " ")}{i.view_count > 0 ? ` · opened ${i.view_count}×, last ${formatDateTime(i.last_viewed_at, ctx.org.timezone)}` : " · not opened yet"}
+                      </div>
+                    </div>
+                    {canEdit && !["interested", "not_interested"].includes(i.status) && <InterestButtons interestId={i.id} />}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {canEdit && <ShareProperty leadId={lead.id} properties={availableProps.data ?? []} />}
           </Card>
 
           <Card title="Sequences">

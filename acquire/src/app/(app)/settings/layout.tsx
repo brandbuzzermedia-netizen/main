@@ -8,6 +8,7 @@ export default async function SettingsLayout({ children }: LayoutProps<"/setting
     { href: "/settings/team", label: "Team" },
     { href: "/settings/pipeline", label: "Pipeline" },
     { href: "/settings/sources", label: "Lead sources" },
+    { href: "/settings/forms", label: "Lead forms" },
     ...(ctx.can.viewAudit ? [{ href: "/settings/audit", label: "Audit log" }] : []),
   ];
   return (
