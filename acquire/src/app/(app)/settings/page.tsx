@@ -4,6 +4,7 @@ import type { OrgSettings } from "@/lib/db-types";
 import { MARKET_RULES } from "@/domain/eligibility";
 import { Card } from "@/components/ui";
 import { WorkspaceForm } from "./forms";
+import { SendingSettingsForm } from "@/components/outreach";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -22,6 +23,13 @@ export default async function SettingsPage() {
           windowEnd={s.contact_window_end.slice(0, 5)}
           inquiryDays={s.implied_inquiry_days}
           disabled={!ctx.can.manageSettings}
+        />
+      </Card>
+      <Card title="Sending">
+        {!ctx.can.manageSettings && <p className="mb-4 text-sm text-muted">Only an agency admin can change these.</p>}
+        <SendingSettingsForm
+          disabled={!ctx.can.manageSettings}
+          values={{ email_from_name: s.email_from_name, email_from_address: s.email_from_address, postal_address: s.postal_address, sms_from_number: s.sms_from_number }}
         />
       </Card>
       <Card title="Market">

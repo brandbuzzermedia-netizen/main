@@ -31,9 +31,12 @@ Output: a decision, the reasons, a plain-language note on the basis, and, when t
 | `review` | Software cannot settle it: no basis where one isn't strictly required, a registry check that isn't integrated, an unknown country or time zone | Hold for a person |
 | `block` | Suppressed, opted out, consent withdrawn, or no sufficient basis where one is required | Never send |
 
-Today the result is shown on every lead page ("Can we contact them?"). From phase 4, every send
-and call runs the engine at the moment of sending, not when the message is queued. The result is
-stored in `contact_decisions`.
+The result is shown on every lead page, and every email and SMS (manual or sequence) runs the engine
+at the moment of sending. The decision, its reasons and the ruleset version are stored on the
+message; the database refuses to mark a message sent unless that decision was `allow`.
+
+Automatic suppression sources: SMS STOP-style replies (all phone channels), email unsubscribe
+links, hard bounces and spam complaints (email).
 
 ### Rules by market
 

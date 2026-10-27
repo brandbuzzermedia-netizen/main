@@ -8,11 +8,14 @@ import { DEAL_COLUMNS, loadDealStages } from "@/lib/crm";
 import { AppointmentForm, AppointmentStatusMenu, InteractionForm, TaskForm, TaskToggle } from "@/components/crm/controls";
 import { appointmentKindLabel, appointmentStatusLabel, appointmentStatusTone, dealCategoryTone } from "@/domain/labels";
 import { formatMoney } from "@/domain/money";
+import { anthropicConfig } from "@/lib/env";
+import type { Qualification } from "@/integrations/ai/qualify";
+import { ApplyQualification, EnrollForm, EnrollmentButton, MarkReadButton, MessageComposer, QualifyButton } from "@/components/outreach";
 import { CHANNELS, evaluateEligibility, type Channel, type Decision } from "@/domain/eligibility";
 import { basisLabel, categoryTone, channelLabel, segmentLabel, suppressionReasonLabel, timelineLabel } from "@/domain/labels";
 import { formatBudget } from "@/domain/money";
 import { formatDate, formatDateTime } from "@/domain/dates";
-import { Badge, ButtonLink, Card, Dl, PageHeader, Select } from "@/components/ui";
+import { Alert, Badge, ButtonLink, Card, Dl, PageHeader, Select } from "@/components/ui";
 import { assignAction, liftSuppressionAction, setStageAction } from "../actions";
 import { ConsentForm, EraseForm, NoteForm, SuppressForm } from "./forms";
 
@@ -33,7 +36,7 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
     lead.phone_e164 && `and(value_type.eq.phone,value.eq.${lead.phone_e164})`,
   ].filter(Boolean) as string[];
 
-  const [ref, activities, consents, suppressions, settings, deals, tasks, appts, dealStages] = await Promise.all([
+  const [ref, activities, consents, suppressions, settings, deals, tasks, appts, dealStages, msgs, templates, campaigns, enrollments, aiRuns] = await Promise.all([
     loadLeadContext(ctx),
     ctx.supabase.from("lead_activities").select("id, kind, summary, data, actor_id, occurred_at").eq("lead_id", id).order("occurred_at", { ascending: false }).limit(100),
     ctx.supabase.from("consent_records").select("id, channel, status, basis, source, evidence_url, captured_at, expires_at, recorded_by").eq("lead_id", id).order("captured_at", { ascending: false }),
@@ -44,6 +47,11 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
       .neq("status", "cancelled").order("status").order("due_at", { ascending: true, nullsFirst: false }).limit(50),
     ctx.supabase.from("appointments").select("id, lead_id, deal_id, kind, title, starts_at, ends_at, location, status, assigned_to, source, notes").eq("lead_id", id).order("starts_at", { ascending: false }).limit(20),
     loadDealStages(ctx),
+    ctx.supabase.from("messages").select("id, channel, direction, subject, body, status, error, decision, created_at, read_at").eq("lead_id", id).order("created_at", { ascending: false }).limit(30),
+    ctx.supabase.from("message_templates").select("id, name, channel").eq("organization_id", ctx.org.id).eq("status", "approved").order("name"),
+    ctx.supabase.from("campaigns").select("id, name").eq("organization_id", ctx.org.id).eq("status", "active").order("name"),
+    ctx.supabase.from("campaign_enrollments").select("id, campaign_id, status, current_step, next_run_at, stop_reason").eq("lead_id", id),
+    ctx.supabase.from("ai_runs").select("id, status, output, error, model, created_at, applied_at").eq("lead_id", id).order("created_at", { ascending: false }).limit(1),
   ]);
   for (const r of [deals, tasks, appts]) if (r.error) throw new Error(r.error.message);
   const leadDeals = (deals.data ?? []) as unknown as Deal[];
@@ -150,6 +158,89 @@ export default async function LeadPage({ params }: PageProps<"/leads/[id]">) {
               </div>
             </Card>
           )}
+
+          <Card title="Messages" actions={(msgs.data ?? []).some((m) => m.direction === "inbound" && !m.read_at) && canEdit ? <MarkReadButton leadId={lead.id} /> : undefined}>
+            <div id="messages" className="-mt-2" />
+            {(msgs.data ?? []).length === 0 ? <p className="mb-4 text-sm text-muted">No messages yet.</p> : (
+              <ol className="mb-4 flex max-h-96 flex-col-reverse gap-2 overflow-y-auto">
+                {(msgs.data ?? []).map((m) => (
+                  <li key={m.id} className={`max-w-[85%] rounded-lg border px-3 py-2 text-sm ${m.direction === "inbound" ? "self-start border-line bg-surface-2" : "self-end border-brand/20 bg-brand-soft/50"}`}>
+                    {m.subject && <div className="font-medium">{m.subject}</div>}
+                    <div className="whitespace-pre-wrap">{m.body}</div>
+                    <div className="mt-1 text-[11px] text-muted">
+                      {m.channel.toUpperCase()} · {formatDateTime(m.created_at, ctx.org.timezone)} · {m.direction === "inbound" ? (m.read_at ? "read" : "unread") : m.status}
+                      {m.error && <span className="text-danger"> · {m.error}</span>}
+                      {(m.status === "blocked" || m.status === "held") && !m.error && <span className="text-warn"> · {((m.decision as { reasons?: { message: string }[] } | null)?.reasons ?? []).map((r) => r.message).join(" ")}</span>}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+            {canEdit && (
+              <MessageComposer
+                leadId={lead.id}
+                templates={(templates.data ?? []) as { id: string; name: string; channel: "email" | "sms" }[]}
+                channelStatus={Object.fromEntries((["email", "sms"] as const).map((ch) => {
+                  const r = eligibility.find((x) => x.channel === ch)!.result;
+                  return [ch, { decision: decisionLabel[r.decision], note: r.reasons[0]?.message ?? "" }];
+                })) as Record<"email" | "sms", { decision: string; note: string }>}
+              />
+            )}
+          </Card>
+
+          <Card title="Sequences">
+            {(enrollments.data ?? []).length > 0 && (
+              <ul className="mb-4 flex flex-col divide-y divide-line text-sm">
+                {(enrollments.data ?? []).map((e) => (
+                  <li key={e.id} className="flex items-center justify-between gap-3 py-2">
+                    <div>
+                      <Link className="hover:text-brand" href={`/campaigns/${e.campaign_id}`}>{(campaigns.data ?? []).find((c) => c.id === e.campaign_id)?.name ?? "Sequence"}</Link>
+                      <div className="text-xs text-muted">
+                        {e.status === "active" ? `Step ${e.current_step + 1} due ${formatDateTime(e.next_run_at, ctx.org.timezone)}` : e.status}
+                        {e.stop_reason && ` · ${e.stop_reason}`}
+                      </div>
+                    </div>
+                    {canEdit && e.status === "held" && <EnrollmentButton enrollmentId={e.id} to="active" label="Reviewed, resume" />}
+                    {canEdit && e.status === "active" && <EnrollmentButton enrollmentId={e.id} to="stopped" label="Stop" />}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {canEdit && <EnrollForm leadId={lead.id} campaigns={(campaigns.data ?? []).filter((c) => !(enrollments.data ?? []).some((e) => e.campaign_id === c.id))} />}
+          </Card>
+
+          <Card title="AI assessment">
+            {(() => {
+              const run = aiRuns.data?.[0];
+              const out = run?.status === "succeeded" ? (run.output as Qualification) : null;
+              return (
+                <div className="flex flex-col gap-3">
+                  {run && !out && <Alert tone="warn">Last attempt failed: {run.error}</Alert>}
+                  {out && run && (
+                    <div className="flex flex-col gap-2 text-sm">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="tabular text-2xl font-semibold">{out.score}</span>
+                        <Badge tone="brand">{out.intent}</Badge><Badge>{out.readiness.replaceAll("_", " ")}</Badge><Badge>{out.financing.replaceAll("_", " ")}</Badge>
+                        {out.suggested_stage !== "no_change" && <span className="text-muted">suggests stage: {out.suggested_stage}</span>}
+                      </div>
+                      <p>{out.summary}</p>
+                      <p className="text-xs text-muted">Budget: {out.budget_summary} · Location: {out.location_summary}</p>
+                      {out.missing_information.length > 0 && <div className="text-xs"><span className="font-medium">Still to ask:</span> {out.missing_information.join("; ")}</div>}
+                      {out.evidence.length > 0 && (
+                        <details className="text-xs text-muted"><summary className="cursor-pointer">Evidence ({out.evidence.length})</summary>
+                          <ul className="mt-1 list-disc pl-4">{out.evidence.map((ev, i) => <li key={i}>{ev.claim}: “{ev.quote}”</li>)}</ul>
+                        </details>
+                      )}
+                      <p className="text-[11px] text-muted">{run.model} · {formatDateTime(run.created_at, ctx.org.timezone)}{run.applied_at ? ` · applied ${formatDateTime(run.applied_at, ctx.org.timezone)}` : " · not applied"}</p>
+                      {canEdit && !run.applied_at && <ApplyQualification runId={run.id} hasStage={out.suggested_stage !== "no_change"} />}
+                    </div>
+                  )}
+                  {canEdit && <QualifyButton leadId={lead.id} enabled={anthropicConfig().enabled} />}
+                  <p className="text-xs text-muted">Reads this lead&apos;s details, notes, logged interactions and messages (no email or phone). Nothing changes until a person applies it.</p>
+                </div>
+              );
+            })()}
+          </Card>
 
           {canEdit && (
             <Card title="Log an interaction">

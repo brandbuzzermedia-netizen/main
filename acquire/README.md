@@ -23,8 +23,9 @@ database and Vercel project (Root Directory = `acquire`).
 | 2 | Auth, onboarding with market, tenants, roles, RLS, plans and limits, audit, app shell, settings, team | Done |
 | 3 | Leads, import/export, dedupe, consent, suppression, erasure, eligibility panel, pipeline, overview | Done |
 | 3b | Built-in CRM: deals, tasks, appointments, logged interactions, drag-and-drop boards, CRM dashboard | Done |
-| 4 | AI qualification, templates, email and SMS, usage metering | Next |
-| 5–7 | Workflow engine; voice, calendar, GoHighLevel; analytics, billing, hardening | Planned |
+| 4 | Outreach: templates with approval, email (Resend) and SMS (Twilio), conversations, opt-out handling, usage quotas, AI lead assessment (Claude) | Done (needs provider keys) |
+| 5 | Follow-up sequences with a scheduled runner (Day 0/1/3/5/7 style) | Done (sequences); visual workflow builder planned |
+| 6–7 | Voice agents, calendar sync, GoHighLevel, licensed data, Stripe billing, analytics | Planned |
 
 What works today:
 
@@ -70,24 +71,35 @@ What works today:
 - **Billing** shows the plan and its enforced limits. **Integrations** lists what is not connected yet.
 - **Platform admin console** (`/admin`). Lists organizations and lets you suspend them, with no access to their leads.
 
-Nothing sends a message or places a call yet. Navigation items for later phases are visibly
-disabled and labelled with their phase.
+- **Outreach.**
+  - **Templates** for email and SMS with `{{first_name}}`-style variables. A manager approves each one; editing approved text sends it back to draft.
+  - **Send from a lead** (template or your own words). Eligibility is checked at the moment of sending; a blocked or needs-review message is recorded but never leaves the platform.
+  - **Sequences** (Campaigns): up to 10 email/SMS steps with day delays. A runner every 15 minutes sends due steps and re-checks each one: outside contact hours waits, needs-review pauses that lead for a person ("Reviewed, resume"), blocked skips the step. Replies stop the sequence.
+  - **Conversations** inbox with unread replies first.
+  - **Opt-outs are automatic**: SMS STOP replies, email unsubscribe links (page and RFC 8058 one-click), bounces and complaints all become suppressions.
+  - Every email carries your postal address and an unsubscribe link; every SMS identifies the sender and the STOP route.
+  - **Usage is metered** per message and the plan quota is enforced before the provider is called.
+- **AI lead assessment** (Claude): intent, readiness, financing, a 0–100 score from a fixed rubric, a summary, questions still to ask, and exact quotes as evidence. It sees no email or phone, treats lead text as data, and changes nothing until a person clicks Apply. Every run is logged with model and tokens.
+
+Each provider stays off until its keys are set; Integrations shows what is connected. Voice agents,
+calendar sync and GoHighLevel are still to come and are visibly labelled with their phase.
 
 ## Verification done
 
-- **40 unit tests** (`npm test`) on eligibility rules, normalisation, money, labels and import planning.
-- **3 SQL suites, 126 assertions** (`npm run test:db`), run against PostgreSQL 16 with all migrations applied. They cover:
+- **49 unit tests** (`npm test`) on eligibility rules, normalisation, money, labels, import planning, templates, opt-out keywords, webhook signatures (Twilio, Resend/Svix), unsubscribe tokens and sequence decisions.
+- **4 SQL suites, 146 assertions** (`npm run test:db`), run against PostgreSQL 16 with all migrations applied. They cover:
   - isolation and permissions: tenant isolation, each role, platform admins, anon;
   - plan limits: seats and contacts;
   - lead data: dedupe, triggers, consent immutability, suppression;
   - workflows: import idempotency and erasure;
+  - outreach: template approval, the no-send-without-allow guard, duplicate webhooks, replies stopping sequences, quotas and metering idempotency;
   - CRM: deal close dates, appointment and interaction stage moves, rep visibility of deals, tasks and appointments, and dashboard figures.
 - `npm run lint`, `npm run typecheck` and `npm run build` are clean.
 - Production server smoke test:
   - every app route redirects to `/login` when signed out;
   - security headers are present;
   - the login page renders at 1280 px and at 390 px in dark mode, with no overflow and no console errors.
-- **Not yet done:** a browser walkthrough of the signed-in pages against a live Supabase stack.
+- **Not yet done:** no real email, SMS or AI call has been made (no provider keys here). The Twilio signature check follows Twilio's documented algorithm and matches an independently computed value, but has not been checked against a live Twilio request. Also not done: a browser walkthrough of the signed-in pages against a live Supabase stack.
   This container had no Docker, so Supabase Auth and PostgREST could not run here. The database
   logic is tested directly in SQL, but the pages themselves have only been type-checked and built.
   Do the walkthrough below before relying on them.
@@ -122,3 +134,4 @@ npm run lint && npm run typecheck && npm run build
 5. Invite a second user as a sales rep, assign them one lead, and sign in as them: they see only that lead.
 6. Erase a lead and check that the audit log shows it as redacted.
 7. Log a call on a new lead (it moves to Contacted), book a viewing (it moves to Appointment booked), open a deal, drag it to Closed won, and check the dashboard.
+8. Set Settings → Sending, add the provider keys, approve a template, build a sequence, enroll a lead with recorded consent and run `curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/jobs/run`.

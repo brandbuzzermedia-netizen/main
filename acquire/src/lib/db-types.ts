@@ -21,6 +21,10 @@ export type OrgSettings = {
   contact_window_end: string;
   require_review_when_unsure: boolean;
   implied_inquiry_days: number;
+  email_from_name: string | null;
+  email_from_address: string | null;
+  postal_address: string | null;
+  sms_from_number: string | null;
 };
 
 export type Stage = { id: string; key: string; name: string; category: StageCategory; position: number; is_system: boolean };

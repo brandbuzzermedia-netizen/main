@@ -24,9 +24,9 @@ const NAV: { heading?: string; items: Item[] }[] = [
   {
     heading: "Outreach",
     items: [
-      { href: "/campaigns", label: "Campaigns", phase: 4 },
-      { href: "/conversations", label: "Conversations", phase: 4 },
-      { href: "/agents", label: "AI agents", phase: 4 },
+      { href: "/campaigns", label: "Campaigns" },
+      { href: "/conversations", label: "Conversations" },
+      { href: "/agents", label: "AI voice agents", phase: 6 },
       { href: "/workflows", label: "Workflows", phase: 5 },
       { href: "/analytics", label: "Analytics", phase: 7 },
     ],
