@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meta Ads Business Calculator | Get Bee Seen</title>
+<meta name="description" content="Calculate leads, sales, revenue, CAC, CPL, ROAS, ROI and profitability before you spend on Meta Ads. By Get Bee Seen.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Get Bee Seen, Meta Ads Business Calculator"><img src="assets/logo-horizontal.png" alt="Get Bee Seen"><span>Meta Ads Business Calculator</span></a>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="mainnav"><span aria-hidden="true"></span>Menu</button>
+    <nav aria-label="Main" id="mainnav">
+      <a href="#models">Business calculators</a>
+      <a href="#how">How it works</a>
+      <a href="#calculator">Calculator</a>
+      <a href="#planner">Marketing planner</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero">
+  <div class="bee-fly" aria-hidden="true"><img data-asset="bee" alt=""></div>
+  <div class="wrap">
+    <div>
+      <span class="kicker"><img data-asset="bee" alt="">A Get Bee Seen planning tool</span>
+      <h1><span class="app-name">Meta Ads Business Calculator</span><span class="statement" aria-label="Know Your Numbers Before You Spend."><span class="w" style="--i:0">Know</span> <span class="w" style="--i:1">Your</span> <span class="w" style="--i:2">Numbers</span> <span class="w" style="--i:3">Before</span> <span class="w" style="--i:4">You</span> <span class="w" style="--i:5">Spend.</span></span></h1>
+      <p class="lead">Calculate Leads, Sales, Revenue, CAC, CPL, ROAS, ROI &amp; Profitability Before You Spend.</p>
+      <p class="desc">Calculate your expected leads, sales, CPL, CPA, CAC, revenue, ROAS, ROI and profit based on your business model and funnel.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#models" id="start">Start Calculating</a>
+        <a class="btn btn-ghost" href="#how">View How It Works</a>
+      </div>
+    </div>
+
+    <div class="receipt-wrap">
+      <img class="badge-float" data-asset="badge" alt="Get Bee Seen badge">
+      <aside class="receipt" aria-label="Quick estimate">
+        <h2>Your spend receipt</h2>
+        <p class="sub">A 10 second estimate. The full calculators below model your real funnel.</p>
+        <div class="rc-row"><label for="rb">Monthly ad budget <b id="rbv"></b></label><input id="rb" type="range" min="10000" max="1000000" step="5000" value="50000"></div>
+        <div class="rc-row"><label for="rc">Cost per lead <b id="rcv"></b></label><input id="rc" type="range" min="50" max="2000" step="10" value="250"></div>
+        <div class="rc-row"><label for="rr">Leads that become customers <b id="rrv"></b></label><input id="rr" type="range" min="1" max="50" step="1" value="10"></div>
+        <div class="rc-out">
+          <div><span>Leads</span><b id="o1"></b></div>
+          <div><span>Customers</span><b id="o2"></b></div>
+          <div class="big"><span>Ad cost per customer</span><b id="o3"></b></div>
+        </div>
+        <p class="rc-note">This shortcut ignores people dropping out inside your funnel, repeat sales and costs other than ads. That is what the calculators fix.</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<div class="ribbon" aria-label="Industry groups">
+  <div class="wrap"><img data-asset="bee" alt=""><span>Lead generation</span><i class="sep"></i><span>B2B</span><i class="sep"></i><span>B2C / Ecommerce</span><i class="sep"></i><span>Professional services</span><i class="sep"></i><span>Your own funnel</span></div>
+</div>
+
+<section class="sec" id="models">
+  <div class="wrap">
+    <div class="banner rv"><span class="num">1</span><div><h2>Select your industry</h2><p><span id="ind-count">37</span> specialised calculators. Each one has its own funnel, inputs, cost structure and revenue model, because a dental clinic, a timber importer and an online store make money in completely different ways.</p></div></div>
+    <div id="industries" class="industries"></div>
+  </div>
+</section>
+
+<section class="sec calc" id="calculator">
+  <div class="wrap">
+    <div class="banner rv"><span class="num">2</span><div><h2>Run your numbers</h2><p>Change any assumption and every result updates instantly. Start from a niche preset, then swap in your real figures.</p></div></div>
+    <div id="calc-root">
+      <div class="empty">
+        <img data-asset="bee" alt="">
+        <h3>Choose an industry to begin</h3>
+        <p>Pick one above. Your inputs, funnel, costs and results load as soon as you do.</p>
+        <div class="row">
+          <button class="btn btn-line" data-pick="service" type="button">Service business</button>
+          <button class="btn btn-line" data-pick="realestate" type="button">Real estate</button>
+          <button class="btn btn-line" data-pick="b2c" type="button">Ecommerce</button>
+          <button class="btn btn-line" data-pick="door" type="button">Doors</button>
+          <button class="btn btn-line" data-pick="custom" type="button">Custom industry</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec planner" id="planner">
+  <div class="wrap">
+    <div class="banner rv"><span class="num">3</span><div><h2>Build your marketing plan</h2><p>Pick only what you need: platforms, audience, funnel, creatives, landing page, campaign structure, forecast, profitability, a 90 day plan or tracking. One module, a few, or the full plan.</p></div></div>
+    <div id="planner-root" class="planner-root"><noscript><p>The marketing planner needs JavaScript.</p></noscript></div>
+  </div>
+</section>
+
+<section class="sec how" id="how">
+  <div class="wrap">
+    <div class="banner rv"><span class="num">4</span><div><h2>How it works</h2><p>The calculator turns a budget into a funnel, and a funnel into profit. Every number is an assumption you can change.</p></div></div>
+    <div class="steps">
+      <div class="step rv" style="--d:0"><div class="n">1</div><h3>Choose your industry</h3><p>37 industries across lead generation, B2B, ecommerce and professional services, or build your own funnel. Each has its own funnel stages, costs and definition of a "sale".</p></div>
+      <div class="step rv" style="--d:1"><div class="n">2</div><h3>Enter your assumptions</h3><p>Start from a niche preset, then replace it with numbers from your own Ads Manager and sales records. Real data beats any benchmark.</p></div>
+      <div class="step hi rv" style="--d:2"><div class="n">3</div><h3>Read and stress test</h3><p>See ROAS, profit ROAS and ROI, breakeven, scenarios, goals and insights. After the campaign, compare actual results with the projection and generate a report.</p></div>
+    </div>
+    <div class="cmp rv">
+      <h3>Why every industry gets its own calculator</h3>
+      <div class="tscroll">
+      <table>
+        <thead><tr><th></th><th>Lead generation</th><th>B2B</th><th>B2C / Ecommerce</th><th>Professional / local</th></tr></thead>
+        <tbody>
+          <tr><td><b>What Meta delivers</b></td><td>Enquiries, calls and messages</td><td>Business leads, often mixed quality</td><td>Store visits and orders</td><td>Consultation and appointment requests</td></tr>
+          <tr><td><b>Where money is lost</b></td><td>Unanswered leads, missed appointments</td><td>Unqualified leads, long cycles</td><td>Abandoned carts, returns, thin margins</td><td>Low show rates, one off clients</td></tr>
+          <tr><td><b>Cost structure</b></td><td>Delivery, commissions, brokerage</td><td>Materials, labour, logistics, landed cost</td><td>COGS, shipping, payment fees, returns</td><td>Staff time, products, referrals</td></tr>
+          <tr><td><b>Special metrics</b></td><td>Cost per site visit, revenue per lead</td><td>Pipeline, CFT sold, dealer LTV, payback</td><td>CPP, net ROAS, lifetime ROAS</td><td>MRR, ARR, LTV : CAC</td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="sign rv">
+      <img data-asset="badge" alt="Get Bee Seen">
+      <div>
+        <h2>Numbers first. Then spend.</h2>
+        <p>Built by Get Bee Seen, a digital marketing and website agency. Use it to plan a campaign before the first rupee goes into Meta Ads.</p>
+        <div class="chips"><span>Meta Ads</span><span>Websites</span><span>Lead generation</span><span>Performance marketing</span></div>
+      </div>
+    </div>
+    <p class="fine"><b>About these numbers.</b> This is a planning model. Results are estimates built from the assumptions you enter, and niche presets are starting points, not guarantees. Actual Meta Ads performance changes with creative, offer, audience, season and how fast your team responds. Test with a small budget and update the inputs with real results.</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/market.js"></script>
+<script src="js/benchmarks.js"></script>
+<script src="js/framework.js"></script>
+<script src="js/industries.js"></script>
+<script src="js/door.js"></script>
+<script src="js/app.js"></script>
+<script src="js/planner-data.js"></script>
+<script src="js/planner.js"></script>
+</body>
+</html>

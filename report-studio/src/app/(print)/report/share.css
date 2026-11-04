@@ -1,0 +1,18 @@
+/* Client share page chrome. The report pages themselves use report.css. */
+.share{min-height:100vh;background:#e9e7e1;color:#191816;font:14px/1.5 var(--font-poppins),system-ui,sans-serif}
+.share-bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:12px max(16px,calc((100vw - 1122px)/2));background:#fff;border-bottom:1px solid #dcd9d2}
+.share-bar h1{margin:0;font:400 22px/1.15 var(--font-instrument-serif),Georgia,serif}
+.share-bar small{display:block;color:#6b6558;font-size:12px}
+.share-actions{display:flex;gap:8px;flex-wrap:wrap}
+.share-btn{display:inline-flex;align-items:center;border-radius:99px;padding:8px 16px;font:600 13px var(--font-poppins),system-ui,sans-serif;text-decoration:none;cursor:pointer;border:1px solid #191816;background:#fff;color:#191816}
+.share-btn.primary{background:#191816;color:#fff}
+.share-btn:focus-visible{outline:2px solid #ffb933;outline-offset:2px}
+.share-body{padding:24px 16px 48px;max-width:1154px;margin:0 auto}
+.share-lock{min-height:100vh;display:grid;place-items:center;padding:24px;background:#e9e7e1;font:14px/1.5 var(--font-poppins),system-ui,sans-serif}
+.share-lock form{width:100%;max-width:380px;background:#fff;border-radius:20px;padding:28px;display:grid;gap:12px;box-shadow:0 20px 50px -24px rgba(0,0,0,.35)}
+.share-lock h1{margin:0;font:400 28px/1.1 var(--font-instrument-serif),Georgia,serif}
+.share-lock input{height:40px;border:1px solid #cfccc4;border-radius:12px;padding:0 12px;font:inherit}
+.share-lock .err{color:#b93815;font-size:13px}
+.share-lock p{margin:0;color:#6b6558;font-size:13px}
+.share-gone{min-height:100vh;display:grid;place-items:center;text-align:center;padding:24px;font:15px/1.5 var(--font-poppins),system-ui,sans-serif;color:#191816;background:#e9e7e1}
+@media print{.share-bar{display:none}.share,.share-body{background:#fff;padding:0;margin:0;max-width:none}}

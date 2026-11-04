@@ -1,0 +1,12 @@
+{
+  "name": "point-vision-lead-engine",
+  "version": "1.0.0",
+  "description": "Internal B2B outbound pipeline for Point Vision: 15 researched prospects a day, personalised drafts, founder review, manual sending, tracking.",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "static": "python3 -m http.server 8091",
+    "test": "node test/engine.test.js",
+    "build": "node build.js"
+  }
+}

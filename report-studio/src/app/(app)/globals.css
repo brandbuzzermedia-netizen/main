@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+/*
+ * GBS brand tokens for the studio chrome. Values follow the prototype; the
+ * shadcn/ui variables are mapped onto them so components pick up the brand.
+ * Client reports do not use these: they use src/components/report/report.css.
+ */
+
+:root {
+  --gbs-green: #196144;
+  --gbs-gold: #ffb933;
+  --gbs-cream: #fff2dc;
+  --gbs-sage: #3e5d48;
+  --gbs-ink: #191816;
+  --gbs-grey: #999999;
+
+  --background: #fff2dc;
+  --foreground: #191816;
+  --card: #ffffff;
+  --card-foreground: #191816;
+  --popover: #ffffff;
+  --popover-foreground: #191816;
+  --primary: #ffb933;
+  --primary-foreground: #191816;
+  --secondary: #fff8ea;
+  --secondary-foreground: #191816;
+  --muted: #fff8ea;
+  --muted-foreground: #6b6558;
+  --accent: #fff8ea;
+  --accent-foreground: #191816;
+  --destructive: #b93815;
+  --border: #ebddbf;
+  --input: #ebddbf;
+  --ring: #ffb933;
+  --heading: #196144;
+  --ok: #196144;
+  --warn: #9a6200;
+  --bad: #b93815;
+  --sidebar: #196144;
+  --sidebar-foreground: #fff2dc;
+  --sidebar-muted: rgba(255, 242, 220, 0.74);
+  --radius: 1.25rem;
+  /* Hex texture used on green grounds. */
+  --hex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cpath d='M28 66L0 50V16L28 0l28 16v34zM28 100L0 84V66l28 16 28-16v18z' fill='none' stroke='%23FFF2DC' stroke-opacity='.09'/%3E%3C/svg%3E");
+}
+
+/*
+ * The studio always uses the GBS brand, whatever the device's light or dark
+ * setting. Client reports carry the client's own colours instead.
+ */
+:root { color-scheme: light; }
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-heading: var(--heading);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-gbs-green: var(--gbs-green);
+  --color-gbs-gold: var(--gbs-gold);
+  --color-gbs-cream: var(--gbs-cream);
+  --color-gbs-sage: var(--gbs-sage);
+  --color-gbs-ink: var(--gbs-ink);
+  --color-gbs-grey: var(--gbs-grey);
+  --font-sans: var(--font-poppins), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-heading: var(--font-baloo), var(--font-poppins), system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * { @apply border-border; }
+  html { height: 100%; }
+  body { @apply bg-background text-foreground font-sans antialiased; font-size: 14px; line-height: 1.5; min-height: 100%; }
+  :focus-visible { outline: 2px solid var(--gbs-gold); outline-offset: 2px; }
+}
+
+@utility bg-hex {
+  background-color: var(--gbs-green);
+  background-image: var(--hex);
+}
+
+
+/* ------------------------------------------------------------------ motion
+ * Studio only: client reports and PDFs never animate. Entrance animations
+ * use fill-mode "backwards", so nothing keeps a transform once they finish
+ * (present mode's fixed overlay stays relative to the window). All motion
+ * is switched off for people who ask for reduced motion (rule below).
+ */
+@keyframes gbs-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes gbs-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes gbs-hover {
+  0%, 100% { transform: translate(0, 0) rotate(-2deg); }
+  50% { transform: translate(0, -7px) rotate(3deg); }
+}
+@keyframes gbs-fly-in {
+  0% { opacity: 0; transform: translate(-220px, 60px) rotate(-18deg) scale(.7); }
+  60% { opacity: 1; transform: translate(14px, -10px) rotate(8deg) scale(1.04); }
+  100% { opacity: 1; transform: translate(0, 0) rotate(-2deg) scale(1); }
+}
+@keyframes gbs-hex-drift { from { background-position: 0 0; } to { background-position: 56px 100px; } }
+@keyframes gbs-pop { 0% { transform: scale(0); } 70% { transform: scale(1.35); } 100% { transform: scale(1); } }
+@keyframes gbs-shine { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* Each page's blocks rise in one after another. */
+.page-enter > * { animation: gbs-rise .5s cubic-bezier(.2, .7, .2, 1) backwards; }
+.page-enter > *:nth-child(2) { animation-delay: 70ms; }
+.page-enter > *:nth-child(3) { animation-delay: 140ms; }
+.page-enter > *:nth-child(4) { animation-delay: 210ms; }
+.page-enter > *:nth-child(5) { animation-delay: 280ms; }
+.page-enter > *:nth-child(n+6) { animation-delay: 340ms; }
+
+/* Rows of the first table on a page fade in, top to bottom. */
+.page-enter tbody tr { animation: gbs-fade .4s ease-out backwards; }
+.page-enter tbody tr:nth-child(2) { animation-delay: 60ms; }
+.page-enter tbody tr:nth-child(3) { animation-delay: 120ms; }
+.page-enter tbody tr:nth-child(4) { animation-delay: 180ms; }
+.page-enter tbody tr:nth-child(n+5) { animation-delay: 240ms; }
+
+/* The bee flies in, then hovers. */
+.bee-fly { animation: gbs-fly-in 1.3s cubic-bezier(.3, .8, .3, 1) backwards, gbs-hover 3.4s ease-in-out 1.3s infinite; transform-origin: 60% 60%; }
+.bee-hover { animation: gbs-hover 3.4s ease-in-out infinite; }
+
+/* The honeycomb drifts slowly behind the dashboard banner. */
+.hex-drift { animation: gbs-hex-drift 24s linear infinite; }
+
+/* Gold sheen across the primary buttons on hover. */
+.btn-shine { background-image: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .45) 50%, transparent 65%); background-size: 200% 100%; background-position: 200% 0; }
+.btn-shine:hover { animation: gbs-shine .9s ease-out; }
+
+/* The gold dot on the current page in the sidebar pops in. */
+.nav-on::after { animation: gbs-pop .35s cubic-bezier(.3, 1.6, .5, 1) backwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

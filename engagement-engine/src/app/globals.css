@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+/*
+  GBS brand system for the Engagement Engine, from the Get Bee Seen brand kit
+  (root styles.css): cream ground, deep green, bee yellow, thick green outlines,
+  hard offset shadows, pill buttons, Bunga display type (Alfa Slab One fallback)
+  and Neue Leiden body type (Archivo fallback). Brand character is strongest on
+  chrome — titles, buttons, cards, navigation — and quieter inside dense tables.
+  The brand is a light identity, so the app commits to it in every theme.
+*/
+:root {
+  color-scheme: light;
+  /* brand palette */
+  --cream: #fff2dc;
+  --cream-lift: #fffaf0;
+  --yellow: #ffb933;
+  --yellow-deep: #ff9600;
+  --green: #196144;
+  --green-2: #3e5d48;
+  --green-ink: #0f3d2b;
+  --ink: #191816;
+
+  /* roles */
+  --bg: var(--cream);
+  --surface: var(--cream-lift);
+  --surface-2: #ffffff;
+  --surface-sunken: #fbecd2;
+  --border: rgba(25, 97, 68, 0.16);
+  --border-strong: var(--green);
+  --ink-2: #4a4639;
+  --ink-3: #7a7360;
+  --brand: var(--green);
+  --brand-ink: var(--cream);
+  --brand-soft: #e3eee4;
+  --accent: var(--yellow);
+  --accent-soft: #ffe7b8;
+  --sidebar: var(--green);
+  --sidebar-2: #12503a;
+  --sidebar-ink: var(--cream);
+  --sidebar-ink-2: #b9d1c2;
+  --good: #16804f;
+  --good-soft: #dcefe2;
+  --warn: #8a5300;
+  --warn-soft: #ffe9c2;
+  --bad: #b42318;
+  --bad-soft: #fde4df;
+  --info: #2a6fd6;
+  --info-soft: #e3ecfb;
+  /* charts: brand green, brand orange, blue — validated for colour-blind separation */
+  --series-1: #16804f;
+  --series-2: #ee8a00;
+  --series-3: #2a6fd6;
+  --focus: var(--yellow-deep);
+
+  --shadow-hard: 4px 5px 0 rgba(25, 97, 68, 0.9);
+  --shadow-hard-sm: 3px 3px 0 rgba(25, 97, 68, 0.9);
+  --shadow-hard-lg: 7px 8px 0 rgba(25, 97, 68, 0.9);
+  --font-display: "Bunga", "Alfa Slab One", "Cooper Black", Georgia, serif;
+  --font-body: "Neue Leiden", "Archivo", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-sunken: var(--surface-sunken);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--yellow-deep);
+  --color-accent-soft: var(--accent-soft);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-2: var(--sidebar-2);
+  --color-sidebar-ink: var(--sidebar-ink);
+  --color-sidebar-ink-2: var(--sidebar-ink-2);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-green-ink: var(--green-ink);
+  --color-green-2: var(--green-2);
+  --color-cream-disc: var(--cream);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+  --shadow-hard: var(--shadow-hard);
+  --shadow-hard-sm: var(--shadow-hard-sm);
+  --shadow-hard-lg: var(--shadow-hard-lg);
+}
+
+@layer base {
+  html,
+  body {
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  body {
+    font-family: var(--font-body);
+    font-size: 14.5px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  input,
+  select,
+  textarea {
+    color: var(--ink);
+    background: var(--surface-2);
+  }
+
+  ::selection {
+    background: var(--yellow);
+    color: var(--green-ink);
+  }
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dot texture from the GBS badge, used on green brand surfaces. */
+.gbs-dots {
+  background-image: radial-gradient(rgba(255, 242, 220, 0.09) 1.6px, transparent 1.6px);
+  background-size: 26px 26px;
+}
+
+/* The brand's tactile press: lift on hover, settle on press. */
+.gbs-press {
+  transition: transform 0.16s cubic-bezier(0.22, 0.68, 0.3, 1), box-shadow 0.16s cubic-bezier(0.22, 0.68, 0.3, 1), background-color 0.16s;
+}
+.gbs-press:hover:not(:disabled) {
+  transform: translate(-1px, -2px);
+  box-shadow: 4px 5px 0 rgba(25, 97, 68, 0.9);
+}
+.gbs-press:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 rgba(25, 97, 68, 0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
