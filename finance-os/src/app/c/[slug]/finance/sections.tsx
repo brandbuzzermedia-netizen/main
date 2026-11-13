@@ -207,7 +207,7 @@ export async function TaxSection({ ctx }: { ctx: CompanyContext }) {
       ledgers: [
         { l: "Income / sales", href: ex("income") }, { l: "Rent", href: `/c/${slug}/finance?tab=rental` }, { l: "Purchases & expenses", href: ex("expense") }, { l: "GST summary", href: ex("gst") },
         { l: "TDS references" }, { l: "Fixed assets & depreciation" }, { l: "Receivables / payables", href: `/c/${slug}/finance/ledger` },
-        { l: "Bank reconciliation vs statement", href: `/switch?to=${slug}&next=/payments/import` }, { l: "Source-document index", href: `/c/${slug}/vault` },
+        { l: "Bank reconciliation vs statement", href: `/c/${slug}/receivables/payments/import` }, { l: "Source-document index", href: `/c/${slug}/vault` },
       ],
     }} />
   );

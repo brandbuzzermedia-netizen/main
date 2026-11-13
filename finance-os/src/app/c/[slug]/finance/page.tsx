@@ -26,7 +26,7 @@ export default async function FinancePage({ params, searchParams }: PageProps<"/
       <PageHead own={d.own} treat={d.treat} title="Finance" right={ctx.can("documents.write") ? <Cta href={`${base}?tab=expenses`}>Upload bill / receipt</Cta> : undefined} />
       <FinanceTabs current={tab} base={base} hide={(["rental", "expenses", "tax"] as const).filter((k) => !ctx.company.enabled_modules.includes(k))} />
       {tab === "overview" && (canFin ? <FinanceOverview vm={await loadOverview(ctx.supabase, [ctx.company.id], todayInBusinessTz(), ctx.company.fy_start_month, d.kpis,
-        [link(`${base}/ledger`, "Open ledger & approvals"), link(`/switch?to=${slug}&next=/invoices`, "Invoices & receivables"), link(`/switch?to=${slug}&next=/payments`, "Payments & bank import")], true)} />
+        [link(`${base}/ledger`, "Open ledger & approvals"), link(`/c/${slug}/receivables/invoices`, "Invoices & receivables"), link(`/c/${slug}/receivables/payments`, "Payments & bank import")], true)} />
         : <div style={{ color: "#55605a" }}>Your role does not include the finance ledger.</div>)}
       {tab === "expenses" && <ExpensesSection ctx={ctx} bill={typeof sp.bill === "string" ? sp.bill : undefined} edit={sp.edit === "1"} />}
       {tab === "rental" && (ctx.can("rental.read") ? <RentalSection ctx={ctx} /> : <div style={{ color: "#55605a" }}>Your role does not include rental records.</div>)}

@@ -79,3 +79,33 @@ test("the emergency stop needs a reason and can be resumed", async ({ page }) =>
   await page.getByRole("button", { name: "Resume company" }).click();
   await expect(page.getByRole("button", { name: "Emergency stop" })).toBeVisible();
 });
+
+test("receivables live under the company's own address, and old links still work", async ({ page }) => {
+  for (const p of ["", "/clients", "/invoices", "/payments", "/tasks", "/integrations", "/invoices/new", "/payments/new", "/invoices/import", "/payments/import"]) {
+    const res = await page.goto(`/c/demo-gbs/receivables${p}`);
+    expect(res?.status(), p).toBe(200);
+    await expectHealthy(page);
+  }
+  await page.goto("/c/demo-gbs/receivables/invoices");
+  const first = page.locator('a[href^="/c/demo-gbs/receivables/invoices/"]').filter({ hasText: /\S/ }).first();
+  const href = await first.getAttribute("href");
+  expect(href).toBeTruthy();
+  expect((await page.goto(href!))?.status()).toBe(200);
+  await expectHealthy(page);
+
+  await page.goto("/switch?to=demo-gbs");
+  await page.goto("/invoices");
+  await expect(page).toHaveURL(/\/c\/demo-gbs\/receivables\/invoices$/);
+  // A company the user is not a member of is not found, even by its address.
+  expect((await page.goto("/c/someone-else/receivables"))?.status()).toBe(404);
+});
+
+test("a client created in receivables opens on its own page", async ({ page }) => {
+  const code = `E2E${Date.now() % 100000}`;
+  await page.goto("/c/demo-gbs/receivables/clients/new");
+  await page.fill("input[name=client_code]", code);
+  await page.fill("input[name=legal_name]", `E2E Client ${code}`);
+  await page.locator("form button[type=submit]").last().click();
+  await expect(page).toHaveURL(/\/c\/demo-gbs\/receivables\/clients\/[0-9a-f-]{36}$/);
+  await expect(page.getByText(`E2E Client ${code}`).first()).toBeVisible();
+});

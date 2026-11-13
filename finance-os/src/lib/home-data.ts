@@ -70,7 +70,7 @@ async function kpiSet(ctx: CompanyContext, set: string, period: Period, today: s
       const passOut = (ledger.data ?? []).filter((r) => ["approved", "partially_settled", "settled"].includes(r.status as string) && (r.txn_date as string) >= period.start && (r.txn_date as string) < period.end).reduce((s, r) => s + Number(r.amount_minor), 0);
       return [open,
         { l: "Won this month", s: `${p.won.count} deal${p.won.count === 1 ? "" : "s"} won`, v: formatShort(p.won.valueMinor) },
-        { l: "Retainer MRR", s: fin ? `${(clients.data ?? []).length} retainers` : "Needs finance access", v: fin ? formatShort(mrr) : NO, href: fin ? `/switch?to=${ctx.company.slug}&next=/clients` : undefined },
+        { l: "Retainer MRR", s: fin ? `${(clients.data ?? []).length} retainers` : "Needs finance access", v: fin ? formatShort(mrr) : NO, href: fin ? `/c/${ctx.company.slug}/receivables/clients` : undefined },
         { l: "Ad spend (pass-through)", s: "Not agency revenue", v: fin ? formatShort(passOut) : NO }];
     }
     case "products": {
