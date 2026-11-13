@@ -42,9 +42,10 @@ export default async function GroupAutomation() {
           n: `${defName.get(x.definition_id) ?? "Workflow"} · ${names.get(x.organization_id)}`,
           s: x.is_mock ? `${x.status.replace("_", " ")} (mock)` : x.status.replace("_", " "), c: RUN_COLOR[x.status] ?? C.muted })),
         conns: [
-          { n: "n8n", s: n8n.mock ? "Not connected · mock mode" : "Connected" },
-          { n: "Claude AI", s: aiConfig().mock ? "Not connected · mock mode" : "Connected" },
-          { n: "Businesses covered", s: String(cs.length) },
+          { n: "n8n", s: n8n.mock ? "Needs connection" : `Connected · ${n8n.environment}` },
+          { n: "Email provider", s: "Needs connection" },
+          { n: "WhatsApp provider", s: "Needs confirmation" },
+          { n: "Claude (backend only)", s: aiConfig().mock ? "Optional · no key" : "Configured" },
         ],
       }} />
     </>
