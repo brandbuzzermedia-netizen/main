@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:db": "scripts/test-db.sh",
     "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > src/lib/database.generated.ts"
+    "db:types": "supabase gen types typescript --local > src/lib/database.generated.ts",
+    "test:e2e": "playwright test --trace off"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",
@@ -25,6 +26,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^22.20.5",
     "@types/react": "^19",
