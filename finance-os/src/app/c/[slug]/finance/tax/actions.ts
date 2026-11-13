@@ -25,7 +25,7 @@ export async function addGstPeriodsAction(slug: string, fd: FormData) {
   });
   const { error } = await ctx.supabase.from("tax_periods").upsert(rows, { onConflict: "organization_id,legal_entity_id,kind,period_start", ignoreDuplicates: true });
   if (error) throw new Error(error.message);
-  revalidatePath(`/c/${slug}/tax`);
+  revalidatePath(`/c/${slug}/finance`, "layout");
 }
 
 export async function addPeriodAction(slug: string, fd: FormData) {
@@ -38,7 +38,7 @@ export async function addPeriodAction(slug: string, fd: FormData) {
     due_on: fd.get("due_on") ? date.parse(fd.get("due_on")) : null, accountant_id: fd.get("accountant_id") ? z.uuid().parse(fd.get("accountant_id")) : null,
   });
   if (error) throw new Error(error.message);
-  revalidatePath(`/c/${slug}/tax`);
+  revalidatePath(`/c/${slug}/finance`, "layout");
 }
 
 export async function setStatusAction(slug: string, fd: FormData) {
@@ -46,14 +46,14 @@ export async function setStatusAction(slug: string, fd: FormData) {
   const { error } = await ctx.supabase.from("tax_periods").update({ status: z.enum(["not_started", "preparing", "in_review", "ready_to_file"]).parse(fd.get("status")) })
     .eq("id", z.uuid().parse(fd.get("id"))).eq("organization_id", ctx.company.id);
   if (error) throw new Error(error.message);
-  revalidatePath(`/c/${slug}/tax`);
+  revalidatePath(`/c/${slug}/finance`, "layout");
 }
 
 export async function recordFilingAction(slug: string, fd: FormData) {
   const ctx = await getCompanyContext(slug);
   const { error } = await ctx.supabase.rpc("record_filing", { p_period: z.uuid().parse(fd.get("id")), p_ack: z.string().trim().min(5).max(80).parse(fd.get("ack")), p_filed_on: date.parse(fd.get("filed_on")) });
   if (error) throw new Error(error.message);
-  revalidatePath(`/c/${slug}/tax`);
+  revalidatePath(`/c/${slug}/finance`, "layout");
 }
 
 export async function grantAccountantAction(slug: string, fd: FormData) {
@@ -64,5 +64,5 @@ export async function grantAccountantAction(slug: string, fd: FormData) {
     period_start: date.parse(fd.get("period_start")), period_end: date.parse(fd.get("period_end")),
   });
   if (error) throw new Error(error.message);
-  revalidatePath(`/c/${slug}/tax`);
+  revalidatePath(`/c/${slug}/finance`, "layout");
 }

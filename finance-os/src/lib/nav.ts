@@ -24,7 +24,7 @@ export function companyNav(company: CompanyLike, can: (p: string) => boolean, ro
     operations: { href: `${base}/operations`, allowed: can("operations.read") },
     automation: { href: `${base}/automation`, allowed: can("automation.manage") || can("automation.approve") },
     marketing: { href: `${base}/r/ads`, allowed: can("operations.read") },
-    finance: { href: `${base}/ledger`, allowed: can("finance.read") },
+    finance: { href: `${base}/finance`, allowed: can("finance.read") },
     rental: { href: `${base}/rental`, allowed: can("rental.read") },
     expenses: { href: `${base}/bills`, allowed: can("documents.write") || can("documents.read") },
     tax: { href: `${base}/tax`, allowed: can("finance.read") || role === "accountant" },

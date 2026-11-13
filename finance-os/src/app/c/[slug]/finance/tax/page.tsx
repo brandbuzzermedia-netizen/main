@@ -10,7 +10,7 @@ import { addGstPeriodsAction, addPeriodAction, grantAccountantAction, recordFili
 export const metadata: Metadata = { title: "Tax & GST" };
 const input = "rounded-lg border border-line bg-surface px-2 py-2 text-sm";
 
-export default async function TaxPage({ params }: PageProps<"/c/[slug]/tax">) {
+export default async function TaxPage({ params }: PageProps<"/c/[slug]/finance/tax">) {
   const { slug } = await params;
   const ctx = await getCompanyContext(slug);
   const isAccountant = ctx.role === "accountant";
@@ -27,7 +27,7 @@ export default async function TaxPage({ params }: PageProps<"/c/[slug]/tax">) {
   const ps = (periods.data ?? []) as { id: string; label: string; kind: string; period_start: string; period_end: string; due_on: string | null; status: string; ack_reference: string | null; filed_on: string | null }[];
   const ents = (entities.data ?? []) as { id: string; name: string }[];
   const canWrite = ctx.can("finance.write");
-  const ex = (reg: string) => `/c/${slug}/tax/export?register=${reg}&fy=${fy.startYear}`;
+  const ex = (reg: string) => `/c/${slug}/finance/tax/export?register=${reg}&fy=${fy.startYear}`;
   return (
     <>
       <PageHeader title="Tax & GST" description={`${fy.label} (income tax ${assessmentYearLabel(fy.startYear)}). Preparation support for your accountant: nothing here files a return or decides tax treatment.`} />

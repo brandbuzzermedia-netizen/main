@@ -38,7 +38,7 @@ export async function createEntryAction(slug: string, _p: LedgerState, fd: FormD
     status: p.data.submit ? "pending_approval" : "draft", submitted_at: p.data.submit ? new Date().toISOString() : null,
   });
   if (error) return { error: error.message };
-  revalidatePath(`/c/${slug}/ledger`);
+  revalidatePath(`/c/${slug}/finance/ledger`);
   return { ok: p.data.submit ? "Submitted for approval. It counts in reports once approved." : "Saved as draft." };
 }
 
@@ -46,7 +46,7 @@ async function rpc(slug: string, fn: string, args: Record<string, unknown>) {
   const ctx = await getCompanyContext(slug);
   const { error } = await ctx.supabase.rpc(fn, args);
   if (error) throw new Error(error.message);
-  revalidatePath(`/c/${slug}/ledger`);
+  revalidatePath(`/c/${slug}/finance/ledger`);
 }
 
 export async function submitEntryAction(slug: string, fd: FormData) {
@@ -54,7 +54,7 @@ export async function submitEntryAction(slug: string, fd: FormData) {
   const id = z.uuid().parse(fd.get("id"));
   const { error } = await ctx.supabase.from("ledger_entries").update({ status: "pending_approval", submitted_at: new Date().toISOString() }).eq("id", id).eq("organization_id", ctx.company.id);
   if (error) throw new Error(error.message);
-  revalidatePath(`/c/${slug}/ledger`);
+  revalidatePath(`/c/${slug}/finance/ledger`);
 }
 export async function decideEntryAction(slug: string, fd: FormData) {
   await rpc(slug, "approve_ledger_entry", { p_entry: z.uuid().parse(fd.get("id")), p_approve: fd.get("approve") === "true", p_note: null });
@@ -82,6 +82,6 @@ export async function transferAction(slug: string, _p: LedgerState, fd: FormData
   } catch (e) {
     return { error: e instanceof z.ZodError ? "Fill in every field." : (e as Error).message };
   }
-  revalidatePath(`/c/${slug}/ledger`);
+  revalidatePath(`/c/${slug}/finance/ledger`);
   return { ok: "Both legs created, pending approval in each company. Transfers never count as income or expense." };
 }

@@ -24,7 +24,7 @@ const METRICS: { key: LedgerMetric; label: string; basis: string }[] = [
 ];
 const TONE: Record<string, "neutral" | "warn" | "ok" | "danger" | "brand"> = { draft: "neutral", pending_approval: "warn", approved: "brand", partially_settled: "brand", settled: "ok", void: "neutral", reversed: "danger" };
 
-export default async function LedgerPage({ params, searchParams }: PageProps<"/c/[slug]/ledger">) {
+export default async function LedgerPage({ params, searchParams }: PageProps<"/c/[slug]/finance/ledger">) {
   const { slug } = await params;
   const sp = await searchParams;
   const ctx = await getCompanyContext(slug);
@@ -46,7 +46,7 @@ export default async function LedgerPage({ params, searchParams }: PageProps<"/c
   const show = METRICS.find((m) => m.key === sp.show);
   const drill = show ? rowsForMetric(rows, show.key, period) : null;
   const pending = rows.filter((r) => r.status === "pending_approval");
-  const base = `/c/${slug}/ledger`;
+  const base = `/c/${slug}/finance/ledger`;
   const keep = key === "month" ? "" : `period=${key}&`;
   return (
     <>

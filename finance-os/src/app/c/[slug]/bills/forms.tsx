@@ -50,3 +50,20 @@ export function ReviewForm({ slug, docId, extractionId, fields, entities, units,
     </form>
   );
 }
+
+/** The design's dashed "Choose files or drop here" box. Picking a file uploads it straight away. */
+export function UploadBox({ slug }: { slug: string }) {
+  const [s, action, pending] = useActionState<UploadState, FormData>(uploadBillAction.bind(null, slug), {});
+  return (
+    <form action={action}>
+      <label style={{ display: "block", border: "1.5px dashed #cfc8b5", borderRadius: 12, padding: 26, textAlign: "center", color: "#55605a", fontSize: 14, lineHeight: 1.6, cursor: "pointer" }}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => { e.preventDefault(); const input = e.currentTarget.querySelector("input"); if (input && e.dataTransfer.files.length) { input.files = e.dataTransfer.files; input.form?.requestSubmit(); } }}>
+        <input type="file" name="file" accept="application/pdf,image/jpeg,image/png,image/webp,image/heic" capture="environment" required
+          onChange={(e) => e.currentTarget.form?.requestSubmit()} style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
+        {pending ? <b style={{ color: "var(--co-side)" }}>Uploading and reading…</b> : <><b style={{ color: "var(--co-side)" }}>Choose files</b> or drop here<br />Photos, scans, PDFs · phone camera · one at a time</>}
+      </label>
+      {s.error && <div role="alert" style={{ background: "#F5DADA", color: "#8C2F39", borderRadius: 8, padding: "9px 12px", fontSize: 13, marginTop: 10 }}>{s.error} {s.duplicateOf && <Link href={`/c/${slug}/finance?tab=expenses&bill=${s.duplicateOf}`} style={{ textDecoration: "underline" }}>Open the earlier upload</Link>}</div>}
+    </form>
+  );
+}

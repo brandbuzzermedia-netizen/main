@@ -2,70 +2,63 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCompanyContext } from "@/lib/workspace";
-import { AUTOMATION_TEMPLATES } from "@/integrations/n8n/templates";
+import { designFor, workflowKey } from "@/domain/design";
 
 async function manager(slug: string) {
   const ctx = await getCompanyContext(slug);
   if (!ctx.can("automation.manage") && !ctx.can("automation.approve")) throw new Error("Not allowed");
   return ctx;
 }
-const done = (slug: string) => revalidatePath(`/c/${slug}/automation`);
 
-export async function addTemplateAction(slug: string, fd: FormData) {
+/** Finds or creates the definition row for one workflow in the company's design library. */
+async function definition(slug: string, name: string) {
   const ctx = await manager(slug);
-  const t = AUTOMATION_TEMPLATES.find((x) => x.key === fd.get("key"));
-  if (!t) throw new Error("Unknown template");
-  const { error } = await ctx.supabase.from("automation_definitions").insert({
-    organization_id: ctx.company.id, template_key: t.key, name: t.name, trigger_kind: t.trigger, trigger_detail: t.detail,
-    enabled: false, requires_approval: t.requiresApproval, is_financial: t.isFinancial, idempotent: t.idempotent,
+  const wf = designFor(slug).wf.find((w) => w.n === name);
+  if (!wf) throw new Error("Unknown workflow");
+  const key = workflowKey(wf.n);
+  const { data: existing } = await ctx.supabase.from("automation_definitions").select("id, enabled").eq("organization_id", ctx.company.id).eq("template_key", key).maybeSingle();
+  if (existing) return { ctx, id: existing.id as string, wf };
+  const gated = wf.mode !== "Auto";
+  const { data, error } = await ctx.supabase.from("automation_definitions").insert({
+    organization_id: ctx.company.id, template_key: key, name: wf.n, trigger_kind: "record_change", trigger_detail: wf.trigger,
+    enabled: false, requires_approval: gated, is_financial: /invoice|payment|refund|commission|disbursal/i.test(wf.n), idempotent: true,
     environment: process.env.N8N_ENVIRONMENT ?? "development",
-  });
-  if (error) throw new Error(error.code === "23505" ? "Already added" : error.message);
-  done(slug);
+  }).select("id").single();
+  if (error) throw new Error(error.message);
+  return { ctx, id: data.id as string, wf };
 }
 
-export async function toggleAction(slug: string, fd: FormData) {
-  const ctx = await manager(slug);
-  const { error } = await ctx.supabase.from("automation_definitions").update({ enabled: fd.get("enabled") === "true" })
-    .eq("id", z.uuid().parse(fd.get("id"))).eq("organization_id", ctx.company.id);
+export async function toggleWorkflowAction(slug: string, fd: FormData) {
+  const { ctx, id } = await definition(slug, String(fd.get("name")));
+  if (!ctx.can("automation.manage")) throw new Error("Only owners and company admins switch workflows on or off.");
+  const { error } = await ctx.supabase.from("automation_definitions").update({ enabled: fd.get("on") === "true" }).eq("id", id);
   if (error) throw new Error(error.message);
-  done(slug);
+  revalidatePath(`/c/${slug}`, "layout");
 }
 
-/** Dry run in mock mode: validates the gates, records a labelled mock run, sends nothing. */
-export async function testRunAction(slug: string, fd: FormData) {
-  const ctx = await manager(slug);
-  const { data: run, error } = await ctx.supabase.rpc("request_automation_run", {
-    p_definition: z.uuid().parse(fd.get("id")), p_idempotency_key: `test-${randomUUID()}`, p_source: "test_run", p_summary: { requested_by: ctx.displayName }, p_mock: true,
-  });
-  if (error) throw new Error(error.message);
-  const c = await ctx.supabase.rpc("complete_mock_run", { p_run: run });
-  if (c.error) throw new Error(c.error.message);
-  done(slug);
-}
-
-/** Manual trigger of a real run. It waits for approval if the workflow needs it, then the dispatcher sends it. */
-export async function runNowAction(slug: string, fd: FormData) {
-  const ctx = await manager(slug);
-  const { error } = await ctx.supabase.rpc("request_automation_run", {
-    p_definition: z.uuid().parse(fd.get("id")), p_idempotency_key: `manual-${randomUUID()}`, p_source: "manual", p_summary: { requested_by: ctx.displayName }, p_mock: false,
-  });
-  if (error) throw new Error(error.message);
-  done(slug);
+/** Dry run: checks the gates and records a labelled mock run. Nothing is sent or changed. */
+export async function dryRunAction(slug: string, fd: FormData) {
+  const { ctx, id, wf } = await definition(slug, String(fd.get("name")));
+  const { data: run, error } = await ctx.supabase.rpc("request_automation_run", { p_definition: id, p_idempotency_key: `dry-${randomUUID()}`, p_source: "dry_run", p_summary: { requested_by: ctx.displayName }, p_mock: true });
+  if (error) redirect(`/c/${slug}/automation?dry=${encodeURIComponent(`Dry run blocked: ${error.message}`)}`);
+  await ctx.supabase.rpc("complete_mock_run", { p_run: run });
+  revalidatePath(`/c/${slug}/automation`);
+  redirect(`/c/${slug}/automation?dry=${encodeURIComponent(`Dry run: "${wf.n}" passed validation, 0 records changed, approval gate: ${wf.mode === "Auto" ? "none" : "required"}`)}`);
 }
 
 export async function decideAction(slug: string, fd: FormData) {
   const ctx = await manager(slug);
   const { error } = await ctx.supabase.rpc("decide_automation_run", { p_run: z.uuid().parse(fd.get("id")), p_approve: fd.get("approve") === "true" });
   if (error) throw new Error(error.message);
-  done(slug);
+  revalidatePath(`/c/${slug}`, "layout");
 }
 
 export async function retryAction(slug: string, fd: FormData) {
   const ctx = await manager(slug);
   const { error } = await ctx.supabase.rpc("retry_automation_run", { p_run: z.uuid().parse(fd.get("id")) });
   if (error) throw new Error(error.message);
-  done(slug);
+  revalidatePath(`/c/${slug}/automation`);
 }

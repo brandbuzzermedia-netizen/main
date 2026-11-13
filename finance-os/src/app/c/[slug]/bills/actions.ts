@@ -48,7 +48,7 @@ export async function uploadBillAction(slug: string, _p: UploadState, fd: FormDa
     await ctx.supabase.from("ai_usage_log").insert({ organization_id: ctx.company.id, user_id: ctx.userId, purpose: "bill_extraction", model: x.usage.model,
       input_tokens: x.usage.input_tokens, output_tokens: x.usage.output_tokens, refused: x.usage.refused, outcome: x.error ? "error" : "draft" });
   }
-  redirect(`/c/${slug}/bills/${id}`);
+  redirect(`/c/${slug}/finance?tab=expenses&bill=${id}`);
 }
 
 const reviewSchema = z.object({
@@ -88,8 +88,8 @@ export async function submitReviewAction(slug: string, docId: string, _p: Review
     source_document_id: docId, ocr_extraction_id: ex.id, rental_unit_id: p.data.rental_unit_id || null, status: "pending_approval", submitted_at: new Date().toISOString(),
   });
   if (r2.error) return { error: r2.error.message };
-  revalidatePath(`/c/${slug}/bills`);
-  redirect(`/c/${slug}/bills?submitted=1`);
+  revalidatePath(`/c/${slug}/finance`, "layout");
+  redirect(`/c/${slug}/finance?tab=expenses&bill=${docId}`);
 }
 
 export async function rejectBillAction(slug: string, fd: FormData) {
@@ -98,6 +98,26 @@ export async function rejectBillAction(slug: string, fd: FormData) {
   const id = z.uuid().parse(fd.get("extraction_id"));
   const { error } = await ctx.supabase.from("ocr_extractions").update({ status: "rejected" }).eq("id", id).eq("organization_id", ctx.company.id);
   if (error) throw new Error(error.message);
-  revalidatePath(`/c/${slug}/bills`);
-  redirect(`/c/${slug}/bills`);
+  revalidatePath(`/c/${slug}/finance`, "layout");
+  redirect(`/c/${slug}/finance?tab=expenses`);
+}
+
+/** Reads the original again (new extraction row; the earlier one is kept). */
+export async function rescanAction(slug: string, fd: FormData) {
+  const ctx = await getCompanyContext(slug);
+  if (!ctx.can("documents.write")) throw new Error("Not allowed");
+  const docId = z.uuid().parse(fd.get("document_id"));
+  const { data: doc } = await ctx.supabase.from("documents").select("storage_path, mime_type").eq("id", docId).eq("organization_id", ctx.company.id).single();
+  const { data: settings } = await ctx.supabase.from("app_settings").select("ai_enabled").eq("organization_id", ctx.company.id).maybeSingle();
+  const { data: remaining } = await ctx.supabase.rpc("ai_budget_remaining", { p_org: ctx.company.id });
+  if (!doc || !settings?.ai_enabled || Number(remaining ?? 0) <= 20000) redirect(`/c/${slug}/finance?tab=expenses&bill=${docId}&edit=1`);
+  const file = await ctx.supabase.storage.from("documents").download(doc.storage_path as string);
+  if (file.error || !file.data) throw new Error("The original could not be read from storage.");
+  const x = await extractBill({ bytes: new Uint8Array(await file.data.arrayBuffer()), mime: doc.mime_type as string });
+  await ctx.supabase.from("ocr_extractions").insert({ organization_id: ctx.company.id, document_id: docId, provider: "anthropic", model: x.usage.model, is_mock: false,
+    status: x.error ? "failed" : "extracted", fields: x.result, error: x.error ?? null });
+  await ctx.supabase.from("ai_usage_log").insert({ organization_id: ctx.company.id, user_id: ctx.userId, purpose: "bill_extraction", model: x.usage.model,
+    input_tokens: x.usage.input_tokens, output_tokens: x.usage.output_tokens, refused: x.usage.refused, outcome: x.error ? "error" : "draft" });
+  revalidatePath(`/c/${slug}/finance`, "layout");
+  redirect(`/c/${slug}/finance?tab=expenses&bill=${docId}`);
 }

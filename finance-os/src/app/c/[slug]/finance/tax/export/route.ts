@@ -15,9 +15,10 @@ const REGISTERS = {
   expense: { title: "Purchase and expense register", types: ["expense", "write_off"] },
   financing: { title: "Loans, capital, deposits and pass-through", types: ["loan_in", "loan_repayment", "capital_in", "owner_withdrawal", "deposit_received", "deposit_refunded", "pass_through_in", "pass_through_out", "tax_payment", "transfer_in", "transfer_out"] },
   gst: { title: "GST summary by month (as recorded, for review)", types: [] as string[] },
+  pack: { title: "Accountant pack: every approved ledger entry", types: ["income", "commission_income", "other_income", "refund_out", "credit_note", "expense", "write_off", "loan_in", "loan_repayment", "capital_in", "owner_withdrawal", "deposit_received", "deposit_refunded", "pass_through_in", "pass_through_out", "tax_payment", "transfer_in", "transfer_out"] },
 } as const;
 
-export async function GET(request: NextRequest, { params }: RouteContext<"/c/[slug]/tax/export">) {
+export async function GET(request: NextRequest, { params }: RouteContext<"/c/[slug]/finance/tax/export">) {
   const { slug } = await params;
   const ctx = await getCompanyContext(slug);
   const which = request.nextUrl.searchParams.get("register") as keyof typeof REGISTERS;
