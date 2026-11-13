@@ -70,8 +70,11 @@ select pg_temp.assert((select count(*) from public.tax_periods) = 1, 'accountant
 select pg_temp.assert((select count(*) from public.automation_runs) = 0, 'accountant sees no automation');
 select pg_temp.logout();
 select pg_temp.login('00000000-0000-0000-0000-00000000000c');
+select public.log_export((select org from t), 'contacts', 3);
+select pg_temp.assert_raises(format($$select public.log_export(%L, 'x', 1)$$, gen_random_uuid()), 'not a member', 'cannot log exports for another company');
 select pg_temp.assert((select count(*) from public.tax_periods) = 0, 'rep sees no tax data');
 select pg_temp.assert(public.ai_budget_remaining((select org from t)) = 300, 'members see the shared budget');
 select pg_temp.assert_raises($$select public.request_automation_run((select def from t), 'evt-0000003', 'test')$$, 'not allowed', 'rep cannot trigger automations');
 select pg_temp.logout();
+select pg_temp.assert((select count(*) from public.audit_logs where action = 'EXPORT') = 1, 'export is audited');
 rollback;

@@ -44,7 +44,9 @@ export type Company = {
 export type Permission =
   | "company.view" | "company.settings" | "company.emergency_stop" | "members.manage" | "members.grant_owner"
   | "dashboard.owner" | "finance.read" | "finance.write" | "crm.read_all" | "crm.read_assigned" | "crm.read_shared"
-  | "crm.write" | "crm.manage" | "tasks.read_all" | "tasks.write" | "audit.read";
+  | "crm.write" | "crm.manage" | "tasks.read_all" | "tasks.write" | "audit.read"
+  | "finance.approve" | "finance.sensitive" | "rental.read" | "rental.write" | "documents.read" | "documents.write"
+  | "automation.manage" | "automation.approve" | "operations.read" | "operations.write" | "compliance.verify";
 
 export type GroupRole = "group_owner" | "family_owner" | "group_viewer";
 export type GroupRef = { id: string; name: string; role: GroupRole; is_demo: boolean; fy_start_month: number; base_currency: string };
