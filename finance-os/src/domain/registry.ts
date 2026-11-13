@@ -9,22 +9,22 @@
 
 export const MODULES = [
   { key: "home", label: "Home", icon: "◧", phase: 0 },
-  { key: "leads", label: "Leads", icon: "◎", phase: 3 },
+  { key: "leads", label: "Leads", icon: "◎", phase: 0 },
   { key: "pipeline", label: "Pipeline", icon: "▥", phase: 0 },
-  { key: "outreach", label: "Outreach", icon: "➶", phase: 3 },
+  { key: "outreach", label: "Outreach", icon: "➶", phase: 0 },
   { key: "meetings", label: "Meetings", icon: "◷", phase: 0 },
   { key: "tasks", label: "Tasks & follow-ups", icon: "✓", phase: 0 },
-  { key: "customers", label: "Customers", icon: "☺", phase: 3 },
-  { key: "operations", label: "Operations", icon: "⚙", phase: 10 },
-  { key: "automation", label: "Automation", icon: "⚡", phase: 8 },
-  { key: "marketing", label: "Marketing", icon: "◈", phase: 10 },
+  { key: "customers", label: "Customers", icon: "☺", phase: 0 },
+  { key: "operations", label: "Operations", icon: "⚙", phase: 0 },
+  { key: "automation", label: "Automation", icon: "⚡", phase: 0 },
+  { key: "marketing", label: "Marketing", icon: "◈", phase: 0 },
   { key: "finance", label: "Finance", icon: "₹", phase: 0 },
-  { key: "rental", label: "Rental income", icon: "⌂", phase: 5 },
-  { key: "expenses", label: "Expenses & bills", icon: "▭", phase: 6 },
-  { key: "tax", label: "Tax & GST", icon: "§", phase: 7 },
+  { key: "rental", label: "Rental income", icon: "⌂", phase: 0 },
+  { key: "expenses", label: "Expenses & bills", icon: "▭", phase: 0 },
+  { key: "tax", label: "Tax & GST", icon: "§", phase: 0 },
   { key: "team", label: "Team", icon: "☷", phase: 0 },
-  { key: "reports", label: "Reports", icon: "▤", phase: 11 },
-  { key: "vault", label: "Vault", icon: "▣", phase: 6 },
+  { key: "reports", label: "Reports", icon: "▤", phase: 0 },
+  { key: "vault", label: "Vault", icon: "▣", phase: 0 },
   { key: "settings", label: "Settings", icon: "✲", phase: 0 },
 ] as const;
 
@@ -200,6 +200,13 @@ export const COMPANY_TEMPLATES: CompanyTemplate[] = [
     setup: ["Add first SKUs with fabric, weave, price and photos", "Set shipping and return policy", "Connect Instagram and WhatsApp enquiries"],
   },
 ];
+
+// Every workspace that keeps books also gets bills, tax readiness and the vault.
+for (const t of COMPANY_TEMPLATES) {
+  if (t.enabled_modules.includes("finance")) {
+    for (const m of ["expenses", "tax", "vault"] as ModuleKey[]) if (!t.enabled_modules.includes(m)) t.enabled_modules.push(m);
+  }
+}
 
 /** Group shell identity. Restrained and separate from every company's brand. */
 export const GROUP_BRAND = { sidebar: "#173F32", accent: "#C7A45A" } as const;

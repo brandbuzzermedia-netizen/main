@@ -4,7 +4,7 @@ import { getCompanyContext } from "@/lib/workspace";
 import { BUSINESS_MODELS, CONSOLIDATION, GROUP_BRAND, LIFECYCLE, OWNERSHIP_TYPES } from "@/domain/registry";
 import { formatDateTime } from "@/domain/dates";
 import { Card, Dl, PageHeader } from "@/components/ui";
-import { SettingsForm, StopForm } from "../forms";
+import { AiSettingsForm, SettingsForm, StopForm } from "../forms";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -13,6 +13,9 @@ export default async function SettingsPage({ params }: PageProps<"/c/[slug]/sett
   const ctx = await getCompanyContext(slug);
   if (!ctx.can("company.settings") && !ctx.can("company.emergency_stop")) notFound();
   const c = ctx.company;
+  const { data: app } = ctx.can("finance.approve")
+    ? await ctx.supabase.from("app_settings").select("ai_enabled, ai_monthly_token_limit, self_approval_limit_minor").eq("organization_id", c.id).maybeSingle()
+    : { data: null };
   return (
     <>
       <PageHeader title="Settings" description={c.name} />
@@ -31,6 +34,11 @@ export default async function SettingsPage({ params }: PageProps<"/c/[slug]/sett
         {ctx.can("company.settings") && (
           <Card title="Modules and branding">
             <SettingsForm slug={slug} enabled={c.enabled_modules} sidebar={c.sidebar_color ?? GROUP_BRAND.sidebar} accent={c.accent_color ?? GROUP_BRAND.accent} />
+          </Card>
+        )}
+        {app && (
+          <Card title="AI and approvals">
+            <AiSettingsForm slug={slug} enabled={Boolean(app.ai_enabled)} limit={Number(app.ai_monthly_token_limit)} selfLimit={(Number(app.self_approval_limit_minor) / 100).toFixed(2)} />
           </Card>
         )}
         {ctx.can("company.emergency_stop") && (

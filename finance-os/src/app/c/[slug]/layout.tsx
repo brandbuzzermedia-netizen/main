@@ -20,7 +20,7 @@ export default async function CompanyLayout({ children, params }: LayoutProps<"/
     <AppShell
       theme={{ side: c.sidebar_color ?? GROUP_BRAND.sidebar, hi: c.accent_color ?? GROUP_BRAND.accent }}
       brand={companyBrand(c)}
-      nav={companyNav(c, (p) => ctx.can(p as never))}
+      nav={companyNav(c, (p) => ctx.can(p as never), ctx.role)}
       homeHref={`/c/${c.slug}`}
       switcher={{ options: switchOptions(ctx.groups, ctx.memberships), current: c.slug, accent: c.accent_color ?? GROUP_BRAND.accent }}
       user={{ name: ctx.displayName, initials: ctx.initials, roleLabel: ROLE_LABELS[ctx.role] ?? ctx.role }}

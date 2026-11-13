@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getGroupContext } from "@/lib/workspace";
 import { loadGroupDashboard, type PortfolioCard } from "@/lib/dashboard-data";
+import { loadGroupExtras } from "@/lib/group-extras";
 import { parsePeriodKey, periodRange, financialYear } from "@/domain/periods";
 import { todayInBusinessTz } from "@/domain/dates";
 import { formatShort } from "@/domain/money";
@@ -19,7 +20,7 @@ export default async function CommandCentre({ searchParams }: PageProps<"/group"
   const today = todayInBusinessTz();
   const period = periodRange(key, today, g.group.fy_start_month);
   const fy = financialYear(today, g.group.fy_start_month);
-  const { cards, totals: t } = await loadGroupDashboard(g, period);
+  const [{ cards, totals: t }, x] = await Promise.all([loadGroupDashboard(g, period), loadGroupExtras(g, period, today)]);
   const anyFinance = t.includedFinance.length > 0;
   const anyCrm = t.includedPipeline.length > 0;
   const nameOf = (id: string) => cards.find((c) => c.company.id === id)?.company.short_name ?? cards.find((c) => c.company.id === id)?.company.name ?? id;
@@ -46,8 +47,10 @@ export default async function CommandCentre({ searchParams }: PageProps<"/group"
         <Tile label="Meetings this week" value={t.meetingsThisWeek} sub="Companies you can see" />
         <Tile label="Overdue tasks" value={t.overdueTasks} />
         <Tile label="Partner referrals (gross)" value={formatShort(t.partnerGrossPipelineMinor)} sub="Partner deal value. Not income" />
-        <Tile label="Automation health" value={<NotYet>Not connected</NotYet>} sub="n8n arrives in build phase 8" />
-        <Tile label="Rental income" value={<NotYet>Not set up</NotYet>} sub="Salon and Tower: build phase 5" />
+        <Tile label="Automation health" href="/group/automation" value={x.automation ? `${x.automation.live} live / ${x.automation.failed} failed` : <NotYet>No access</NotYet>}
+          sub={x.automation ? `${x.automation.pending} waiting for approval` : "Owners and company admins see this"} />
+        <Tile label="Rent received" href="/group/rental" value={x.rental ? formatShort(x.rental.total.receivedMinor) : <NotYet>No rental access</NotYet>}
+          sub={x.rental ? `${formatShort(x.rental.total.overdueMinor)} overdue · cash` : "Salon and Tower live under the owning workspace"} />
       </div>
 
       <Coverage included={t.includedFinance.map(nameOf)} pipeline={t.includedPipeline.map(nameOf)} separate={t.shownSeparately.map(nameOf)} noAccess={t.noAccess.map(nameOf)} />
@@ -57,20 +60,23 @@ export default async function CommandCentre({ searchParams }: PageProps<"/group"
         <MoneyRows title="Income" rows={[
           { name: "Operating revenue invoiced", basis: "Booked, accrual, incl. GST", value: money(t.finance.invoicedMinor, anyFinance) },
           { name: "Cash actually received", basis: "Cash basis", value: money(t.finance.cashReceivedMinor, anyFinance) },
-          { name: "Rental income", basis: "Salon and Tower, billed", value: <NotYet>Build phase 5</NotYet> },
-          { name: "Other income", basis: "Interest, commission received", value: <NotYet>Build phase 4</NotYet> },
+          { name: "Ledger income booked", basis: "Commission, other income (accrual); kept apart from invoices", value: x.ledgerSummary ? formatShort(x.ledgerSummary.incomeBookedMinor) : "—" },
+          { name: "Rental income billed", basis: "Salon, Tower and other units (accrual)", value: x.rental ? formatShort(x.rental.total.billedMinor) : "—" },
         ]} />
         <MoneyRows title="Expenses" rows={[
-          { name: "Expenses paid", basis: "Cash basis, this period", value: money(t.finance.expensesPaidMinor, anyFinance) },
-          { name: "Payables (unpaid)", basis: "As recorded", value: money(t.finance.payablesMinor, anyFinance) },
-          { name: "Expenses booked", basis: "Incurred, accrual", value: <NotYet>Build phase 4</NotYet> },
-          { name: "Bills awaiting approval", basis: "OCR review queue", value: <NotYet>Build phase 6</NotYet> },
+          { name: "Expenses booked", basis: "Incurred, accrual (approved ledger)", value: x.ledgerSummary ? formatShort(x.ledgerSummary.expensesBookedMinor) : "—" },
+          { name: "Expenses paid", basis: "Cash basis, this period", value: x.ledgerSummary ? formatShort(x.ledgerSummary.expensesPaidMinor) : "—" },
+          { name: "Payables (unpaid)", basis: "Approved, not yet paid", value: x.ledgerSummary ? formatShort(x.ledgerSummary.payablesMinor) : "—" },
+          { name: "Bills waiting for review", basis: "OCR queue, not yet in the ledger", value: x.bills ?? "—" },
         ]} />
-        <MoneyRows title="Rental income" rows={[
-          { name: "Salon", basis: "Owner, tenant, rent and due day not configured", value: <NotYet>Not set up</NotYet> },
-          { name: "Tower", basis: "Owner, tenant, rent and due day not configured", value: <NotYet>Not set up</NotYet> },
-          { name: "Security deposits", basis: "Liability, never income", value: <NotYet>Not set up</NotYet> },
-        ]} footer={<span className="text-muted">Rental management arrives in build phase 5. Nothing is assumed about ownership or tax treatment.</span>} />
+        <MoneyRows title="Rental income" rows={x.rental && x.rental.units.length ? [
+          ...x.rental.units.map((u) => ({ name: u.label, basis: u.tenant ? `Billed ${formatShort(u.report.billedMinor)} · arrears ${formatShort(u.report.arrearsMinor)}` : "No active lease", value: formatShort(u.report.receivedMinor) })),
+          { name: "Security deposits", basis: "Liability, never income", value: formatShort(x.rental.total.depositsHeldMinor) },
+          { name: "Net rental cash flow", basis: "Cash", value: formatShort(x.rental.total.netCashMinor) },
+        ] : [
+          { name: "Salon", basis: "Not configured yet", value: <NotYet>Not set up</NotYet> },
+          { name: "Tower", basis: "Not configured yet", value: <NotYet>Not set up</NotYet> },
+        ]} footer={<Link href="/group/rental" className="text-co-side">Open rental income →</Link>} />
       </div>
 
       <h2 className="mt-8 mb-3.5 font-display text-2xl">Portfolio</h2>

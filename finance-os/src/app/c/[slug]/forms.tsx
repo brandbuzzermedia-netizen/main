@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { Alert, Button, Field, Input, Select, Textarea } from "@/components/ui";
 import { MODULES, CORE_MODULES, type ModuleKey } from "@/domain/registry";
 import {
-  addMemberAction, createDealAction, createMeetingAction, createTaskAction, emergencyStopAction, saveModulesAction, type FormState,
+  addMemberAction, aiSettingsAction, createDealAction, createMeetingAction, createTaskAction, emergencyStopAction, saveModulesAction, type FormState,
 } from "./actions";
 
 type Opt = { id: string; label: string };
@@ -138,6 +138,19 @@ export function StopForm({ slug, stopped }: { slug: string; stopped: boolean }) 
       )}
       <Feedback state={state} />
       <div><Button type="submit" variant={stopped ? "company" : "danger"} disabled={pending}>{stopped ? "Resume company" : "Stop all outbound activity"}</Button></div>
+    </form>
+  );
+}
+
+export function AiSettingsForm({ slug, enabled, limit, selfLimit }: { slug: string; enabled: boolean; limit: number; selfLimit: string }) {
+  const [state, action, pending] = useActionState<FormState, FormData>(aiSettingsAction.bind(null, slug), {});
+  return (
+    <form action={action} className="grid max-w-xl gap-3">
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="ai_enabled" defaultChecked={enabled} /> Allow Claude to read bills and draft follow-ups for this company</label>
+      <Field label="Monthly AI token budget" name="ai_monthly_token_limit" hint="Requests stop when the month's budget is used."><Input name="ai_monthly_token_limit" type="number" min={0} defaultValue={limit} /></Field>
+      <Field label="Self-approval limit (₹)" name="self_approval_limit" hint="Ledger entries above this need a second person to approve. 0 means always a second person."><Input name="self_approval_limit" inputMode="decimal" defaultValue={selfLimit} /></Field>
+      <Feedback state={state} />
+      <div><Button type="submit" variant="company" disabled={pending}>Save</Button></div>
     </form>
   );
 }

@@ -17,7 +17,13 @@ export default async function CompanyHome({ params, searchParams }: PageProps<"/
   const c = ctx.company;
   const key = parsePeriodKey((await searchParams).period);
   const period = periodRange(key, todayInBusinessTz(), c.fy_start_month);
-  const d = await loadCompanyDashboard(ctx, period);
+  const canAuto = ctx.can("automation.manage") || ctx.can("automation.approve");
+  const [d, autoDefs, autoRuns] = await Promise.all([
+    loadCompanyDashboard(ctx, period),
+    canAuto ? ctx.supabase.from("automation_definitions").select("id", { count: "exact", head: true }).eq("organization_id", c.id).eq("enabled", true) : Promise.resolve({ count: 0 }),
+    canAuto ? ctx.supabase.from("automation_runs").select("status").eq("organization_id", c.id).in("status", ["pending_approval", "failed"]) : Promise.resolve({ data: [] }),
+  ]);
+  const runs = ((autoRuns as { data: { status: string }[] | null }).data ?? []);
   const base = `/c/${c.slug}`;
   const p = d.pipeline;
 
@@ -96,11 +102,12 @@ export default async function CompanyHome({ params, searchParams }: PageProps<"/
           <KpiList rows={kpis} />
           <section className="rounded-2xl bg-co-side p-6 text-[#F5F1E8]">
             <div className="text-[13px] text-white/65">Automation (n8n)</div>
-            <div className="my-1.5 font-display text-[30px]">Not connected</div>
+            <div className="my-1.5 font-display text-[36px]">{autoDefs.count ?? 0} live</div>
             <p className="text-sm text-white/80">
-              Workflow library, approvals and run history arrive in build phase 8. Nothing runs automatically for {c.short_name ?? c.name} yet
-              {c.emergency_stop ? ", and the emergency stop is on." : "."}
+              {runs.filter((r) => r.status === "pending_approval").length} waiting for approval · {runs.filter((r) => r.status === "failed").length} failed runs
+              {c.emergency_stop ? " · emergency stop is on" : ""}
             </p>
+            {canAuto && <Link href={`${base}/automation`} className="mt-4 inline-block rounded-[9px] bg-co-hi px-4 py-2 text-[13.5px] font-bold text-co-side">Review approvals</Link>}
           </section>
           <Panel title="Today" aside={formatDate(d.today)}>
             {d.todaysMeetings.length === 0 ? (

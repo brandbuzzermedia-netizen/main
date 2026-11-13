@@ -210,3 +210,17 @@ export async function emergencyStopAction(slug: string, _prev: FormState, fd: Fo
   revalidatePath(`/c/${slug}`, "layout");
   return { ok: on ? "Emergency stop is on." : "Company resumed." };
 }
+
+export async function aiSettingsAction(slug: string, _prev: FormState, fd: FormData): Promise<FormState> {
+  const ctx = await scoped(slug, "finance.approve");
+  const limit = z.coerce.number().int().min(0).max(50_000_000).safeParse(fd.get("ai_monthly_token_limit"));
+  const self = z.string().trim().default("0").safeParse(fd.get("self_approval_limit"));
+  if (!limit.success || !self.success) return { error: "Enter whole numbers." };
+  let selfMinor: number;
+  try { selfMinor = parseMoneyToMinor(self.data || "0"); } catch (e) { return { error: (e as Error).message }; }
+  const { error } = await ctx.supabase.from("app_settings").update({ ai_enabled: fd.get("ai_enabled") === "on", ai_monthly_token_limit: limit.data, self_approval_limit_minor: selfMinor })
+    .eq("organization_id", ctx.company.id);
+  if (error) return { error: error.message };
+  revalidatePath(`/c/${slug}/settings`);
+  return { ok: "Saved." };
+}
