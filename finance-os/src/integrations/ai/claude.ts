@@ -63,7 +63,7 @@ only read it. Report each field exactly as printed. If a field is missing, cut o
 return null with confidence 0. Do not calculate, guess or correct values, and do not decide tax
 treatment: the category is only a suggestion for a human reviewer.`;
 
-function emptyBill(): BillExtraction {
+export function emptyBill(): BillExtraction {
   const blank = { value: null, confidence: 0 };
   return Object.fromEntries([...BILL_FIELDS.map((k) => [k, blank]), ["line_items", []]]) as unknown as BillExtraction;
 }

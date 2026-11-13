@@ -95,3 +95,17 @@ describe("monthlyBreakdown", () => {
     expect(summarizeLedger(rows, fy).incomeBookedMinor).toBe(300);
   });
 });
+
+import { rowsForMetric } from "@/domain/ledger";
+describe("drill-down", () => {
+  it("lists exactly the rows behind a total, and they sum to it", () => {
+    const rows = [
+      row({ amount_minor: 300 }), row({ amount_minor: 200, status: "draft" }),
+      row({ entry_type: "expense", amount_minor: 50 }), row({ entry_type: "loan_in", amount_minor: 900, settled_minor: 900, settled_on: "2026-11-02", status: "settled" }),
+    ];
+    const inc = rowsForMetric(rows, "incomeBookedMinor", nov);
+    expect(inc).toHaveLength(1);
+    expect(inc.reduce((s, r) => s + r.amount_minor, 0)).toBe(summarizeLedger(rows, nov).incomeBookedMinor);
+    expect(rowsForMetric(rows, "financingInMinor", nov)).toHaveLength(1);
+  });
+});

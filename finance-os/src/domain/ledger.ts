@@ -149,3 +149,10 @@ export function monthlyBreakdown(rows: LedgerRow[], period: { start: string; end
   }
   return out;
 }
+
+export type LedgerMetric = Exclude<keyof LedgerSummary, "unconvertedRows" | "rowIds">;
+
+/** Drill-down: the rows that make up one total. Uses the same rules, one row at a time. */
+export function rowsForMetric<T extends LedgerRow>(rows: T[], metric: LedgerMetric, period: { start: string; end: string }): T[] {
+  return rows.filter((r) => summarizeLedger([r], period)[metric] !== 0);
+}
