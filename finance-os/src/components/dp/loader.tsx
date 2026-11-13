@@ -17,14 +17,17 @@ export function WorkspaceLoader({ id, theme }: { id: string; theme: Theme }) {
   const [n, setN] = useState(0);
   useEffect(() => {
     let seen = "";
-    try { seen = sessionStorage.getItem(KEY) ?? ""; sessionStorage.setItem(KEY, id); } catch { /* ignore */ }
+    try { seen = sessionStorage.getItem(KEY) ?? ""; } catch { /* ignore */ }
     if (seen === id || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // Marked as seen only once the panel has had time to show, so a re-run effect (React dev
+    // mode, fast refresh) cannot leave the overlay up without its timers.
+    const mark = () => { try { sessionStorage.setItem(KEY, id); } catch { /* ignore */ } };
     // eslint-disable-next-line react-hooks/set-state-in-effect -- start the entry animation once per workspace
     setOn(true);
     const t0 = Date.now();
-    const timers = [setTimeout(() => setShown(true), 120), setTimeout(() => setOut(true), 2150), setTimeout(() => setOn(false), 2900)];
+    const timers = [setTimeout(() => setShown(true), 120), setTimeout(() => { setOut(true); mark(); }, 2150), setTimeout(() => setOn(false), 2900)];
     const iv = setInterval(() => { const t = Math.min(1, (Date.now() - t0) / 1900); setN(Math.round(100 * (1 - Math.pow(1 - t, 2)))); if (t >= 1) clearInterval(iv); }, 45);
-    return () => { timers.forEach(clearTimeout); clearInterval(iv); };
+    return () => { timers.forEach(clearTimeout); clearInterval(iv); setOn(false); setShown(false); setOut(false); setN(0); };
   }, [id]);
   if (!on) return null;
   const g = theme.isGroup;

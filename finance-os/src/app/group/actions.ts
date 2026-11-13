@@ -101,7 +101,7 @@ export async function attachLegacyAction(_prev: GroupFormState, fd: FormData): P
   const { count } = await g.supabase.from("pipeline_stages").select("id", { count: "exact", head: true }).eq("organization_id", orgId.data);
   if (!count) {
     const { error: stageError } = await g.supabase.from("pipeline_stages")
-      .insert(t.stages.map((s, i) => ({ ...s, position: i, organization_id: orgId.data })));
+      .insert(t.stages.map((s, i) => ({ ...s, position: i, organization_id: orgId.data })), { defaultToNull: false });
     if (stageError) return { error: `Attached, but stages could not be created: ${stageError.message}` };
   }
   const { error: renameError } = await g.supabase.from("organizations").update({ enabled_modules: t.enabled_modules, name: t.name }).eq("id", orgId.data);

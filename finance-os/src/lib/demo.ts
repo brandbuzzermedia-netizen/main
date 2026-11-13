@@ -26,7 +26,7 @@ export async function seedDemoWorkspace(supabase: SupabaseClient, orgId: string)
     { organization_id: orgId, client_id: id("DEMO-HONEY"), name: "Demo Accounts Team", email: "accounts@honeycomb.example", is_primary: true },
     { organization_id: orgId, client_id: id("DEMO-PETAL"), name: "Demo Owner", email: "owner@petalpine.example", whatsapp_e164: "+919800000001", is_primary: true },
     { organization_id: orgId, client_id: id("DEMO-ORBIT"), name: "Demo Practice Manager", email: "billing@orbit.example", is_primary: true },
-  ]);
+  ], { defaultToNull: false });
   await supabase.from("contracts").insert(
     clients.map((c) => ({
       organization_id: orgId,
@@ -125,7 +125,7 @@ export async function seedDemoGroup(
   const tk = await supabase.from("tasks").insert([
     { organization_id: ids.gbs, title: "[DEMO] Collect client ad account access", due_on: addDays(today, -1), priority: "high" },
     { organization_id: ids.gbs, title: "[DEMO] Draft monthly report", due_on: addDays(today, 3) },
-  ]);
+  ], { defaultToNull: false });
   if (tk.error) throw new Error(`Demo tasks failed: ${tk.error.message}`);
   const { data: ent } = await supabase.from("legal_entities").select("id").eq("organization_id", ids.gbs).eq("is_default", true).single();
   const le = await supabase.from("ledger_entries").insert([
