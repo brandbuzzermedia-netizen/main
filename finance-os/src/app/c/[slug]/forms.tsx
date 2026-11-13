@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { Alert, Button, Field, Input, Select, Textarea } from "@/components/ui";
 import { MODULES, CORE_MODULES, type ModuleKey } from "@/domain/registry";
 import {
-  addMemberAction, aiSettingsAction, createDealAction, createMeetingAction, createTaskAction, emergencyStopAction, saveModulesAction, type FormState,
+  addMemberAction, deactivateMemberAction, aiSettingsAction, createDealAction, createMeetingAction, createTaskAction, emergencyStopAction, saveModulesAction, type FormState,
 } from "./actions";
 
 type Opt = { id: string; label: string };
@@ -92,6 +92,19 @@ export function MemberForm({ slug, roles }: { slug: string; roles: Opt[] }) {
       <Field label="Role" name="role" error={f.role}><Select name="role" defaultValue="staff">{roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}</Select></Field>
       <Button type="submit" variant="company" disabled={pending}>{pending ? "Adding…" : "Add member"}</Button>
       <div className="sm:col-span-3"><Feedback state={state} /></div>
+    </form>
+  );
+}
+
+export function DeactivateForm({ slug, membershipId, name }: { slug: string; membershipId: string; name: string }) {
+  const [state, action, pending] = useActionState<FormState, FormData>(deactivateMemberAction.bind(null, slug), {});
+  const f = state.fields ?? {};
+  return (
+    <form action={action} className="flex flex-col gap-3">
+      <input type="hidden" name="membership_id" value={membershipId} />
+      <Field label={`Why is ${name} being deactivated?`} name="reason" error={f.reason}><Input name="reason" required minLength={3} maxLength={300} placeholder="Left the company, role changed…" /></Field>
+      <Feedback state={state} />
+      <div><Button type="submit" variant="company" disabled={pending}>{pending ? "Deactivating…" : "Deactivate access"}</Button></div>
     </form>
   );
 }

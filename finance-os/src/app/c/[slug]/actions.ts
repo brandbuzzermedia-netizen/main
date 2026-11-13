@@ -160,10 +160,45 @@ export async function addMemberAction(slug: string, _prev: FormState, fd: FormDa
   const ctx = await scoped(slug, "members.manage");
   const parsed = z.object({ email: z.string().trim().email("Enter an email address"), role: z.enum(COMPANY_ROLES) }).safeParse(formToObject(fd));
   if (!parsed.success) return { fields: z.flattenError(parsed.error).fieldErrors };
-  const { error } = await ctx.supabase.rpc("add_member_by_email", { p_org: ctx.company.id, p_email: parsed.data.email, p_role: parsed.data.role });
+  const { data, error } = await ctx.supabase.rpc("invite_member", { p_org: ctx.company.id, p_email: parsed.data.email, p_role: parsed.data.role });
   if (error) return { error: error.message };
   revalidatePath(`/c/${slug}/team`);
-  return { ok: `${parsed.data.email} added.` };
+  return data === "invited"
+    ? { ok: `${parsed.data.email} is invited. They get this role the first time they sign in with that email (link valid 14 days).` }
+    : { ok: `${parsed.data.email} added.` };
+}
+
+export async function revokeInvitationAction(slug: string, fd: FormData) {
+  const ctx = await scoped(slug, "members.manage");
+  const { error } = await ctx.supabase.rpc("revoke_invitation", { p_invitation: uuid.parse(fd.get("invitation_id")) });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/c/${slug}/team`);
+}
+
+/** Deactivation archives the membership with a reason; it can be restored. Nothing the person created is removed. */
+export async function deactivateMemberAction(slug: string, _prev: FormState, fd: FormData): Promise<FormState> {
+  const ctx = await scoped(slug, "members.manage");
+  const parsed = z.object({ membership_id: uuid, reason: z.string().trim().min(3, "Say why (a few words)").max(300) }).safeParse(formToObject(fd));
+  if (!parsed.success) return { fields: z.flattenError(parsed.error).fieldErrors };
+  const { error } = await ctx.supabase.rpc("deactivate_member", { p_membership: parsed.data.membership_id, p_reason: parsed.data.reason });
+  if (error) return { error: error.message.includes("last owner") ? "A company must keep at least one owner." : error.message };
+  revalidatePath(`/c/${slug}/team`);
+  redirect(`/c/${slug}/team`);
+}
+
+export async function reactivateMemberAction(slug: string, fd: FormData) {
+  const ctx = await scoped(slug, "members.manage");
+  const { error } = await ctx.supabase.rpc("reactivate_member", { p_history: uuid.parse(fd.get("history_id")) });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/c/${slug}/team`);
+}
+
+/** Two-step sign-in requirement for owner, admin and finance roles. The database checks MFA is in use. */
+export async function requireMfaAction(slug: string, fd: FormData) {
+  const ctx = await scoped(slug, "company.settings");
+  const { error } = await ctx.supabase.rpc("set_require_mfa", { p_org: ctx.company.id, p_on: fd.get("on") === "true" });
+  if (error) redirect(`/c/${slug}/settings?mfa_error=${encodeURIComponent(error.message)}`);
+  revalidatePath(`/c/${slug}`, "layout");
 }
 
 export async function changeRoleAction(slug: string, fd: FormData) {
@@ -173,15 +208,6 @@ export async function changeRoleAction(slug: string, fd: FormData) {
     .eq("id", membership_id).eq("organization_id", ctx.company.id);
   if (error) throw new Error(error.message);
   if (count === 0) throw new Error("You cannot change that membership.");
-  revalidatePath(`/c/${slug}/team`);
-}
-
-export async function removeMemberAction(slug: string, fd: FormData) {
-  const ctx = await scoped(slug, "members.manage");
-  const { membership_id } = z.object({ membership_id: uuid }).parse(formToObject(fd));
-  const { error, count } = await ctx.supabase.from("memberships").delete({ count: "exact" }).eq("id", membership_id).eq("organization_id", ctx.company.id);
-  if (error) throw new Error(error.message);
-  if (count === 0) throw new Error("You cannot remove that member.");
   revalidatePath(`/c/${slug}/team`);
 }
 

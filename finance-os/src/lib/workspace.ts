@@ -15,7 +15,7 @@ import type { BusinessModel, Consolidation, Lifecycle, LogoKey, ModuleKey, Owner
 export const COMPANY_COLUMNS =
   "id, name, slug, short_name, family_group_id, ownership_type, owner_label, consolidation, business_model, lifecycle_status, " +
   "enabled_modules, sidebar_color, accent_color, logo_key, is_demo, base_currency, timezone, fy_start_month, " +
-  "emergency_stop, emergency_stop_at, emergency_stop_reason";
+  "emergency_stop, emergency_stop_at, emergency_stop_reason, require_mfa";
 
 export type Company = {
   id: string;
@@ -39,6 +39,7 @@ export type Company = {
   emergency_stop: boolean;
   emergency_stop_at: string | null;
   emergency_stop_reason: string | null;
+  require_mfa: boolean;
 };
 
 export type Permission =
@@ -70,6 +71,10 @@ export const getWorkspaceUser = cache(async () => {
   ]);
   if (memberships.error) throw new Error(`Could not load memberships: ${memberships.error.message}`);
   if (groups.error) throw new Error(`Could not load group memberships: ${groups.error.message}`);
+  // A company that requires two-step sign-in releases nothing sensitive until it is used (the
+  // database enforces this); send the person to set it up or enter a code first.
+  const { data: mfa } = await supabase.rpc("my_mfa_requirements");
+  if (((mfa ?? []) as { satisfied: boolean }[]).some((r) => !r.satisfied)) redirect("/mfa");
   const name = (profile.data?.full_name as string | null) || email || "You";
   return {
     supabase,

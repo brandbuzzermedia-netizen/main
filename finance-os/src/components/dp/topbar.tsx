@@ -58,7 +58,8 @@ export function Me({ initials, name, role, side }: { initials: string; name: str
       </button>
       {open && (
         <form action="/auth/signout" method="post" style={{ position: "absolute", right: 0, top: 46, background: "#fff", border: `1px solid ${C.line}`, borderRadius: 10, padding: 6, boxShadow: "0 8px 24px rgba(0,0,0,.08)", zIndex: 20 }}>
-          <button style={{ border: 0, background: "transparent", padding: "8px 14px", fontSize: 13.5, cursor: "pointer", whiteSpace: "nowrap" }}>Sign out</button>
+          <a href="/mfa" style={{ display: "block", padding: "8px 14px", fontSize: 13.5, color: C.ink, textDecoration: "none", whiteSpace: "nowrap" }}>Two-step sign-in</a>
+          <button style={{ border: 0, background: "transparent", padding: "8px 14px", fontSize: 13.5, cursor: "pointer", whiteSpace: "nowrap", textAlign: "left", width: "100%" }}>Sign out</button>
         </form>
       )}
     </div>

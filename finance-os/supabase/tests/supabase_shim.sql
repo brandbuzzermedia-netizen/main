@@ -13,6 +13,11 @@ create table if not exists auth.users (
   email              text,
   raw_user_meta_data jsonb default '{}'::jsonb
 );
+alter table auth.users add column if not exists email_confirmed_at timestamptz;
+
+create or replace function auth.jwt() returns jsonb language sql stable as $$
+  select coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb, '{}'::jsonb)
+$$;
 
 create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(coalesce(
@@ -22,5 +27,5 @@ create or replace function auth.uid() returns uuid language sql stable as $$
 $$;
 
 grant usage on schema auth to anon, authenticated, service_role;
-grant execute on function auth.uid() to anon, authenticated, service_role;
+grant execute on function auth.uid(), auth.jwt() to anon, authenticated, service_role;
 grant usage on schema public to anon, authenticated, service_role;
