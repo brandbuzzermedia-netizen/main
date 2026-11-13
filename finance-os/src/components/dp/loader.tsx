@@ -3,12 +3,11 @@
 import { useEffect, useState } from "react";
 import type { Theme } from "./theme";
 
-const KEY = "dp_loader_seen";
-
 /**
  * Workspace entry animation from the design: the workspace logo (or name) on its own canvas, a
- * counter to 100% and a progress bar, then the panel slides away. Plays once per workspace per
- * browser session, and again when switching.
+ * counter to 100% and a progress bar, then the panel slides away. As in the design it plays when
+ * the app opens and every time you switch company; moving between screens of the same company
+ * keeps the shell mounted, so it does not replay. Skipped when the viewer prefers reduced motion.
  */
 export function WorkspaceLoader({ id, theme }: { id: string; theme: Theme }) {
   const [on, setOn] = useState(false);
@@ -16,16 +15,11 @@ export function WorkspaceLoader({ id, theme }: { id: string; theme: Theme }) {
   const [out, setOut] = useState(false);
   const [n, setN] = useState(0);
   useEffect(() => {
-    let seen = "";
-    try { seen = sessionStorage.getItem(KEY) ?? ""; } catch { /* ignore */ }
-    if (seen === id || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    // Marked as seen only once the panel has had time to show, so a re-run effect (React dev
-    // mode, fast refresh) cannot leave the overlay up without its timers.
-    const mark = () => { try { sessionStorage.setItem(KEY, id); } catch { /* ignore */ } };
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- start the entry animation once per workspace
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- start the entry animation for this workspace
     setOn(true);
     const t0 = Date.now();
-    const timers = [setTimeout(() => setShown(true), 120), setTimeout(() => { setOut(true); mark(); }, 2150), setTimeout(() => setOn(false), 2900)];
+    const timers = [setTimeout(() => setShown(true), 120), setTimeout(() => setOut(true), 2150), setTimeout(() => setOn(false), 2900)];
     const iv = setInterval(() => { const t = Math.min(1, (Date.now() - t0) / 1900); setN(Math.round(100 * (1 - Math.pow(1 - t, 2)))); if (t >= 1) clearInterval(iv); }, 45);
     return () => { timers.forEach(clearTimeout); clearInterval(iv); setOn(false); setShown(false); setOut(false); setN(0); };
   }, [id]);

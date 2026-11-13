@@ -113,6 +113,8 @@ body {
 /* Company OS shell: hover states and small-screen behaviour (the design is desktop-first). */
 .dp-nav:not([aria-current]):hover { background: rgba(255, 255, 255, 0.08) !important; }
 .dp-root button, .dp-root input, .dp-root select, .dp-root textarea { font-family: inherit; }
+/* The design uses the browser's normal line height, not Tailwind's 1.5. */
+.dp-root { line-height: normal; }
 /* The design is light-only: pin the light palette inside the shell. */
 .dp-root {
   --bg: #f5f1e8; --surface: #ffffff; --surface-2: #efe9d9; --ink: #171817; --muted: #6d7a70; --faint: #829487; --line: #e2dcc9; --line-2: #efe9d9;

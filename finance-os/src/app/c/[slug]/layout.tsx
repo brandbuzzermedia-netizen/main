@@ -3,7 +3,7 @@ import { getCompanyContext, ROLE_LABELS } from "@/lib/workspace";
 import { dpCompanyNav } from "@/lib/dp-nav";
 import { companyApprovals, wsOptions } from "@/lib/dp-chrome";
 import { companyTheme } from "@/components/dp/theme";
-import { DemoBanner, DpShell, StopBanner } from "@/components/dp/shell";
+import { DpShell, StopBanner } from "@/components/dp/shell";
 import { toggleStopAction } from "./actions";
 
 export async function generateMetadata({ params }: LayoutProps<"/c/[slug]">): Promise<Metadata> {
@@ -28,7 +28,7 @@ export default async function CompanyLayout({ children, params }: LayoutProps<"/
       search={{ placeholder: `Search in ${c.name} only…`, action: `/c/${slug}/search` }}
       bell={{ href: ap.automation ? `/c/${slug}/automation` : `/c/${slug}/finance/ledger`, count: ap.automation + ap.ledger }}
       user={{ initials: ctx.initials, name: ctx.displayName, role: ROLE_LABELS[ctx.role] ?? ctx.role }}
-      banner={<>{c.emergency_stop && <StopBanner name={c.name} />}{c.is_demo && <DemoBanner />}</>}>
+      banner={<>{c.emergency_stop && <StopBanner name={c.name} />}</>}>
       {children}
     </DpShell>
   );

@@ -14,7 +14,7 @@ export function Switcher({ options, current, acc }: { options: WsOption[]; curre
     <label style={{ display: "flex", alignItems: "center", gap: 10, background: "#fff", border: `1px solid ${C.line}`, borderRadius: 24, padding: "5px 6px 5px 14px" }}>
       <span aria-hidden style={{ width: 10, height: 10, borderRadius: "50%", background: acc, flex: "none" }} />
       <span className="sr-only">Workspace</span>
-      <select value={current} onChange={(e) => { window.dispatchEvent(new CustomEvent("dp:loader", { detail: e.target.value })); router.push(`/switch?to=${encodeURIComponent(e.target.value)}`); }}
+      <select value={current} onChange={(e) => router.push(`/switch?to=${encodeURIComponent(e.target.value)}`)}
         style={{ border: 0, background: "transparent", font: "600 14.5px var(--font-figtree)", color: C.ink, outline: 0, maxWidth: 210, cursor: "pointer" }}>
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>

@@ -139,9 +139,9 @@ export async function addGroupMemberAction(_prev: GroupFormState, fd: FormData):
 export async function createDemoGroupAction(): Promise<GroupFormState> {
   if (!isDevelopment) return { error: "Demo data can only be created in development." };
   const { supabase } = await getUser();
-  const { data: groupId, error } = await supabase.rpc("create_family_group", { p_name: "[DEMO] Diwani Parivaar", p_is_demo: true });
+  const { data: groupId, error } = await supabase.rpc("create_family_group", { p_name: "Diwani Parivaar Group", p_is_demo: true });
   if (error) return { error: error.message };
-  const firstOrg = await seedDemoGroup(supabase, groupId as string, (t) => templatePayload(t, { name: `[DEMO] ${t.name}`, slug: `demo-${t.slug}` }));
+  const firstOrg = await seedDemoGroup(supabase, groupId as string, (t) => templatePayload(t, { slug: `demo-${t.slug}` }));
   if (firstOrg) await setActiveOrg(firstOrg);
   redirect("/group");
 }

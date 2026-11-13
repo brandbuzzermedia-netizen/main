@@ -73,6 +73,3 @@ export function StopBanner({ name }: { name: string }) {
   return <div role="alert" style={{ background: C.red, color: "#fff", borderRadius: 10, padding: "12px 16px", fontWeight: 600, fontSize: 14, marginBottom: 20 }}>Emergency stop is ON for {name}. Outbound messages and workflow runs are paused. Resume from the sidebar.</div>;
 }
 
-export function DemoBanner() {
-  return <div style={{ background: C.warnBg, color: C.warnFg, borderRadius: 10, padding: "10px 16px", fontSize: 13.5, marginBottom: 20 }}>Demo workspace. Every name and figure here is made up for development and never mixed with production.</div>;
-}

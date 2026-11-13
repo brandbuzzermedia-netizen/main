@@ -9,8 +9,6 @@ export const EMPLOYEE_STATE = "e2e/.auth/employee.json";
 /** Skips the workspace entry animation so screens can be asserted straight away. */
 export async function skipLoader(page: Page) {
   await page.addInitScript(() => {
-    const real = sessionStorage.getItem.bind(sessionStorage);
-    sessionStorage.getItem = (k: string) => (k === "dp_loader_seen" ? "__skip__" : real(k));
     window.matchMedia = ((q: string) => ({ matches: q.includes("reduce"), media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false })) as typeof window.matchMedia;
   });
 }

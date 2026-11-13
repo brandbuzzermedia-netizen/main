@@ -3,7 +3,7 @@ import { getGroupContext, ROLE_LABELS } from "@/lib/workspace";
 import { dpGroupNav } from "@/lib/dp-nav";
 import { groupApprovals, wsOptions } from "@/lib/dp-chrome";
 import { groupTheme } from "@/components/dp/theme";
-import { DemoBanner, DpShell } from "@/components/dp/shell";
+import { DpShell } from "@/components/dp/shell";
 
 export const metadata: Metadata = { title: { default: "Command Centre", template: "%s · Diwani Parivaar OS" } };
 
@@ -21,7 +21,7 @@ export default async function GroupLayout({ children }: LayoutProps<"/group">) {
       search={{ placeholder: `Search in ${g.group.name} only…`, action: "/group/search" }}
       bell={{ href: "/group/automation", count: approvals }}
       user={{ initials: g.initials, name: g.displayName, role: g.group.role === "group_owner" ? "Company owner" : ROLE_LABELS[g.group.role] }}
-      banner={g.group.is_demo ? <DemoBanner /> : null}>
+      >
       {children}
     </DpShell>
   );
