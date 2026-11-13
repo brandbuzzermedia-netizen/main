@@ -62,3 +62,13 @@ invented: OCR returns empty fields for manual entry, drafting is unavailable, an
 **D14. Simple record screens are configuration.** `src/lib/resources.ts` describes tables,
 columns, fields and permissions; one server action and one page serve them. The table name never
 comes from the request and `organization_id` is always set server-side.
+
+**D15. The UI follows the owner's Company OS design.** Screens copy the layout, type, colour
+and wording of the supplied `Company OS.dc.html` design: the 252px collapsible sidebar, the
+workspace loader, per-company fonts, colours, logos and menu names (`src/domain/design.ts`), and
+the group Command Centre. Views in `src/views/` are pure and take view models built from real,
+permission-filtered records; where the design showed sample numbers, the app shows actual figures
+or an honest empty state. Group Settings now holds the business registry (`/group/companies`
+redirects there) and module visibility (`family_groups.disabled_modules`). Hiding a module only
+changes navigation; it never removes data. Baloo 2 is loaded by stylesheet because Turbopack's
+`next/font` build fails on it; the CSP allows Google Fonts for that one stylesheet.

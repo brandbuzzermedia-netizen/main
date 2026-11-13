@@ -8,9 +8,9 @@ const csp = [
   "default-src 'self'",
   // Next.js inlines its bootstrap scripts; no third-party script hosts are allowed.
   `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
-  "style-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   `img-src 'self' data: blob: ${supabaseOrigin}`,
-  "font-src 'self' data:",
+  "font-src 'self' data: https://fonts.gstatic.com",
   `connect-src 'self' ${supabaseOrigin}`,
   `frame-src ${supabaseOrigin || "'none'"}`,
   "frame-ancestors 'none'",

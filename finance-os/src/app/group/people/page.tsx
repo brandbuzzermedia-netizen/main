@@ -1,35 +1,41 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { getGroupContext, ROLE_LABELS } from "@/lib/workspace";
-import { Card, PageHeader, Table, Td } from "@/components/ui";
+import { GroupHead } from "@/lib/group-head";
+import { Cta } from "@/components/dp/shell";
+import { Modal } from "@/components/dp/modal";
+import { ListView, NOTES } from "@/views/list";
 import { GroupMemberForm } from "../forms";
 
-export const metadata: Metadata = { title: "People & access" };
+export const metadata: Metadata = { title: "People" };
 
-export default async function PeoplePage() {
+export default async function PeoplePage({ searchParams }: PageProps<"/group/people">) {
+  const sp = await searchParams;
   const g = await getGroupContext();
-  if (g.group.role !== "group_owner") notFound();
-  const { data, error } = await g.supabase.from("group_memberships")
-    .select("id, role, created_at, user:users(full_name, email)").eq("family_group_id", g.group.id).order("created_at");
-  if (error) throw new Error(error.message);
-  const rows = (data ?? []) as unknown as { id: string; role: string; user: { full_name: string | null; email: string | null } | null }[];
+  const ids = g.registry.map((c) => c.id);
+  const [gm, cm] = await Promise.all([
+    g.supabase.from("group_memberships").select("user_id, role, user:users(full_name, email)").eq("family_group_id", g.group.id),
+    ids.length ? g.supabase.from("memberships").select("user_id, role, organization_id, user:users(full_name, email)").in("organization_id", ids) : Promise.resolve({ data: [] }),
+  ]);
+  type U = { full_name: string | null; email: string | null } | null;
+  const people = new Map<string, { name: string; email: string; group?: string; companies: string[] }>();
+  const nm = new Map(g.registry.map((c) => [c.id, c.short_name ?? c.name]));
+  for (const x of (gm.data ?? []) as unknown as { user_id: string; role: string; user: U }[]) people.set(x.user_id, { name: x.user?.full_name || x.user?.email || "—", email: x.user?.email ?? "", group: ROLE_LABELS[x.role], companies: [] });
+  for (const x of (cm.data ?? []) as unknown as { user_id: string; role: string; organization_id: string; user: U }[]) {
+    const p = people.get(x.user_id) ?? { name: x.user?.full_name || x.user?.email || "—", email: x.user?.email ?? "", companies: [] };
+    p.companies.push(`${nm.get(x.organization_id)} (${ROLE_LABELS[x.role] ?? x.role})`);
+    people.set(x.user_id, p);
+  }
+  const [title, lines] = NOTES.team;
+  const owner = g.group.role === "group_owner";
   return (
     <>
-      <PageHeader title="People & access" description="Group roles. A group role shows the registry and Command Centre; company figures and records need membership of that company (granted from its Team page)." />
-      <div className="flex flex-col gap-5">
-        <Table head={["Person", "Group role"]}>
-          {rows.map((r) => (
-            <tr key={r.id}>
-              <Td><div className="font-medium">{r.user?.full_name || r.user?.email}</div><div className="text-xs text-muted">{r.user?.email}</div></Td>
-              <Td>{ROLE_LABELS[r.role] ?? r.role}</Td>
-            </tr>
-          ))}
-        </Table>
-        <Card title="Grant group access">
-          <p className="mb-3 text-sm text-muted">Only group owners can do this; company admins cannot. The person must have signed in once.</p>
-          <GroupMemberForm />
-        </Card>
-      </div>
+      <GroupHead title="People" right={owner ? <Cta href="/group/people?add=1">+ Add</Cta> : undefined} />
+      <ListView vm={{
+        head: ["PERSON", "GROUP ROLE", "COMPANIES", "TARGET"],
+        rows: [...people.values()].map((p) => ({ a: <>{p.name}<div style={{ fontWeight: 400, fontSize: 12.5, color: "#6d7a70" }}>{p.email}</div></>, b: p.group ?? "No group access", c: p.companies.join(", ") || "—", d: "—" })),
+        empty: "No people yet.", noteTitle: title, noteLines: [...lines, "Group roles show the registry; company figures need company membership"],
+      }} />
+      {sp.add && owner && <Modal title="Grant group access" closeHref="/group/people"><GroupMemberForm /></Modal>}
     </>
   );
 }

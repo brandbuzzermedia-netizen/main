@@ -1,45 +1,56 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 import { getGroupContext } from "@/lib/workspace";
 import { companiesWith, nameMap } from "@/lib/group-data";
-import { formatDate, todayInBusinessTz } from "@/domain/dates";
+import { GroupHead } from "@/lib/group-head";
 import { formatMoney } from "@/domain/money";
 import { includedInGroupTotals } from "@/domain/dashboard";
-import { Badge, EmptyState, PageHeader, Table, Td } from "@/components/ui";
+import { Cta } from "@/components/dp/shell";
+import { Modal } from "@/components/dp/modal";
+import { C } from "@/components/dp/theme";
+import { Kanban } from "@/views/kanban";
 
 export const metadata: Metadata = { title: "Group pipeline" };
+const COLS = ["Lead", "Qualified", "Meeting", "Proposal", "Negotiation", "Won"] as const;
 
 export default async function GroupPipeline({ searchParams }: PageProps<"/group/pipeline">) {
+  const sp = await searchParams;
   const g = await getGroupContext();
   const cs = companiesWith(g, "crm.read_all");
-  const only = (await searchParams).company;
-  const ids = cs.filter((c) => !only || c.slug === only).map((c) => c.id);
   const names = nameMap(cs);
+  const ids = cs.map((c) => c.id);
+  const [deals, stages] = ids.length ? await Promise.all([
+    g.supabase.from("deals").select("id, organization_id, title, value_minor, currency, is_hot, stage_id, closed_at").in("organization_id", ids).limit(2000),
+    g.supabase.from("pipeline_stages").select("id, organization_id, kind, position").in("organization_id", ids),
+  ]) : [{ data: [] }, { data: [] }];
+  const st = (stages.data ?? []) as { id: string; organization_id: string; kind: string; position: number }[];
+  const firstOpen = new Map<string, number>();
+  for (const s of st) if (s.kind === "open") firstOpen.set(s.organization_id, Math.min(firstOpen.get(s.organization_id) ?? 99, s.position));
+  const col = (stageId: string): (typeof COLS)[number] | null => {
+    const s = st.find((x) => x.id === stageId);
+    if (!s) return null;
+    return ({ open: s.position === firstOpen.get(s.organization_id) ? "Lead" : "Qualified", meeting: "Meeting", proposal: "Proposal", negotiation: "Negotiation", won: "Won", lost: null } as Record<string, (typeof COLS)[number] | null>)[s.kind];
+  };
   const cons = new Map(cs.map((c) => [c.id, c.consolidation]));
-  const { data } = ids.length ? await g.supabase.from("deals")
-    .select("id, organization_id, title, account_name, value_minor, currency, is_hot, next_action, next_action_on, expected_close_on, source, stage:pipeline_stages(name, probability_pct), owner:users!deals_owner_id_fkey(full_name, email)")
-    .in("organization_id", ids).is("closed_at", null).order("value_minor", { ascending: false }).limit(1000) : { data: [] };
-  const rows = (data ?? []) as unknown as { id: string; organization_id: string; title: string; account_name: string | null; value_minor: number; currency: string; is_hot: boolean; next_action: string | null; next_action_on: string | null; expected_close_on: string | null; source: string | null; stage: { name: string; probability_pct: number }; owner: { full_name: string | null; email: string } | null }[];
-  const today = todayInBusinessTz();
+  const slugOf = new Map(cs.map((c) => [c.id, c.slug]));
+  const ds = (deals.data ?? []) as { id: string; organization_id: string; title: string; value_minor: number; currency: string; is_hot: boolean; stage_id: string; closed_at: string | null }[];
+  const cols = COLS.map((name) => ({
+    name,
+    deals: ds.filter((d) => col(d.stage_id) === name && (name === "Won" || !d.closed_at)).map((d) => ({
+      id: d.id, t: d.title, v: formatMoney(d.value_minor, d.currency, { compact: true }), hot: d.is_hot,
+      sub: `${names.get(d.organization_id)}${includedInGroupTotals(cons.get(d.organization_id)!) ? "" : " · not in totals"}`,
+      href: `/switch?to=${slugOf.get(d.organization_id)}&next=${encodeURIComponent(`/c/${slugOf.get(d.organization_id)}/pipeline?deal=${d.id}`)}`,
+    })),
+  }));
+  const writable = companiesWith(g, "crm.write");
   return (
     <>
-      <PageHeader title="Group pipeline" description="Open deals across the companies where you can see the whole pipeline. Partner-channel values are partner gross value, never group revenue." />
-      <nav className="mb-4 flex flex-wrap gap-1.5 text-sm">
-        <Link href="/group/pipeline" className={!only ? "rounded-full bg-co-side px-3 py-1 text-white" : "rounded-full border border-line px-3 py-1"}>All</Link>
-        {cs.map((c) => <Link key={c.id} href={`/group/pipeline?company=${c.slug}`} className={only === c.slug ? "rounded-full bg-co-side px-3 py-1 text-white" : "rounded-full border border-line px-3 py-1"}>{names.get(c.id)}</Link>)}
-      </nav>
-      {rows.length === 0 ? <EmptyState title="No open deals you can see" /> : (
-        <Table head={["Company", "Deal", "Stage", "Value", "Prob.", "Next step", "Close", "Owner"]}>
-          {rows.map((d) => (
-            <tr key={d.id}>
-              <Td>{names.get(d.organization_id)}{!includedInGroupTotals(cons.get(d.organization_id)!) && <div><Badge>not in totals</Badge></div>}</Td>
-              <Td><div className="font-medium">{d.title} {d.is_hot && <Badge tone="warn">Hot</Badge>}</div><div className="text-xs text-muted">{[d.account_name, d.source].filter(Boolean).join(" · ")}</div></Td>
-              <Td>{d.stage?.name}</Td><Td numeric>{formatMoney(d.value_minor, d.currency, { compact: true })}</Td><Td numeric>{d.stage?.probability_pct ?? 0}%</Td>
-              <Td>{d.next_action ?? "—"}{d.next_action_on && <div className={d.next_action_on < today ? "text-xs text-danger" : "text-xs text-muted"}>{formatDate(d.next_action_on)}</div>}</Td>
-              <Td>{formatDate(d.expected_close_on)}</Td><Td>{d.owner?.full_name || d.owner?.email || "—"}</Td>
-            </tr>
-          ))}
-        </Table>
+      <GroupHead title="Group pipeline" right={writable.length ? <Cta href="/group/pipeline?add=1">+ Add</Cta> : undefined} />
+      <Kanban cols={cols} empty={ds.length === 0 ? { msg: cs.length ? "No deals yet in the companies you can see. Add one in a company workspace." : "You do not see the full pipeline of any company yet." } : undefined} />
+      <div style={{ fontSize: 12.5, color: C.muted, marginTop: 10 }}>Stages are mapped by meaning across companies. Partner-channel deal values are partner gross value, never group revenue.</div>
+      {sp.add && (
+        <Modal title="Add a lead to which business?" closeHref="/group/pipeline">
+          {writable.map((c) => <a key={c.id} href={`/switch?to=${c.slug}&next=${encodeURIComponent(`/c/${c.slug}/pipeline?add=1`)}`} style={{ display: "flex", justifyContent: "space-between", padding: "11px 0", borderTop: `1px solid ${C.line2}`, color: C.ink, textDecoration: "none" }}><span>{c.name}</span><span style={{ color: C.faint }}>→</span></a>)}
+        </Modal>
       )}
     </>
   );

@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cx } from "@/components/ui";
 
 const TABS = [
-  { href: "/finance", label: "Overview" },
+  { href: "/finance", label: "Receivables" },
   { href: "/clients", label: "Clients" },
   { href: "/invoices", label: "Invoices" },
   { href: "/payments", label: "Payments" },
@@ -13,18 +12,21 @@ const TABS = [
   { href: "/settings/integrations", label: "Integrations" },
 ];
 
-/** Sub-navigation for the finance ledger of the active company. */
-export function FinanceTabs({ companyName }: { companyName: string }) {
+/** Receivables sub-navigation for the active company, in the Company OS tab style. */
+export function FinanceTabs({ companyName, financeHref }: { companyName: string; financeHref: string }) {
   const pathname = usePathname();
   return (
-    <div className="mb-6">
-      <div className="mb-2 text-xs font-semibold tracking-[.18em] text-muted uppercase">Finance · {companyName}</div>
-      <nav aria-label="Finance" className="flex gap-1 overflow-x-auto border-b border-line">
+    <div style={{ marginBottom: 22 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+        <span style={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase", color: "#829487" }}>Receivables · {companyName}</span>
+        <a href={financeHref} style={{ fontSize: 12.5, color: "#6d7a70" }}>← Back to Finance</a>
+      </div>
+      <nav aria-label="Receivables" style={{ display: "flex", gap: 6, borderBottom: "1px solid #e2dcc9", overflowX: "auto" }}>
         {TABS.map((t) => {
           const active = pathname === t.href || pathname.startsWith(`${t.href}/`);
           return (
             <Link key={t.href} href={t.href} aria-current={active ? "page" : undefined}
-              className={cx("-mb-px border-b-2 px-3 py-2 text-sm whitespace-nowrap", active ? "border-co-side font-semibold text-ink" : "border-transparent text-muted hover:text-ink")}>
+              style={{ padding: "10px 16px", fontWeight: 600, fontSize: 14.5, whiteSpace: "nowrap", textDecoration: "none", borderBottom: `3px solid ${active ? "var(--co-side)" : "transparent"}`, color: active ? "var(--co-side)" : "#6d7a70" }}>
               {t.label}
             </Link>
           );

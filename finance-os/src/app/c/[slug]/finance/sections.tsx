@@ -51,7 +51,7 @@ export async function ExpensesSection({ ctx, bill, edit }: { ctx: CompanyContext
       ctx.supabase.from("legal_entities").select("id, name").eq("organization_id", ctx.company.id),
       ctx.supabase.from("rental_units").select("id, label").eq("organization_id", ctx.company.id),
     ]);
-    const dups = ((dup.data ?? []) as { reason: string; description: string }[]).filter((d) => !postedBy.get(sel.document.id));
+    const dups = ((dup.data ?? []) as { reason: string; description: string }[]).filter(() => !postedBy.get(sel.document.id));
     const [state, color] = label(sel);
     const v = (x?: { value: string | null }) => x?.value ?? null;
     const fields: BillField[] = [

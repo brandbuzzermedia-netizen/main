@@ -21,14 +21,14 @@ export async function addSalonTowerAction(slug: string) {
     ["Salon", "Tower"].map((label) => ({ organization_id: ctx.company.id, legal_entity_id: ent!.id, label })),
     { onConflict: "organization_id,label", ignoreDuplicates: true });
   if (error) throw new Error(error.message);
-  revalidatePath(`/c/${slug}/rental`);
+  revalidatePath(`/c/${slug}/finance`);
 }
 
 export async function generateChargesAction(slug: string) {
   const ctx = await writer(slug);
   const { error } = await ctx.supabase.rpc("generate_rent_charges", { p_org: ctx.company.id, p_through: addDays(todayInBusinessTz(), 31) });
   if (error) throw new Error(error.message);
-  revalidatePath(`/c/${slug}/rental`);
+  revalidatePath(`/c/${slug}/finance`);
 }
 
 export async function receiptAction(slug: string, fd: FormData) {
@@ -39,7 +39,7 @@ export async function receiptAction(slug: string, fd: FormData) {
     reference: z.string().trim().min(1).max(80).parse(fd.get("reference")),
   });
   if (error) throw new Error(error.code === "23505" ? "That reference is already recorded." : error.message);
-  revalidatePath(`/c/${slug}/rental`);
+  revalidatePath(`/c/${slug}/finance`);
 }
 
 export async function depositAction(slug: string, fd: FormData) {
@@ -49,5 +49,5 @@ export async function depositAction(slug: string, fd: FormData) {
     amount_minor: parseMoneyToMinor(String(fd.get("amount"))), on_date: date.parse(fd.get("on")), reference: String(fd.get("reference") ?? "").slice(0, 80) || null,
   });
   if (error) throw new Error(error.message);
-  revalidatePath(`/c/${slug}/rental`);
+  revalidatePath(`/c/${slug}/finance`);
 }

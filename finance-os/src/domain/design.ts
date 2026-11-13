@@ -159,7 +159,7 @@ export const FONT_VAR: Record<FontKey, string> = {
   newsreader: "var(--font-newsreader), Georgia, serif",
   caprasimo: "var(--font-caprasimo), Georgia, serif",
   outfit: "var(--font-outfit), system-ui, sans-serif",
-  baloo: "var(--font-baloo), system-ui, sans-serif",
+  baloo: "'Baloo 2', system-ui, sans-serif",
 };
 
 /** Workflows shown in a company's Automation library, keyed so each maps to one definition row. */

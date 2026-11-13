@@ -34,7 +34,7 @@ export async function createGroupAction(_prev: GroupFormState, fd: FormData): Pr
   if (!name.success) return { error: name.error.issues[0].message };
   const { error } = await supabase.rpc("create_family_group", { p_name: name.data });
   if (error) return { error: error.message };
-  redirect("/group/companies");
+  redirect("/group/settings");
 }
 
 export async function createFromTemplatesAction(_prev: GroupFormState, fd: FormData): Promise<GroupFormState> {
@@ -144,4 +144,20 @@ export async function createDemoGroupAction(): Promise<GroupFormState> {
   const firstOrg = await seedDemoGroup(supabase, groupId as string, (t) => templatePayload(t, { name: `[DEMO] ${t.name}`, slug: `demo-${t.slug}` }));
   if (firstOrg) await setActiveOrg(firstOrg);
   redirect("/group");
+}
+
+const GROUP_TOGGLES = ["pipeline", "meetings", "automation", "finance", "rental", "expenses", "tax", "team", "reports", "vault"] as const;
+
+/** Shows or hides a Command Centre module. Hiding changes navigation only; no data is removed. */
+export async function toggleGroupModuleAction(fd: FormData) {
+  const g = await requireGroupOwner();
+  const key = z.enum(GROUP_TOGGLES).parse(fd.get("module"));
+  const on = fd.get("on") === "true";
+  const { data, error: readError } = await g.supabase.from("family_groups").select("disabled_modules").eq("id", g.group.id).single();
+  if (readError) throw new Error(readError.message);
+  const cur = (data.disabled_modules as string[]) ?? [];
+  const next = on ? cur.filter((k) => k !== key) : Array.from(new Set([...cur, key]));
+  const { error } = await g.supabase.from("family_groups").update({ disabled_modules: next }).eq("id", g.group.id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/group", "layout");
 }
