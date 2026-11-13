@@ -224,3 +224,9 @@ export async function aiSettingsAction(slug: string, _prev: FormState, fd: FormD
   revalidatePath(`/c/${slug}/settings`);
   return { ok: "Saved." };
 }
+
+/** Sidebar emergency-stop toggle (reason required to stop; audited by the database). */
+export async function toggleStopAction(slug: string, fd: FormData): Promise<void> {
+  const res = await emergencyStopAction(slug, {}, fd);
+  if (res.error || res.fields) throw new Error(res.error ?? res.fields?.reason?.[0] ?? "Could not change the emergency stop");
+}

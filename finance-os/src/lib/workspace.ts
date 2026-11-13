@@ -53,7 +53,7 @@ export type GroupRef = { id: string; name: string; role: GroupRole; is_demo: boo
 export type MembershipRef = { role: string; company: Company };
 
 export const ROLE_LABELS: Record<string, string> = {
-  owner: "Owner", company_admin: "Company admin", finance: "Finance manager", viewer: "Finance viewer",
+  owner: "Company owner", company_admin: "Company admin", finance: "Finance manager", viewer: "Finance viewer",
   account_manager: "Account manager", sales_manager: "Sales manager", sales_rep: "Sales rep / setter",
   operations_manager: "Operations manager", marketing_manager: "Marketing manager", staff: "Staff",
   accountant: "External accountant", partner: "External partner",

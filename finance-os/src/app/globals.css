@@ -109,3 +109,25 @@ body {
   background: #cfc8b5;
   border-radius: 4px;
 }
+
+/* Company OS shell: hover states and small-screen behaviour (the design is desktop-first). */
+.dp-nav:not([aria-current]):hover { background: rgba(255, 255, 255, 0.08) !important; }
+.dp-root button, .dp-root input, .dp-root select, .dp-root textarea { font-family: inherit; }
+/* The design is light-only: pin the light palette inside the shell. */
+.dp-root {
+  --bg: #f5f1e8; --surface: #ffffff; --surface-2: #efe9d9; --ink: #171817; --muted: #6d7a70; --faint: #829487; --line: #e2dcc9; --line-2: #efe9d9;
+  --brand: var(--co-side); --brand-ink: #ffffff; --brand-soft: #e3e8df; --accent: var(--co-hi); --accent-soft: #f3e7c4;
+  --danger: #8c2f39; --danger-soft: #f5dada; --warn: #5a4300; --warn-soft: #f3e7c4; --ok: #2f5d4c; --ok-soft: #e3e8df; --info: #24425f; --info-soft: #e1e9f2;
+  color-scheme: light;
+}
+.dp-root a:focus-visible, .dp-root button:focus-visible, .dp-root select:focus-visible, .dp-root input:focus-visible { outline: 2px solid var(--co-hi); outline-offset: 2px; }
+@media (max-width: 900px) {
+  .dp-aside { position: fixed; inset: 0 auto 0 0; z-index: 30; transform: translateX(-100%); transition: transform 0.2s; width: 252px !important; }
+  .dp-aside-open { transform: none; }
+  .dp-menu-btn { display: inline-grid !important; place-items: center; }
+  .dp-topbar { padding: 10px 16px !important; flex-wrap: wrap; }
+  .dp-search { order: 10; min-width: 100%; }
+  .dp-me-text { display: none; }
+  .dp-content { padding: 20px 16px 48px !important; }
+  .dp-grid { grid-template-columns: minmax(0, 1fr) !important; }
+}

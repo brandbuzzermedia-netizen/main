@@ -7,13 +7,13 @@
  * commission rates. Everything here can be changed per company after creation.
  */
 
+/** Module catalogue in the order and with the icons of the Company OS design. */
 export const MODULES = [
   { key: "home", label: "Home", icon: "◧", phase: 0 },
   { key: "leads", label: "Leads", icon: "◎", phase: 0 },
   { key: "pipeline", label: "Pipeline", icon: "▥", phase: 0 },
   { key: "outreach", label: "Outreach", icon: "➶", phase: 0 },
   { key: "meetings", label: "Meetings", icon: "◷", phase: 0 },
-  { key: "tasks", label: "Tasks & follow-ups", icon: "✓", phase: 0 },
   { key: "customers", label: "Customers", icon: "☺", phase: 0 },
   { key: "operations", label: "Operations", icon: "⚙", phase: 0 },
   { key: "automation", label: "Automation", icon: "⚡", phase: 0 },
@@ -26,12 +26,15 @@ export const MODULES = [
   { key: "reports", label: "Reports", icon: "▤", phase: 0 },
   { key: "vault", label: "Vault", icon: "▣", phase: 0 },
   { key: "settings", label: "Settings", icon: "✲", phase: 0 },
+  { key: "tasks", label: "Tasks & follow-ups", icon: "✓", phase: 0 },
 ] as const;
 
 export type ModuleKey = (typeof MODULES)[number]["key"];
 export const MODULE_KEYS = MODULES.map((m) => m.key) as ModuleKey[];
 /** Modules every workspace keeps; they cannot be switched off. */
-export const CORE_MODULES: ModuleKey[] = ["home", "team", "settings"];
+export const CORE_MODULES: ModuleKey[] = ["home", "settings"];
+/** Company workspaces in the design show every module except the group-only finance views, which appear as Finance tabs. */
+export const COMPANY_MODULES: ModuleKey[] = ["home", "leads", "pipeline", "outreach", "meetings", "customers", "operations", "automation", "marketing", "finance", "team", "reports", "vault", "settings"];
 
 export function moduleInfo(key: ModuleKey) {
   return MODULES.find((m) => m.key === key)!;
@@ -146,7 +149,7 @@ export const COMPANY_TEMPLATES: CompanyTemplate[] = [
     slug: "more-of-us", name: "More of Us", short_name: "More of Us", ownership_type: "director_partner_operated", owner_label: "Mehul (director)",
     consolidation: "needs_confirmation", business_model: "services", lifecycle_status: "active",
     enabled_modules: [...BASE, "leads", "outreach", "customers", "operations", "finance", "reports", "vault"],
-    sidebar_color: "#141414", accent_color: "#E5392B", logo_key: "moreofus",
+    sidebar_color: "#141414", accent_color: "#EDEAE0", logo_key: "moreofus",
     stages: salesStages("Lead", "Qualified", "Discovery call", "Proposal sent", "Negotiation").map((st) =>
       st.name === "Discovery call" ? { ...st, kind: "meeting" as const } : st.name === "Proposal sent" ? { ...st, kind: "proposal" as const } : st.name === "Negotiation" ? { ...st, kind: "negotiation" as const } : st),
     setup: ["Confirm consolidation treatment with partners", "Mark NDA-restricted accounts", "Grant directors only what they need"],
@@ -155,7 +158,7 @@ export const COMPANY_TEMPLATES: CompanyTemplate[] = [
     slug: "real-estate", name: "Real Estate Firm (name pending)", short_name: "Real Estate", ownership_type: "proposed", owner_label: "Mehul",
     consolidation: "needs_confirmation", business_model: "real_estate", lifecycle_status: "pre_launch",
     enabled_modules: [...BASE, "leads", "customers", "operations", "finance"],
-    sidebar_color: "#24425F", accent_color: "#9DB8D4", logo_key: null,
+    sidebar_color: "#173F32", accent_color: "#C7A45A", logo_key: null,
     stages: [s("Buyer lead"), s("Qualified"), s("Shortlist"), s("Site visit", "meeting"), s("Offer", "proposal"), s("Milestones", "negotiation"), s("Closed", "won", 100), s("Lost", "lost")],
     setup: ["Enter the legal entity name", "Record K-RERA registration before any advertising", "Add first listing or mandate", "Add brokers"],
   },
@@ -163,7 +166,7 @@ export const COMPANY_TEMPLATES: CompanyTemplate[] = [
     slug: "ashwin-bhai", name: "Ashwin Bhai Channel", short_name: "Ashwin Bhai", ownership_type: "partner_channel", owner_label: "Partner (Ashwin)",
     consolidation: "commission_only", business_model: "partner_channel", lifecycle_status: "active",
     enabled_modules: [...BASE, "leads", "finance"],
-    sidebar_color: "#3F5A44", accent_color: "#C9D8C0", logo_key: null,
+    sidebar_color: "#173F32", accent_color: "#C7A45A", logo_key: null,
     stages: [s("Lead"), s("Handed off"), s("Site visit", "meeting"), s("Negotiation", "negotiation"), s("Closed (partner confirmed)", "won", 100), s("Lost", "lost")],
     setup: ["Record the signed commission agreement (no percentage is assumed)", "Record consent for each referred lead"],
   },
@@ -171,7 +174,7 @@ export const COMPANY_TEMPLATES: CompanyTemplate[] = [
     slug: "accent-spaces", name: "Accent Spaces Channel", short_name: "Accent Spaces", ownership_type: "partner_channel", owner_label: "Partner (Accent Spaces)",
     consolidation: "commission_only", business_model: "partner_channel", lifecycle_status: "active",
     enabled_modules: [...BASE, "leads", "finance"],
-    sidebar_color: "#6B4A2E", accent_color: "#E8D2B8", logo_key: null,
+    sidebar_color: "#173F32", accent_color: "#C7A45A", logo_key: null,
     stages: [s("Lead"), s("Handed off"), s("Design brief", "meeting"), s("Quote", "proposal"), s("Closed (partner confirmed)", "won", 100), s("Lost", "lost")],
     setup: ["Record the signed commission agreement (no percentage is assumed)"],
   },
@@ -179,7 +182,7 @@ export const COMPANY_TEMPLATES: CompanyTemplate[] = [
     slug: "refresh-money", name: "Refresh Money Channel", short_name: "Refresh Money", ownership_type: "partner_channel", owner_label: "Partner (Refresh Money)",
     consolidation: "commission_only", business_model: "partner_channel", lifecycle_status: "active",
     enabled_modules: [...BASE, "leads", "finance"],
-    sidebar_color: "#1F5C48", accent_color: "#BFE0D2", logo_key: null,
+    sidebar_color: "#173F32", accent_color: "#C7A45A", logo_key: null,
     stages: [s("Lead"), s("Consent recorded"), s("Sent to provider"), s("Provider status"), s("Disbursed (verified)", "won", 100), s("Not eligible", "lost")],
     setup: ["Record consent before handoff; never collect OTPs or identity documents here", "Record the signed commission agreement"],
   },
@@ -187,7 +190,7 @@ export const COMPANY_TEMPLATES: CompanyTemplate[] = [
     slug: "la-pinoz", name: "La Pino'z Pizza", short_name: "La Pino'z", ownership_type: "joint_venture", owner_label: "Brother (with Mehul and a partner)",
     consolidation: "share_per_agreement", business_model: "restaurant", lifecycle_status: "active",
     enabled_modules: ["home", "tasks", "operations", "finance", "team", "settings"],
-    sidebar_color: "#7E1F17", accent_color: "#F4C9C3", logo_key: null,
+    sidebar_color: "#173F32", accent_color: "#C7A45A", logo_key: null,
     stages: [s("Bulk enquiry"), s("Quoted", "proposal"), s("Confirmed", "won", 100), s("Lost", "lost")],
     setup: ["Record ownership shares from the verified agreement", "Confirm Petpooja outlet access before any POS integration", "Grant the brother and partner their own access"],
   },
@@ -195,18 +198,14 @@ export const COMPANY_TEMPLATES: CompanyTemplate[] = [
     slug: "vyra-studio", name: "Vyra Studio", short_name: "Vyra Studio", ownership_type: "family_owned", owner_label: "Mother",
     consolidation: "needs_confirmation", business_model: "retail", lifecycle_status: "pre_launch",
     enabled_modules: [...BASE, "customers", "operations", "marketing", "finance"],
-    sidebar_color: "#6E2F52", accent_color: "#F0D3E2", logo_key: null,
+    sidebar_color: "#173F32", accent_color: "#C7A45A", logo_key: null,
     stages: [s("Enquiry"), s("Styling chat", "meeting"), s("Order", "proposal"), s("Reserved", "negotiation"), s("Delivered", "won", 100), s("Lost", "lost")],
     setup: ["Add first SKUs with fabric, weave, price and photos", "Set shipping and return policy", "Connect Instagram and WhatsApp enquiries"],
   },
 ];
 
-// Every workspace that keeps books also gets bills, tax readiness and the vault.
-for (const t of COMPANY_TEMPLATES) {
-  if (t.enabled_modules.includes("finance")) {
-    for (const m of ["expenses", "tax", "vault"] as ModuleKey[]) if (!t.enabled_modules.includes(m)) t.enabled_modules.push(m);
-  }
-}
+// The design shows every module in every company; owners switch modules off in Settings.
+for (const t of COMPANY_TEMPLATES) t.enabled_modules = [...COMPANY_MODULES];
 
 /** Group shell identity. Restrained and separate from every company's brand. */
 export const GROUP_BRAND = { sidebar: "#173F32", accent: "#C7A45A" } as const;
