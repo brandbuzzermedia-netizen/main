@@ -230,3 +230,15 @@ export async function toggleStopAction(slug: string, fd: FormData): Promise<void
   const res = await emergencyStopAction(slug, {}, fd);
   if (res.error || res.fields) throw new Error(res.error ?? res.fields?.reason?.[0] ?? "Could not change the emergency stop");
 }
+
+/** Settings switch for one module (the design's module registry). */
+export async function toggleModuleAction(slug: string, fd: FormData): Promise<void> {
+  const ctx = await scoped(slug, "company.settings");
+  const key = z.enum(MODULE_KEYS as [string, ...string[]]).parse(fd.get("module"));
+  if (CORE_MODULES.includes(key as never)) return;
+  const on = fd.get("on") === "true";
+  const next = on ? Array.from(new Set([...ctx.company.enabled_modules, key])) : ctx.company.enabled_modules.filter((m) => m !== key);
+  const { error } = await ctx.supabase.from("organizations").update({ enabled_modules: next }).eq("id", ctx.company.id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/c/${slug}`, "layout");
+}

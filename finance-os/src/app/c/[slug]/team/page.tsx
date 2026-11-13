@@ -2,68 +2,58 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCompanyContext, ROLE_LABELS } from "@/lib/workspace";
 import { loadMembers } from "@/lib/people";
-import { Card, PageHeader, Table, Td } from "@/components/ui";
+import { designFor } from "@/domain/design";
+import { Cta, PageHead } from "@/components/dp/shell";
+import { Modal } from "@/components/dp/modal";
+import { C } from "@/components/dp/theme";
+import { ListView, NOTES } from "@/views/list";
 import { MemberForm } from "../forms";
 import { changeRoleAction, removeMemberAction } from "../actions";
 
 export const metadata: Metadata = { title: "Team" };
+const ASSIGNABLE = ["company_admin", "finance", "viewer", "sales_manager", "sales_rep", "account_manager", "operations_manager", "marketing_manager", "staff", "accountant", "partner"];
+const SCOPE: Record<string, string> = { partner: "Shared records only", accountant: "Granted periods only", finance: "Finance module", viewer: "Finance, read only", sales_rep: "Own records", staff: "Own records", account_manager: "Own clients" };
+const sm = { border: `1px solid ${C.btnLine}`, borderRadius: 7, padding: "4px 8px", fontSize: 12.5, background: "#fff", cursor: "pointer" } as const;
 
-const ASSIGNABLE = ["company_admin", "finance", "viewer", "sales_manager", "sales_rep", "account_manager", "operations_manager",
-  "marketing_manager", "staff", "accountant", "partner"];
-
-export default async function TeamPage({ params }: PageProps<"/c/[slug]/team">) {
+export default async function TeamPage({ params, searchParams }: PageProps<"/c/[slug]/team">) {
   const { slug } = await params;
+  const sp = await searchParams;
   const ctx = await getCompanyContext(slug);
   if (!ctx.can("members.manage") && !ctx.can("dashboard.owner")) notFound();
-  const [members, perms] = await Promise.all([
-    loadMembers(ctx.supabase, ctx.company.id),
-    ctx.supabase.from("role_permissions").select("role, permission"),
-  ]);
-  const canManage = ctx.can("members.manage");
+  const d = designFor(slug);
+  const base = `/c/${slug}/team`;
+  const members = await loadMembers(ctx.supabase, ctx.company.id);
+  const manage = ctx.can("members.manage");
   const roles = ctx.can("members.grant_owner") ? ["owner", ...ASSIGNABLE] : ASSIGNABLE;
-  const byRole = new Map<string, string[]>();
-  for (const r of perms.data ?? []) byRole.set(r.role as string, [...(byRole.get(r.role as string) ?? []), r.permission as string]);
+  const [title, lines] = NOTES.team;
   return (
     <>
-      <PageHeader title="Team" description={`People with access to ${ctx.company.name}. Membership here grants nothing in other companies or the group.`} />
-      <div className="flex flex-col gap-5">
-        <Table head={["Person", "Role", "Can", ""]}>
-          {members.map((m) => {
-            const editable = canManage && m.user_id !== ctx.userId && (m.role !== "owner" || ctx.can("members.grant_owner"));
-            return (
-              <tr key={m.id}>
-                <Td><div className="font-medium">{m.name}</div><div className="text-xs text-muted">{m.email}</div></Td>
-                <Td>
-                  {editable ? (
-                    <form action={changeRoleAction.bind(null, slug)} className="flex gap-1.5">
-                      <input type="hidden" name="membership_id" value={m.id} />
-                      <select name="role" defaultValue={m.role} aria-label={`Role for ${m.name}`} className="rounded-md border border-line bg-surface px-2 py-1 text-sm">
-                        {roles.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
-                      </select>
-                      <button className="rounded-md border border-line px-2 text-xs hover:bg-surface-2">Save</button>
-                    </form>
-                  ) : ROLE_LABELS[m.role] ?? m.role}
-                </Td>
-                <Td className="max-w-md text-xs text-muted">{(byRole.get(m.role) ?? []).filter((p) => p !== "company.view").join(", ") || "View only"}</Td>
-                <Td>
-                  {editable && (
-                    <form action={removeMemberAction.bind(null, slug)}>
-                      <input type="hidden" name="membership_id" value={m.id} />
-                      <button className="text-xs text-danger underline-offset-2 hover:underline">Remove</button>
-                    </form>
-                  )}
-                </Td>
-              </tr>
-            );
-          })}
-        </Table>
-        {canManage && (
-          <Card title="Add a member">
-            <p className="mb-3 text-sm text-muted">The person signs in once with their email (sign-in links are limited to approved addresses), then you add them here with a scoped role. Every change is audited.</p>
-            <MemberForm slug={slug} roles={roles.map((r) => ({ id: r, label: ROLE_LABELS[r] ?? r }))} />
-          </Card>
-        )}
-      </div>
+      <PageHead own={d.own} treat={d.treat} title={d.ren.team ?? "Team"} right={manage ? <Cta href={`${base}?add=1`}>+ Add</Cta> : undefined} />
+      <ListView vm={{
+        head: ["PERSON", "ROLE", "SCOPE", "TARGET"],
+        rows: members.map((m) => {
+          const editable = manage && m.user_id !== ctx.userId && (m.role !== "owner" || ctx.can("members.grant_owner"));
+          return {
+            a: <>{m.name}<div style={{ fontWeight: 400, fontSize: 12.5, color: C.muted }}>{m.email}</div></>,
+            b: editable ? (
+              <form action={changeRoleAction.bind(null, slug)} style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                <input type="hidden" name="membership_id" value={m.id} />
+                <select name="role" defaultValue={m.role} aria-label={`Role for ${m.name}`} style={sm}>{roles.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}</select>
+                <button style={sm}>Save</button>
+              </form>
+            ) : ROLE_LABELS[m.role] ?? m.role,
+            c: SCOPE[m.role] ?? "This company only",
+            d: editable ? <form action={removeMemberAction.bind(null, slug)}><input type="hidden" name="membership_id" value={m.id} /><button style={{ ...sm, color: C.red }}>Remove</button></form> : "—",
+          };
+        }),
+        empty: "No members yet.", noteTitle: title, noteLines: lines,
+      }} />
+      {sp.add && manage && (
+        <Modal title="Add a member" closeHref={base}>
+          <p style={{ fontSize: 13.5, color: C.body, marginTop: 0, lineHeight: 1.5 }}>The person signs in once with their approved email, then you add them here with a scoped role. Membership here grants nothing in other companies or the group.</p>
+          <MemberForm slug={slug} roles={roles.map((r) => ({ id: r, label: ROLE_LABELS[r] ?? r }))} />
+        </Modal>
+      )}
     </>
   );
 }

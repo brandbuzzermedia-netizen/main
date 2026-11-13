@@ -1,35 +1,35 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCompanyContext } from "@/lib/workspace";
-import { formatDateTime } from "@/domain/dates";
-import { Badge, Card, EmptyState, PageHeader, Table, Td } from "@/components/ui";
+import { designFor } from "@/domain/design";
+import { formatDate } from "@/domain/dates";
+import { Cta, PageHead } from "@/components/dp/shell";
+import { Modal } from "@/components/dp/modal";
+import { ListView, NOTES } from "@/views/list";
 import { VaultUpload } from "./upload";
 
 export const metadata: Metadata = { title: "Vault" };
 
-export default async function VaultPage({ params }: PageProps<"/c/[slug]/vault">) {
+export default async function VaultPage({ params, searchParams }: PageProps<"/c/[slug]/vault">) {
   const { slug } = await params;
+  const sp = await searchParams;
   const ctx = await getCompanyContext(slug);
   if (!ctx.can("documents.read") && !ctx.can("documents.write")) notFound();
-  const { data } = await ctx.supabase.from("documents").select("id, file_name, kind, mime_type, size_bytes, restricted, created_at").eq("organization_id", ctx.company.id).order("created_at", { ascending: false }).limit(500);
-  const rows = data ?? [];
+  const d = designFor(slug);
+  const base = `/c/${slug}/vault`;
+  const { data } = await ctx.supabase.from("documents").select("id, file_name, kind, restricted, created_at").eq("organization_id", ctx.company.id).order("created_at", { ascending: false }).limit(300);
+  const [title, lines] = NOTES.vault;
   return (
     <>
-      <PageHeader title="Vault" description="Private storage for this company only. Files open through short-lived links; originals are never deleted by the app. Never store passwords, OTPs or card details here." />
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
-        {rows.length === 0 ? <EmptyState title="No documents yet" /> : (
-          <Table head={["File", "Kind", "Size", "Uploaded", ""]}>
-            {rows.map((d) => (
-              <tr key={d.id as string}>
-                <Td>{d.file_name as string} {d.restricted && <Badge tone="danger">Restricted</Badge>}</Td><Td><Badge>{d.kind as string}</Badge></Td>
-                <Td numeric>{Math.max(1, Math.round(Number(d.size_bytes) / 1024))} KB</Td><Td className="whitespace-nowrap">{formatDateTime(d.created_at as string)}</Td>
-                <Td><a className="text-sm underline" href={`/c/${slug}/documents/${d.id}`} target="_blank" rel="noreferrer">Open</a></Td>
-              </tr>
-            ))}
-          </Table>
-        )}
-        {ctx.can("documents.write") && <Card title="Add a document"><VaultUpload slug={slug} canRestrict={ctx.can("finance.sensitive")} /></Card>}
-      </div>
+      <PageHead own={d.own} treat={d.treat} title="Vault" right={ctx.can("documents.write") ? <Cta href={`${base}?add=1`}>+ Add</Cta> : undefined} />
+      <ListView vm={{
+        head: ["FILE", "TYPE", "ACCESS", "UPDATED"],
+        rows: ((data ?? []) as { id: string; file_name: string; kind: string; restricted: boolean; created_at: string }[]).map((x) => ({
+          a: x.file_name, b: x.kind[0].toUpperCase() + x.kind.slice(1), c: x.restricted ? "Owner, Finance" : "Vault access", d: formatDate(x.created_at.slice(0, 10)), href: `/c/${slug}/documents/${x.id}`,
+        })),
+        empty: "No documents yet. Bills uploaded under Finance also appear here.", noteTitle: title, noteLines: lines,
+      }} />
+      {sp.add && ctx.can("documents.write") && <Modal title="Add a document" closeHref={base}><VaultUpload slug={slug} canRestrict={ctx.can("finance.sensitive")} /></Modal>}
     </>
   );
 }

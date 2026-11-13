@@ -7,8 +7,8 @@ const h = (t: ReactNode, mb = 6) => <div style={{ fontFamily: font, fontSize: 22
 const row = { display: "flex", justifyContent: "space-between", gap: 10, padding: "9px 0", borderTop: `1px solid ${C.line2}`, fontSize: 14 } as const;
 const btn = { border: `1px solid ${C.btnLine}`, borderRadius: 9, padding: "9px 16px", fontSize: 13.5, background: "transparent", cursor: "pointer", color: C.ink, textDecoration: "none", display: "inline-block" } as const;
 
-export function FinanceTabs({ current, base }: { current: string; base: string }) {
-  const tabs: [string, string][] = [["overview", "Overview"], ["expenses", "Expenses & bills"], ["rental", "Rental income"], ["tax", "Tax readiness"]];
+export function FinanceTabs({ current, base, hide = [] }: { current: string; base: string; hide?: string[] }) {
+  const tabs = ([["overview", "Overview"], ["expenses", "Expenses & bills"], ["rental", "Rental income"], ["tax", "Tax readiness"]] as [string, string][]).filter(([k]) => !hide.includes(k));
   return (
     <nav aria-label="Finance" style={{ display: "flex", gap: 6, borderBottom: `1px solid ${C.line}`, marginBottom: 22, flexWrap: "wrap" }}>
       {tabs.map(([k, l]) => (

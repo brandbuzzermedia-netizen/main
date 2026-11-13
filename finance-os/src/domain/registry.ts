@@ -33,8 +33,8 @@ export type ModuleKey = (typeof MODULES)[number]["key"];
 export const MODULE_KEYS = MODULES.map((m) => m.key) as ModuleKey[];
 /** Modules every workspace keeps; they cannot be switched off. */
 export const CORE_MODULES: ModuleKey[] = ["home", "settings"];
-/** Company workspaces in the design show every module except the group-only finance views, which appear as Finance tabs. */
-export const COMPANY_MODULES: ModuleKey[] = ["home", "leads", "pipeline", "outreach", "meetings", "customers", "operations", "automation", "marketing", "finance", "team", "reports", "vault", "settings"];
+/** Company workspaces show every module; rental, expenses and tax appear as Finance tabs rather than menu items. */
+export const COMPANY_MODULES: ModuleKey[] = ["home", "leads", "pipeline", "outreach", "meetings", "customers", "operations", "automation", "marketing", "finance", "rental", "expenses", "tax", "team", "reports", "vault", "settings"];
 
 export function moduleInfo(key: ModuleKey) {
   return MODULES.find((m) => m.key === key)!;
