@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
-import { Archivo } from "next/font/google";
+import { Figtree, Newsreader } from "next/font/google";
 import "./globals.css";
 
-const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"] });
+const figtree = Figtree({ variable: "--font-figtree", subsets: ["latin"] });
+const newsreader = Newsreader({ variable: "--font-newsreader", subsets: ["latin"], style: ["normal", "italic"] });
 
 export const metadata: Metadata = {
-  title: { default: "GBS Finance OS", template: "%s · GBS Finance OS" },
-  description: "Collections, billing follow-ups and cash flow for Get Bee Seen.",
+  title: { default: "Diwani Parivaar OS", template: "%s · Diwani Parivaar OS" },
+  description: "Private operating system for the Diwani Parivaar family business group.",
   robots: { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-IN" className={`${archivo.variable} h-full antialiased`}>
+    <html lang="en-IN" className={`${figtree.variable} ${newsreader.variable} h-full antialiased`}>
       <body className="min-h-full font-sans text-[15px]">{children}</body>
     </html>
   );

@@ -5,11 +5,12 @@ export function cx(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(" ");
 }
 
-export function PageHeader({ title, description, actions }: { title: string; description?: ReactNode; actions?: ReactNode }) {
+export function PageHeader({ title, description, actions, eyebrow }: { title: string; description?: ReactNode; actions?: ReactNode; eyebrow?: ReactNode }) {
   return (
     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        {eyebrow && <div className="mb-2 flex flex-wrap items-center gap-2">{eyebrow}</div>}
+        <h1 className="font-display text-[32px] leading-[1.08] font-medium tracking-tight sm:text-[40px]">{title}</h1>
         {description && <p className="mt-1 max-w-2xl text-sm text-muted">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -19,10 +20,10 @@ export function PageHeader({ title, description, actions }: { title: string; des
 
 export function Card({ title, actions, children, className }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={cx("rounded-xl border border-line bg-surface", className)}>
+    <section className={cx("rounded-2xl border border-line bg-surface", className)}>
       {(title || actions) && (
         <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-          <h2 className="text-sm font-semibold">{title}</h2>
+          <h2 className="font-display text-xl font-medium">{title}</h2>
           {actions}
         </header>
       )}
@@ -34,9 +35,9 @@ export function Card({ title, actions, children, className }: { title?: ReactNod
 export function Stat({ label, value, hint, tone = "default" }: { label: string; value: ReactNode; hint?: ReactNode; tone?: "default" | "danger" | "warn" | "ok" }) {
   const toneClass = { default: "", danger: "text-danger", warn: "text-warn", ok: "text-ok" }[tone];
   return (
-    <div className="rounded-xl border border-line bg-surface p-4">
-      <div className="text-xs font-medium uppercase tracking-wide text-muted">{label}</div>
-      <div className={cx("tabular mt-1 text-2xl font-semibold", toneClass)}>{value}</div>
+    <div className="rounded-2xl border border-line bg-surface px-[18px] py-4">
+      <div className="text-[13px] text-muted">{label}</div>
+      <div className={cx("tabular mt-1.5 font-display text-[28px] leading-tight", toneClass)}>{value}</div>
       {hint && <div className="mt-1 text-xs text-muted">{hint}</div>}
     </div>
   );
@@ -64,6 +65,7 @@ const buttonBase =
   "inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50";
 const buttonVariants = {
   primary: "bg-brand text-brand-ink hover:opacity-90",
+  company: "bg-co-side text-white hover:opacity-90",
   secondary: "border border-line bg-surface hover:bg-surface-2",
   danger: "bg-danger text-white hover:opacity-90",
   ghost: "hover:bg-surface-2",
@@ -120,7 +122,7 @@ export function Alert({ tone = "info", title, children }: { tone?: "info" | "war
 
 export function EmptyState({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-line px-6 py-12 text-center">
+    <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line px-6 py-12 text-center">
       <p className="font-medium">{title}</p>
       {children && <p className="max-w-md text-sm text-muted">{children}</p>}
       {action && <div className="mt-2">{action}</div>}
@@ -130,7 +132,7 @@ export function EmptyState({ title, children, action }: { title: string; childre
 
 export function Table({ head, children }: { head: ReactNode[]; children: ReactNode }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-line bg-surface">
+    <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
       <table className="w-full min-w-[640px] text-left text-sm">
         <thead className="border-b border-line bg-surface-2 text-xs uppercase tracking-wide text-muted">
           <tr>
@@ -145,8 +147,8 @@ export function Table({ head, children }: { head: ReactNode[]; children: ReactNo
   );
 }
 
-export function Td({ children, className, numeric }: { children: ReactNode; className?: string; numeric?: boolean }) {
-  return <td className={cx("px-4 py-2.5 align-top", numeric && "tabular text-right whitespace-nowrap", className)}>{children}</td>;
+export function Td({ children, className, numeric, colSpan }: { children: ReactNode; className?: string; numeric?: boolean; colSpan?: number }) {
+  return <td colSpan={colSpan} className={cx("px-4 py-2.5 align-top", numeric && "tabular text-right whitespace-nowrap", className)}>{children}</td>;
 }
 
 export function Dl({ items }: { items: [string, ReactNode][] }) {

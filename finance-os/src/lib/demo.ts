@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDays, todayInBusinessTz } from "@/domain/dates";
+import { COMPANY_TEMPLATES, type CompanyTemplate } from "@/domain/registry";
 
 /**
  * Development-only demo data. Every name is prefixed "[DEMO]" and the organization is
@@ -66,4 +67,66 @@ export async function seedDemoWorkspace(supabase: SupabaseClient, orgId: string)
     ],
   });
   if (importError) throw new Error(`Demo invoices failed: ${importError.message}`);
+}
+
+/**
+ * Development-only demo group. Companies come from the registry templates, renamed
+ * "[DEMO] …" with "demo-" slugs, inside a group flagged is_demo (every page shows a banner).
+ * Deals, meetings and tasks are inserted through the normal RLS-guarded paths.
+ * Returns the demo GBS workspace id.
+ */
+export async function seedDemoGroup(
+  supabase: SupabaseClient,
+  groupId: string,
+  payloadFor: (t: CompanyTemplate) => Record<string, unknown>,
+): Promise<string | null> {
+  const ids: Record<string, string> = {};
+  for (const t of COMPANY_TEMPLATES) {
+    const { data, error } = await supabase.rpc("create_company", { p_group: groupId, p_company: payloadFor(t) });
+    if (error) throw new Error(`Demo company ${t.name} failed: ${error.message}`);
+    ids[t.slug] = data as string;
+  }
+  const today = todayInBusinessTz();
+  const now = Date.now();
+  const iso = (days: number, hour = 11) => new Date(Date.parse(`${addDays(today, days)}T${String(hour).padStart(2, "0")}:00:00+05:30`)).toISOString();
+
+  async function deals(slug: string, rows: { title: string; stage: string; value: number; hot?: boolean; next?: [string, number]; idleDays?: number }[]) {
+    const org = ids[slug];
+    const { data: stages, error } = await supabase.from("pipeline_stages").select("id, name").eq("organization_id", org);
+    if (error) throw new Error(error.message);
+    const stageId = (n: string) => stages!.find((s) => s.name === n)!.id;
+    const { data, error: insError } = await supabase.from("deals").insert(rows.map((r) => ({
+      organization_id: org, title: `[DEMO] ${r.title}`, account_name: "[DEMO] Example account", stage_id: stageId(r.stage),
+      value_minor: r.value, is_hot: Boolean(r.hot), next_action: r.next?.[0] ?? null, next_action_on: r.next ? addDays(today, r.next[1]) : null,
+      last_activity_at: new Date(now - (r.idleDays ?? 1) * 86_400_000).toISOString(), source: "Demo",
+    }))).select("id, title");
+    if (insError) throw new Error(`Demo deals failed: ${insError.message}`);
+    return data!;
+  }
+
+  const gbs = await deals("gbs", [
+    { title: "Website + Meta ads retainer", stage: "Proposal", value: 1_20_000_00, hot: true, next: ["Call on revised scope", 1] },
+    { title: "Clinic lead-gen campaign", stage: "Meeting", value: 75_000_00, next: ["Send case studies", -2] },
+    { title: "Furniture brand refresh", stage: "Qualified", value: 60_000_00, idleDays: 12 },
+    { title: "48-hour landing page", stage: "Lead", value: 25_000_00 },
+    { title: "SEO retainer", stage: "Negotiation", value: 50_000_00, hot: true },
+  ]);
+  await deals("tan-o-fun", [
+    { title: "Corporate gifting order (200 kits)", stage: "Quote sent", value: 3_40_000_00, hot: true },
+    { title: "Dealer onboarding · Mysuru", stage: "Enquiry", value: 80_000_00 },
+  ]);
+  await deals("ashwin-bhai", [{ title: "Office space referral (partner gross value)", stage: "Site visit", value: 2_50_00_000_00 }]);
+
+  const m = await supabase.from("meetings").insert([
+    { organization_id: ids.gbs, title: "[DEMO] Proposal review", starts_at: iso(0, 16), deal_id: gbs[0].id },
+    { organization_id: ids.gbs, title: "[DEMO] Discovery call", starts_at: iso(2, 11), deal_id: gbs[1].id },
+  ]);
+  if (m.error) throw new Error(`Demo meetings failed: ${m.error.message}`);
+  const tk = await supabase.from("tasks").insert([
+    { organization_id: ids.gbs, title: "[DEMO] Collect client ad account access", due_on: addDays(today, -1), priority: "high" },
+    { organization_id: ids.gbs, title: "[DEMO] Draft monthly report", due_on: addDays(today, 3) },
+  ]);
+  if (tk.error) throw new Error(`Demo tasks failed: ${tk.error.message}`);
+  await seedDemoWorkspace(supabase, ids.gbs);
+  return ids.gbs ?? null;
 }
