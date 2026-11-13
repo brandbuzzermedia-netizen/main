@@ -2,11 +2,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { dispatchToN8n, n8nConfig } from "@/integrations/n8n/client";
+import { todayInBusinessTz } from "@/domain/dates";
 
 /**
  * Scheduled dispatcher (e.g. Vercel Cron every 5 minutes with Authorization: Bearer CRON_SECRET).
- * Claims queued, approved, non-mock runs (skipping emergency-stopped companies) and sends them to
- * n8n. A failed send marks the run failed; retry rules live in the database.
+ * Queues today's scheduled runs, then claims queued, approved, non-mock runs (skipping
+ * emergency-stopped companies) and sends each to its template's n8n webhook (dp-<template>). A failed send marks the run failed; retry rules live in the database.
  */
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET ?? "";
@@ -16,6 +17,9 @@ export async function GET(request: NextRequest) {
   }
   if (n8nConfig().mock) return NextResponse.json({ ok: true, dispatched: 0, note: "n8n not configured (mock mode)" });
   const db = createAdminClient();
+  // Today's scheduled runs (daily summary, bill review reminder, rent overdue). Idempotent per day.
+  const queued = await db.rpc("enqueue_scheduled_runs", { p_today: todayInBusinessTz() });
+  if (queued.error) return NextResponse.json({ error: "enqueue_failed" }, { status: 500 });
   const { data: runs, error } = await db.rpc("claim_automation_runs", { p_limit: 20 });
   if (error) return NextResponse.json({ error: "claim_failed" }, { status: 500 });
   let sent = 0;
@@ -28,5 +32,5 @@ export async function GET(request: NextRequest) {
       await db.from("automation_runs").update({ status: "failed", last_error: res.error ?? "Dispatch failed", finished_at: new Date().toISOString() }).eq("id", run.id);
     }
   }
-  return NextResponse.json({ ok: true, dispatched: sent });
+  return NextResponse.json({ ok: true, queued: queued.data ?? 0, dispatched: sent });
 }
