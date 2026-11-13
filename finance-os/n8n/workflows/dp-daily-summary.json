@@ -1,5 +1,7 @@
 {
   "name": "Diwani Parivaar OS · Daily business summary",
+  "id": "4f8fed798b2c53db",
+  "versionId": "8605cfa7-38ee-5d28-abb5-878c4cb0bd00",
   "nodes": [
     {
       "parameters": {
@@ -100,7 +102,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const inr = (m) => '₹' + (Number(m || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 });\nconst s = $('Verify signature').first().json.input;\nconst lines = [\n  `Open deals: ${s.open_deals ?? 0} (${inr(s.open_pipeline_minor)} in INR pipeline)`,\n  `Meetings today: ${s.meetings_today ?? 0}`,\n  `Overdue tasks: ${s.tasks_overdue ?? 0}`,\n  `Ledger entries waiting for approval: ${s.ledger_awaiting_approval ?? 0}`,\n  `Bills waiting for review: ${s.bills_awaiting_review ?? 0}`,\n];\nreturn [{ json: { subject: `${s.company}: summary for ${s.date}`, text: lines.join('\\n') + '\\n\\nFigures come from approved records in Diwani Parivaar OS. Open the OS to act on any of them.' } }];\n"
+        "jsCode": "const inr = (m) => '₹' + (Number(m || 0) / 100).toLocaleString('en-IN', { maximumFractionDigits: 0 });\nconst s = $('Verify signature').first().json.input;\nconst lines = [\n  `Open deals: ${s.open_deals ?? 0} (${inr(s.open_pipeline_minor)} in INR pipeline)`,\n  `Meetings today: ${s.meetings_today ?? 0}`,\n  `Overdue tasks: ${s.tasks_overdue ?? 0}`,\n  `Ledger entries waiting for approval: ${s.ledger_awaiting_approval ?? 0}`,\n  `Bills waiting for review: ${s.bills_awaiting_review ?? 0}`,\n];\nreturn [{ json: { subject: `${s.company}: summary for ${s.date}`, text: lines.join('\\n') + '\\n\\nCounts come from records in Diwani Parivaar OS. Open the OS to act on any of them.' } }];\n"
       },
       "id": "dfac3565-2b3d-59e2-964c-191e7bcff197",
       "name": "Compose message",
@@ -118,7 +120,9 @@
         "subject": "={{ $json.subject }}",
         "emailFormat": "text",
         "text": "={{ $json.text }}",
-        "options": {}
+        "options": {
+          "appendAttribution": false
+        }
       },
       "id": "6c22373f-cd42-5a81-a26d-148b6b589c58",
       "name": "Email the owner",

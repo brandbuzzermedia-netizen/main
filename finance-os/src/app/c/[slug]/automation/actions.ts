@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCompanyContext } from "@/lib/workspace";
 import { designFor, workflowKey } from "@/domain/design";
+import { SCHEDULED_TEMPLATES } from "@/integrations/n8n/templates";
 
 async function manager(slug: string) {
   const ctx = await getCompanyContext(slug);
@@ -16,14 +17,15 @@ async function manager(slug: string) {
 /** Finds or creates the definition row for one workflow in the company's design library. */
 async function definition(slug: string, name: string) {
   const ctx = await manager(slug);
-  const wf = designFor(slug).wf.find((w) => w.n === name);
+  const sched = SCHEDULED_TEMPLATES.find((t) => t.name === name);
+  const wf = sched ? { n: sched.name, trigger: sched.detail, mode: sched.requiresApproval ? "Approval" : "Auto" } : designFor(slug).wf.find((w) => w.n === name);
   if (!wf) throw new Error("Unknown workflow");
-  const key = workflowKey(wf.n);
+  const key = sched ? sched.key : workflowKey(wf.n);
   const { data: existing } = await ctx.supabase.from("automation_definitions").select("id, enabled").eq("organization_id", ctx.company.id).eq("template_key", key).maybeSingle();
   if (existing) return { ctx, id: existing.id as string, wf };
   const gated = wf.mode !== "Auto";
   const { data, error } = await ctx.supabase.from("automation_definitions").insert({
-    organization_id: ctx.company.id, template_key: key, name: wf.n, trigger_kind: "record_change", trigger_detail: wf.trigger,
+    organization_id: ctx.company.id, template_key: key, name: wf.n, trigger_kind: sched ? sched.trigger : "record_change", trigger_detail: wf.trigger,
     enabled: false, requires_approval: gated, is_financial: /invoice|payment|refund|commission|disbursal/i.test(wf.n), idempotent: true,
     environment: process.env.N8N_ENVIRONMENT ?? "development",
   }).select("id").single();

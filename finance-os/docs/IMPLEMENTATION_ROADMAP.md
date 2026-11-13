@@ -18,15 +18,19 @@ What could **not** be verified in this build environment is listed at the end.
 | 9 | Server-side Claude provider, structured outputs, draft-and-approve, NDA exclusion, per-company toggle and token budget, usage log | Built | `11_tax_automation_ai.sql` |
 | 10 | Products/SKUs with BIS gate, suppliers, orders with B2B advance gate, commission agreements and receivables gate, properties with K-RERA ad gate, site visits, ad approvals, outlet daily sales | Built | `12_business_modules.sql` |
 | 11 | CSP/HSTS, audited exports, error boundaries, cron dispatcher, runbook (backup, restore, monitoring, UAT) | Built (see below) | `11_tax_automation_ai.sql` |
+| 12 | UI rebuilt to the owner's Company OS design (D15): shell, loader, per-company names/fonts/colours, every screen | Built | `e2e/01-owner.spec.ts` |
+| 13 | Invitations, deactivation instead of deletion, two-step sign-in (TOTP) for owner/admin/finance | Built | `13_people_access.sql`, `e2e/03-people-access.spec.ts` |
+| 14 | Receivables moved under `/c/<company>/receivables`, old links redirect | Built | `e2e/01-owner.spec.ts` |
+| 15 | Scheduled runs + n8n workflows (daily summary, bills waiting, rent overdue) | Built | `14_scheduled_automation.sql`, `n8n-workflows.test.ts` |
 
-Totals: 146 unit tests, 12 SQL suites (all passing against PostgreSQL 16), lint, typecheck, production build.
+Totals: 157 unit tests, 14 SQL suites (PostgreSQL 16), 15 Playwright end-to-end tests against a local Supabase stack, lint, typecheck, production build.
 
 ## Needs credentials or confirmation before it is live
 
 | Item | Needs | Until then |
 | --- | --- | --- |
 | Claude bill OCR and drafting | `ANTHROPIC_API_KEY`, then each company switches AI on in Settings | Bills are typed by hand beside the original; drafting is off |
-| n8n workflows | `N8N_BASE_URL`, `N8N_SIGNING_SECRET`, `CRON_SECRET`, workflows built in n8n that verify the signature | Test runs are mock and labelled; nothing is sent |
+| n8n workflows | `N8N_BASE_URL` (https), `N8N_SIGNING_SECRET`, `CRON_SECRET`, the files in `n8n/workflows` imported with an SMTP credential (see n8n/README.md) | Test runs are mock and labelled; nothing is sent |
 | Email / WhatsApp / LinkedIn sending | An approved provider wired in n8n, WhatsApp templates and opt-ins | Outreach is logged by hand; drafts become tasks |
 | Calendar sync | Google/Outlook connection via n8n | Meetings are entered by hand |
 | Shopify (IYP, Vyra) | Store app credentials | Orders entered by hand |
@@ -34,19 +38,31 @@ Totals: 146 unit tests, 12 SQL suites (all passing against PostgreSQL 16), lint,
 | Swipe API (GBS) | Plan-level API access (see SWIPE_INTEGRATION.md) | CSV import |
 | Supabase Storage bucket | Applied automatically by migration 11 on Supabase | — |
 
-## Not verified in this environment
+## Verified in this environment
 
-There was no Docker, so a full Supabase stack (Auth + PostgREST + Storage) could not run here.
-Database rules were tested against real PostgreSQL 16; TypeScript was typechecked, unit tested
-and built; the production server was started and its pages and headers checked. **Signed-in
-end-to-end flows (upload to Storage, server actions against PostgREST) still need a pass on a
-staging Supabase project** using the UAT checklist in DEPLOYMENT_RUNBOOK.md, and a Playwright
-end-to-end suite should be added to CI with `supabase start`.
+- **Full local Supabase stack** (Auth, PostgREST, Storage, Postgres 17) via `supabase start`.
+  All 18 migrations applied from scratch, and migrations 17 and 18 also on top of existing data.
+- **Playwright suite** (`npm run test:e2e`), signed in as an owner and as a sales rep:
+  - every menu item;
+  - creating deals and clients;
+  - module toggles and the emergency stop;
+  - bill upload to private Storage;
+  - invitations, deactivation and restore;
+  - two-step sign-in;
+  - the receivables routes;
+  - employee isolation.
+  CI runs the same suite.
+- **n8n 1.123.4** in Docker: the three workflow files ran end to end (see n8n/README.md).
+- **Bugs this found and fixed:**
+  - the workspace loader could stay stuck over the page;
+  - bulk inserts sent null instead of column defaults;
+  - runs had no n8n webhook path;
+  - the scheduled templates could not be switched on.
+
+Still not verified: a hosted Supabase project, real email/SMTP delivery, and the cron schedule on
+the hosting platform. These need the staging deployment below.
 
 ## Next increments
 
-1. Staging deployment and the UAT checklist.
-2. Playwright E2E in CI against `supabase start`.
-3. Email invitations for people who have never signed in; deactivate instead of delete; MFA for owners and finance.
-4. Move the receivables pages under `/c/[slug]/…`.
-5. n8n workflow JSON for the first low-risk templates (daily summary, bill OCR queue, rent overdue task).
+1. Staging deployment (hosted Supabase + hosting with cron) and the UAT checklist in DEPLOYMENT_RUNBOOK.md.
+2. n8n workflows for the remaining templates as each provider (email, WhatsApp, calendar) is chosen.

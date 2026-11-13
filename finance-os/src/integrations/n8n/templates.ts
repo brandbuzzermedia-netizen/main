@@ -25,3 +25,6 @@ export const AUTOMATION_TEMPLATES: AutomationTemplate[] = [
   { key: "restaurant_order_sync", name: "Restaurant order status sync", trigger: "webhook", detail: "POS event", requiresApproval: false, isFinancial: false, idempotent: true, needs: "Confirmed Petpooja (or other POS) API access" },
   { key: "ecommerce_order_sync", name: "E-commerce order sync", trigger: "webhook", detail: "Shopify order", requiresApproval: false, isFinancial: false, idempotent: true, needs: "Shopify app credentials" },
 ];
+
+/** Templates the OS queues on a schedule (see enqueue_scheduled_runs) with workflow files in n8n/workflows. */
+export const SCHEDULED_TEMPLATES = AUTOMATION_TEMPLATES.filter((t) => ["daily_summary", "bill_ocr_review", "rent_overdue_escalation"].includes(t.key));

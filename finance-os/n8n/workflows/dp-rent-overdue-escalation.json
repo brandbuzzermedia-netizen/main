@@ -1,5 +1,7 @@
 {
   "name": "Diwani Parivaar OS · Rent overdue → escalation task",
+  "id": "73c3e2d044375d8f",
+  "versionId": "ce42043d-132e-58fa-a291-b37777e7f087",
   "nodes": [
     {
       "parameters": {
@@ -118,7 +120,9 @@
         "subject": "={{ $json.subject }}",
         "emailFormat": "text",
         "text": "={{ $json.text }}",
-        "options": {}
+        "options": {
+          "appendAttribution": false
+        }
       },
       "id": "6c22373f-cd42-5a81-a26d-148b6b589c58",
       "name": "Email the owner",

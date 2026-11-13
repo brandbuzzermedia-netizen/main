@@ -7,6 +7,7 @@ import { aiConfig } from "@/integrations/ai/claude";
 import { formatDateTime } from "@/domain/dates";
 import { Cta, PageHead } from "@/components/dp/shell";
 import { AutomationView, RUN_COLOR } from "@/views/automation";
+import { SCHEDULED_TEMPLATES } from "@/integrations/n8n/templates";
 import { decideAction, dryRunAction, retryAction, toggleWorkflowAction } from "./actions";
 
 export const metadata: Metadata = { title: "Automation" };
@@ -34,7 +35,9 @@ export default async function AutomationPage({ params, searchParams }: PageProps
       <AutomationView vm={{
         dry: typeof sp.dry === "string" ? sp.dry : undefined,
         wfs: d.wf.map((w) => ({ n: w.n, meta: `Trigger: ${w.trigger} · ${w.mode}`, on: byKey.get(workflowKey(w.n))?.enabled ?? false,
-          dry: dryRunAction.bind(null, slug), toggle: manage ? toggleWorkflowAction.bind(null, slug) : undefined })),
+          dry: dryRunAction.bind(null, slug), toggle: manage ? toggleWorkflowAction.bind(null, slug) : undefined }))
+          .concat(SCHEDULED_TEMPLATES.map((t) => ({ n: t.name, meta: `Scheduled by the OS: ${t.detail} · ${t.requiresApproval ? "Approval" : "Auto"} · n8n`, on: byKey.get(t.key)?.enabled ?? false,
+            dry: dryRunAction.bind(null, slug), toggle: manage ? toggleWorkflowAction.bind(null, slug) : undefined }))),
         pending: rs.filter((r) => r.status === "pending_approval").map((r) => ({ id: r.id, t: byId.get(r.definition_id)?.name ?? "Workflow run", s: `${r.trigger_source.replace("_", " ")} · ${formatDateTime(r.created_at)}` })),
         decide: ctx.can("automation.approve") ? decideAction.bind(null, slug) : undefined,
         runs: rs.filter((r) => r.status !== "pending_approval").slice(0, 12).map((r) => {
