@@ -1,8 +1,28 @@
 # Automation architecture (OS → n8n)
 
-Status: **design only. Nothing runs automatically yet.** Build phase 8. What exists today is the
-company **emergency stop** flag (`organizations.emergency_stop`, set via `set_emergency_stop`,
-audited) which every future run must check first.
+Status: **built; runs in mock mode until n8n credentials are set.** Implemented in
+migrations 12 and 15, `src/integrations/n8n/*`, `/api/automation/dispatch` (cron) and
+`/api/automation/callback` (signed). The company emergency stop blocks run requests and the
+dispatcher skips stopped companies.
+
+## How a run flows today
+
+1. A person (or later a record trigger) calls `request_automation_run` with an idempotency key.
+   Disabled workflows and emergency-stopped companies are refused; a repeated key returns the
+   existing run.
+2. Workflows needing approval wait in `pending_approval`; an owner decides with `decide_automation_run`.
+3. Every 5 minutes Vercel Cron calls `/api/automation/dispatch` (Bearer `CRON_SECRET`). It claims
+   queued runs (`claim_automation_runs`, `FOR UPDATE SKIP LOCKED`) and POSTs to
+   `N8N_BASE_URL/webhook/<path>` with `x-dp-timestamp`, `x-dp-nonce`, `x-dp-signature` =
+   HMAC-SHA256(secret, `timestamp.nonce.body`).
+4. n8n calls `/api/automation/callback` the same way. The OS rejects stale (>5 min), replayed
+   (nonce stored) or badly signed requests, validates the payload, checks the run belongs to the
+   named company, and records a final result once.
+5. Failures appear in the failure queue. Only idempotent, non-financial workflows offer Retry.
+6. "Test run" creates a mock run, completes it in-app and labels it mock; nothing is sent.
+
+In n8n, the first node of each workflow must verify the same signature (Function node with the
+shared secret) before doing anything.
 
 ## Roles of each system
 

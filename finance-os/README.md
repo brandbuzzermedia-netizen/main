@@ -10,6 +10,11 @@ channels, La Pino'z and Vyra Studio). Start with
 [`IMPLEMENTATION_ROADMAP`](docs/IMPLEMENTATION_ROADMAP.md) and
 [`DEPLOYMENT_RUNBOOK`](docs/DEPLOYMENT_RUNBOOK.md).
 
+**Status:** every phase in the brief has a working first version, tested at the database and
+domain level. See [`docs/IMPLEMENTATION_ROADMAP.md`](docs/IMPLEMENTATION_ROADMAP.md) for what is
+built, what needs credentials (Claude, n8n, messaging, Shopify, POS) and what still needs a
+staging pass.
+
 First run after this release: sign in, create the family group at `/onboarding`, then on
 **Businesses** attach the existing GBS Finance workspace and create the other workspaces.
 

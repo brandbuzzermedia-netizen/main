@@ -10,12 +10,10 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
-        <div className="mb-8 flex items-center gap-3">
-          <Image src="/bee.svg" alt="" width={40} height={40} priority />
-          <div>
-            <h1 className="text-xl font-semibold">GBS Finance OS</h1>
-            <p className="text-sm text-muted">Collections and cash flow for Get Bee Seen</p>
-          </div>
+        <div className="mb-6 text-center">
+          <Image src="/logos/diwani.png" alt="Diwani Parivaar" width={240} height={160} priority className="mx-auto rounded-xl" />
+          <h1 className="mt-3 font-display text-2xl">Diwani Parivaar OS</h1>
+          <p className="text-sm text-muted">Private to the family group. Sign in with an approved email.</p>
         </div>
         <div className="rounded-xl border border-line bg-surface p-6">
           {error === "link" && (

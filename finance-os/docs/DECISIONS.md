@@ -39,3 +39,26 @@ so comparisons parse to instants, and period membership uses the India calendar 
 
 **D9. Unbuilt modules are visible but disabled** (with the phase they arrive in) to owners only,
 so every visible action works or says why not, and employees see a shorter menu.
+
+**D10. One shared ledger, separate from the invoice receivables module.** The original Swipe
+invoice ledger stays the record of sales invoices and receipts. The general ledger holds
+expenses, other and commission income, financing, deposits, pass-through funds and tax. The
+Command Centre shows the two side by side with their sources and never adds them together, so a
+receipt entered in both places cannot be counted twice.
+
+**D11. Rental income lives in its own subledger.** Charges (accrual), receipts (cash) and the
+deposit ledger (liability) are separate tables; the ledger refuses income rows tagged with a
+rental unit, so rent cannot be booked twice. Unit expenses are ledger expenses tagged with the unit.
+
+**D12. Compliance gates are database rules, set through RPCs.** BIS verification, K-RERA
+verification, filing a return and approving ledger entries can only happen through functions
+that check the permission and the evidence. A direct table update is refused even for a user who
+can write the table.
+
+**D13. AI and automation degrade to labelled mock mode.** Without credentials nothing is
+invented: OCR returns empty fields for manual entry, drafting is unavailable, and test runs say
+"mock". Live behaviour starts only when keys are configured and a company opts in.
+
+**D14. Simple record screens are configuration.** `src/lib/resources.ts` describes tables,
+columns, fields and permissions; one server action and one page serve them. The table name never
+comes from the request and `organization_id` is always set server-side.

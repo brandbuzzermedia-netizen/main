@@ -127,6 +127,12 @@ export async function seedDemoGroup(
     { organization_id: ids.gbs, title: "[DEMO] Draft monthly report", due_on: addDays(today, 3) },
   ]);
   if (tk.error) throw new Error(`Demo tasks failed: ${tk.error.message}`);
+  const { data: ent } = await supabase.from("legal_entities").select("id").eq("organization_id", ids.gbs).eq("is_default", true).single();
+  const le = await supabase.from("ledger_entries").insert([
+    { organization_id: ids.gbs, legal_entity_id: ent!.id, entry_type: "expense", category: "Software", description: "[DEMO] Design tool subscription", txn_date: today, amount_minor: 1_180_00, status: "pending_approval" },
+    { organization_id: ids.gbs, legal_entity_id: ent!.id, entry_type: "pass_through_in", category: "Client ad budget", description: "[DEMO] Client Meta ad funds (not revenue)", txn_date: today, amount_minor: 50_000_00, status: "draft" },
+  ]);
+  if (le.error) throw new Error(`Demo ledger failed: ${le.error.message}`);
   await seedDemoWorkspace(supabase, ids.gbs);
   return ids.gbs ?? null;
 }

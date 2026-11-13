@@ -60,3 +60,24 @@ audited.
 Email invitations for people who have never signed in, deactivation without deleting membership,
 session revocation, MFA for privileged roles (Supabase Auth supports TOTP MFA; to be enforced
 for owners and finance), and audit of sensitive reads and exports.
+
+## Permissions added in Phases 3–10
+
+| Permission | Granted to |
+| --- | --- |
+| finance.approve | owner |
+| finance.sensitive | owner, finance |
+| rental.read | owner, finance, viewer |
+| rental.write | owner, finance |
+| documents.read | owner, company_admin, finance, viewer |
+| documents.write | owner, company_admin, finance, operations_manager, sales_manager, staff |
+| automation.manage | owner, company_admin |
+| automation.approve | owner |
+| operations.read | owner, company_admin, operations_manager, sales_manager, marketing_manager, staff, finance |
+| operations.write | owner, company_admin, operations_manager |
+| compliance.verify | owner, company_admin |
+
+Accountants read ledger rows only for entities and dates in their `accountant_grants`, and may
+move their assigned tax periods through review, never to "filed". Partner terms
+(`commission_agreements`) need `finance.sensitive`. Restricted vault documents need
+`finance.sensitive` even with `documents.read`.

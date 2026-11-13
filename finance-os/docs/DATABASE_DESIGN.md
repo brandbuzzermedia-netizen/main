@@ -62,3 +62,17 @@ Validated per phase before creation, as the brief asks: contacts/leads/consent a
 rent schedules, deposit ledger (5); documents, versions, OCR extractions and field confidence (6);
 tax periods, packs, filing statuses, accountant period grants (7); automation definitions,
 versions, runs, webhook events (8); AI usage log (9); business-specific modules (10).
+
+## Phases 3–10 (migrations 09–15)
+
+| Domain | Tables | Key rules |
+| --- | --- | --- |
+| CRM | `contacts`, `suppression_records`, `outreach_sequences`, `outreach_enrollments`, `outreach_events`; `deals.contact_id/setter_id/handed_over_at` | Unique email/phone per company; no enrollment without a lawful basis, for do-not-contact, suppressed, or during an emergency stop; an unsubscribe suppresses and stops sequences |
+| Ledger | `legal_entities`, `ledger_entries` | 18 entry types; only approved rows count; approved rows immutable except via `approve_/settle_/reverse_ledger_entry`; approver ≠ creator above the self-approval limit; FX rows need a booked rate; transfers have two legs with a shared `transfer_group_id` |
+| Rental | `rental_units`, `tenants`, `leases`, `rent_charges`, `rent_receipts`, `security_deposit_ledger` | One active lease per unit; charges idempotent per period with escalation; receipts cannot exceed due; deposits cannot go negative; receipts and deposit moves append-only; unit expenses are ledger expenses |
+| Documents | `documents`, `ocr_extractions`; ledger GST columns and source links | Path must sit under the company folder; allowed types and 15 MB only; same file twice rejected; originals undeletable; an OCR-sourced entry cannot leave draft until the extraction is reviewed |
+| Tax | `tax_periods`, `accountant_grants` | "Filed" only through `record_filing` with an acknowledgement; filed periods locked; accountants read only granted entities and dates |
+| Automation | `automation_definitions`, `automation_runs`, `webhook_nonces` | Financial ⇒ approval; disabled ⇒ no run; idempotency key unique; runs written only by RPCs or the signed callback; non-idempotent/financial runs never auto-retried |
+| AI | `ai_usage_log`, `app_settings.ai_enabled/ai_monthly_token_limit` | Usage logged without prompt content; monthly budget enforced before each call |
+| Business | `suppliers`, `products`, `orders`, `order_items`, `commission_agreements`, `commission_receivables`, `properties`, `site_visits`, `ad_approvals`, `outlet_daily_sales` | BIS verified only via `verify_bis` with evidence and future expiry; B2B PO needs the advance; commission only under a signed agreement on a won deal, confirmed with a partner statement ref; ads approved only by compliance roles with verified K-RERA/BIS |
+| Audit | `audit_logs` (+ `EXPORT`, `SENSITIVE_READ` actions) | Every table above is audited by trigger; exports logged via `log_export` |
