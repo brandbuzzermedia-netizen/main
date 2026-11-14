@@ -28,8 +28,8 @@ describe("n8n request signing", () => {
 
 describe("automation templates", () => {
   it("has the 15 workflows from the brief plus the growth and payment systems, financial ones always gated", () => {
-    expect(AUTOMATION_TEMPLATES).toHaveLength(21);
-    expect(new Set(AUTOMATION_TEMPLATES.map((t) => t.key)).size).toBe(21);
+    expect(AUTOMATION_TEMPLATES).toHaveLength(22);
+    expect(new Set(AUTOMATION_TEMPLATES.map((t) => t.key)).size).toBe(22);
     for (const t of AUTOMATION_TEMPLATES) if (t.isFinancial) expect(t.requiresApproval).toBe(true);
     for (const k of ["invoice_overdue_reminder", "rent_due_reminder", "qualified_meeting_slots", "sequence_sends", "voice_calls"]) {
       expect(AUTOMATION_TEMPLATES.find((t) => t.key === k)?.requiresApproval).toBe(true);

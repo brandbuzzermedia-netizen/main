@@ -39,7 +39,7 @@ function signedRequest(body: string, ts = Math.floor(Date.now() / 1000), nonce =
 
 describe("n8n workflow files", () => {
   it("ship inactive workflows: one per scheduled template, plus the inbound relays", () => {
-    expect(files.sort()).toEqual(["dp-bill-ocr-review.json", "dp-daily-summary.json", "dp-elevenlabs-results.json", "dp-meta-leads.json", "dp-payment-hold-alerts.json", "dp-payment-reminders.json",
+    expect(files.sort()).toEqual(["dp-apollo-search.json", "dp-bill-ocr-review.json", "dp-daily-summary.json", "dp-elevenlabs-results.json", "dp-meta-leads.json", "dp-payment-hold-alerts.json", "dp-payment-reminders.json",
       "dp-reddit-listen.json", "dp-rent-overdue-escalation.json", "dp-sequence-sends.json", "dp-social-publish.json", "dp-voice-calls.json"]);
     for (const f of files) {
       const wf = load(f);
@@ -72,7 +72,7 @@ describe("n8n workflow files", () => {
       expect(JSON.parse(out.json.body)).toEqual(payload);
       checked++;
     }
-    expect(checked).toBe(5);
+    expect(checked).toBe(6);
   });
 
   for (const f of files.filter((x) => has(load(x), "Verify signature"))) {

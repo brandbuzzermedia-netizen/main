@@ -28,9 +28,10 @@ export const AUTOMATION_TEMPLATES: AutomationTemplate[] = [
   { key: "social_publish", name: "Approved posts → LinkedIn, Facebook, Instagram", trigger: "schedule", detail: "At the scheduled day", requiresApproval: false, isFinancial: false, idempotent: true, needs: "Page access for each network" },
   { key: "voice_calls", name: "AI voice calls (always says it is an AI)", trigger: "schedule", detail: "09:00–21:00 IST", requiresApproval: true, isFinancial: false, idempotent: true, needs: "ElevenLabs agent and a calling number" },
   { key: "reddit_listen", name: "Reddit listening → conversations to answer", trigger: "schedule", detail: "Daily", requiresApproval: false, isFinancial: false, idempotent: true, needs: "Reddit API app" },
+  { key: "apollo_search", name: "Apollo searches → new leads (verified emails only)", trigger: "schedule", detail: "Daily", requiresApproval: false, isFinancial: false, idempotent: true, needs: "Apollo API key (plan with API access)" },
   { key: "payment_hold_alerts", name: "Payment overdue past the limit → stop work, alert the team", trigger: "schedule", detail: "Daily, per company payment rules", requiresApproval: false, isFinancial: false, idempotent: true, needs: "Email sender" },
   { key: "ecommerce_order_sync", name: "E-commerce order sync", trigger: "webhook", detail: "Shopify order", requiresApproval: false, isFinancial: false, idempotent: true, needs: "Shopify app credentials" },
 ];
 
 /** Templates the OS queues on a schedule (see enqueue_scheduled_runs) with workflow files in n8n/workflows. */
-export const SCHEDULED_TEMPLATES = AUTOMATION_TEMPLATES.filter((t) => ["daily_summary", "bill_ocr_review", "rent_overdue_escalation", "payment_reminders", "sequence_sends", "social_publish", "voice_calls", "reddit_listen", "payment_hold_alerts"].includes(t.key));
+export const SCHEDULED_TEMPLATES = AUTOMATION_TEMPLATES.filter((t) => ["daily_summary", "bill_ocr_review", "rent_overdue_escalation", "payment_reminders", "sequence_sends", "social_publish", "voice_calls", "reddit_listen", "payment_hold_alerts", "apollo_search"].includes(t.key));

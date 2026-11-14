@@ -27,7 +27,7 @@ export default async function LeadsPage({ params, searchParams }: PageProps<"/c/
   const [title, lines] = NOTES.leads;
   return (
     <>
-      <PageHead own={d.own} treat={d.treat} title={d.ren.leads ?? "Leads"} right={ctx.can("crm.write") ? <Cta href={`${base}?add=1`}>+ Add</Cta> : undefined} />
+      <PageHead own={d.own} treat={d.treat} title={d.ren.leads ?? "Leads"} right={ctx.can("crm.write") ? <span style={{ display: "flex", gap: 8 }}><Cta href={`${base}/import`}>Import</Cta><Cta href={`${base}?add=1`}>+ Add</Cta></span> : undefined} />
       <ListView vm={{
         chips: CHIPS.map(([l]) => ({ l, href: src?.[0] === l ? base : `${base}?source=${encodeURIComponent(l)}`, on: src?.[0] === l })),
         head: ["LEAD", "SOURCE", "SCORE", "OWNER"],
@@ -35,7 +35,7 @@ export default async function LeadsPage({ params, searchParams }: PageProps<"/c/
           a: <>{c.full_name}{c.company_name && <span style={{ fontWeight: 400, color: "#6d7a70" }}> · {c.company_name}</span>}{c.do_not_contact && <span style={{ fontWeight: 400, color: "#8C2F39" }}> · do not contact</span>}</>,
           b: c.source ?? "—", c: c.score ?? "—", d: c.owner_id ? names.get(c.owner_id) ?? "—" : "Unassigned",
         })),
-        empty: src ? `No leads from ${src[0].toLowerCase()} yet.` : "No leads yet. Add one, or import a list from the full records view.",
+        empty: src ? `No leads from ${src[0].toLowerCase()} yet.` : "No leads yet. Add one, or import a list (D7, Apollo, CSV).",
         noteTitle: title, noteLines: lines,
         more: <a href={`/c/${slug}/r/contacts`} style={{ fontSize: 13.5, color: "var(--co-side)", fontWeight: 600 }}>Search, sort, import and export all leads →</a>,
       }} />

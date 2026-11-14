@@ -105,3 +105,16 @@ Platform limits are enforced in the database: per-account daily ceilings (email 
 LinkedIn 25, X/Instagram/Facebook 50, Reddit 10), new mailboxes warm up from 10 a day (+5 a day),
 and each company's weekly cap on contacting the same person across all channels (default 3).
 Personal profiles never send automatically: their steps become tasks for the profile's owner.
+
+## Bought lead data: Apollo and CSV (added 14 Nov 2026)
+
+| File | Switch in Automation | What it does |
+| --- | --- | --- |
+| `dp-apollo-search.json` | Apollo searches → new leads (verified emails only) | Runs each company's saved searches (Leads → Import → Apollo searches) daily, enriches the people found and sends only Apollo-verified work emails to the OS as new leads tagged `Apollo: <search>`, with lawful basis "legitimate interest". If the search names a campaign, new leads are enrolled in it. |
+
+n8n variable: `DP_APOLLO_API_KEY` (Apollo → Settings → Integrations → API; the plan must include API access).
+Enrichment uses Apollo credits: "New leads per day" on each search caps it.
+
+D7 Lead Finder and other lists: export CSV and upload it in Leads → Import. Duplicates (same email or
+phone in the company) are skipped. Leads with lawful basis "legitimate interest" never get WhatsApp
+steps: WhatsApp needs consent.

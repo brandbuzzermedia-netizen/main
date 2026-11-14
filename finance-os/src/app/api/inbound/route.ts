@@ -13,7 +13,7 @@ const org = z.uuid();
 const url = z.string().url().startsWith("https://").max(2000);
 const schema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("lead"), organization_id: org, full_name: z.string().trim().min(1).max(200), email: z.email().optional(), phone_e164: z.string().regex(/^\+[1-9][0-9]{7,14}$/).optional(),
-    company_name: z.string().max(200).optional(), source: z.string().max(80), consent: z.boolean().default(false), linkedin_url: url.optional(), facebook_url: url.optional(),
+    company_name: z.string().max(200).optional(), source: z.string().max(80), consent: z.boolean().default(false), basis: z.enum(["legitimate_interest"]).optional(), search_id: z.uuid().optional(), linkedin_url: url.optional(), facebook_url: url.optional(),
     instagram_handle: z.string().regex(/^[A-Za-z0-9._]{1,30}$/).optional(), notes: z.string().max(2000).optional() }),
   z.object({ type: z.literal("message"), organization_id: org, channel: z.enum(["email", "whatsapp", "facebook", "instagram", "linkedin"]),
     from: z.string().max(200), text: z.string().max(4000), url: url.optional() }),
@@ -54,10 +54,16 @@ export async function POST(request: NextRequest) {
     }
     const { data, error } = await db.from("contacts").insert({
       organization_id: m.organization_id, full_name: m.full_name, email: m.email?.toLowerCase() ?? null, phone_e164: m.phone_e164 ?? null, company_name: m.company_name ?? null,
-      source: m.source, lead_status: "new", consent_basis: m.consent ? "consent" : "none", consent_at: m.consent ? new Date().toISOString() : null,
+      source: m.source, lead_status: "new", consent_basis: m.consent ? "consent" : m.basis ?? "none", consent_at: m.consent || m.basis ? new Date().toISOString() : null,
+      consent_note: m.basis ? `Bought data (${m.source}); legitimate interest, B2B. Email/LinkedIn/calls only, never WhatsApp.` : null,
       linkedin_url: m.linkedin_url ?? null, facebook_url: m.facebook_url ?? null, instagram_handle: m.instagram_handle ?? null,
     }).select("id").single();
     if (error) return NextResponse.json({ error: "lead_failed" }, { status: 422 });
+    if (m.search_id) {
+      // Saved search with a campaign: enrol the new lead straight away (sends still respect account limits and the weekly cap).
+      const { data: ls } = await db.from("lead_searches").select("enroll_sequence_id").eq("id", m.search_id).eq("organization_id", m.organization_id).maybeSingle();
+      if (ls?.enroll_sequence_id) await db.from("outreach_enrollments").insert({ organization_id: m.organization_id, sequence_id: ls.enroll_sequence_id, contact_id: data.id });
+    }
     return NextResponse.json({ ok: true, contact_id: data.id });
   }
   if (m.type === "message") {
