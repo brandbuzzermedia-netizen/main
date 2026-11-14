@@ -11,6 +11,7 @@ import { Assistant } from "../assistant/forms";
 import { handoverAction, logOutcomeAction } from "./actions";
 import { ChannelSection } from "./channel";
 import { CampaignDetail, CampaignList, Note } from "./systems";
+import { pauseOutreachAction } from "../actions";
 import { OUTREACH_CHANNELS, OutreachTabs } from "@/views/outreach";
 
 export const metadata: Metadata = { title: "Outreach" };
@@ -55,6 +56,12 @@ export default async function OutreachPage({ params, searchParams }: PageProps<"
         intro="Sequences run in n8n. If a channel is unsupported or consent is missing, the step becomes a human task for you." />
       <OutreachTabs base={`/c/${slug}/outreach`} current="overview" />
       {typeof spAll.note === "string" && <Note text={spAll.note} />}
+      {ctx.can("crm.manage") && (
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginBottom: 12 }}>
+          <form action={pauseOutreachAction.bind(null, slug)}><input type="hidden" name="paused" value="true" /><button style={{ border: `1px solid ${C.btnLine}`, background: "#fff", borderRadius: 8, padding: "7px 14px", fontWeight: 600, color: "#7a5b00", cursor: "pointer" }}>Pause all campaigns</button></form>
+          <form action={pauseOutreachAction.bind(null, slug)}><input type="hidden" name="paused" value="false" /><button style={{ border: `1px solid ${C.btnLine}`, background: "#fff", borderRadius: 8, padding: "7px 14px", fontWeight: 600, color: "#2F5D4C", cursor: "pointer" }}>Resume all</button></form>
+        </div>
+      )}
       {typeof spAll.campaign === "string" && /^[0-9a-f-]{36}$/.test(spAll.campaign) && <CampaignDetail ctx={ctx} id={spAll.campaign} />}
       <Grid cols="minmax(0,1.4fr) minmax(0,1fr)">
         <Card title="Campaigns">

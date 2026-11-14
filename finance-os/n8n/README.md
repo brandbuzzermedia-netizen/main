@@ -83,3 +83,25 @@ Rules built in: AI calls always disclose they are AI and only reach leads with a
 do-not-contact flag and no suppression; WhatsApp uses approved templates only; posts publish only
 after an approver approves them; LinkedIn, Facebook and Instagram person-to-person steps are
 drafted for a person to send (the platforms do not allow automated messaging).
+
+## Multiple accounts per channel (added 14 Nov 2026)
+
+Each company (and the group, for shared accounts) lists its sending accounts in Settings → Sending
+accounts. Every account has a key (shown in the list, e.g. `SALES_MAILBOX_2_AB12`). Bulk sends are
+spread across accounts with capacity left today; each send carries `from` and `account_key`.
+
+Give each account its own secrets in n8n using the key as a suffix; the workflows fall back to the
+unsuffixed variable when an account-specific one is missing:
+
+| Channel | n8n variables per account |
+| --- | --- |
+| Email | One SMTP credential per mailbox; the From address is the account's address |
+| WhatsApp | `DP_WA_PHONE_<KEY>` (phone number ID) |
+| Facebook / Instagram | `DP_FB_PAGE_ID_<KEY>`, `DP_FB_PAGE_TOKEN_<KEY>`, `DP_IG_USER_ID_<KEY>` |
+| LinkedIn Page | `DP_LINKEDIN_TOKEN_<KEY>`, `DP_LINKEDIN_ORG_URN_<KEY>` |
+| X (Twitter) | `DP_X_TOKEN_<KEY>` (OAuth 2.0 user token with tweet.write) |
+
+Platform limits are enforced in the database: per-account daily ceilings (email 200, WhatsApp 1,000,
+LinkedIn 25, X/Instagram/Facebook 50, Reddit 10), new mailboxes warm up from 10 a day (+5 a day),
+and each company's weekly cap on contacting the same person across all channels (default 3).
+Personal profiles never send automatically: their steps become tasks for the profile's owner.

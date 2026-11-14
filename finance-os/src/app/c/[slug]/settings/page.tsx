@@ -7,7 +7,10 @@ import { PageHead } from "@/components/dp/shell";
 import { Card, Toggle } from "@/components/dp/ui";
 import { C } from "@/components/dp/theme";
 import { AiSettingsForm } from "../forms";
-import { requireMfaAction, savePaymentRulesAction, toggleModuleAction } from "../actions";
+import { outreachRulesAction, requireMfaAction, savePaymentRulesAction, toggleModuleAction } from "../actions";
+import { AccountsCard, type SenderAccount } from "@/components/dp/accounts-card";
+import { loadMembers } from "@/lib/people";
+import { todayInBusinessTz } from "@/domain/dates";
 
 export const metadata: Metadata = { title: "Settings" };
 const LIST: ModuleKey[] = ["leads", "pipeline", "outreach", "meetings", "customers", "operations", "automation", "marketing", "finance", "rental", "expenses", "tax", "team", "reports", "vault"];
@@ -22,6 +25,18 @@ export default async function SettingsPage({ params, searchParams }: PageProps<"
   const c = ctx.company;
   const d = designFor(slug);
   const edit = ctx.can("company.settings");
+  const canOutreach = ctx.can("crm.write");
+  const [accRes, logRes, members, orules] = canOutreach ? await Promise.all([
+    ctx.supabase.from("sender_accounts").select("id, channel, kind, label, address, account_key, daily_limit, status, organization_id, operator_id").order("channel"),
+    ctx.supabase.from("outreach_send_log").select("sender_account_id").eq("organization_id", c.id).eq("sent_on", todayInBusinessTz()),
+    loadMembers(ctx.supabase, c.id),
+    ctx.supabase.from("outreach_rules").select("max_touches_per_week").eq("organization_id", c.id).maybeSingle(),
+  ]) : [{ data: [] }, { data: [] }, [], { data: null }];
+  const sentBy = new Map<string, number>();
+  for (const l of (logRes.data ?? []) as { sender_account_id: string | null }[]) if (l.sender_account_id) sentBy.set(l.sender_account_id, (sentBy.get(l.sender_account_id) ?? 0) + 1);
+  const nameOf = new Map(members.map((m) => [m.user_id, m.name]));
+  const accounts: SenderAccount[] = ((accRes.data ?? []) as (SenderAccount & { organization_id: string | null; operator_id: string | null })[])
+    .map((a) => ({ ...a, shared: a.organization_id === null, operator: a.operator_id ? nameOf.get(a.operator_id) ?? "Team member" : null, sentToday: sentBy.get(a.id) ?? 0 }));
   const { data: rules } = await ctx.supabase.from("payment_rules").select("enabled, warn_after_days, hold_after_days").eq("organization_id", c.id).maybeSingle();
   const { data: app } = ctx.can("finance.approve")
     ? await ctx.supabase.from("app_settings").select("ai_enabled, ai_monthly_token_limit, self_approval_limit_minor").eq("organization_id", c.id).maybeSingle() : { data: null };
@@ -43,6 +58,18 @@ export default async function SettingsPage({ params, searchParams }: PageProps<"
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 620, marginTop: 20 }}>
         {app && <Card title="AI and approvals"><div style={{ marginTop: 10 }}><AiSettingsForm slug={slug} enabled={Boolean(app.ai_enabled)} limit={Number(app.ai_monthly_token_limit)} selfLimit={(Number(app.self_approval_limit_minor) / 100).toFixed(2)} /></div></Card>}
+        {canOutreach && (
+          <AccountsCard slug={slug} title="Sending accounts" accounts={accounts} canEdit={ctx.can("crm.manage")} operators={members.map((m) => ({ id: m.user_id, name: m.name }))}
+            note={typeof spx.accounts === "string" ? spx.accounts : undefined}
+            extra={ctx.can("crm.manage") ? (
+              <form action={outreachRulesAction.bind(null, slug)} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", borderTop: `1px solid ${C.line2}`, marginTop: 12, paddingTop: 12, fontSize: 14 }}>
+                Contact one person at most
+                <input type="number" name="max_touches_per_week" min={1} max={14} defaultValue={orules.data?.max_touches_per_week ?? 3} style={{ width: 64, border: `1px solid ${C.btnLine}`, borderRadius: 8, padding: "6px 8px" }} />
+                times a week, across all channels
+                <button style={{ border: `1px solid ${C.btnLine}`, background: "#fff", borderRadius: 8, padding: "6px 12px", fontWeight: 600, cursor: "pointer" }}>Save</button>
+              </form>
+            ) : undefined} />
+        )}
         {edit && (
           <Card title="Payment rules" aside={<span style={{ fontSize: 12.5, color: C.muted }}>Applies to every client</span>}>
             <form action={savePaymentRulesAction.bind(null, slug)} style={{ display: "flex", flexDirection: "column", gap: 10, borderTop: `1px solid ${C.line2}`, marginTop: 10, paddingTop: 12, fontSize: 14 }}>

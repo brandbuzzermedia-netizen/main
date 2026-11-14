@@ -9,7 +9,7 @@ export async function logOutcomeAction(slug: string, fd: FormData) {
   const ctx = await getCompanyContext(slug);
   if (!ctx.can("crm.write")) throw new Error("Not allowed");
   const contact = z.uuid().parse(fd.get("contact_id"));
-  const kind = z.enum(["call", "email", "whatsapp", "linkedin", "facebook", "instagram", "reply", "unsubscribe", "note"]).parse(fd.get("kind"));
+  const kind = z.enum(["call", "email", "whatsapp", "linkedin", "facebook", "instagram", "twitter", "reply", "unsubscribe", "note"]).parse(fd.get("kind"));
   const outcome = z.enum(["connected", "no_answer", "voicemail", "positive", "objection", "not_now", "referral", "wrong_contact", "out_of_office", "sent", "other"]).nullable().catch(null).parse(fd.get("outcome"));
   const { error } = await ctx.supabase.from("outreach_events").insert({ organization_id: ctx.company.id, contact_id: contact, kind, outcome, notes: String(fd.get("notes") ?? "").slice(0, 2000) || null });
   if (error) throw new Error(error.message);
@@ -41,7 +41,7 @@ async function writer(slug: string) {
   return ctx;
 }
 const back = (slug: string, ch: string, note?: string) => redirect(`/c/${slug}/outreach?ch=${ch}${note ? `&note=${encodeURIComponent(note)}` : ""}`);
-const KIND: Record<string, "linkedin" | "facebook" | "instagram" | "call" | "email" | "whatsapp" | "note"> = { linkedin: "linkedin", facebook: "facebook", instagram: "instagram", call: "call", email: "email", whatsapp: "whatsapp", reddit: "note" };
+const KIND: Record<string, "linkedin" | "facebook" | "instagram" | "twitter" | "call" | "email" | "whatsapp" | "note"> = { linkedin: "linkedin", facebook: "facebook", instagram: "instagram", twitter: "twitter", call: "call", email: "email", whatsapp: "whatsapp", reddit: "note" };
 
 /** Done / Skipped / Replied on an assisted step. A reply stops the lead's sequence. */
 export async function taskOutcomeAction(slug: string, fd: FormData) {
@@ -63,11 +63,12 @@ export async function taskOutcomeAction(slug: string, fd: FormData) {
 
 export async function createPostAction(slug: string, fd: FormData) {
   const ctx = await writer(slug);
-  const v = z.object({ channel: z.enum(["linkedin", "facebook", "instagram"]), body: z.string().trim().min(1).max(3000), media_url: z.string().url().startsWith("https://").optional().or(z.literal("")),
+  const v = z.object({ channel: z.enum(["linkedin", "facebook", "instagram", "twitter"]), sender_account_id: z.uuid().optional().or(z.literal("")), body: z.string().trim().min(1).max(3000), media_url: z.string().url().startsWith("https://").optional().or(z.literal("")),
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), time: z.string().regex(/^\d{2}:\d{2}$/) }).safeParse(Object.fromEntries(fd));
   if (!v.success) back(slug, String(fd.get("channel") ?? "linkedin"), "Check the post: text, date and time are needed; Instagram needs an image link.");
   const p = v.data!;
-  const { error } = await ctx.supabase.from("content_posts").insert({ organization_id: ctx.company.id, channel: p.channel, body: p.body, media_url: p.media_url || null,
+  if (p.channel === "twitter" && p.body.length > 280) back(slug, "twitter", "X posts are limited to 280 characters.");
+  const { error } = await ctx.supabase.from("content_posts").insert({ organization_id: ctx.company.id, channel: p.channel, body: p.body, media_url: p.media_url || null, sender_account_id: p.sender_account_id || null,
     scheduled_at: new Date(`${p.date}T${p.time}:00+05:30`).toISOString() });
   back(slug, p.channel, error ? (error.message.includes("check") ? "Instagram posts need an image link." : error.message) : "Draft saved. It publishes after approval.");
 }
@@ -132,6 +133,10 @@ const PRESETS: Record<string, { name: string; steps: { channel: string; action?:
     { channel: "instagram", action: "follow", delay_days: 0, template: "Follow and watch their stories." },
     { channel: "instagram", action: "comment", delay_days: 1, template: "Genuine comment on their latest post." },
     { channel: "instagram", action: "comment", delay_days: 3, template: "Reply to a story or comment again; DM only after they engage." } ] },
+  twitter: { name: "X engagement", steps: [
+    { channel: "twitter", action: "follow", delay_days: 0, template: "Follow {{first_name}} and read their recent posts." },
+    { channel: "twitter", action: "comment", delay_days: 1, template: "Reply to a recent post with a genuine point." },
+    { channel: "twitter", action: "comment", delay_days: 3, template: "Reply or quote again; DM only if they engage back." } ] },
   facebook: { name: "Facebook engagement", steps: [
     { channel: "facebook", action: "follow", delay_days: 0, template: "Follow their Page and engage with a recent post." },
     { channel: "facebook", action: "comment", delay_days: 2, template: "Helpful comment on their Page post." } ] },

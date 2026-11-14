@@ -41,6 +41,7 @@ export const RESOURCES: Record<string, Resource> = {
       { name: "facebook_url", label: "Facebook profile or Page", type: "text", max: 300, hint: "https://www.facebook.com/…" },
       { name: "instagram_handle", label: "Instagram handle", type: "text", max: 30, hint: "Without the @" },
       { name: "reddit_username", label: "Reddit username", type: "text", max: 20 },
+      { name: "twitter_handle", label: "X (Twitter) handle", type: "text", max: 15, hint: "Without the @" },
       { name: "lead_status", label: "Status", type: "select", options: opt("new", "contacted", "qualified", "disqualified", "customer"), default: "new" },
       { name: "consent_basis", label: "Lawful basis for outreach", type: "select", options: opt("none", "consent", "contract", "legitimate_interest"), default: "none" },
       { name: "consent_note", label: "Consent evidence", type: "text", hint: "Where and how consent was given" },

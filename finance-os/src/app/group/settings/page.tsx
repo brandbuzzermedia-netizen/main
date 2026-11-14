@@ -7,17 +7,26 @@ import { Card, Toggle } from "@/components/dp/ui";
 import { C } from "@/components/dp/theme";
 import { AddCompanyForm, AttachForm, TemplatesForm } from "../forms";
 import { setRegistryAction, toggleGroupModuleAction } from "../actions";
+import { AccountsCard, type SenderAccount } from "@/components/dp/accounts-card";
+import { pauseOutreachAction } from "@/app/c/[slug]/actions";
 
 export const metadata: Metadata = { title: "Settings" };
 const LIST: ModuleKey[] = ["pipeline", "meetings", "automation", "finance", "rental", "expenses", "tax", "team", "reports", "vault"];
 const sel = { border: `1px solid ${C.line}`, borderRadius: 7, padding: "4px 6px", fontSize: 12.5, background: "#fff" } as const;
 
-export default async function GroupSettings() {
+export default async function GroupSettings({ searchParams }: PageProps<"/group/settings">) {
   const g = await getGroupContext();
+  const note = (await searchParams).accounts;
   const owner = g.group.role === "group_owner";
   const { data } = await g.supabase.from("family_groups").select("disabled_modules").eq("id", g.group.id).maybeSingle();
   const off = (data?.disabled_modules as string[] | undefined) ?? [];
   const slugs = new Set(g.registry.map((c) => c.slug));
+  const [acc, gm] = await Promise.all([
+    g.supabase.from("sender_accounts").select("id, channel, kind, label, address, account_key, daily_limit, status, operator_id").eq("family_group_id", g.group.id).order("channel"),
+    g.supabase.from("group_memberships").select("user_id, user:users(full_name, email)").eq("family_group_id", g.group.id),
+  ]);
+  const ops = ((gm.data ?? []) as unknown as { user_id: string; user: { full_name: string | null; email: string | null } | null }[]).map((m) => ({ id: m.user_id, name: m.user?.full_name || m.user?.email || "Member" }));
+  const shared: SenderAccount[] = ((acc.data ?? []) as (SenderAccount & { operator_id: string | null })[]).map((a) => ({ ...a, shared: true, operator: a.operator_id ? ops.find((o) => o.id === a.operator_id)?.name ?? null : null }));
   const legacy = g.memberships.filter((m) => m.company.family_group_id === null && m.role === "owner");
   return (
     <>
@@ -38,6 +47,14 @@ export default async function GroupSettings() {
         })}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 900, marginTop: 20 }}>
+        <AccountsCard slug={null} title="Shared sending accounts (all companies)" accounts={shared} canEdit={owner} operators={ops} note={typeof note === "string" ? note : undefined}
+          extra={owner ? (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", borderTop: `1px solid ${C.line2}`, marginTop: 12, paddingTop: 12, fontSize: 14 }}>
+              <span style={{ flex: 1 }}>Outreach in all companies</span>
+              <form action={pauseOutreachAction.bind(null, null)}><input type="hidden" name="paused" value="true" /><button style={{ border: `1px solid ${C.btnLine}`, background: "#fff", borderRadius: 8, padding: "7px 14px", fontWeight: 600, color: "#7a5b00", cursor: "pointer" }}>Pause all campaigns</button></form>
+              <form action={pauseOutreachAction.bind(null, null)}><input type="hidden" name="paused" value="false" /><button style={{ border: `1px solid ${C.btnLine}`, background: "#fff", borderRadius: 8, padding: "7px 14px", fontWeight: 600, color: "#2F5D4C", cursor: "pointer" }}>Resume all campaigns</button></form>
+            </div>
+          ) : undefined} />
         <Card title="Businesses" aside={<span style={{ fontSize: 12.5, color: C.muted }}>Ownership and consolidation decide group totals</span>}>
           {g.registry.length === 0 && <div style={{ fontSize: 14, color: C.muted, paddingTop: 8 }}>No businesses yet.</div>}
           {g.registry.map((c) => (

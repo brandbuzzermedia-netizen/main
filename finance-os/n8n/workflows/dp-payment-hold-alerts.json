@@ -115,7 +115,7 @@
     },
     {
       "parameters": {
-        "fromEmail": "={{ $env.DP_FROM_EMAIL }}",
+        "fromEmail": "={{ $json.from || $env.DP_FROM_EMAIL }}",
         "toEmail": "={{ $json.to }}",
         "subject": "={{ $json.subject }}",
         "emailFormat": "text",

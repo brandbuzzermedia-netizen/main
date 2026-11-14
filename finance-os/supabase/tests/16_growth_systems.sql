@@ -62,6 +62,7 @@ insert into public.outreach_enrollments (organization_id, sequence_id, contact_i
 select org, (select id from public.outreach_sequences), ok, now() - interval '1 hour' from t;
 insert into public.automation_definitions (organization_id, template_key, name, trigger_kind, enabled, requires_approval, is_financial, idempotent)
 select org, k, k, 'schedule', true, false, false, true from t, unnest(array['payment_reminders', 'sequence_sends']) k;
+insert into public.sender_accounts (organization_id, channel, kind, label, address, account_key, daily_limit) select org, 'email', 'mailbox', 'Sales', 'sales@gbs.test', 'GBS_SALES', 50 from t;
 select pg_temp.logout();
 set local role service_role;
 select public.enqueue_scheduled_runs((now() at time zone 'Asia/Kolkata')::date);

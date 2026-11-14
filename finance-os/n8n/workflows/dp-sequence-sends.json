@@ -102,7 +102,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const s = $('Verify signature').first().json.input;\nconst first = (n) => String(n || '').split(' ')[0];\nconst fill = (t, x) => String(t || '').replaceAll('{{first_name}}', first(x.name)).replaceAll('{{company}}', x.company || 'your team');\nreturn (s.sends || []).map((x) => x.channel === 'email'\n  ? { json: { channel: 'email', to: x.to, subject: `${s.company}: ${first(x.name)}, a quick idea`, text: fill(x.template, x) + `\\n\\n${s.company}\\nReply STOP to opt out.` } }\n  : { json: { channel: 'whatsapp', to: x.to, template: String(x.template || '').replace('approved_template:', ''), params: [first(x.name)] } });"
+        "jsCode": "const s = $('Verify signature').first().json.input;\nconst first = (n) => String(n || '').split(' ')[0];\nconst fill = (t, x) => String(t || '').replaceAll('{{first_name}}', first(x.name)).replaceAll('{{company}}', x.company || 'your team');\nreturn (s.sends || []).map((x) => x.channel === 'email'\n  ? { json: { channel: 'email', to: x.to, from: x.from, account_key: x.account_key, subject: `${s.company}: ${first(x.name)}, a quick idea`, text: fill(x.template, x) + `\\n\\n${s.company}\\nReply STOP to opt out.` } }\n  : { json: { channel: 'whatsapp', to: x.to, account_key: x.account_key, template: String(x.template || '').replace('approved_template:', ''), params: [first(x.name)] } });"
       },
       "id": "4e9ccb2e-4320-55a5-9938-8b9bd7b7758c",
       "name": "Build sends",
@@ -214,7 +214,7 @@
     },
     {
       "parameters": {
-        "fromEmail": "={{ $env.DP_FROM_EMAIL }}",
+        "fromEmail": "={{ $json.from || $env.DP_FROM_EMAIL }}",
         "toEmail": "={{ $json.to }}",
         "subject": "={{ $json.subject }}",
         "emailFormat": "text",
@@ -237,7 +237,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://graph.facebook.com/v21.0/{{ $env.DP_WA_PHONE_NUMBER_ID }}/messages",
+        "url": "=https://graph.facebook.com/v21.0/{{ $env['DP_WA_PHONE_' + ($json.account_key || '')] || $env.DP_WA_PHONE_NUMBER_ID }}/messages",
         "options": {
           "timeout": 20000
         },

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getCompanyContext, type Permission } from "@/lib/workspace";
+import { getCompanyContext, getGroupContext, type Permission } from "@/lib/workspace";
 import { issuePaymentLink } from "@/lib/payment-links";
 import { parseMoneyToMinor } from "@/domain/money";
 import { MODULE_KEYS, CORE_MODULES } from "@/domain/registry";
@@ -302,4 +302,68 @@ export async function releaseHoldAction(slug: string, fd: FormData): Promise<voi
   const { error } = await ctx.supabase.rpc("release_work_hold", { p_hold: uuid.parse(fd.get("hold_id")), p_reason: String(fd.get("reason") ?? ""), p_resume_by: /^\d{4}-\d{2}-\d{2}$/.test(until) ? until : null });
   revalidatePath(`/c/${slug}`, "layout");
   redirect(`/c/${slug}/finance${error ? `?hold_error=${encodeURIComponent(error.message)}` : ""}`);
+}
+
+const CEILING: Record<string, number> = { email: 200, whatsapp: 1000, linkedin: 25, twitter: 50, instagram: 50, facebook: 50, reddit: 10 };
+const accountSchema = z.object({
+  channel: z.enum(["email", "whatsapp", "linkedin", "twitter", "instagram", "facebook", "reddit"]),
+  kind: z.enum(["mailbox", "business_number", "page", "business_account", "personal_profile"]),
+  label: z.string().trim().min(1).max(80), address: z.string().trim().min(2).max(200),
+  daily_limit: z.coerce.number().int().min(1), operator_id: z.uuid().optional().or(z.literal("")),
+});
+const keyOf = (label: string) => label.toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 32) || "ACCOUNT";
+
+/** Adds a sending account to one company (or, from group Settings, to all companies). */
+export async function addSenderAccountAction(slug: string | null, fd: FormData): Promise<void> {
+  const back = slug ? `/c/${slug}/settings` : "/group/settings";
+  const go = (m: string) => redirect(`${back}?accounts=${encodeURIComponent(m)}#accounts`);
+  const v = accountSchema.safeParse(formToObject(fd));
+  if (!v.success) go("Fill in the account name, address or handle, and a daily limit.");
+  const a = v.data!;
+  if (a.daily_limit > CEILING[a.channel]) go(`${a.channel} accounts can do at most ${CEILING[a.channel]} a day under the platform's rules.`);
+  if (a.kind === "personal_profile" && !a.operator_id) go("A personal profile needs the team member who owns it; they send its steps themselves.");
+  let target: { organization_id?: string; family_group_id?: string };
+  let sb;
+  if (slug) { const ctx = await scoped(slug, "crm.manage"); target = { organization_id: ctx.company.id }; sb = ctx.supabase; }
+  else { const g = await getGroupContext(); target = { family_group_id: g.group.id }; sb = g.supabase; }
+  const { error } = await sb.from("sender_accounts").insert({ ...target, channel: a.channel, kind: a.kind, label: a.label, address: a.address,
+    account_key: `${keyOf(a.label)}_${Math.random().toString(36).slice(2, 6).toUpperCase()}`, daily_limit: a.daily_limit, operator_id: a.operator_id || null,
+    warmup_started: a.channel === "email" ? new Date().toISOString().slice(0, 10) : null });
+  go(error ? (error.message.includes("policy") ? "Only a sales manager or owner can add accounts (group owner for shared ones)." : error.message) : "Account added.");
+}
+
+export async function senderAccountStatusAction(slug: string | null, fd: FormData): Promise<void> {
+  const id = uuid.parse(fd.get("account_id"));
+  const sb = slug ? (await scoped(slug, "crm.manage")).supabase : (await getGroupContext()).supabase;
+  if (fd.get("remove")) await sb.from("sender_accounts").delete().eq("id", id);
+  else await sb.from("sender_accounts").update({ status: fd.get("status") === "paused" ? "paused" : "active" }).eq("id", id);
+  redirect(`${slug ? `/c/${slug}/settings` : "/group/settings"}#accounts`);
+}
+
+export async function outreachRulesAction(slug: string, fd: FormData): Promise<void> {
+  const ctx = await scoped(slug, "crm.manage");
+  const v = z.coerce.number().int().min(1).max(14).safeParse(fd.get("max_touches_per_week"));
+  await ctx.supabase.from("outreach_rules").upsert({ organization_id: ctx.company.id, max_touches_per_week: v.success ? v.data : 3, updated_at: new Date().toISOString() });
+  redirect(`/c/${slug}/settings?accounts=${encodeURIComponent("Contact limit saved.")}#accounts`);
+}
+
+/** Pause or resume every campaign in this company, or (from the group) in all companies. */
+export async function pauseOutreachAction(slug: string | null, fd: FormData): Promise<void> {
+  const paused = fd.get("paused") === "true";
+  if (slug) {
+    const ctx = await scoped(slug, "crm.manage");
+    await ctx.supabase.rpc("set_outreach_paused", { p_org: ctx.company.id, p_group: null, p_paused: paused });
+    redirect(`/c/${slug}/outreach?note=${encodeURIComponent(paused ? "All campaigns paused in this company." : "All campaigns resumed.")}`);
+  }
+  const g = await getGroupContext();
+  const { data, error } = await g.supabase.rpc("set_outreach_paused", { p_org: null, p_group: g.group.id, p_paused: paused });
+  redirect(`/group/settings?accounts=${encodeURIComponent(error ? error.message : `${data ?? 0} campaign(s) ${paused ? "paused" : "resumed"} across all companies.`)}#accounts`);
+}
+
+export async function copyCampaignAction(slug: string, fd: FormData): Promise<void> {
+  const ctx = await scoped(slug, "crm.write");
+  const seq = uuid.parse(fd.get("sequence_id"));
+  const orgs = fd.getAll("org").map(String).filter((x) => /^[0-9a-f-]{36}$/.test(x));
+  const { data, error } = await ctx.supabase.rpc("copy_campaign", { p_sequence: seq, p_orgs: orgs });
+  redirect(`/c/${slug}/outreach?campaign=${seq}&note=${encodeURIComponent(error ? error.message : `Copied to ${data ?? 0} compan${data === 1 ? "y" : "ies"} as paused campaigns. Review and start them there.`)}`);
 }

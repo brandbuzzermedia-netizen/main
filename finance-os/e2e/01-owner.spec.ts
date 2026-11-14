@@ -40,6 +40,7 @@ test("a new deal appears on the pipeline board", async ({ page }) => {
   await page.fill("input[name=title]", title);
   await page.fill("input[name=value]", "12500");
   await page.getByRole("button", { name: "Create deal" }).click();
+  await expect(page).not.toHaveURL(/add=1/); // the save redirects back to the board when done
   await page.goto("/c/demo-gbs/pipeline");
   await expect(page.getByText(title)).toBeVisible();
   await page.goto(`/c/demo-gbs/search?q=${encodeURIComponent(title)}`);
@@ -137,7 +138,7 @@ test("outreach has every channel, and a WhatsApp message can be logged", async (
 test("growth systems: LinkedIn steps and posts, Reddit keywords, AI calls, and invoicing a won deal", async ({ page }) => {
   // LinkedIn: sequences, today's tasks and a post that publishes only after approval.
   await page.goto("/c/demo-gbs/outreach?ch=linkedin");
-  for (const t of ["Today's tasks", "Posts", "Sequences"]) await expect(page.getByText(t, { exact: true }).first()).toBeVisible();
+  for (const t of ["Today's tasks", "Posts", "Campaigns", "Accounts today"]) await expect(page.getByText(t, { exact: true }).first()).toBeVisible();
   await page.getByRole("button", { name: "+ LinkedIn engagement" }).click();
   await expect(page.getByRole("status")).toContainText("LinkedIn engagement");
   await page.fill("textarea[name=body]", `E2E post ${Date.now()}`);
@@ -163,6 +164,7 @@ test("growth systems: LinkedIn steps and posts, Reddit keywords, AI calls, and i
   await page.fill("input[name=account_name]", `E2E Buyer ${Date.now() % 10000}`);
   await page.fill("input[name=value]", "50000");
   await page.getByRole("button", { name: "Create deal" }).click();
+  await expect(page).not.toHaveURL(/add=1/); // the save redirects back to the board when done
   await page.goto("/c/demo-gbs/pipeline");
   await page.getByText(title).click();
   await page.selectOption("select[name=stage_id]", { label: "Won" });
@@ -200,4 +202,33 @@ test("campaigns can be paused and resumed inside a company's Outreach", async ({
   await expect(page.getByRole("status")).toContainText("Campaign running");
   await page.getByRole("link", { name: "Email outreach" }).first().click();
   await expect(page.getByText("Leads in this campaign")).toBeVisible();
+});
+
+test("sending accounts: add a mailbox with a platform limit; pause all campaigns", async ({ page }) => {
+  await page.goto("/c/demo-gbs/settings#accounts");
+  const form = page.locator("#accounts form:has(select[name=channel])");
+  await form.locator("select[name=channel]").selectOption("linkedin");
+  await form.locator("select[name=kind]").selectOption("page");
+  await form.locator("input[name=label]").fill("Too many");
+  await form.locator("input[name=address]").fill("https://www.linkedin.com/company/x");
+  await form.locator("input[name=daily_limit]").fill("100");
+  await form.getByRole("button", { name: "Add account" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "at most 25 a day" })).toBeVisible();
+  const f2 = page.locator("#accounts form:has(select[name=channel])");
+  await f2.locator("select[name=channel]").selectOption("email");
+  await f2.locator("select[name=kind]").selectOption("mailbox");
+  await f2.locator("input[name=label]").fill(`Sales mailbox ${Date.now() % 1000}`);
+  await f2.locator("input[name=address]").fill("sales2@example.test");
+  await f2.locator("input[name=daily_limit]").fill("50");
+  await f2.getByRole("button", { name: "Add account" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Account added." })).toBeVisible();
+  await page.goto("/c/demo-gbs/outreach?ch=email");
+  await expect(page.getByText("Accounts today")).toBeVisible();
+  await expect(page.getByText("warming up").first()).toBeVisible();
+  await page.goto("/c/demo-gbs/outreach");
+  await page.getByRole("button", { name: "Pause all campaigns" }).click();
+  await expect(page.getByRole("status")).toContainText("All campaigns paused");
+  await page.getByRole("button", { name: "Resume all" }).click();
+  await page.goto("/c/demo-gbs/outreach?ch=twitter");
+  await expect(page.getByText("No bulk or unsolicited automated DMs or mentions")).toBeVisible();
 });

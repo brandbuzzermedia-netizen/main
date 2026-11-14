@@ -4,7 +4,7 @@ import { formatShort } from "@/domain/money";
 import { C } from "@/components/dp/theme";
 import { CHANNEL_RULES, ChannelView, OUTREACH_CHANNELS, type ChannelKey } from "@/views/outreach";
 import { logOutcomeAction } from "./actions";
-import { CallsPanel, Note, PostsCard, RedditPanel, SequencesCard, TasksCard } from "./systems";
+import { AccountsToday, CallsPanel, Note, PostsCard, RedditPanel, SequencesCard, TasksCard } from "./systems";
 
 const sel = { border: `1px solid ${C.btnLine}`, borderRadius: 8, padding: "9px 10px", fontSize: 14, background: "#fff" } as const;
 const OUTCOMES: Record<string, string[]> = {
@@ -14,6 +14,7 @@ const OUTCOMES: Record<string, string[]> = {
   call: ["connected", "no_answer", "voicemail", "positive", "objection", "not_now", "referral", "wrong_contact"],
   facebook: ["sent", "positive", "objection", "not_now", "referral"],
   instagram: ["sent", "positive", "objection", "not_now", "referral"],
+  twitter: ["sent", "positive", "objection", "not_now", "referral"],
 };
 const RESPONDED = ["connected", "positive", "objection", "not_now", "referral"];
 const NOT_REACHED = ["no_answer", "voicemail", "wrong_contact", "failed"];
@@ -129,14 +130,15 @@ async function channelBody(ctx: CompanyContext, ch: ChannelKey) {
           )}
         </>
       ),
-      extra: ch === "linkedin" || ch === "facebook" || ch === "instagram" ? (
+      extra: ch === "linkedin" || ch === "facebook" || ch === "instagram" || ch === "twitter" ? (
         <>
           <TasksCard ctx={ctx} channel={ch} />
           <PostsCard ctx={ctx} channel={ch} ch={ch} />
           <SequencesCard ctx={ctx} ch={ch} presets={ch === "linkedin" ? [["linkedin", "LinkedIn engagement"], ["multi", "Multi-channel"]] : [[ch, `${meta.label} engagement`]]} />
+          <AccountsToday ctx={ctx} channel={ch} />
         </>
-      ) : ch === "email" ? <SequencesCard ctx={ctx} ch={ch} presets={[["email", "Email outreach"], ["multi", "Multi-channel"]]} />
-      : ch === "whatsapp" ? <SequencesCard ctx={ctx} ch={ch} presets={[["whatsapp", "WhatsApp follow-up"]]} />
+      ) : ch === "email" ? <><SequencesCard ctx={ctx} ch={ch} presets={[["email", "Email outreach"], ["multi", "Multi-channel"]]} /><AccountsToday ctx={ctx} channel="email" /></>
+      : ch === "whatsapp" ? <><SequencesCard ctx={ctx} ch={ch} presets={[["whatsapp", "WhatsApp follow-up"]]} /><AccountsToday ctx={ctx} channel="whatsapp" /></>
       : ch === "calls" ? (
         <div style={{ background: "#fff", border: `1px solid ${C.line}`, borderRadius: 16, padding: "22px 26px" }}>
           <div style={{ fontFamily: "var(--co-font)", fontSize: 22, fontWeight: 500, marginBottom: 6 }}>Call queue</div>

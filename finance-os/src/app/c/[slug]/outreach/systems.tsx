@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { CompanyContext } from "@/lib/workspace";
 import { formatDate, formatDateTime, todayInBusinessTz } from "@/domain/dates";
 import { C } from "@/components/dp/theme";
+import { copyCampaignAction } from "../actions";
 import { campaignStatusAction, enrollmentStatusAction, enrollAction, keywordAction, postDecisionAction, presetSequenceAction, queueCallAction, signalAction, taskOutcomeAction, createPostAction } from "./actions";
 
 const card = { background: "#fff", border: `1px solid ${C.line}`, borderRadius: 16, padding: "22px 26px" } as const;
@@ -47,19 +48,22 @@ export async function TasksCard({ ctx, channel }: { ctx: CompanyContext; channel
 }
 
 /** Content calendar: drafts need approval; approved posts publish through n8n on the day. */
-export async function PostsCard({ ctx, channel, ch }: { ctx: CompanyContext; channel: "linkedin" | "facebook" | "instagram"; ch: string }) {
+export async function PostsCard({ ctx, channel, ch }: { ctx: CompanyContext; channel: "linkedin" | "facebook" | "instagram" | "twitter"; ch: string }) {
   const slug = ctx.company.slug;
   const { data } = await ctx.supabase.from("content_posts").select("id, body, media_url, scheduled_at, status, external_url, error").eq("organization_id", ctx.company.id).eq("channel", channel)
     .neq("status", "cancelled").order("scheduled_at", { ascending: false }).limit(20);
   const ps = (data ?? []) as { id: string; body: string; media_url: string | null; scheduled_at: string; status: string; external_url: string | null; error: string | null }[];
   const approve = ctx.can("automation.approve");
+  const { data: accs } = await ctx.supabase.from("sender_accounts").select("id, label").eq("channel", channel).eq("status", "active").neq("kind", "personal_profile");
+  const postAccounts = (accs ?? []) as { id: string; label: string }[];
   const colour: Record<string, string> = { draft: C.warnFg2, approved: "var(--co-side)", published: "#2F5D4C", failed: C.red };
   return (
     <div style={card}>
       <Head t="Posts" aside={<span style={{ fontSize: 13, color: C.muted }}>Publish after approval</span>} />
       <form action={createPostAction.bind(null, slug)} style={{ display: "flex", flexDirection: "column", gap: 8, paddingBottom: 14 }}>
         <input type="hidden" name="channel" value={channel} />
-        <textarea name="body" required maxLength={3000} rows={3} placeholder={`Write the ${channel === "linkedin" ? "LinkedIn" : channel === "facebook" ? "Facebook" : "Instagram"} post`} aria-label="Post text" style={{ ...field, resize: "vertical" }} />
+        {postAccounts.length > 0 && <select name="sender_account_id" aria-label="Post from" style={field}>{postAccounts.map((a) => <option key={a.id} value={a.id}>Post from {a.label}</option>)}</select>}
+        <textarea name="body" required maxLength={channel === "twitter" ? 280 : 3000} rows={3} placeholder={`Write the ${channel === "linkedin" ? "LinkedIn" : channel === "facebook" ? "Facebook" : channel === "twitter" ? "X (max 280 characters)" : "Instagram"} post`} aria-label="Post text" style={{ ...field, resize: "vertical" }} />
         <input name="media_url" placeholder={channel === "instagram" ? "Image link (https://…), required for Instagram" : "Image link (optional, https://…)"} aria-label="Image link" style={field} />
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <input type="date" name="date" required defaultValue={todayInBusinessTz()} aria-label="Date" style={field} />
@@ -220,7 +224,7 @@ export async function CallsPanel({ ctx }: { ctx: CompanyContext }) {
 }
 
 const STATUS_STYLE: Record<string, [string, string]> = { active: ["#E3E8DF", "#2F5D4C"], paused: ["#F3E7C4", "#7a5b00"], draft: ["#EFE9D9", "#6d7a70"] };
-const CH_LABEL: Record<string, string> = { email: "Email", whatsapp: "WhatsApp", linkedin: "LinkedIn", linkedin_task: "LinkedIn", facebook: "Facebook", instagram: "Instagram", call_task: "Call", reddit: "Reddit" };
+const CH_LABEL: Record<string, string> = { twitter: "X", email: "Email", whatsapp: "WhatsApp", linkedin: "LinkedIn", linkedin_task: "LinkedIn", facebook: "Facebook", instagram: "Instagram", call_task: "Call", reddit: "Reddit" };
 
 /** Every campaign in this company with live numbers and one-click Start / Pause / Resume. */
 export async function CampaignList({ ctx, ret }: { ctx: CompanyContext; ret: string }) {
@@ -271,6 +275,8 @@ export async function CampaignDetail({ ctx, id }: { ctx: CompanyContext; id: str
     ctx.supabase.from("outreach_enrollments").select("id, status, current_step, next_step_at, contact:contacts(full_name, company_name)").eq("sequence_id", id).eq("organization_id", ctx.company.id).order("created_at", { ascending: false }).limit(300),
   ]);
   if (!seq) return null;
+  const others = ctx.memberships.filter((m) => m.company.id !== ctx.company.id && m.company.family_group_id === ctx.company.family_group_id && ["owner", "company_admin", "sales_manager"].includes(m.role))
+    .map((m) => ({ id: m.company.id, name: m.company.name }));
   const steps = seq.steps as { channel: string; action?: string }[];
   const es = (ens ?? []) as unknown as { id: string; status: string; current_step: number; next_step_at: string | null; contact: { full_name: string; company_name: string | null } | null }[];
   const label: Record<string, string> = { active: "Running", paused: "Paused", completed: "Finished", stopped_reply: "Replied", stopped_suppressed: "Opted out", stopped_manual: "Removed" };
@@ -278,6 +284,14 @@ export async function CampaignDetail({ ctx, id }: { ctx: CompanyContext; id: str
     <div style={{ ...card, marginBottom: 20 }}>
       <Head t={seq.name as string} aside={<a href={`/c/${slug}/outreach`} style={{ fontSize: 13, fontWeight: 600, color: "var(--co-side)" }}>← All campaigns</a>} />
       <CampaignList ctx={ctx} ret={`/c/${slug}/outreach?campaign=${id}`} />
+      {others.length > 0 && (
+        <form action={copyCampaignAction.bind(null, slug)} style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", borderTop: `1px solid ${C.line2}`, marginTop: 10, paddingTop: 12, fontSize: 13.5 }}>
+          <input type="hidden" name="sequence_id" value={id} />
+          <span style={{ fontWeight: 600 }}>Copy to</span>
+          {others.map((o) => <label key={o.id} style={{ display: "flex", gap: 4, alignItems: "center" }}><input type="checkbox" name="org" value={o.id} /> {o.name}</label>)}
+          <button style={btn}>Copy campaign</button>
+        </form>
+      )}
       <div style={{ fontWeight: 600, fontSize: 14, margin: "14px 0 4px" }}>Leads in this campaign · {es.length}</div>
       {es.length === 0 && <div style={{ ...row, color: C.muted }}>No leads enrolled. Enrol them from a channel tab.</div>}
       {es.map((e) => {
@@ -296,6 +310,31 @@ export async function CampaignDetail({ ctx, id }: { ctx: CompanyContext; id: str
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/** Each account's pace today on this channel, so bulk sending stays inside platform limits. */
+export async function AccountsToday({ ctx, channel }: { ctx: CompanyContext; channel: string }) {
+  const today = todayInBusinessTz();
+  const [{ data: accs }, { data: log }, { data: tasks }] = await Promise.all([
+    ctx.supabase.from("sender_accounts").select("id, label, kind, daily_limit, status, warmup_started, organization_id").eq("channel", channel),
+    ctx.supabase.from("outreach_send_log").select("sender_account_id").eq("organization_id", ctx.company.id).eq("sent_on", today),
+    ctx.supabase.from("outreach_tasks").select("sender_account_id").eq("organization_id", ctx.company.id).eq("due_on", today),
+  ]);
+  const as = (accs ?? []) as { id: string; label: string; kind: string; daily_limit: number; status: string; warmup_started: string | null; organization_id: string | null }[];
+  const used = (id: string) => ((log ?? []) as { sender_account_id: string | null }[]).filter((x) => x.sender_account_id === id).length + ((tasks ?? []) as { sender_account_id: string | null }[]).filter((x) => x.sender_account_id === id).length;
+  const cap = (a: (typeof as)[number]) => (channel === "email" && a.warmup_started ? Math.min(a.daily_limit, 10 + 5 * Math.max(0, Math.round((Date.parse(today) - Date.parse(a.warmup_started)) / 86_400_000))) : a.daily_limit);
+  return (
+    <div style={card}>
+      <Head t="Accounts today" aside={ctx.can("crm.manage") ? <a href={`/c/${ctx.company.slug}/settings#accounts`} style={{ fontSize: 13, fontWeight: 600, color: "var(--co-side)" }}>Manage →</a> : undefined} />
+      {as.length === 0 && <div style={{ ...row, color: C.muted }}>No accounts for this channel yet. Add mailboxes, numbers, Pages or team profiles in Settings → Sending accounts; bulk sends then spread across them.</div>}
+      {as.map((a) => (
+        <div key={a.id} style={{ ...row, display: "flex", justifyContent: "space-between", gap: 10 }}>
+          <span>{a.label}{a.organization_id === null ? <span style={{ color: C.muted }}> · shared</span> : null}{a.status !== "active" ? <span style={{ color: "#7a5b00" }}> · paused</span> : null}</span>
+          <span style={{ color: C.muted, whiteSpace: "nowrap" }}>{used(a.id)} / {cap(a)} today{channel === "email" && a.warmup_started && cap(a) < a.daily_limit ? " · warming up" : ""}</span>
+        </div>
+      ))}
     </div>
   );
 }

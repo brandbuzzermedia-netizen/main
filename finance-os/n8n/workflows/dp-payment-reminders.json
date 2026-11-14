@@ -214,7 +214,7 @@
     },
     {
       "parameters": {
-        "fromEmail": "={{ $env.DP_FROM_EMAIL }}",
+        "fromEmail": "={{ $json.from || $env.DP_FROM_EMAIL }}",
         "toEmail": "={{ $json.to }}",
         "subject": "={{ $json.subject }}",
         "emailFormat": "text",
@@ -237,7 +237,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://graph.facebook.com/v21.0/{{ $env.DP_WA_PHONE_NUMBER_ID }}/messages",
+        "url": "=https://graph.facebook.com/v21.0/{{ $env['DP_WA_PHONE_' + ($json.account_key || '')] || $env.DP_WA_PHONE_NUMBER_ID }}/messages",
         "options": {
           "timeout": 20000
         },
