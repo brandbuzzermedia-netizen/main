@@ -29,7 +29,7 @@ export default async function globalSetup(config: FullConfig) {
   const rep = await browser.newPage({ baseURL });
   await signIn(rep, EMPLOYEE); // a person signs in once before an owner can add them
   await owner.goto("/c/demo-gbs/team");
-  if (!(await owner.getByText(EMPLOYEE).count())) {
+  if (!(await owner.locator(`span[title="${EMPLOYEE}"]`).count())) {
     await owner.goto("/c/demo-gbs/team?add=1");
     await owner.fill("input[name=email]", EMPLOYEE);
     await owner.selectOption("select[name=role]", "sales_rep");

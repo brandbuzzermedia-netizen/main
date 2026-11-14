@@ -33,6 +33,7 @@ export default async function TeamPage({ params, searchParams }: PageProps<"/c/[
   const invites = (inv.data ?? []) as { id: string; email: string; role: string; expires_at: string }[];
   const former = (hist.data ?? []) as unknown as { id: string; role: string; reason: string; deactivated_at: string; user: { full_name: string | null; email: string | null } | null }[];
   const leaving = typeof sp.deactivate === "string" ? members.find((m) => m.id === sp.deactivate) : undefined;
+  const editing = typeof sp.member === "string" ? members.find((m) => m.id === sp.member && m.user_id !== ctx.userId) : undefined;
   const roles = ctx.can("members.grant_owner") ? ["owner", ...ASSIGNABLE] : ASSIGNABLE;
   const [title, lines] = NOTES.team;
   return (
@@ -42,18 +43,7 @@ export default async function TeamPage({ params, searchParams }: PageProps<"/c/[
         head: ["PERSON", "ROLE", "SCOPE", "TARGET"],
         rows: members.map((m) => {
           const editable = manage && m.user_id !== ctx.userId && (m.role !== "owner" || ctx.can("members.grant_owner"));
-          return {
-            a: <>{m.name}<div style={{ fontWeight: 400, fontSize: 12.5, color: C.muted }}>{m.email}</div></>,
-            b: editable ? (
-              <form action={changeRoleAction.bind(null, slug)} style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                <input type="hidden" name="membership_id" value={m.id} />
-                <select name="role" defaultValue={m.role} aria-label={`Role for ${m.name}`} style={sm}>{roles.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}</select>
-                <button style={sm}>Save</button>
-              </form>
-            ) : ROLE_LABELS[m.role] ?? m.role,
-            c: SCOPE[m.role] ?? "This company only",
-            d: editable ? <a href={`${base}?deactivate=${m.id}`} style={{ ...sm, color: C.red, textDecoration: "none" }}>Deactivate</a> : "—",
-          };
+          return { a: <span title={m.email ?? undefined}>{m.name}</span>, b: ROLE_LABELS[m.role] ?? m.role, c: SCOPE[m.role] ?? "This company only", d: "—", href: editable ? `${base}?member=${m.id}` : undefined };
         }),
         empty: "No members yet.", noteTitle: title, noteLines: lines,
       }} />
@@ -78,6 +68,19 @@ export default async function TeamPage({ params, searchParams }: PageProps<"/c/[
             ))}
           </Card>
         </div>
+      )}
+      {editing && manage && (
+        <Modal title={editing.name} closeHref={base}>
+          <p style={{ fontSize: 13.5, color: C.body, marginTop: 0 }}>{editing.email} · {ROLE_LABELS[editing.role] ?? editing.role}</p>
+          <form action={changeRoleAction.bind(null, slug)} style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <input type="hidden" name="membership_id" value={editing.id} />
+            <select name="role" defaultValue={editing.role} aria-label={`Role for ${editing.name}`} style={{ ...sm, padding: "8px 10px", fontSize: 14 }}>{roles.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}</select>
+            <button style={{ ...sm, padding: "8px 14px", fontSize: 14, fontWeight: 600 }}>Change role</button>
+          </form>
+          <div style={{ borderTop: `1px solid ${C.line2}`, marginTop: 18, paddingTop: 14 }}>
+            <a href={`${base}?deactivate=${editing.id}`} style={{ color: C.red, fontWeight: 600, fontSize: 14 }}>Deactivate access…</a>
+          </div>
+        </Modal>
       )}
       {leaving && manage && (
         <Modal title={`Deactivate ${leaving.name}`} closeHref={base}>

@@ -4,7 +4,8 @@ import { fieldsNeedingReview, type BillExtraction } from "@/integrations/ai/clau
 import { parseMoneyToMinor, formatShort } from "@/domain/money";
 import { assessmentYearLabel, financialYear } from "@/domain/periods";
 import { addDays, formatDate, todayInBusinessTz } from "@/domain/dates";
-import { FinanceExpenses, FinanceRental, FinanceTax, billBtn, billPrimary, originalBox, type BillField } from "@/views/finance";
+import { billFields } from "@/lib/bill-fields";
+import { FinanceExpenses, FinanceRental, FinanceTax, billBtn, billPrimary, originalBox } from "@/views/finance";
 import { Modal } from "@/components/dp/modal";
 import { C } from "@/components/dp/theme";
 import { ReviewForm, UploadBox, type ReviewField } from "../bills/forms";
@@ -15,11 +16,6 @@ import { recordFilingAction } from "./tax/actions";
 const small = { border: `1px solid ${C.btnLine}`, borderRadius: 7, padding: "5px 8px", fontSize: 12.5, background: "#fff" } as const;
 type Ex = { id: string; status: string; is_mock: boolean; error: string | null; fields: BillExtraction; created_at: string; document: { id: string; file_name: string; storage_path: string; mime_type: string } };
 
-function chip(...fs: ({ value: string | null; confidence: number } | undefined)[]): BillField["c"] {
-  if (fs.some((f) => !f || f.value === null)) return "Missing";
-  const m = Math.min(...fs.map((f) => f!.confidence));
-  return m >= 0.85 ? "High" : m >= 0.6 ? "Check" : "Low";
-}
 
 export async function ExpensesSection({ ctx, bill, edit }: { ctx: CompanyContext; bill?: string; edit?: boolean }) {
   const slug = ctx.company.slug;
@@ -53,20 +49,7 @@ export async function ExpensesSection({ ctx, bill, edit }: { ctx: CompanyContext
     ]);
     const dups = ((dup.data ?? []) as { reason: string; description: string }[]).filter(() => !postedBy.get(sel.document.id));
     const [state, color] = label(sel);
-    const v = (x?: { value: string | null }) => x?.value ?? null;
-    const fields: BillField[] = [
-      { l: "Vendor", v: v(f.vendor_name) ?? "Not found", c: chip(f.vendor_name) },
-      { l: "GSTIN", v: v(f.vendor_gstin) ?? "Not printed", c: chip(f.vendor_gstin) },
-      { l: "Bill no. / date", v: [v(f.bill_number), v(f.bill_date) && formatDate(v(f.bill_date))].filter(Boolean).join(" · ") || "Not found", c: chip(f.bill_number, f.bill_date) },
-      { l: "Taxable value", v: v(f.taxable_value) ? `₹${v(f.taxable_value)}` : "Not found", c: chip(f.taxable_value) },
-      { l: "CGST / SGST", v: `${v(f.cgst) ?? "—"} / ${v(f.sgst) ?? "—"}`, c: chip(f.cgst, f.sgst) },
-      { l: "IGST / cess", v: `${v(f.igst) ?? "—"} / ${v(f.cess) ?? "—"}`, c: chip(f.igst, f.cess) === "Missing" ? "Low" : chip(f.igst, f.cess) },
-      { l: "Total", v: v(f.total) ? `₹${v(f.total)}` : "Not found", c: chip(f.total) },
-      { l: "Currency", v: v(f.currency) ?? "INR", c: f.currency?.value ? chip(f.currency) : "Check" },
-      { l: "Due date", v: v(f.due_date) ? formatDate(v(f.due_date)) : "Not found", c: chip(f.due_date) },
-      { l: "Suggested category", v: v(f.suggested_category) ? `${v(f.suggested_category)} (suggestion)` : "None", c: f.suggested_category?.value ? "Low" : "Missing" },
-      { l: "Entity / unit", v: "Chosen on review", c: "Low" },
-    ];
+    const fields = billFields(f);
     const url = signed.data?.signedUrl;
     const done = Boolean(postedBy.get(sel.document.id)) || sel.status === "rejected";
     review = {

@@ -39,8 +39,8 @@ test.describe("people and access", () => {
 
   test("deactivating keeps a record and can be undone", async ({ page }) => {
     await page.goto("/c/demo-gbs/team");
-    const row = page.locator("div").filter({ has: page.getByText(EMPLOYEE, { exact: true }) }).filter({ has: page.locator('a[href*="deactivate="]') }).last();
-    await row.locator('a[href*="deactivate="]').click();
+    await page.locator(`a:has(span[title="${EMPLOYEE}"])`).first().click();
+    await page.getByRole("link", { name: "Deactivate access…" }).click();
     await page.fill("input[name=reason]", "E2E: temporary removal");
     await page.getByRole("button", { name: "Deactivate access" }).click();
     await expect(page.getByText("Former members")).toBeVisible();
