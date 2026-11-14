@@ -159,3 +159,25 @@ export async function enrollAction(slug: string, fd: FormData) {
   const { error } = rows.length ? await ctx.supabase.from("outreach_enrollments").insert(rows) : { error: { message: "Choose at least one lead." } };
   back(slug, ch, error ? (error.message.includes("duplicate") ? "That lead is already in this sequence." : error.message) : `${rows.length} lead(s) enrolled. Steps start at the next daily run.`);
 }
+
+/** Start, pause or resume a whole campaign. Paused campaigns send nothing and create no tasks. */
+export async function campaignStatusAction(slug: string, fd: FormData) {
+  const ctx = await writer(slug);
+  const id = z.uuid().parse(fd.get("sequence_id"));
+  const status = z.enum(["active", "paused", "archived"]).parse(fd.get("status"));
+  const ret = String(fd.get("ret") ?? `/c/${slug}/outreach`);
+  const { error, count } = await ctx.supabase.from("outreach_sequences").update({ status }, { count: "exact" }).eq("id", id).eq("organization_id", ctx.company.id);
+  const msg = error || count === 0 ? "Only a sales manager or owner can start or pause campaigns." : status === "active" ? "Campaign running. Due steps go out at the next daily run." : status === "paused" ? "Campaign paused. Nothing is sent until you resume." : "Campaign archived.";
+  revalidatePath(`/c/${slug}/outreach`);
+  redirect(`${ret.startsWith(`/c/${slug}/outreach`) ? ret : `/c/${slug}/outreach`}${ret.includes("?") ? "&" : "?"}note=${encodeURIComponent(msg)}`);
+}
+
+/** Pause or resume one lead inside a campaign. */
+export async function enrollmentStatusAction(slug: string, fd: FormData) {
+  const ctx = await writer(slug);
+  const id = z.uuid().parse(fd.get("enrollment_id"));
+  const status = z.enum(["active", "paused", "stopped_manual"]).parse(fd.get("status"));
+  await ctx.supabase.from("outreach_enrollments").update({ status }).eq("id", id).eq("organization_id", ctx.company.id).in("status", ["active", "paused"]);
+  revalidatePath(`/c/${slug}/outreach`);
+  redirect(`/c/${slug}/outreach?campaign=${z.uuid().parse(fd.get("sequence_id"))}`);
+}

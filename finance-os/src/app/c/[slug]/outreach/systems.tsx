@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { CompanyContext } from "@/lib/workspace";
 import { formatDate, formatDateTime, todayInBusinessTz } from "@/domain/dates";
 import { C } from "@/components/dp/theme";
-import { enrollAction, keywordAction, postDecisionAction, presetSequenceAction, queueCallAction, signalAction, taskOutcomeAction, createPostAction } from "./actions";
+import { campaignStatusAction, enrollmentStatusAction, enrollAction, keywordAction, postDecisionAction, presetSequenceAction, queueCallAction, signalAction, taskOutcomeAction, createPostAction } from "./actions";
 
 const card = { background: "#fff", border: `1px solid ${C.line}`, borderRadius: 16, padding: "22px 26px" } as const;
 const field = { border: `1px solid ${C.btnLine}`, borderRadius: 8, padding: "9px 10px", fontSize: 14, background: "#fff", color: C.ink } as const;
@@ -101,13 +101,14 @@ export async function SequencesCard({ ctx, ch, presets }: { ctx: CompanyContext;
   const ls = (leads.data ?? []) as { id: string; full_name: string; company_name: string | null; consent_basis: string }[];
   return (
     <div style={card}>
-      <Head t="Sequences" aside={<a href={`/c/${slug}/r/sequences`} style={{ fontSize: 13, fontWeight: 600, color: "var(--co-side)" }}>Edit wording →</a>} />
+      <Head t="Campaigns" aside={<a href={`/c/${slug}/r/sequences`} style={{ fontSize: 13, fontWeight: 600, color: "var(--co-side)" }}>Edit wording →</a>} />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", paddingBottom: 12 }}>
         {presets.map(([k, l]) => (
           <form key={k} action={presetSequenceAction.bind(null, slug)}><input type="hidden" name="preset" value={k} /><input type="hidden" name="ch" value={ch} /><button style={btn}>+ {l}</button></form>
         ))}
       </div>
-      {ss.length === 0 ? <div style={{ ...row, color: C.muted }}>No active sequences. Add one above.</div> : (
+      <CampaignList ctx={ctx} ret={`/c/${slug}/outreach?ch=${ch}`} />
+      {ss.length === 0 ? <div style={{ ...row, color: C.muted }}>Start a campaign above to enrol leads.</div> : (
         <form action={enrollAction.bind(null, slug)} style={{ display: "flex", flexDirection: "column", gap: 8, borderTop: `1px solid ${C.line2}`, paddingTop: 12 }}>
           <input type="hidden" name="ch" value={ch} />
           <select name="sequence_id" aria-label="Sequence" style={field}>{ss.map((s) => <option key={s.id} value={s.id}>{s.name} · {s.steps.length} steps</option>)}</select>
@@ -215,5 +216,86 @@ export async function CallsPanel({ ctx }: { ctx: CompanyContext }) {
         ))}
       </div>
     </>
+  );
+}
+
+const STATUS_STYLE: Record<string, [string, string]> = { active: ["#E3E8DF", "#2F5D4C"], paused: ["#F3E7C4", "#7a5b00"], draft: ["#EFE9D9", "#6d7a70"] };
+const CH_LABEL: Record<string, string> = { email: "Email", whatsapp: "WhatsApp", linkedin: "LinkedIn", linkedin_task: "LinkedIn", facebook: "Facebook", instagram: "Instagram", call_task: "Call", reddit: "Reddit" };
+
+/** Every campaign in this company with live numbers and one-click Start / Pause / Resume. */
+export async function CampaignList({ ctx, ret }: { ctx: CompanyContext; ret: string }) {
+  const slug = ctx.company.slug;
+  const [seqs, ens] = await Promise.all([
+    ctx.supabase.from("outreach_sequences").select("id, name, steps, status, requires_approval").eq("organization_id", ctx.company.id).neq("status", "archived").order("created_at"),
+    ctx.supabase.from("outreach_enrollments").select("sequence_id, status").eq("organization_id", ctx.company.id).limit(10000),
+  ]);
+  const ss = (seqs.data ?? []) as { id: string; name: string; steps: { channel: string }[]; status: string; requires_approval: boolean }[];
+  const es = (ens.data ?? []) as { sequence_id: string; status: string }[];
+  const manage = ctx.can("crm.manage");
+  if (ss.length === 0) return <div style={{ ...row, color: C.muted }}>No campaigns yet. Add one from a channel tab (Email, LinkedIn, WhatsApp…).</div>;
+  return (
+    <>
+      {ss.map((q) => {
+        const mine = es.filter((e) => e.sequence_id === q.id);
+        const n = (f: (s: string) => boolean) => mine.filter((e) => f(e.status)).length;
+        const [bg, fg] = STATUS_STYLE[q.status] ?? STATUS_STYLE.draft;
+        const channels = [...new Set(q.steps.map((s) => CH_LABEL[s.channel] ?? s.channel))].join(" · ");
+        return (
+          <div key={q.id} style={{ ...row, display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <a href={`/c/${slug}/outreach?campaign=${q.id}`} style={{ fontWeight: 600, color: C.ink }}>{q.name}</a>
+              <div style={{ fontSize: 12.5, color: C.muted }}>{channels} · {q.steps.length} steps · {n((s) => s === "active")} running · {n((s) => s === "paused")} paused · {n((s) => s === "stopped_reply")} replied · {n((s) => s === "completed")} finished</div>
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 700, background: bg, color: fg, borderRadius: 6, padding: "3px 9px" }}>{q.status === "active" ? "Running" : q.status === "paused" ? "Paused" : "Draft"}</span>
+            {manage && (
+              <form action={campaignStatusAction.bind(null, slug)} style={{ display: "flex", gap: 6 }}>
+                <input type="hidden" name="sequence_id" value={q.id} /><input type="hidden" name="ret" value={ret} />
+                {q.status === "active"
+                  ? <button name="status" value="paused" style={{ ...btn, color: "#7a5b00" }}>Pause</button>
+                  : <button name="status" value="active" style={{ ...btn, color: "#2F5D4C" }}>{q.status === "paused" ? "Resume" : "Start"}</button>}
+              </form>
+            )}
+          </div>
+        );
+      })}
+      {!manage && <div style={{ fontSize: 12.5, color: C.muted, marginTop: 8 }}>A sales manager or owner starts and pauses campaigns.</div>}
+    </>
+  );
+}
+
+/** One campaign: its leads, where each is in the sequence, and per-lead pause / resume / remove. */
+export async function CampaignDetail({ ctx, id }: { ctx: CompanyContext; id: string }) {
+  const slug = ctx.company.slug;
+  const [{ data: seq }, { data: ens }] = await Promise.all([
+    ctx.supabase.from("outreach_sequences").select("id, name, steps, status").eq("id", id).eq("organization_id", ctx.company.id).maybeSingle(),
+    ctx.supabase.from("outreach_enrollments").select("id, status, current_step, next_step_at, contact:contacts(full_name, company_name)").eq("sequence_id", id).eq("organization_id", ctx.company.id).order("created_at", { ascending: false }).limit(300),
+  ]);
+  if (!seq) return null;
+  const steps = seq.steps as { channel: string; action?: string }[];
+  const es = (ens ?? []) as unknown as { id: string; status: string; current_step: number; next_step_at: string | null; contact: { full_name: string; company_name: string | null } | null }[];
+  const label: Record<string, string> = { active: "Running", paused: "Paused", completed: "Finished", stopped_reply: "Replied", stopped_suppressed: "Opted out", stopped_manual: "Removed" };
+  return (
+    <div style={{ ...card, marginBottom: 20 }}>
+      <Head t={seq.name as string} aside={<a href={`/c/${slug}/outreach`} style={{ fontSize: 13, fontWeight: 600, color: "var(--co-side)" }}>← All campaigns</a>} />
+      <CampaignList ctx={ctx} ret={`/c/${slug}/outreach?campaign=${id}`} />
+      <div style={{ fontWeight: 600, fontSize: 14, margin: "14px 0 4px" }}>Leads in this campaign · {es.length}</div>
+      {es.length === 0 && <div style={{ ...row, color: C.muted }}>No leads enrolled. Enrol them from a channel tab.</div>}
+      {es.map((e) => {
+        const st = steps[e.current_step];
+        return (
+          <div key={e.id} style={{ ...row, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <span style={{ flex: 1, minWidth: 180 }}><b style={{ fontWeight: 600 }}>{e.contact?.full_name ?? "Lead"}</b>{e.contact?.company_name ? <span style={{ color: C.muted }}> · {e.contact.company_name}</span> : null}</span>
+            <span style={{ fontSize: 13, color: C.muted }}>{st && (e.status === "active" || e.status === "paused") ? `Step ${e.current_step + 1} of ${steps.length}: ${CH_LABEL[st.channel] ?? st.channel}${st.action ? ` ${st.action.replace("_", " ")}` : ""}${e.next_step_at && e.status === "active" ? ` · ${formatDate(e.next_step_at.slice(0, 10))}` : ""}` : label[e.status] ?? e.status}</span>
+            {(e.status === "active" || e.status === "paused") && (
+              <form action={enrollmentStatusAction.bind(null, slug)} style={{ display: "flex", gap: 6 }}>
+                <input type="hidden" name="enrollment_id" value={e.id} /><input type="hidden" name="sequence_id" value={id} />
+                {e.status === "active" ? <button name="status" value="paused" style={btn}>Pause</button> : <button name="status" value="active" style={{ ...btn, color: "#2F5D4C" }}>Resume</button>}
+                <button name="status" value="stopped_manual" style={{ ...btn, color: C.red }}>Remove</button>
+              </form>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }

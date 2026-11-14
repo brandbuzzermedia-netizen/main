@@ -10,6 +10,7 @@ import { C } from "@/components/dp/theme";
 import { Assistant } from "../assistant/forms";
 import { handoverAction, logOutcomeAction } from "./actions";
 import { ChannelSection } from "./channel";
+import { CampaignDetail, CampaignList, Note } from "./systems";
 import { OUTREACH_CHANNELS, OutreachTabs } from "@/views/outreach";
 
 export const metadata: Metadata = { title: "Outreach" };
@@ -19,7 +20,6 @@ const TRIAGE: [string, (e: { kind: string; outcome: string | null }) => boolean]
   ["Referral", (e) => e.outcome === "referral"], ["Unsubscribe", (e) => e.kind === "unsubscribe"], ["Wrong contact", (e) => e.outcome === "wrong_contact"],
   ["Out of office", (e) => e.outcome === "out_of_office"], ["Human review", (e) => e.kind === "reply" && (!e.outcome || e.outcome === "other")],
 ];
-const CH: Record<string, string> = { email: "Email", whatsapp: "WhatsApp", linkedin_task: "LinkedIn task", call_task: "call task" };
 
 export default async function OutreachPage({ params, searchParams }: PageProps<"/c/[slug]/outreach">) {
   const { slug } = await params;
@@ -39,8 +39,7 @@ export default async function OutreachPage({ params, searchParams }: PageProps<"
     );
   }
   const org = ctx.company.id;
-  const [seqs, events, queue, deals, members, settings] = await Promise.all([
-    ctx.supabase.from("outreach_sequences").select("id, name, steps, requires_approval, status").eq("organization_id", org).neq("status", "archived").order("created_at"),
+  const [events, queue, deals, members, settings] = await Promise.all([
     ctx.supabase.from("outreach_events").select("kind, outcome").eq("organization_id", org).limit(5000),
     ctx.supabase.from("contacts").select("id, full_name, company_name, phone_e164, email, consent_basis").eq("organization_id", org).eq("do_not_contact", false).in("lead_status", ["new", "contacted"]).order("created_at").limit(30),
     ctx.supabase.from("deals").select("id, title, account_name, handed_over_at").eq("organization_id", org).is("closed_at", null).order("last_activity_at", { ascending: false }).limit(200),
@@ -55,16 +54,11 @@ export default async function OutreachPage({ params, searchParams }: PageProps<"
       <PageHead own={d.own} treat={d.treat} title={d.ren.outreach ?? "Outreach"} right={ctx.can("crm.manage") ? <Cta href={`/c/${slug}/r/sequences`}>+ Add</Cta> : undefined}
         intro="Sequences run in n8n. If a channel is unsupported or consent is missing, the step becomes a human task for you." />
       <OutreachTabs base={`/c/${slug}/outreach`} current="overview" />
+      {typeof spAll.note === "string" && <Note text={spAll.note} />}
+      {typeof spAll.campaign === "string" && /^[0-9a-f-]{36}$/.test(spAll.campaign) && <CampaignDetail ctx={ctx} id={spAll.campaign} />}
       <Grid cols="minmax(0,1.4fr) minmax(0,1fr)">
-        <Card title="Sequences">
-          {(seqs.data ?? []).length === 0 && <div style={{ padding: "14px 0", borderTop: `1px solid ${C.line2}`, marginTop: 12, fontSize: 14, color: C.muted }}>No sequences yet. Add one with + Add; every bulk send waits for approval.</div>}
-          {((seqs.data ?? []) as { id: string; name: string; steps: { channel: string; delay_days?: number }[]; requires_approval: boolean; status: string }[]).map((q) => (
-            <div key={q.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 0", borderTop: `1px solid ${C.line2}`, marginTop: 12 }}>
-              <div style={{ flex: 1 }}><div style={{ fontWeight: 600 }}>{q.name}</div>
-                <div style={{ fontSize: 13, color: C.muted }}>{q.steps.length ? `${q.steps.map((s) => CH[s.channel] ?? s.channel).join(" → ")} · ${q.steps.reduce((t, s) => t + (s.delay_days ?? 0), 0)} days` : "No steps yet"} · {q.status}</div></div>
-              <span style={{ fontSize: 12, background: C.soft, color: "var(--co-side)", borderRadius: 6, padding: "3px 9px" }}>{q.requires_approval ? "Approval for bulk" : "Auto"}</span>
-            </div>
-          ))}
+        <Card title="Campaigns">
+          <div style={{ marginTop: 4 }}><CampaignList ctx={ctx} ret={`/c/${slug}/outreach`} /></div>
           <div style={{ marginTop: 14, fontSize: 13, color: C.muted, lineHeight: 1.5 }}>Before every send: opt-out and suppression check, daily channel limits, country rules. Bulk sends need approval.</div>
         </Card>
         <Card title="Reply triage">

@@ -187,3 +187,17 @@ test("payment rules: an owner sets when work stops for late payers", async ({ pa
   await page.fill("input[name=hold_after_days]", "15");
   await page.getByRole("button", { name: "Save rules" }).click();
 });
+
+test("campaigns can be paused and resumed inside a company's Outreach", async ({ page }) => {
+  await page.goto("/c/demo-gbs/outreach?ch=email");
+  await page.getByRole("button", { name: "+ Email outreach" }).click();
+  await page.goto("/c/demo-gbs/outreach");
+  const row = page.locator("div").filter({ has: page.getByRole("link", { name: "Email outreach" }) }).filter({ has: page.getByRole("button", { name: /Pause|Resume|Start/ }) }).last();
+  await row.getByRole("button", { name: "Pause" }).click();
+  await expect(page.getByRole("status")).toContainText("Campaign paused");
+  await expect(page.getByText("Paused", { exact: true }).first()).toBeVisible();
+  await page.locator("div").filter({ has: page.getByRole("link", { name: "Email outreach" }) }).filter({ has: page.getByRole("button", { name: "Resume" }) }).last().getByRole("button", { name: "Resume" }).click();
+  await expect(page.getByRole("status")).toContainText("Campaign running");
+  await page.getByRole("link", { name: "Email outreach" }).first().click();
+  await expect(page.getByText("Leads in this campaign")).toBeVisible();
+});
