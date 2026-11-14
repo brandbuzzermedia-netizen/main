@@ -133,3 +133,43 @@ test("outreach has every channel, and a WhatsApp message can be logged", async (
   await page.goto("/c/demo-la-pinoz/outreach?ch=instagram");
   await expect(page.getByRole("navigation", { name: "Outreach channels" }).getByRole("link", { name: "Meta ads" })).toBeVisible();
 });
+
+test("growth systems: LinkedIn steps and posts, Reddit keywords, AI calls, and invoicing a won deal", async ({ page }) => {
+  // LinkedIn: sequences, today's tasks and a post that publishes only after approval.
+  await page.goto("/c/demo-gbs/outreach?ch=linkedin");
+  for (const t of ["Today's tasks", "Posts", "Sequences"]) await expect(page.getByText(t, { exact: true }).first()).toBeVisible();
+  await page.getByRole("button", { name: "+ LinkedIn engagement" }).click();
+  await expect(page.getByRole("status")).toContainText("LinkedIn engagement");
+  await page.fill("textarea[name=body]", `E2E post ${Date.now()}`);
+  await page.getByRole("button", { name: "Save draft" }).click();
+  await expect(page.getByRole("status")).toContainText("publishes after approval");
+  await page.getByRole("button", { name: "Approve" }).first().click();
+  await expect(page.getByText("Approved, waiting to publish").first()).toBeVisible();
+
+  // Reddit keywords.
+  await page.goto("/c/demo-gbs/outreach?ch=reddit");
+  await page.fill("input[name=keyword]", `agency ${Date.now() % 10000}`);
+  await page.getByRole("button", { name: "Watch" }).click();
+  await expect(page.getByRole("button", { name: "Remove" }).first()).toBeVisible();
+
+  // AI calls tab explains the disclosure rule.
+  await page.goto("/c/demo-gbs/outreach?ch=ai-calls");
+  await expect(page.getByText("Every call says it is an AI assistant at the start")).toBeVisible();
+
+  // Won deal → invoice.
+  await page.goto("/c/demo-gbs/pipeline?add=1");
+  const title = `E2E won ${Date.now()}`;
+  await page.fill("input[name=title]", title);
+  await page.fill("input[name=account_name]", `E2E Buyer ${Date.now() % 10000}`);
+  await page.fill("input[name=value]", "50000");
+  await page.getByRole("button", { name: "Create deal" }).click();
+  await page.goto("/c/demo-gbs/pipeline");
+  await page.getByText(title).click();
+  await page.selectOption("select[name=stage_id]", { label: "Won" });
+  await page.getByRole("button", { name: "Move" }).click();
+  await page.goto("/c/demo-gbs/pipeline?view=closed");
+  await page.getByText(title).click();
+  await page.getByRole("button", { name: "Create invoice and payment link" }).click();
+  await expect(page).toHaveURL(/\/receivables\/invoices\/[0-9a-f-]{36}/);
+  await expect(page.locator("body")).toContainText("59,000");
+});
