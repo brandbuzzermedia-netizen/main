@@ -3,7 +3,7 @@ import { getCompanyContext, ROLE_LABELS } from "@/lib/workspace";
 import { dpCompanyNav } from "@/lib/dp-nav";
 import { companyApprovals, wsOptions } from "@/lib/dp-chrome";
 import { companyTheme } from "@/components/dp/theme";
-import { DpShell, StopBanner } from "@/components/dp/shell";
+import { DpShell, HoldBanner, StopBanner } from "@/components/dp/shell";
 import { toggleStopAction } from "./actions";
 
 export async function generateMetadata({ params }: LayoutProps<"/c/[slug]">): Promise<Metadata> {
@@ -19,6 +19,8 @@ export default async function CompanyLayout({ children, params }: LayoutProps<"/
   const c = ctx.company;
   const theme = companyTheme(c);
   const ap = await companyApprovals(ctx);
+  const { data: holds } = await ctx.supabase.from("work_holds").select("client:clients(legal_name)").eq("organization_id", c.id).eq("status", "active").limit(20);
+  const onHold = ((holds ?? []) as unknown as { client: { legal_name: string } | null }[]).map((h) => h.client?.legal_name ?? "A client");
   return (
     <DpShell theme={theme} wsId={c.id} homeHref={`/c/${slug}`}
       nav={dpCompanyNav(c, (p) => ctx.can(p as never), { role: ctx.role, approvals: ap.automation })}
@@ -28,7 +30,7 @@ export default async function CompanyLayout({ children, params }: LayoutProps<"/
       search={{ placeholder: `Search in ${c.name} only…`, action: `/c/${slug}/search` }}
       bell={{ href: ap.automation ? `/c/${slug}/automation` : `/c/${slug}/finance/ledger`, count: ap.automation + ap.ledger }}
       user={{ initials: ctx.initials, name: ctx.displayName, role: ROLE_LABELS[ctx.role] ?? ctx.role }}
-      banner={<>{c.emergency_stop && <StopBanner name={c.name} />}</>}>
+      banner={<>{c.emergency_stop && <StopBanner name={c.name} />}{onHold.length > 0 && <HoldBanner slug={slug} clients={onHold} />}</>}>
       {children}
     </DpShell>
   );

@@ -73,3 +73,13 @@ export function StopBanner({ name }: { name: string }) {
   return <div role="alert" style={{ background: C.red, color: "#fff", borderRadius: 10, padding: "12px 16px", fontWeight: 600, fontSize: 14, marginBottom: 20 }}>Emergency stop is ON for {name}. Outbound messages and workflow runs are paused. Resume from the sidebar.</div>;
 }
 
+
+/** Shown to the whole team while any client is on a payment hold. */
+export function HoldBanner({ slug, clients }: { slug: string; clients: string[] }) {
+  return (
+    <div role="alert" style={{ background: "#F5DADA", color: C.red, border: `1px solid ${C.red}33`, borderRadius: 10, padding: "12px 16px", fontSize: 14, marginBottom: 20, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+      <b>Work on hold, payment overdue:</b> <span style={{ flex: 1 }}>{clients.join(", ")}. Do not start or deliver new work for {clients.length === 1 ? "this client" : "these clients"}.</span>
+      <a href={`/c/${slug}/finance`} style={{ color: C.red, fontWeight: 700 }}>See holds →</a>
+    </div>
+  );
+}

@@ -27,7 +27,7 @@ export default async function PipelinePage({ params, searchParams }: PageProps<"
   const base = `/c/${slug}/pipeline`;
   const [stagesRes, dealsRes, members] = await Promise.all([
     ctx.supabase.from("pipeline_stages").select("id, organization_id, name, position, kind, probability_pct").eq("organization_id", ctx.company.id).order("position"),
-    ctx.supabase.from("deals").select("id, organization_id, title, account_name, stage_id, value_minor, currency, owner_id, is_hot, expected_close_on, next_action, next_action_on, last_activity_at, closed_at, invoice_id")
+    ctx.supabase.from("deals").select("id, organization_id, title, account_name, stage_id, value_minor, currency, owner_id, is_hot, expected_close_on, next_action, next_action_on, last_activity_at, closed_at, invoice_id, client_id")
       .eq("organization_id", ctx.company.id).order("value_minor", { ascending: false }).limit(1000),
     ctx.can("crm.read_all") ? loadMembers(ctx.supabase, ctx.company.id) : Promise.resolve([]),
   ]);
@@ -42,6 +42,8 @@ export default async function PipelinePage({ params, searchParams }: PageProps<"
     deals: deals.filter((x) => x.stage_id === s.id).map((x) => ({ id: x.id, t: x.title, v: formatMoney(x.value_minor, x.currency, { compact: true }), hot: x.is_hot, sub: x.account_name ?? undefined, href: `${base}?deal=${x.id}${view !== "all" ? `&view=${view}` : ""}` })),
   }));
   const open = sp.deal ? all.find((x) => x.id === sp.deal) : undefined;
+  const openClient = (open as (DealRow & { client_id?: string | null }) | undefined)?.client_id;
+  const { data: openHold } = openClient ? await ctx.supabase.from("work_holds").select("days_overdue").eq("client_id", openClient).eq("status", "active").maybeSingle() : { data: null };
   const close = view === "all" ? base : `${base}?view=${view}`;
   const canWrite = ctx.can("crm.write");
   const sel = { border: `1px solid ${C.btnLine}`, borderRadius: 8, padding: "8px 10px", fontSize: 14, background: "#fff" } as const;
@@ -64,6 +66,7 @@ export default async function PipelinePage({ params, searchParams }: PageProps<"
       )}
       {open && (
         <Modal title={open.title} closeHref={close}>
+          {openHold && <div role="alert" style={{ background: "#F5DADA", color: C.red, borderRadius: 8, padding: "10px 12px", fontSize: 13.5, marginBottom: 12 }}><b>Work on hold:</b> this client is {openHold.days_overdue} days overdue. Do not start new work until they pay.</div>}
           <div style={{ fontSize: 14, color: C.body, lineHeight: 1.6, marginBottom: 14 }}>
             {open.account_name && <div>{open.account_name}</div>}
             <div><b>{formatMoney(open.value_minor, open.currency)}</b>{open.next_action && <> · Next: {open.next_action}</>}</div>

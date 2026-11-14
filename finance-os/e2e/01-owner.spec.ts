@@ -173,3 +173,17 @@ test("growth systems: LinkedIn steps and posts, Reddit keywords, AI calls, and i
   await expect(page).toHaveURL(/\/receivables\/invoices\/[0-9a-f-]{36}/);
   await expect(page.locator("body")).toContainText("59,000");
 });
+
+test("payment rules: an owner sets when work stops for late payers", async ({ page }) => {
+  await page.goto("/c/demo-gbs/settings");
+  await page.fill("input[name=warn_after_days]", "5");
+  await page.fill("input[name=hold_after_days]", "20");
+  await page.getByRole("button", { name: "Save rules" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Payment rules saved." })).toBeVisible();
+  await page.goto("/c/demo-gbs/finance");
+  await expect(page.getByText("work stops at 20 days")).toBeVisible();
+  await page.goto("/c/demo-gbs/settings");
+  await page.fill("input[name=warn_after_days]", "3");
+  await page.fill("input[name=hold_after_days]", "15");
+  await page.getByRole("button", { name: "Save rules" }).click();
+});

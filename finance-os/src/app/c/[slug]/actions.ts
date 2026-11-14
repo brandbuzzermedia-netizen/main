@@ -283,3 +283,23 @@ export async function invoiceWonDealAction(slug: string, fd: FormData): Promise<
   revalidatePath(`/c/${slug}`, "layout");
   redirect(`/c/${slug}/receivables/invoices/${invoiceId}${linkError ? `?link_note=${encodeURIComponent(linkError)}` : ""}`);
 }
+
+/** Company payment rules: when the team is warned and when work stops for an overdue client. */
+export async function savePaymentRulesAction(slug: string, fd: FormData): Promise<void> {
+  const ctx = await scoped(slug, "company.settings");
+  const v = z.object({ warn_after_days: z.coerce.number().int().min(0).max(90), hold_after_days: z.coerce.number().int().min(1).max(180) }).safeParse(formToObject(fd));
+  const go = (m: string) => redirect(`/c/${slug}/settings?rules=${encodeURIComponent(m)}`);
+  if (!v.success || v.data.hold_after_days <= v.data.warn_after_days) go("Work must stop later than the warning (e.g. warn at 3 days, stop at 15).");
+  const { error } = await ctx.supabase.from("payment_rules").upsert({ organization_id: ctx.company.id, enabled: fd.get("enabled") === "on",
+    warn_after_days: v.data!.warn_after_days, hold_after_days: v.data!.hold_after_days, updated_at: new Date().toISOString(), updated_by: ctx.userId });
+  go(error ? error.message : "Payment rules saved.");
+}
+
+/** Owner or approver lifts a work hold early, optionally giving time until a date. */
+export async function releaseHoldAction(slug: string, fd: FormData): Promise<void> {
+  const ctx = await getCompanyContext(slug);
+  const until = String(fd.get("resume_by") ?? "");
+  const { error } = await ctx.supabase.rpc("release_work_hold", { p_hold: uuid.parse(fd.get("hold_id")), p_reason: String(fd.get("reason") ?? ""), p_resume_by: /^\d{4}-\d{2}-\d{2}$/.test(until) ? until : null });
+  revalidatePath(`/c/${slug}`, "layout");
+  redirect(`/c/${slug}/finance${error ? `?hold_error=${encodeURIComponent(error.message)}` : ""}`);
+}

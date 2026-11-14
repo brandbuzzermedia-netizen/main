@@ -65,6 +65,7 @@ on every test run.
 | `dp-social-publish.json` | Approved posts → LinkedIn, Facebook, Instagram | Publishes approved posts on their day through each network's official API and reports each result. |
 | `dp-voice-calls.json` | AI voice calls (always says it is an AI) | Starts ElevenLabs outbound calls between 09:00 and 21:00 IST. The first sentence is always the AI disclosure. |
 | `dp-reddit-listen.json` | Reddit listening | Searches Reddit daily for each watched keyword and sends new posts to Outreach → Reddit. |
+| `dp-payment-hold-alerts.json` | Payment overdue past the limit → stop work, alert the team | Emails the company's owners, finance, account and operations managers when a client goes on hold. |
 | `dp-meta-leads.json` | (relay, always on) | Meta lead forms → new leads in the right company. Register `…/webhook/dp-meta-leads?org=<company id>`. |
 | `dp-elevenlabs-results.json` | (relay, always on) | ElevenLabs post-call results → the call record and the lead's history. Register `…/webhook/dp-elevenlabs-results?org=<company id>`. |
 

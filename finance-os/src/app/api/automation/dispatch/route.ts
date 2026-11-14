@@ -15,8 +15,12 @@ export async function GET(request: NextRequest) {
   if (!secret || given.length !== secret.length || !timingSafeEqual(Buffer.from(given), Buffer.from(secret))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  if (n8nConfig().mock) return NextResponse.json({ ok: true, dispatched: 0, note: "n8n not configured (mock mode)" });
   const db = createAdminClient();
+  // Payment discipline runs every day, with or without n8n: warnings, work holds, team tasks.
+  const holds = await db.rpc("evaluate_payment_holds", { p_today: todayInBusinessTz() });
+  if (holds.error) return NextResponse.json({ error: "holds_failed" }, { status: 500 });
+  if (n8nConfig().mock) return NextResponse.json({ ok: true, holds: holds.data ?? 0, dispatched: 0, note: "n8n not configured (mock mode)" });
+  await db.rpc("enqueue_hold_alerts", { p_today: todayInBusinessTz() });
   // Today's scheduled runs (daily summary, bill review reminder, rent overdue). Idempotent per day.
   const queued = await db.rpc("enqueue_scheduled_runs", { p_today: todayInBusinessTz() });
   if (queued.error) return NextResponse.json({ error: "enqueue_failed" }, { status: 500 });
@@ -32,5 +36,5 @@ export async function GET(request: NextRequest) {
       await db.from("automation_runs").update({ status: "failed", last_error: res.error ?? "Dispatch failed", finished_at: new Date().toISOString() }).eq("id", run.id);
     }
   }
-  return NextResponse.json({ ok: true, queued: queued.data ?? 0, dispatched: sent });
+  return NextResponse.json({ ok: true, holds: holds.data ?? 0, queued: queued.data ?? 0, dispatched: sent });
 }

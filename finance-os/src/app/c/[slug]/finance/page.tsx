@@ -7,6 +7,7 @@ import { todayInBusinessTz } from "@/domain/dates";
 import { Cta, PageHead } from "@/components/dp/shell";
 import { FinanceOverview, FinanceTabs } from "@/views/finance";
 import { ExpensesSection, RentalSection, TaxSection } from "./sections";
+import { HoldsCard } from "./holds";
 
 export const metadata: Metadata = { title: "Finance" };
 
@@ -24,6 +25,7 @@ export default async function FinancePage({ params, searchParams }: PageProps<"/
   return (
     <>
       <PageHead own={d.own} treat={d.treat} title="Finance" right={ctx.can("documents.write") ? <Cta href={`${base}?tab=expenses`}>Upload bill / receipt</Cta> : undefined} />
+      {(canFin || ctx.can("company.settings")) && <HoldsCard ctx={ctx} error={typeof sp.hold_error === "string" ? sp.hold_error : undefined} />}
       <FinanceTabs current={tab} base={base} hide={(["rental", "expenses", "tax"] as const).filter((k) => !ctx.company.enabled_modules.includes(k))} />
       {tab === "overview" && (canFin ? <FinanceOverview vm={await loadOverview(ctx.supabase, [ctx.company.id], todayInBusinessTz(), ctx.company.fy_start_month, d.kpis,
         [link(`${base}/ledger`, "Open ledger & approvals"), link(`/c/${slug}/receivables/invoices`, "Invoices & receivables"), link(`/c/${slug}/receivables/payments`, "Payments & bank import")], true)} />
