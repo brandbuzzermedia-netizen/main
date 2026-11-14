@@ -4,6 +4,7 @@ import { formatShort } from "@/domain/money";
 import { C } from "@/components/dp/theme";
 import { CHANNEL_RULES, ChannelView, OUTREACH_CHANNELS, type ChannelKey } from "@/views/outreach";
 import { logOutcomeAction } from "./actions";
+import { CallsPanel, Note, PostsCard, RedditPanel, SequencesCard, TasksCard } from "./systems";
 
 const sel = { border: `1px solid ${C.btnLine}`, borderRadius: 8, padding: "9px 10px", fontSize: 14, background: "#fff" } as const;
 const OUTCOMES: Record<string, string[]> = {
@@ -20,12 +21,40 @@ const label = (o: string | null) => (o ? o.replace(/_/g, " ").replace(/^./, (x) 
 const colour = (o: string | null) => (o === "positive" ? "#2F5D4C" : o && NOT_REACHED.includes(o) ? C.red : C.muted);
 
 /** One outreach channel for one company: numbers from logged activity only, never estimates. */
-export async function ChannelSection({ ctx, ch }: { ctx: CompanyContext; ch: ChannelKey }) {
+export async function ChannelSection({ ctx, ch, note }: { ctx: CompanyContext; ch: ChannelKey; note?: string }) {
+  return <><Note text={note} />{await channelBody(ctx, ch)}</>;
+}
+
+async function channelBody(ctx: CompanyContext, ch: ChannelKey) {
   const slug = ctx.company.slug;
   const org = ctx.company.id;
   const meta = OUTREACH_CHANNELS.find((c) => c.key === ch)!;
   const info = CHANNEL_RULES[ch];
   const since = `${addDays(todayInBusinessTz(), -30)}T00:00:00+05:30`;
+
+  if (ch === "reddit" || ch === "ai-calls") {
+    const since30 = since;
+    const tiles = ch === "reddit"
+      ? await (async () => {
+          const { data } = await ctx.supabase.from("social_signals").select("status").eq("organization_id", org).eq("channel", "reddit").gte("created_at", since30);
+          const x = (data ?? []) as { status: string }[];
+          return [{ l: "Conversations found", v: x.length, s: "Last 30 days" }, { l: "Waiting for you", v: x.filter((s) => s.status === "new" || s.status === "drafted").length },
+            { l: "Replied", v: x.filter((s) => s.status === "replied").length }, { l: "Became leads", v: x.filter((s) => s.status === "converted").length }];
+        })()
+      : await (async () => {
+          const { data } = await ctx.supabase.from("voice_calls").select("status, outcome").eq("organization_id", org).gte("created_at", since30);
+          const x = (data ?? []) as { status: string; outcome: string | null }[];
+          return [{ l: "Calls made", v: x.filter((c) => c.status === "completed" || c.status === "no_answer").length, s: "Last 30 days" }, { l: "Queued", v: x.filter((c) => c.status === "queued").length },
+            { l: "Interested or booked", v: x.filter((c) => c.outcome === "interested" || c.outcome === "meeting_booked").length, s: "Become qualified leads" },
+            { l: "Asked not to be called", v: x.filter((c) => c.outcome === "do_not_call").length }];
+        })();
+    return (
+      <ChannelView vm={{ label: meta.label, status: info.status, how: info.how, rules: info.rules, tiles, recent: [],
+        log: ch === "reddit" ? <Head2 t="How it works" text="Add keywords below. Each morning the scan lists matching Reddit posts here with a link; write a helpful reply, post it from your account, and mark it replied." />
+          : <Head2 t="How it works" text="Queue a call for a lead. After approval in Automation, the AI agent calls in the 9 am–9 pm window, says it is an AI assistant, qualifies the lead, books a meeting in your calendar, and the summary appears here and on the lead." />,
+        extra: ch === "reddit" ? <RedditPanel ctx={ctx} /> : <CallsPanel ctx={ctx} /> }} />
+    );
+  }
 
   if (ch === "meta-ads") {
     const month = todayInBusinessTz().slice(0, 7) + "-01";
@@ -100,7 +129,15 @@ export async function ChannelSection({ ctx, ch }: { ctx: CompanyContext; ch: Cha
           )}
         </>
       ),
-      extra: ch === "calls" ? (
+      extra: ch === "linkedin" || ch === "facebook" || ch === "instagram" ? (
+        <>
+          <TasksCard ctx={ctx} channel={ch} />
+          <PostsCard ctx={ctx} channel={ch} ch={ch} />
+          <SequencesCard ctx={ctx} ch={ch} presets={ch === "linkedin" ? [["linkedin", "LinkedIn engagement"], ["multi", "Multi-channel"]] : [[ch, `${meta.label} engagement`]]} />
+        </>
+      ) : ch === "email" ? <SequencesCard ctx={ctx} ch={ch} presets={[["email", "Email outreach"], ["multi", "Multi-channel"]]} />
+      : ch === "whatsapp" ? <SequencesCard ctx={ctx} ch={ch} presets={[["whatsapp", "WhatsApp follow-up"]]} />
+      : ch === "calls" ? (
         <div style={{ background: "#fff", border: `1px solid ${C.line}`, borderRadius: 16, padding: "22px 26px" }}>
           <div style={{ fontFamily: "var(--co-font)", fontSize: 22, fontWeight: 500, marginBottom: 6 }}>Call queue</div>
           {queue.length === 0 && <div style={{ fontSize: 14, color: C.muted, padding: "10px 0", borderTop: `1px solid ${C.line2}` }}>No leads with a phone number yet.</div>}
@@ -115,4 +152,8 @@ export async function ChannelSection({ ctx, ch }: { ctx: CompanyContext; ch: Cha
       recent: ev.slice(0, 15).map((e) => ({ who: e.contact?.full_name ?? "Lead", what: label(e.outcome), when: formatDate(e.occurred_at.slice(0, 10)), c: colour(e.outcome) })),
     }} />
   );
+}
+
+function Head2({ t, text }: { t: string; text: string }) {
+  return <><div style={{ fontFamily: "var(--co-font)", fontSize: 22, fontWeight: 500, marginBottom: 8 }}>{t}</div><div style={{ fontSize: 14, color: C.muted, lineHeight: 1.55 }}>{text}</div></>;
 }

@@ -1,0 +1,141 @@
+{
+  "name": "Diwani Parivaar OS · ElevenLabs call results → OS",
+  "id": "318f31ca5cdb594b",
+  "versionId": "e02c5dac-352a-51ef-8619-37b226d9cbf0",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dp-elevenlabs-results",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "f698ad02-d6fb-5a14-9d94-667916ba677f",
+      "name": "Incoming",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "00716666-95e4-5947-9345-16e58a612d10"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ElevenLabs post-call webhook: map the analysis to the OS call record.\n// Register as …/webhook/dp-elevenlabs-results?org=<company id>. Enable HMAC in ElevenLabs and keep this URL private.\nconst org = $('Incoming').first().json.query.org; const d = $json.body.data || {};\nconst vars = (d.conversation_initiation_client_data || {}).dynamic_variables || {};\nconst a = d.analysis || {}; const r = (a.data_collection_results || {});\nconst outcome = (r.outcome && r.outcome.value) || (a.call_successful === 'success' ? 'interested' : undefined);\nreturn [{ json: { payload: { type: 'call_result', organization_id: org, call_id: vars.dp_call_id, status: d.status === 'failed' ? 'failed' : 'completed',\n  ...(outcome ? { outcome } : {}), ...(a.transcript_summary ? { summary: String(a.transcript_summary).slice(0, 4000) } : {}) } } }];"
+      },
+      "id": "06addf35-8f82-5441-9b28-854c987ceb4b",
+      "name": "Map to OS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Signs one message for the OS inbound endpoint, exactly as the OS signs its webhooks.\nconst crypto = require('crypto');\nconst body = JSON.stringify($json.payload);\nconst ts = Math.floor(Date.now() / 1000);\nconst nonce = crypto.randomBytes(16).toString('hex');\nconst signature = crypto.createHmac('sha256', $env.DP_SIGNING_SECRET).update(`${ts}.${nonce}.${body}`).digest('hex');\nreturn { json: { body, ts: String(ts), nonce, signature } };\n",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "13d51266-e1b5-5ad6-9d6a-c8f9d6aa9262",
+      "name": "Sign for OS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DP_APP_URL }}/api/inbound",
+        "options": {
+          "timeout": 20000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-dp-timestamp",
+              "value": "={{ $json.ts }}"
+            },
+            {
+              "name": "x-dp-nonce",
+              "value": "={{ $json.nonce }}"
+            },
+            {
+              "name": "x-dp-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}"
+      },
+      "id": "6d8a9a54-62d1-55c7-a1a1-df6a04a5d947",
+      "name": "Send to OS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Incoming": {
+      "main": [
+        [
+          {
+            "node": "Map to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map to OS": {
+      "main": [
+        [
+          {
+            "node": "Sign for OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign for OS": {
+      "main": [
+        [
+          {
+            "node": "Send to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "meta": {
+    "templateKey": "elevenlabs_results",
+    "webhookPath": "dp-elevenlabs-results",
+    "relay": true
+  },
+  "tags": []
+}

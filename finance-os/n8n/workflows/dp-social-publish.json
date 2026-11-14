@@ -1,0 +1,387 @@
+{
+  "name": "Diwani Parivaar OS · Publish approved posts",
+  "id": "6c80d577dbe15dd3",
+  "versionId": "f9de32bf-eadc-5161-bdef-f99c0f5aee4e",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dp-social-publish",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "84743e6d-78e7-5a59-911c-95ddb3d6fecb",
+      "name": "Webhook from OS",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "e6384713-463e-5047-bb1c-f48eff9a4670"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verifies the OS signature: HMAC-SHA256(secret, `${timestamp}.${nonce}.${body}`), max 5 minutes old.\n// Needs NODE_FUNCTION_ALLOW_BUILTIN=crypto and DP_SIGNING_SECRET (same value as N8N_SIGNING_SECRET in the OS).\nconst crypto = require('crypto');\nconst item = $input.first();\nconst h = item.json.headers || {};\nconst secret = $env.DP_SIGNING_SECRET || '';\nconst raw = item.binary && item.binary.data ? Buffer.from(item.binary.data.data, 'base64').toString('utf8') : JSON.stringify(item.json.body);\nconst ts = String(h['x-dp-timestamp'] || ''), nonce = String(h['x-dp-nonce'] || ''), sig = String(h['x-dp-signature'] || '');\nlet ok = Boolean(secret) && /^\\d{9,11}$/.test(ts) && nonce.length >= 16 && nonce.length <= 128 && /^[0-9a-f]{64}$/.test(sig)\n  && Math.abs(Math.floor(Date.now() / 1000) - Number(ts)) <= 300;\nif (ok) {\n  const expected = crypto.createHmac('sha256', secret).update(`${ts}.${nonce}.${raw}`).digest();\n  const given = Buffer.from(sig, 'hex');\n  ok = given.length === expected.length && crypto.timingSafeEqual(given, expected);\n}\nlet payload = {};\ntry { payload = JSON.parse(raw); } catch (e) { ok = false; }\nconst runOk = ok && /^[0-9a-f-]{36}$/.test(String(payload.run_id || '')) && /^[0-9a-f-]{36}$/.test(String(payload.organization_id || ''));\nreturn [{ json: { ok: runOk, run_id: payload.run_id, organization_id: payload.organization_id, input: payload.input || {} } }];\n"
+      },
+      "id": "86644186-a347-552f-923f-6e8e714f114f",
+      "name": "Verify signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "ok",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      },
+      "id": "16cde70f-2946-50da-9755-299a964e601b",
+      "name": "Signed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: 'bad_signature' } }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "d0492321-8456-5f4a-8a80-927509259a1e",
+      "name": "Reject",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { accepted: true, executionId: String($execution.id) } }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "fb063065-1181-5f56-a8b2-755eeae1be27",
+      "name": "Accept",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $('Verify signature').first().json.input;\nreturn (s.posts || []).map((p) => ({ json: p }));"
+      },
+      "id": "a28311f1-100f-5d17-967b-1a762498f6a8",
+      "name": "Posts",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// One post at a time through the network's official API. Tokens come from n8n environment variables.\nconst p = $json; const env = $env; let url = null; let error = null;\nconst req = (o) => this.helpers.httpRequest(o);\ntry {\n  if (p.channel === 'linkedin') {\n    const r = await req({ method: 'POST', url: 'https://api.linkedin.com/rest/posts', returnFullResponse: true,\n      headers: { Authorization: `Bearer ${env.DP_LINKEDIN_TOKEN}`, 'LinkedIn-Version': env.DP_LINKEDIN_VERSION || '202410', 'X-Restli-Protocol-Version': '2.0.0', 'Content-Type': 'application/json' },\n      body: { author: env.DP_LINKEDIN_ORG_URN, commentary: p.body, visibility: 'PUBLIC', distribution: { feedDistribution: 'MAIN_FEED' }, lifecycleState: 'PUBLISHED' }, json: true });\n    const id = r.headers['x-restli-id']; url = id ? `https://www.linkedin.com/feed/update/${id}` : null;\n  } else if (p.channel === 'facebook') {\n    const r = await req({ method: 'POST', url: `https://graph.facebook.com/v21.0/${env.DP_FB_PAGE_ID}/${p.media_url ? 'photos' : 'feed'}`, json: true,\n      body: p.media_url ? { url: p.media_url, caption: p.body, access_token: env.DP_FB_PAGE_TOKEN } : { message: p.body, access_token: env.DP_FB_PAGE_TOKEN } });\n    url = `https://www.facebook.com/${r.post_id || r.id}`;\n  } else if (p.channel === 'instagram') {\n    const c = await req({ method: 'POST', url: `https://graph.facebook.com/v21.0/${env.DP_IG_USER_ID}/media`, json: true, body: { image_url: p.media_url, caption: p.body, access_token: env.DP_FB_PAGE_TOKEN } });\n    const r = await req({ method: 'POST', url: `https://graph.facebook.com/v21.0/${env.DP_IG_USER_ID}/media_publish`, json: true, body: { creation_id: c.id, access_token: env.DP_FB_PAGE_TOKEN } });\n    url = `https://www.instagram.com/`; void r;\n  }\n} catch (e) { error = String(e.message || e).slice(0, 900); }\nconst org = $('Verify signature').first().json.organization_id;\nreturn { json: { error: error ? { message: error } : undefined, payload: { type: 'post_result', organization_id: org, post_id: p.post_id, status: error ? 'failed' : 'published', ...(url ? { external_url: url } : {}), ...(error ? { error } : {}) } } };",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "609f215a-f7e2-5e6f-b229-5395e66283dc",
+      "name": "Publish",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Signs one message for the OS inbound endpoint, exactly as the OS signs its webhooks.\nconst crypto = require('crypto');\nconst body = JSON.stringify($json.payload);\nconst ts = Math.floor(Date.now() / 1000);\nconst nonce = crypto.randomBytes(16).toString('hex');\nconst signature = crypto.createHmac('sha256', $env.DP_SIGNING_SECRET).update(`${ts}.${nonce}.${body}`).digest('hex');\nreturn { json: { body, ts: String(ts), nonce, signature } };\n",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "ba14a76f-3db7-51d1-be48-6d2270fd9ea2",
+      "name": "Sign for OS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DP_APP_URL }}/api/inbound",
+        "options": {
+          "timeout": 20000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-dp-timestamp",
+              "value": "={{ $json.ts }}"
+            },
+            {
+              "name": "x-dp-nonce",
+              "value": "={{ $json.nonce }}"
+            },
+            {
+              "name": "x-dp-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}"
+      },
+      "id": "b84f4e0c-946a-5b80-a05f-401d073689b5",
+      "name": "Post result to OS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        200
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// One result for the whole run: failed if any send failed.\nconst items = $input.all();\nconst failed = items.filter((i) => i.json && i.json.error);\nreturn [{ json: failed.length ? { error: { message: `${failed.length} of ${items.length} failed: ${String(failed[0].json.error.message || failed[0].json.error).slice(0, 300)}` } } : { sent: items.length } }];\n"
+      },
+      "id": "c59b736a-47fe-560a-ba1c-3bf09531322b",
+      "name": "Collect results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Signs the result for the OS callback exactly as the OS signs its webhooks.\nconst crypto = require('crypto');\nconst run = $('Verify signature').first().json;\nconst failed = $input.first().json.error;\nconst body = JSON.stringify({\n  run_id: run.run_id,\n  organization_id: run.organization_id,\n  status: failed ? 'failed' : 'succeeded',\n  execution_id: String($execution.id),\n  ...(failed ? { error: String(failed.message || failed).slice(0, 1900) } : {}),\n});\nconst ts = Math.floor(Date.now() / 1000);\nconst nonce = crypto.randomBytes(16).toString('hex');\nconst signature = crypto.createHmac('sha256', $env.DP_SIGNING_SECRET).update(`${ts}.${nonce}.${body}`).digest('hex');\nreturn [{ json: { body, ts: String(ts), nonce, signature } }];\n"
+      },
+      "id": "d6fe6236-c54f-58ed-9dec-cd56934423c8",
+      "name": "Sign result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DP_APP_URL }}/api/automation/callback",
+        "options": {
+          "timeout": 20000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-dp-timestamp",
+              "value": "={{ $json.ts }}"
+            },
+            {
+              "name": "x-dp-nonce",
+              "value": "={{ $json.nonce }}"
+            },
+            {
+              "name": "x-dp-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}"
+      },
+      "id": "06b3ffea-52b8-54c8-be9f-51da4be31591",
+      "name": "Report to OS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3080,
+        260
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Webhook from OS": {
+      "main": [
+        [
+          {
+            "node": "Verify signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify signature": {
+      "main": [
+        [
+          {
+            "node": "Signed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signed?": {
+      "main": [
+        [
+          {
+            "node": "Accept",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accept": {
+      "main": [
+        [
+          {
+            "node": "Posts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Posts": {
+      "main": [
+        [
+          {
+            "node": "Publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publish": {
+      "main": [
+        [
+          {
+            "node": "Sign for OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign for OS": {
+      "main": [
+        [
+          {
+            "node": "Post result to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post result to OS": {
+      "main": [
+        [
+          {
+            "node": "Collect results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect results": {
+      "main": [
+        [
+          {
+            "node": "Sign result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign result": {
+      "main": [
+        [
+          {
+            "node": "Report to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "meta": {
+    "templateKey": "social_publish",
+    "webhookPath": "dp-social-publish"
+  },
+  "tags": []
+}

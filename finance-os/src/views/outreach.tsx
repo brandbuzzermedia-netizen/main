@@ -10,6 +10,8 @@ export const OUTREACH_CHANNELS = [
   { key: "calls", label: "Cold calls", kind: "call" },
   { key: "facebook", label: "Facebook", kind: "facebook" },
   { key: "instagram", label: "Instagram", kind: "instagram" },
+  { key: "reddit", label: "Reddit", kind: null },
+  { key: "ai-calls", label: "AI calls", kind: null },
   { key: "meta-ads", label: "Meta ads", kind: null },
 ] as const;
 export type ChannelKey = (typeof OUTREACH_CHANNELS)[number]["key"];
@@ -27,6 +29,10 @@ export const CHANNEL_RULES: Record<ChannelKey, { status: string; how: string; ru
     rules: ["Reply to people who messaged your Page; no cold DMs", "Standard replies only within 24 hours of their last message", "Comments that ask for a price go to a private reply", "Log each conversation against the lead"] },
   instagram: { status: "Needs connection", how: "Instagram business DMs arrive through Meta once the account is connected via n8n. Until then, reply in the Instagram app and log it here.",
     rules: ["Reply to DMs, story replies and comments; no cold DMs", "Standard replies only within 24 hours of their last message", "Move buying conversations to WhatsApp or a call", "Log each conversation against the lead"] },
+  reddit: { status: "Needs connection", how: "A daily scan of Reddit for your keywords finds people asking for what you sell, once a Reddit API app is connected via n8n. You answer from your own account.",
+    rules: ["Answer the question first; mention your business only where it genuinely helps", "Follow each subreddit's self-promotion rules", "No automated posting or vote manipulation", "Turn real interest into a lead with consent before any outreach"] },
+  "ai-calls": { status: "Needs connection", how: "An ElevenLabs voice agent calls queued leads through your calling number via n8n, books meetings and writes a summary to the lead. Every call opens by saying it is an AI assistant.",
+    rules: ["Every call says it is an AI assistant at the start", "Only leads with a lawful basis, never do-not-contact or DND numbers", "Calls only between 9 am and 9 pm IST", "Hot leads and objections are handed to a person; 'do not call' is honoured at once"] },
   "meta-ads": { status: "Needs connection", how: "Ad approvals work now. Spend and lead forms sync once your Meta ad account is connected via n8n.",
     rules: ["Every ad is approved before any spend", "Property ads need the RERA number; loan ads fall under Meta's special ad category", "Lead-form leads arrive in Leads with source Meta", "Client ad funds are pass-through, never agency revenue"] },
 };

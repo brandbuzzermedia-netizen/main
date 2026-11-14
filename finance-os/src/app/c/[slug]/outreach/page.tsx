@@ -26,14 +26,15 @@ export default async function OutreachPage({ params, searchParams }: PageProps<"
   const ctx = await getCompanyContext(slug);
   if (!ctx.can("crm.write")) notFound();
   const d = designFor(slug);
-  const chParam = (await searchParams).ch;
+  const spAll = await searchParams;
+  const chParam = spAll.ch;
   const ch = OUTREACH_CHANNELS.find((c) => c.key === chParam)?.key;
   if (ch) {
     return (
       <>
         <PageHead own={d.own} treat={d.treat} title={d.ren.outreach ?? "Outreach"} right={ctx.can("crm.manage") ? <Cta href={`/c/${slug}/r/sequences`}>+ Add</Cta> : undefined} />
         <OutreachTabs base={`/c/${slug}/outreach`} current={ch} />
-        <ChannelSection ctx={ctx} ch={ch} />
+        <ChannelSection ctx={ctx} ch={ch} note={typeof spAll.note === "string" ? spAll.note : undefined} />
       </>
     );
   }

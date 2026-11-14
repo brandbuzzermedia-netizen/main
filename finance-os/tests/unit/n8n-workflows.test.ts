@@ -13,9 +13,10 @@ import { AUTOMATION_TEMPLATES } from "@/integrations/n8n/templates";
 const dir = join(process.cwd(), "n8n/workflows");
 const files = readdirSync(dir).filter((f) => f.endsWith(".json"));
 type Node = { name: string; type: string; parameters: Record<string, unknown> };
-type Wf = { nodes: Node[]; connections: Record<string, unknown>; active: boolean; meta: { templateKey: string; webhookPath: string } };
+type Wf = { nodes: Node[]; connections: Record<string, unknown>; active: boolean; meta: { templateKey: string; webhookPath: string; relay?: boolean } };
 const load = (f: string) => JSON.parse(readFileSync(join(dir, f), "utf8")) as Wf;
 const code = (wf: Wf, name: string) => String(wf.nodes.find((n) => n.name === name)!.parameters.jsCode);
+const has = (wf: Wf, name: string) => wf.nodes.some((n) => n.name === name);
 const nodeRequire = createRequire(import.meta.url);
 
 function run(src: string, ctx: { input: unknown; env: Record<string, string>; named?: Record<string, unknown> }) {
@@ -37,12 +38,13 @@ function signedRequest(body: string, ts = Math.floor(Date.now() / 1000), nonce =
 }
 
 describe("n8n workflow files", () => {
-  it("ship one inactive workflow per low-risk template, at the path the OS routes to", () => {
-    expect(files.sort()).toEqual(["dp-bill-ocr-review.json", "dp-daily-summary.json", "dp-rent-overdue-escalation.json"]);
+  it("ship inactive workflows: one per scheduled template, plus the inbound relays", () => {
+    expect(files.sort()).toEqual(["dp-bill-ocr-review.json", "dp-daily-summary.json", "dp-elevenlabs-results.json", "dp-meta-leads.json", "dp-payment-reminders.json",
+      "dp-reddit-listen.json", "dp-rent-overdue-escalation.json", "dp-sequence-sends.json", "dp-social-publish.json", "dp-voice-calls.json"]);
     for (const f of files) {
       const wf = load(f);
       expect(wf.active).toBe(false);
-      expect(AUTOMATION_TEMPLATES.some((t) => t.key === wf.meta.templateKey)).toBe(true);
+      if (!wf.meta.relay) expect(AUTOMATION_TEMPLATES.some((t) => t.key === wf.meta.templateKey)).toBe(true);
       expect(wf.meta.webhookPath).toBe(`dp-${wf.meta.templateKey.replace(/_/g, "-")}`);
       expect(f).toBe(`${wf.meta.webhookPath}.json`);
       expect(wf.nodes.find((n) => n.type === "n8n-nodes-base.webhook")!.parameters.path).toBe(wf.meta.webhookPath);
@@ -50,7 +52,30 @@ describe("n8n workflow files", () => {
     }
   });
 
-  for (const f of files) {
+  it("AI calls always open by saying they are an AI, and never dial outside 09:00–21:00 IST", () => {
+    const wf = load("dp-voice-calls.json");
+    const start = JSON.stringify(wf.nodes.find((n) => n.name === "Start call (ElevenLabs)")!.parameters);
+    expect(start).toContain("first_message: $json.disclosure");
+    expect(code(wf, "Calls")).toContain("h < 9 || h >= 21");
+  });
+
+  it("messages to the OS inbound endpoint are signed so the OS accepts them", () => {
+    let checked = 0;
+    for (const f of files) {
+      const wf = load(f);
+      if (!has(wf, "Sign for OS")) continue;
+      const payload = { type: "signal", organization_id: RUN.organization_id, source_url: "https://www.reddit.com/r/x" };
+      const out = runInNewContext(`(function(){ ${code(wf, "Sign for OS")} })()`, {
+        require: () => nodeRequire("crypto"), JSON, Math, Date, String, $json: { payload }, $env: { DP_SIGNING_SECRET: SECRET },
+      }) as { json: { body: string; ts: string; nonce: string; signature: string } };
+      expect(verify(SECRET, { timestamp: out.json.ts, nonce: out.json.nonce, signature: out.json.signature }, out.json.body), f).toEqual({ ok: true });
+      expect(JSON.parse(out.json.body)).toEqual(payload);
+      checked++;
+    }
+    expect(checked).toBe(5);
+  });
+
+  for (const f of files.filter((x) => has(load(x), "Verify signature"))) {
     const wf = load(f);
     describe(f, () => {
       it("accepts a request the OS signed and rejects tampered, stale or unsigned ones", () => {
@@ -73,7 +98,7 @@ describe("n8n workflow files", () => {
         }
       });
 
-      it("composes a message from the run summary only", () => {
+      it.runIf(has(wf, "Compose message"))("composes a message from the run summary only", () => {
         const input = { company: "Demo Co", date: "2026-11-13", open_deals: 3, open_pipeline_minor: 1_20_000_00, meetings_today: 1, tasks_overdue: 2,
           ledger_awaiting_approval: 1, bills_awaiting_review: 4, oldest_waiting_days: 2,
           overdue: [{ unit: "Salon", due_on: "2026-11-05", outstanding_minor: 50_000_00, days_overdue: 8 }] };

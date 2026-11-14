@@ -55,3 +55,30 @@ against a local Supabase stack. Results:
 
 `tests/unit/n8n-workflows.test.ts` runs the workflows' own JavaScript against the OS signing code
 on every test run.
+
+## Growth systems (added 14 Nov 2026)
+
+| File | Switch in Automation | What it does |
+| --- | --- | --- |
+| `dp-payment-reminders.json` | Invoice due → payment reminder with pay link | Emails each billing contact 3 days before, on the day, and 3/7/15/30 days after the due date with the Razorpay link; WhatsApp template to contacts who opted in. Stops once paid. |
+| `dp-sequence-sends.json` | Sequence steps → email and WhatsApp sends | Sends due email steps and WhatsApp template steps from sequences. Needs approval per run. |
+| `dp-social-publish.json` | Approved posts → LinkedIn, Facebook, Instagram | Publishes approved posts on their day through each network's official API and reports each result. |
+| `dp-voice-calls.json` | AI voice calls (always says it is an AI) | Starts ElevenLabs outbound calls between 09:00 and 21:00 IST. The first sentence is always the AI disclosure. |
+| `dp-reddit-listen.json` | Reddit listening | Searches Reddit daily for each watched keyword and sends new posts to Outreach → Reddit. |
+| `dp-meta-leads.json` | (relay, always on) | Meta lead forms → new leads in the right company. Register `…/webhook/dp-meta-leads?org=<company id>`. |
+| `dp-elevenlabs-results.json` | (relay, always on) | ElevenLabs post-call results → the call record and the lead's history. Register `…/webhook/dp-elevenlabs-results?org=<company id>`. |
+
+Extra n8n environment variables (set only the ones for channels you use):
+
+| Variable | For |
+| --- | --- |
+| `DP_WA_PHONE_NUMBER_ID`, `DP_WA_LANG`, `DP_WA_PAYMENT_TEMPLATE` | WhatsApp Cloud API number and approved template names (token in an HTTP header credential) |
+| `DP_LINKEDIN_TOKEN`, `DP_LINKEDIN_ORG_URN`, `DP_LINKEDIN_VERSION` | LinkedIn Company Page posting (approved LinkedIn app) |
+| `DP_FB_PAGE_ID`, `DP_FB_PAGE_TOKEN`, `DP_IG_USER_ID`, `DP_META_VERIFY_TOKEN` | Facebook Page, Instagram business account, Meta lead webhook |
+| `DP_ELEVENLABS_AGENT_ID`, `DP_ELEVENLABS_PHONE_ID` | ElevenLabs agent and its Twilio number (API key in an HTTP header credential) |
+| `DP_REDDIT_CLIENT_ID`, `DP_REDDIT_CLIENT_SECRET`, `DP_REDDIT_USER_AGENT` | Reddit API app (script type, read-only search) |
+
+Rules built in: AI calls always disclose they are AI and only reach leads with a lawful basis, no
+do-not-contact flag and no suppression; WhatsApp uses approved templates only; posts publish only
+after an approver approves them; LinkedIn, Facebook and Instagram person-to-person steps are
+drafted for a person to send (the platforms do not allow automated messaging).
