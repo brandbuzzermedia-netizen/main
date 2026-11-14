@@ -11,7 +11,7 @@ import { Modal } from "@/components/dp/modal";
 import { C } from "@/components/dp/theme";
 import { Kanban } from "@/views/kanban";
 import { DealForm } from "../forms";
-import { moveDealAction, toggleHotAction } from "../actions";
+import { invoiceWonDealAction, moveDealAction, toggleHotAction } from "../actions";
 
 export const metadata: Metadata = { title: "Pipeline" };
 const VIEWS = { all: "All open", hot: "Hot", proposals: "Proposals", stalled: "Stalled", closed: "Closed" } as const;
@@ -27,7 +27,7 @@ export default async function PipelinePage({ params, searchParams }: PageProps<"
   const base = `/c/${slug}/pipeline`;
   const [stagesRes, dealsRes, members] = await Promise.all([
     ctx.supabase.from("pipeline_stages").select("id, organization_id, name, position, kind, probability_pct").eq("organization_id", ctx.company.id).order("position"),
-    ctx.supabase.from("deals").select("id, organization_id, title, account_name, stage_id, value_minor, currency, owner_id, is_hot, expected_close_on, next_action, next_action_on, last_activity_at, closed_at")
+    ctx.supabase.from("deals").select("id, organization_id, title, account_name, stage_id, value_minor, currency, owner_id, is_hot, expected_close_on, next_action, next_action_on, last_activity_at, closed_at, invoice_id")
       .eq("organization_id", ctx.company.id).order("value_minor", { ascending: false }).limit(1000),
     ctx.can("crm.read_all") ? loadMembers(ctx.supabase, ctx.company.id) : Promise.resolve([]),
   ]);
@@ -82,6 +82,26 @@ export default async function PipelinePage({ params, searchParams }: PageProps<"
               <a href={`/c/${slug}/outreach?deal=${open.id}#draft`} style={{ fontSize: 13.5, color: "var(--co-side)", fontWeight: 600 }}>Draft a follow-up →</a>
             </div>
           ) : <div style={{ fontSize: 13, color: C.muted }}>View only for your role.</div>}
+          {kind.get(open.stage_id) === "won" && ctx.can("finance.write") && (
+            <div style={{ borderTop: `1px solid ${C.line2}`, marginTop: 18, paddingTop: 16 }}>
+              {(open as DealRow & { invoice_id?: string | null }).invoice_id ? (
+                <a href={`/c/${slug}/receivables/invoices/${(open as DealRow & { invoice_id?: string | null }).invoice_id}`} style={{ fontWeight: 600, color: "var(--co-side)" }}>Open the invoice and payment link →</a>
+              ) : (
+                <form action={invoiceWonDealAction.bind(null, slug)} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={{ fontWeight: 600, fontSize: 15 }}>Won: raise the invoice</div>
+                  <div style={{ fontSize: 13, color: C.muted, lineHeight: 1.5 }}>Creates the invoice for {formatMoney(open.value_minor, open.currency)} plus GST, a Razorpay payment link (when connected), and starts payment reminders. Choose the GST rate; your accountant decides tax treatment.</div>
+                  <input type="hidden" name="deal_id" value={open.id} />
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <select name="tax_rate_bp" defaultValue="1800" aria-label="GST rate" style={sel}>{[0, 500, 1200, 1800, 2800].map((r) => <option key={r} value={r}>GST {r / 100}%</option>)}</select>
+                    <select name="due_days" defaultValue="7" aria-label="Due in" style={sel}>{[0, 7, 15, 30, 45].map((n) => <option key={n} value={n}>{n ? `Due in ${n} days` : "Due today"}</option>)}</select>
+                  </div>
+                  <input name="description" placeholder={`Line item (default: ${open.title})`} aria-label="Line item" style={sel} />
+                  {typeof sp.invoice_error === "string" && <div role="alert" style={{ background: "#F5DADA", color: C.red, borderRadius: 8, padding: "9px 12px", fontSize: 13 }}>{sp.invoice_error}</div>}
+                  <div><button style={{ background: "var(--co-side)", color: "#fff", border: 0, borderRadius: 9, padding: "10px 18px", fontWeight: 600, cursor: "pointer" }}>Create invoice and payment link</button></div>
+                </form>
+              )}
+            </div>
+          )}
         </Modal>
       )}
     </>

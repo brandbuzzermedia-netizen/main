@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCompanyContext, type Permission } from "@/lib/workspace";
+import { issuePaymentLink } from "@/lib/payment-links";
 import { parseMoneyToMinor } from "@/domain/money";
 import { MODULE_KEYS, CORE_MODULES } from "@/domain/registry";
 
@@ -267,4 +268,18 @@ export async function toggleModuleAction(slug: string, fd: FormData): Promise<vo
   const { error } = await ctx.supabase.from("organizations").update({ enabled_modules: next }).eq("id", ctx.company.id);
   if (error) throw new Error(error.message);
   revalidatePath(`/c/${slug}`, "layout");
+}
+
+/**
+ * Won deal → invoice (GST rate chosen by the person) → Razorpay payment link when Razorpay is
+ * connected. Reminders then go out automatically from the payment_reminders automation.
+ */
+export async function invoiceWonDealAction(slug: string, fd: FormData): Promise<void> {
+  const ctx = await scoped(slug, "finance.write");
+  const v = z.object({ deal_id: uuid, tax_rate_bp: z.coerce.number().int(), due_days: z.coerce.number().int().min(0).max(120), description: z.string().trim().max(500).optional() }).parse(formToObject(fd));
+  const { data: invoiceId, error } = await ctx.supabase.rpc("invoice_from_deal", { p_deal: v.deal_id, p_tax_rate_bp: v.tax_rate_bp, p_due_days: v.due_days, p_description: v.description ?? null });
+  if (error) redirect(`/c/${slug}/pipeline?deal=${v.deal_id}&invoice_error=${encodeURIComponent(error.message)}`);
+  const linkError = await issuePaymentLink(ctx.supabase, { orgId: ctx.company.id, orgName: ctx.company.name, userId: ctx.userId, invoiceId: invoiceId as string });
+  revalidatePath(`/c/${slug}`, "layout");
+  redirect(`/c/${slug}/receivables/invoices/${invoiceId}${linkError ? `?link_note=${encodeURIComponent(linkError)}` : ""}`);
 }

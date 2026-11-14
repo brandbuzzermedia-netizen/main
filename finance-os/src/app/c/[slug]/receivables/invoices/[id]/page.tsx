@@ -16,8 +16,9 @@ import { CommitmentList } from "@/components/commitment-list";
 
 export const metadata: Metadata = { title: "Invoice" };
 
-export default async function InvoicePage({ params }: PageProps<"/c/[slug]/receivables/invoices/[id]">) {
+export default async function InvoicePage({ params, searchParams }: PageProps<"/c/[slug]/receivables/invoices/[id]">) {
   const { id } = await params;
+  const linkNote = (await searchParams).link_note;
   const ctx = await getContext();
   const [{ data }, { data: allocations }, { data: reminders }, { data: tasks }, { data: commitments }, { data: extensions }, { data: creditNotes }, { data: links }] = await Promise.all([
     ctx.supabase.from("invoice_balances").select("*").eq("id", id).maybeSingle(),
@@ -42,6 +43,7 @@ export default async function InvoicePage({ params }: PageProps<"/c/[slug]/recei
 
   return (
     <>
+      {typeof linkNote === "string" && <div className="mb-4"><Alert tone="warn" title="Invoice created. The payment link was not created">{linkNote}</Alert></div>}
       <PageHeader
         title={inv.invoice_number}
         description={<>Invoice to <Link className="underline" href={`${ctx.base}/clients/${inv.client_id}`}>{inv.client_trading_name || inv.client_legal_name}</Link> · issued {formatDate(inv.invoice_date)}</>}
