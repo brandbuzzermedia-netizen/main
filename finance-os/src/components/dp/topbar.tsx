@@ -11,7 +11,7 @@ export type WsOption = { value: string; label: string };
 export function Switcher({ options, current, acc }: { options: WsOption[]; current: string; acc: string }) {
   const router = useRouter();
   return (
-    <label style={{ display: "flex", alignItems: "center", gap: 10, background: "#fff", border: `1px solid ${C.line}`, borderRadius: 24, padding: "5px 6px 5px 14px" }}>
+    <label className="dp-switch" style={{ display: "flex", alignItems: "center", gap: 10, background: "#fff", border: `1px solid ${C.line}`, borderRadius: 24, padding: "5px 6px 5px 14px" }}>
       <span aria-hidden style={{ width: 10, height: 10, borderRadius: "50%", background: acc, flex: "none" }} />
       <span className="sr-only">Workspace</span>
       <select value={current} onChange={(e) => router.push(`/switch?to=${encodeURIComponent(e.target.value)}`)}

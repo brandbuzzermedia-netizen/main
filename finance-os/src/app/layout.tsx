@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Caprasimo, Figtree, Newsreader, Outfit } from "next/font/google";
 import "./globals.css";
 
@@ -14,7 +14,11 @@ export const metadata: Metadata = {
   title: { default: "Diwani Parivaar OS", template: "%s · Diwani Parivaar OS" },
   description: "Private operating system for the Diwani Parivaar family business group.",
   robots: { index: false, follow: false },
+  appleWebApp: { capable: true, title: "Diwani OS", statusBarStyle: "default" },
+  icons: { apple: "/apple-touch-icon.png" },
 };
+
+export const viewport: Viewport = { themeColor: "#173F32", width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (

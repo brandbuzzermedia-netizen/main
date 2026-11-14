@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { Sidebar, type DpNavItem, type StopControl } from "./sidebar";
 import { Bell, Me, MenuButton, Search, Switcher, type WsOption } from "./topbar";
 import { WorkspaceLoader } from "./loader";
+import { TabBar } from "./tabbar";
 import { C, type Theme } from "./theme";
 
 /** The Company OS frame: sidebar, sticky top bar and content column, themed per workspace. */
@@ -21,7 +22,7 @@ export function DpShell({ theme, wsId, nav, homeHref, stop, note, switcher, sear
           <MenuButton />
           <Switcher options={switcher.options} current={switcher.current} acc={theme.acc} />
           <Search placeholder={search.placeholder} action={search.action} />
-          <div style={{ flex: 1 }} />
+          <div className="dp-spacer" style={{ flex: 1 }} />
           <Bell href={bell.href} count={bell.count} hi={theme.hi} />
           <Me initials={user.initials} name={user.name} role={user.role} side={theme.side} />
         </div>
@@ -30,6 +31,7 @@ export function DpShell({ theme, wsId, nav, homeHref, stop, note, switcher, sear
           {children}
         </div>
       </main>
+      <TabBar nav={nav} />
     </div>
   );
 }

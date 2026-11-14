@@ -48,12 +48,12 @@ export function FinanceOverview({ vm }: { vm: OverviewVM }) {
               <span><b style={{ display: "inline-block", width: 10, height: 10, background: hi, borderRadius: 3 }} /> Cash received</span>
             </div>
           </div>
-          <div role="img" aria-label="Booked and cash received by month" style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 170, marginTop: 18, borderBottom: `1px solid ${C.line}` }}>
+          <div role="img" aria-label="Booked and cash received by month" className="dp-chart" style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 170, minWidth: 0, marginTop: 18, borderBottom: `1px solid ${C.line}` }}>
             {vm.trend.map((m) => (
-              <div key={m.m} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%" }}>
+              <div key={m.m} style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%" }}>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: "100%" }}>
-                  <div title={`Booked ${m.b}`} style={{ width: 9, borderRadius: "3px 3px 0 0", background: side, height: px(m.b) }} />
-                  <div title={`Cash ${m.c}`} style={{ width: 9, borderRadius: "3px 3px 0 0", background: hi, height: px(m.c) }} />
+                  <div title={`Booked ${m.b}`} style={{ width: "clamp(4px, 1.6vw, 9px)", borderRadius: "3px 3px 0 0", background: side, height: px(m.b) }} />
+                  <div title={`Cash ${m.c}`} style={{ width: "clamp(4px, 1.6vw, 9px)", borderRadius: "3px 3px 0 0", background: hi, height: px(m.c) }} />
                 </div>
               </div>
             ))}

@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/auth/"];
+const PUBLIC_PATHS = ["/login", "/auth/", "/manifest.webmanifest"];
 const SLUG_HEADER = "x-dp-company";
 
 /** Refreshes the Supabase session cookie on every request and gates the app behind sign-in. */

@@ -168,7 +168,8 @@ test("growth systems: LinkedIn steps and posts, Reddit keywords, AI calls, and i
   await page.goto("/c/demo-gbs/pipeline");
   await page.getByText(title).click();
   await page.selectOption("select[name=stage_id]", { label: "Won" });
-  await page.getByRole("button", { name: "Move" }).click();
+  await Promise.all([page.waitForResponse((r) => r.request().method() === "POST"), page.getByRole("button", { name: "Move" }).click()]);
+  await page.waitForLoadState("networkidle");
   await page.goto("/c/demo-gbs/pipeline?view=closed");
   await page.getByText(title).click();
   await page.getByRole("button", { name: "Create invoice and payment link" }).click();
