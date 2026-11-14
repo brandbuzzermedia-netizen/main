@@ -109,3 +109,27 @@ test("a client created in receivables opens on its own page", async ({ page }) =
   await expect(page).toHaveURL(/\/c\/demo-gbs\/receivables\/clients\/[0-9a-f-]{36}$/);
   await expect(page.getByText(`E2E Client ${code}`).first()).toBeVisible();
 });
+
+test("outreach has every channel, and a WhatsApp message can be logged", async ({ page }) => {
+  await page.goto("/c/demo-gbs/outreach");
+  const tabs = page.getByRole("navigation", { name: "Outreach channels" });
+  for (const ch of ["Email", "WhatsApp", "LinkedIn", "Cold calls", "Facebook", "Instagram", "Meta ads"]) await expect(tabs.getByRole("link", { name: ch })).toBeVisible();
+  for (const ch of ["email", "linkedin", "calls", "facebook", "instagram", "meta-ads"]) {
+    expect((await page.goto(`/c/demo-gbs/outreach?ch=${ch}`))?.status(), ch).toBe(200);
+    await expectHealthy(page);
+  }
+  // A lead to message (the demo data has none).
+  await page.goto("/c/demo-gbs/leads?add=1");
+  await page.fill("input[name=full_name]", `E2E Lead ${Date.now()}`);
+  await page.locator("form button[type=submit]").last().click();
+  await page.waitForLoadState("networkidle");
+  await page.goto("/c/demo-gbs/outreach?ch=whatsapp");
+  const before = Number(await page.locator("text=Messages logged").locator("xpath=following-sibling::div[1]").textContent());
+  await page.selectOption("select[name=outcome]", "positive");
+  await page.getByRole("button", { name: "Log message" }).click();
+  await expect(page).toHaveURL(/ch=whatsapp/);
+  await expect(page.locator("text=Messages logged").locator("xpath=following-sibling::div[1]")).toHaveText(String(before + 1));
+  // Every company has the same channels.
+  await page.goto("/c/demo-la-pinoz/outreach?ch=instagram");
+  await expect(page.getByRole("navigation", { name: "Outreach channels" }).getByRole("link", { name: "Meta ads" })).toBeVisible();
+});

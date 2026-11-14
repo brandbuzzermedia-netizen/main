@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCompanyContext } from "@/lib/workspace";
 
@@ -8,13 +9,15 @@ export async function logOutcomeAction(slug: string, fd: FormData) {
   const ctx = await getCompanyContext(slug);
   if (!ctx.can("crm.write")) throw new Error("Not allowed");
   const contact = z.uuid().parse(fd.get("contact_id"));
-  const kind = z.enum(["call", "email", "whatsapp", "linkedin", "reply", "unsubscribe", "note"]).parse(fd.get("kind"));
-  const outcome = z.enum(["connected", "no_answer", "voicemail", "positive", "objection", "not_now", "referral", "wrong_contact", "out_of_office", "other"]).nullable().catch(null).parse(fd.get("outcome"));
+  const kind = z.enum(["call", "email", "whatsapp", "linkedin", "facebook", "instagram", "reply", "unsubscribe", "note"]).parse(fd.get("kind"));
+  const outcome = z.enum(["connected", "no_answer", "voicemail", "positive", "objection", "not_now", "referral", "wrong_contact", "out_of_office", "sent", "other"]).nullable().catch(null).parse(fd.get("outcome"));
   const { error } = await ctx.supabase.from("outreach_events").insert({ organization_id: ctx.company.id, contact_id: contact, kind, outcome, notes: String(fd.get("notes") ?? "").slice(0, 2000) || null });
   if (error) throw new Error(error.message);
   if (outcome === "positive") await ctx.supabase.from("contacts").update({ lead_status: "qualified" }).eq("id", contact);
-  else if (kind === "call" || kind === "email") await ctx.supabase.from("contacts").update({ lead_status: "contacted" }).eq("id", contact).eq("lead_status", "new");
+  else if (kind !== "note" && kind !== "unsubscribe") await ctx.supabase.from("contacts").update({ lead_status: "contacted" }).eq("id", contact).eq("lead_status", "new");
   revalidatePath(`/c/${slug}/outreach`);
+  const back = String(fd.get("back") ?? "");
+  if (back.startsWith(`/c/${slug}/outreach`)) redirect(back);
 }
 
 /** Setter hands a deal to a closer: the closer becomes the owner; the setter is recorded. */

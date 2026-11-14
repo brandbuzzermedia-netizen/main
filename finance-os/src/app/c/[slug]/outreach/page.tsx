@@ -9,6 +9,8 @@ import { Card, Grid } from "@/components/dp/ui";
 import { C } from "@/components/dp/theme";
 import { Assistant } from "../assistant/forms";
 import { handoverAction, logOutcomeAction } from "./actions";
+import { ChannelSection } from "./channel";
+import { OUTREACH_CHANNELS, OutreachTabs } from "@/views/outreach";
 
 export const metadata: Metadata = { title: "Outreach" };
 const sel = { border: `1px solid ${C.btnLine}`, borderRadius: 7, padding: "5px 8px", fontSize: 12.5, background: "#fff" } as const;
@@ -19,11 +21,22 @@ const TRIAGE: [string, (e: { kind: string; outcome: string | null }) => boolean]
 ];
 const CH: Record<string, string> = { email: "Email", whatsapp: "WhatsApp", linkedin_task: "LinkedIn task", call_task: "call task" };
 
-export default async function OutreachPage({ params }: PageProps<"/c/[slug]/outreach">) {
+export default async function OutreachPage({ params, searchParams }: PageProps<"/c/[slug]/outreach">) {
   const { slug } = await params;
   const ctx = await getCompanyContext(slug);
   if (!ctx.can("crm.write")) notFound();
   const d = designFor(slug);
+  const chParam = (await searchParams).ch;
+  const ch = OUTREACH_CHANNELS.find((c) => c.key === chParam)?.key;
+  if (ch) {
+    return (
+      <>
+        <PageHead own={d.own} treat={d.treat} title={d.ren.outreach ?? "Outreach"} right={ctx.can("crm.manage") ? <Cta href={`/c/${slug}/r/sequences`}>+ Add</Cta> : undefined} />
+        <OutreachTabs base={`/c/${slug}/outreach`} current={ch} />
+        <ChannelSection ctx={ctx} ch={ch} />
+      </>
+    );
+  }
   const org = ctx.company.id;
   const [seqs, events, queue, deals, members, settings] = await Promise.all([
     ctx.supabase.from("outreach_sequences").select("id, name, steps, requires_approval, status").eq("organization_id", org).neq("status", "archived").order("created_at"),
@@ -40,6 +53,7 @@ export default async function OutreachPage({ params }: PageProps<"/c/[slug]/outr
     <>
       <PageHead own={d.own} treat={d.treat} title={d.ren.outreach ?? "Outreach"} right={ctx.can("crm.manage") ? <Cta href={`/c/${slug}/r/sequences`}>+ Add</Cta> : undefined}
         intro="Sequences run in n8n. If a channel is unsupported or consent is missing, the step becomes a human task for you." />
+      <OutreachTabs base={`/c/${slug}/outreach`} current="overview" />
       <Grid cols="minmax(0,1.4fr) minmax(0,1fr)">
         <Card title="Sequences">
           {(seqs.data ?? []).length === 0 && <div style={{ padding: "14px 0", borderTop: `1px solid ${C.line2}`, marginTop: 12, fontSize: 14, color: C.muted }}>No sequences yet. Add one with + Add; every bulk send waits for approval.</div>}
@@ -66,7 +80,7 @@ export default async function OutreachPage({ params }: PageProps<"/c/[slug]/outr
                 <span style={{ color: c.consent_basis === "none" ? C.red : C.muted, fontSize: 12.5 }}>{c.phone_e164 ?? c.email ?? "No contact detail"}{c.consent_basis === "none" ? " · no lawful basis" : ""}</span></div>
               <form action={logOutcomeAction.bind(null, slug)} style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
                 <input type="hidden" name="contact_id" value={c.id} />
-                <select name="kind" aria-label="Activity" style={sel}><option value="call">Call</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="linkedin">LinkedIn</option><option value="reply">Reply received</option><option value="unsubscribe">Asked not to be contacted</option></select>
+                <select name="kind" aria-label="Activity" style={sel}><option value="call">Call</option><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="linkedin">LinkedIn</option><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="reply">Reply received</option><option value="unsubscribe">Asked not to be contacted</option></select>
                 <select name="outcome" aria-label="Outcome" style={sel}>{["connected", "no_answer", "voicemail", "positive", "objection", "not_now", "referral", "wrong_contact", "out_of_office"].map((o) => <option key={o} value={o}>{o.replace("_", " ")}</option>)}</select>
                 <input name="notes" placeholder="Notes" aria-label="Notes" style={{ ...sel, flex: 1, minWidth: 120 }} />
                 <button style={{ ...sel, cursor: "pointer", fontWeight: 600 }}>Log</button>
