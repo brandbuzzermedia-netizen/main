@@ -1,49 +1,61 @@
 @import "tailwindcss";
 
-/* Get Bee Seen brand tokens, adapted for a dense financial UI. */
+/*
+ * Diwani Parivaar OS tokens. Warm canvas, deep family green and gold for the group shell.
+ * Each company workspace overrides --co-side / --co-hi on its shell element, so its sidebar
+ * and accents carry its own brand while the canvas, type and spacing stay consistent.
+ */
 :root {
-  --bg: #faf7f0;
+  --bg: #f5f1e8;
   --surface: #ffffff;
-  --surface-2: #f4efe3;
-  --ink: #191816;
-  --muted: #6b665c;
-  --line: #e6dfcf;
-  --brand: #196144;
+  --surface-2: #efe9d9;
+  --ink: #171817;
+  --muted: #6d7a70;
+  --faint: #829487;
+  --line: #e2dcc9;
+  --line-2: #efe9d9;
+  --brand: #173f32;
   --brand-ink: #ffffff;
-  --brand-soft: #e3efe8;
-  --accent: #ffb933;
-  --accent-soft: #fff2dc;
-  --danger: #b42318;
-  --danger-soft: #fdecea;
-  --warn: #9a5b00;
-  --warn-soft: #fff4dd;
-  --ok: #196144;
-  --ok-soft: #e3efe8;
-  --info: #1d4ed8;
-  --info-soft: #e8efff;
+  --brand-soft: #e3e8df;
+  --accent: #c7a45a;
+  --accent-soft: #f3e7c4;
+  --danger: #8c2f39;
+  --danger-soft: #f5dada;
+  --warn: #6b5000;
+  --warn-soft: #f3e7c4;
+  --ok: #2f5d4c;
+  --ok-soft: #e3e8df;
+  --info: #24425f;
+  --info-soft: #e1e9f2;
+  --co-side: #173f32;
+  --co-hi: #c7a45a;
+  color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #12110f;
-    --surface: #1b1a17;
-    --surface-2: #24221e;
-    --ink: #f3efe6;
-    --muted: #a39d90;
-    --line: #34312b;
-    --brand: #4fb184;
+    --bg: #121412;
+    --surface: #1a1d1a;
+    --surface-2: #232723;
+    --ink: #eeeae0;
+    --muted: #a3ab9f;
+    --faint: #7f8a80;
+    --line: #2f342f;
+    --line-2: #262a26;
+    --brand: #8fc2a8;
     --brand-ink: #0d1f17;
-    --brand-soft: #173326;
-    --accent: #ffb933;
-    --accent-soft: #3a2c10;
-    --danger: #ff8a7a;
-    --danger-soft: #3b1714;
-    --warn: #ffc56b;
-    --warn-soft: #362710;
-    --ok: #6fd3a3;
-    --ok-soft: #173326;
-    --info: #9db7ff;
-    --info-soft: #1a2340;
+    --brand-soft: #1f2e27;
+    --accent: #d8b56a;
+    --accent-soft: #3a2f17;
+    --danger: #f0a0a6;
+    --danger-soft: #3a1c20;
+    --warn: #f0cf7a;
+    --warn-soft: #362b10;
+    --ok: #8fc2a8;
+    --ok-soft: #1f2e27;
+    --info: #a9c3e0;
+    --info-soft: #1b2633;
+    color-scheme: dark;
   }
 }
 
@@ -53,7 +65,9 @@
   --color-surface-2: var(--surface-2);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
+  --color-faint: var(--faint);
   --color-line: var(--line);
+  --color-line-2: var(--line-2);
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
   --color-brand-soft: var(--brand-soft);
@@ -67,7 +81,10 @@
   --color-ok-soft: var(--ok-soft);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
-  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --color-co-side: var(--co-side);
+  --color-co-hi: var(--co-hi);
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-newsreader), ui-serif, Georgia, serif;
 }
 
 body {
@@ -77,4 +94,42 @@ body {
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #cfc8b5;
+  border-radius: 4px;
+}
+
+/* Company OS shell: hover states and small-screen behaviour (the design is desktop-first). */
+.dp-nav:not([aria-current]):hover { background: rgba(255, 255, 255, 0.08) !important; }
+.dp-root button, .dp-root input, .dp-root select, .dp-root textarea { font-family: inherit; }
+/* The design uses the browser's normal line height, not Tailwind's 1.5. */
+.dp-root { line-height: normal; }
+/* The design is light-only: pin the light palette inside the shell. */
+.dp-root {
+  --bg: #f5f1e8; --surface: #ffffff; --surface-2: #efe9d9; --ink: #171817; --muted: #6d7a70; --faint: #829487; --line: #e2dcc9; --line-2: #efe9d9;
+  --brand: var(--co-side); --brand-ink: #ffffff; --brand-soft: #e3e8df; --accent: var(--co-hi); --accent-soft: #f3e7c4;
+  --danger: #8c2f39; --danger-soft: #f5dada; --warn: #5a4300; --warn-soft: #f3e7c4; --ok: #2f5d4c; --ok-soft: #e3e8df; --info: #24425f; --info-soft: #e1e9f2;
+  color-scheme: light;
+}
+.dp-root a:focus-visible, .dp-root button:focus-visible, .dp-root select:focus-visible, .dp-root input:focus-visible { outline: 2px solid var(--co-hi); outline-offset: 2px; }
+@media (max-width: 900px) {
+  .dp-aside { position: fixed; inset: 0 auto 0 0; z-index: 30; transform: translateX(-100%); transition: transform 0.2s; width: 252px !important; }
+  .dp-aside-open { transform: none; }
+  .dp-menu-btn { display: inline-grid !important; place-items: center; }
+  .dp-topbar { padding: 10px 16px !important; flex-wrap: wrap; }
+  .dp-search { order: 10; min-width: 100%; }
+  .dp-me-text { display: none; }
+  .dp-content { padding: 20px 16px 48px !important; }
+  .dp-grid { grid-template-columns: minmax(0, 1fr) !important; }
 }

@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { cookies, headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Organization, Role } from "@/lib/db-types";
 
@@ -13,6 +13,8 @@ export type AppContext = {
   email: string | null;
   org: Organization;
   role: Role;
+  /** Where this company's receivables pages live, e.g. /c/gbs/receivables. */
+  base: string;
   canWrite: boolean;
   organizations: { id: string; name: string; role: Role }[];
 };
@@ -35,21 +37,27 @@ export const getContext = cache(async (): Promise<AppContext> => {
   const { supabase, userId, email } = await getUser();
   const { data: memberships, error } = await supabase
     .from("memberships")
-    .select("role, organization:organizations(id, name, is_demo, timezone, base_currency)")
+    .select("role, organization:organizations(id, name, slug, is_demo, timezone, base_currency)")
     .eq("user_id", userId)
     .order("created_at");
   if (error) throw new Error(`Could not load memberships: ${error.message}`);
-  const rows = (memberships ?? []) as unknown as { role: Role; organization: Organization }[];
+  const rows = (memberships ?? []) as unknown as { role: Role; organization: Organization & { slug: string } }[];
   if (rows.length === 0) redirect("/onboarding");
 
+  // Receivables pages name their company in the URL (proxy.ts passes it on); membership is
+  // still required. Other callers fall back to the company chosen through /switch.
+  const fromUrl = (await headers()).get("x-dp-company");
   const preferred = (await cookies()).get(ACTIVE_ORG_COOKIE)?.value;
-  const active = rows.find((m) => m.organization.id === preferred) ?? rows[0];
+  const active = fromUrl
+    ? rows.find((m) => m.organization.slug === fromUrl) ?? notFound()
+    : rows.find((m) => m.organization.id === preferred) ?? rows[0];
   return {
     supabase,
     userId,
     email,
     org: active.organization,
     role: active.role,
+    base: `/c/${active.organization.slug}/receivables`,
     canWrite: active.role === "owner" || active.role === "finance",
     organizations: rows.map((m) => ({ id: m.organization.id, name: m.organization.name, role: m.role })),
   };

@@ -40,3 +40,33 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+
+  e2e:
+    # Signed-in flows against a real local Supabase stack (Auth, PostgREST, Storage).
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: finance-os/package-lock.json
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.122.1
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start Supabase (migrations applied)
+        run: supabase start -x studio,realtime,imgproxy,vector,logflare,edge-runtime,supavisor,postgres-meta
+      - name: End-to-end tests
+        run: |
+          eval "$(supabase status -o env 2>/dev/null | grep -E "^[A-Z_]+=" | sed -E 's/^([A-Z_]+)=/export SB_\1=/')"
+          export NEXT_PUBLIC_SUPABASE_URL="$SB_API_URL" NEXT_PUBLIC_SUPABASE_ANON_KEY="$SB_ANON_KEY" SUPABASE_SERVICE_ROLE_KEY="$SB_SERVICE_ROLE_KEY" APP_URL=http://localhost:3000
+          npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: finance-os/playwright-report
+          retention-days: 7

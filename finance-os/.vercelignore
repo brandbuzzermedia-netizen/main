@@ -1,0 +1,9 @@
+node_modules
+.next
+test-results
+playwright-report
+.harness
+e2e/.auth
+.env*
+!.env.example
+supabase/.temp

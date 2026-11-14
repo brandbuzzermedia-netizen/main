@@ -65,3 +65,18 @@ export function formatDate(isoDate: string | null | undefined): string {
   return new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })
     .format(new Date(Date.UTC(y, m - 1, d)));
 }
+
+/** "12 Nov 2026, 4:30 pm" in India time. */
+export function formatDateTime(iso: string): string {
+  return new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: BUSINESS_TZ }).format(new Date(iso));
+}
+
+/** "4:30 pm" in India time. */
+export function formatTime(iso: string): string {
+  return new Intl.DateTimeFormat("en-IN", { timeStyle: "short", timeZone: BUSINESS_TZ }).format(new Date(iso));
+}
+
+/** "Thu 12 Nov" in India time. */
+export function formatDayShort(iso: string): string {
+  return new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: BUSINESS_TZ }).format(new Date(iso));
+}

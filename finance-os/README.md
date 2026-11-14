@@ -1,4 +1,26 @@
-# GBS Finance OS
+# Diwani Parivaar OS (formerly GBS Finance OS)
+
+The family group's operating system: a Group Command Centre plus separate company workspaces
+(Get Bee Seen, Tan O' Fun, IYP, Brightwire, More of Us, the real estate firm, three partner
+channels, La Pino'z and Vyra Studio). Start with
+[`docs/PRODUCT_ARCHITECTURE.md`](docs/PRODUCT_ARCHITECTURE.md), then
+[`DECISIONS`](docs/DECISIONS.md), [`DATABASE_DESIGN`](docs/DATABASE_DESIGN.md),
+[`ROLE_PERMISSION_MATRIX`](docs/ROLE_PERMISSION_MATRIX.md),
+[`AUTOMATION_ARCHITECTURE`](docs/AUTOMATION_ARCHITECTURE.md),
+[`IMPLEMENTATION_ROADMAP`](docs/IMPLEMENTATION_ROADMAP.md) and
+[`DEPLOYMENT_RUNBOOK`](docs/DEPLOYMENT_RUNBOOK.md).
+
+**Status:** every phase in the brief has a working first version, tested at the database and
+domain level. See [`docs/IMPLEMENTATION_ROADMAP.md`](docs/IMPLEMENTATION_ROADMAP.md) for what is
+built, what needs credentials (Claude, n8n, messaging, Shopify, POS) and what still needs a
+staging pass.
+
+First run after this release: sign in, create the family group at `/onboarding`, then on
+**Businesses** attach the existing GBS Finance workspace and create the other workspaces.
+
+The finance ledger described below is now each company's **Finance** module.
+
+## Finance module (original GBS Finance OS)
 
 Get Bee Seen's internal accounts-receivable and cash-flow app. **Swipe remains the system of
 record for official invoices.** This app keeps references to those invoices, tracks the money

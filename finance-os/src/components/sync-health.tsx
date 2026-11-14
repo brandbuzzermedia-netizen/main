@@ -44,12 +44,12 @@ export async function getSyncHealth(): Promise<SyncHealth> {
 
 /** Shows a visible warning whenever invoice data from Swipe may be out of date. */
 export async function SyncHealthBanner() {
-  const h = await getSyncHealth();
+  const [h, ctx] = await Promise.all([getSyncHealth(), getContext()]);
   if (h.lastRun?.status === "failed") {
     return (
       <div className="mb-4">
         <Alert tone="danger" title="The last Swipe import failed">
-          {h.lastRun.error ?? "See Integrations for details."} Invoice data may be out of date. <Link className="underline" href="/settings/integrations">Open integrations</Link>
+          {h.lastRun.error ?? "See Integrations for details."} Invoice data may be out of date. <Link className="underline" href={`${ctx.base}/integrations`}>Open integrations</Link>
         </Alert>
       </div>
     );
@@ -68,7 +68,7 @@ export async function SyncHealthBanner() {
     return (
       <div className="mb-4">
         <Alert tone="warn" title={`Swipe data last imported ${days} day${days === 1 ? "" : "s"} ago`}>
-          Invoices issued in Swipe since then are not shown. <Link className="underline" href="/invoices/import">Import a fresh export</Link>.
+          Invoices issued in Swipe since then are not shown. <Link className="underline" href={`${ctx.base}/invoices/import`}>Import a fresh export</Link>.
         </Alert>
       </div>
     );
