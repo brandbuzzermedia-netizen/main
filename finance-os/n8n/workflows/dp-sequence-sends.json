@@ -262,11 +262,78 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1320,
-        300
+        1540,
+        380
       ],
       "onError": "continueRegularOutput",
       "notes": "Header credential: Authorization: Bearer <WhatsApp Cloud API token>. Templates must be approved by Meta."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "w",
+              "leftValue": "={{ !!($env['DP_WATI_ENDPOINT_' + ($json.account_key || '')] || $env.DP_WATI_ENDPOINT) }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      },
+      "id": "a77ed31f-4c1b-587f-a1c1-03e08b20041f",
+      "name": "Via WATI?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($env['DP_WATI_ENDPOINT_' + ($json.account_key || '')] || $env.DP_WATI_ENDPOINT).replace(/\\/$/, '') }}/api/v1/sendTemplateMessage?whatsappNumber={{ $json.to.replace('+', '') }}",
+        "options": {
+          "timeout": 20000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "={{ (t => t.startsWith('Bearer ') ? t : 'Bearer ' + t)(String($env['DP_WATI_TOKEN_' + ($json.account_key || '')] || $env.DP_WATI_TOKEN || '')) }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ template_name: $json.template, broadcast_name: 'dp_' + $now.toFormat('yyyyLLdd'), parameters: ($json.params || []).map((v, i) => ({ name: String(i + 1), value: String(v) })) }) }}"
+      },
+      "id": "553fb7c4-2f9d-582d-bcba-cb801dd26b01",
+      "name": "Send via WATI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        240
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "WATI template parameters are named 1, 2, 3… in the order the OS sends them. Templates must be approved in WATI."
     }
   ],
   "connections": {
@@ -343,7 +410,7 @@
         ],
         [
           {
-            "node": "Send WhatsApp",
+            "node": "Via WATI?",
             "type": "main",
             "index": 0
           }
@@ -384,6 +451,35 @@
       ]
     },
     "Send WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Collect results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Via WATI?": {
+      "main": [
+        [
+          {
+            "node": "Send via WATI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send via WATI": {
       "main": [
         [
           {

@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import QRCode from "qrcode";
+import { waLink } from "@/lib/whatsapp-optin";
 import type { CompanyContext } from "@/lib/workspace";
 import { formatDate, formatDateTime, todayInBusinessTz } from "@/domain/dates";
 import { C } from "@/components/dp/theme";
@@ -318,7 +320,7 @@ export async function CampaignDetail({ ctx, id }: { ctx: CompanyContext; id: str
 export async function AccountsToday({ ctx, channel }: { ctx: CompanyContext; channel: string }) {
   const today = todayInBusinessTz();
   const [{ data: accs }, { data: log }, { data: tasks }] = await Promise.all([
-    ctx.supabase.from("sender_accounts").select("id, label, kind, daily_limit, status, warmup_started, organization_id").eq("channel", channel),
+    ctx.supabase.from("sender_accounts").select("id, label, kind, daily_limit, status, warmup_started, organization_id").eq("channel", channel).or(`organization_id.eq.${ctx.company.id},organization_id.is.null`),
     ctx.supabase.from("outreach_send_log").select("sender_account_id").eq("organization_id", ctx.company.id).eq("sent_on", today),
     ctx.supabase.from("outreach_tasks").select("sender_account_id").eq("organization_id", ctx.company.id).eq("due_on", today),
   ]);
@@ -333,6 +335,33 @@ export async function AccountsToday({ ctx, channel }: { ctx: CompanyContext; cha
         <div key={a.id} style={{ ...row, display: "flex", justifyContent: "space-between", gap: 10 }}>
           <span>{a.label}{a.organization_id === null ? <span style={{ color: C.muted }}> · shared</span> : null}{a.status !== "active" ? <span style={{ color: "#7a5b00" }}> · paused</span> : null}</span>
           <span style={{ color: C.muted, whiteSpace: "nowrap" }}>{used(a.id)} / {cap(a)} today{channel === "email" && a.warmup_started && cap(a) < a.daily_limit ? " · warming up" : ""}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** WhatsApp opt-in: a wa.me link and QR per number. People who send START are recorded as opted in. */
+export async function OptInCard({ ctx }: { ctx: CompanyContext }) {
+  const { data } = await ctx.supabase.from("sender_accounts").select("id, label, address, organization_id").eq("channel", "whatsapp").eq("status", "active").or(`organization_id.eq.${ctx.company.id},organization_id.is.null`);
+  const nums = ((data ?? []) as { id: string; label: string; address: string; organization_id: string | null }[]).filter((a) => /^\+[1-9][0-9]{7,14}$/.test(a.address));
+  const items = await Promise.all(nums.map(async (a) => {
+    const link = waLink(a.address, ctx.company.name);
+    return { ...a, link, svg: await QRCode.toString(link, { type: "svg", margin: 1, width: 132, color: { dark: "#1d2420", light: "#ffffff" } }) };
+  }));
+  return (
+    <div style={card}>
+      <Head t="Get WhatsApp opt-ins" />
+      <div style={{ ...row, color: C.muted, lineHeight: 1.5 }}>Share this link or QR on your website, emails, invoices, ads (click-to-WhatsApp), visiting cards and shop counter. When someone sends the pre-filled START message they are recorded as opted in and can get your WhatsApp campaigns. STOP opts them out at once.</div>
+      {items.length === 0 && <div style={{ ...row, color: C.muted }}>Add a WhatsApp number in Settings → Sending accounts to get its link and QR.</div>}
+      {items.map((a) => (
+        <div key={a.id} style={{ ...row, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+          <div aria-label={`QR code for ${a.label}`} role="img" style={{ width: 132, height: 132, flex: "none" }} dangerouslySetInnerHTML={{ __html: a.svg }} />
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <b style={{ fontWeight: 600 }}>{a.label}</b> <span style={{ color: C.muted }}>{a.address}{a.organization_id === null ? " · shared" : ""}</span>
+            <input readOnly value={a.link} aria-label="WhatsApp opt-in link" style={{ display: "block", width: "100%", marginTop: 8, border: `1px solid ${C.btnLine}`, borderRadius: 8, padding: "8px 10px", fontSize: 12.5, color: C.ink }} />
+            <a href={a.link} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 600, color: "var(--co-side)", display: "inline-block", marginTop: 6 }}>Test the link →</a>
+          </div>
         </div>
       ))}
     </div>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCompanyContext } from "@/lib/workspace";
+import { waLink } from "@/lib/whatsapp-optin";
 
 export async function logOutcomeAction(slug: string, fd: FormData) {
   const ctx = await getCompanyContext(slug);
@@ -126,6 +127,9 @@ const PRESETS: Record<string, { name: string; steps: { channel: string; action?:
     { channel: "email", delay_days: 3, template: "Hi {{first_name}}, following up in case this got buried. [short proof point]" },
     { channel: "email", delay_days: 4, template: "Hi {{first_name}}, one example of what this looked like for a similar business: [result]." },
     { channel: "email", delay_days: 7, template: "Hi {{first_name}}, I'll close the loop here. Reply any time if it becomes relevant." } ] },
+  wa_optin: { name: "Ask for WhatsApp opt-in (email)", steps: [
+    { channel: "email", delay_days: 0, template: "Hi {{first_name}}, would WhatsApp be easier for updates from us? Tap here and send the message to opt in: {{whatsapp_link}} (reply STOP there any time)." },
+    { channel: "email", delay_days: 5, template: "Hi {{first_name}}, last nudge: if you'd like quick updates on WhatsApp, tap {{whatsapp_link}} and send START." } ] },
   whatsapp: { name: "WhatsApp follow-up (opted-in leads)", steps: [
     { channel: "whatsapp", delay_days: 0, template: "approved_template:intro" },
     { channel: "whatsapp", delay_days: 2, template: "approved_template:follow_up" } ] },
@@ -147,10 +151,19 @@ const PRESETS: Record<string, { name: string; steps: { channel: string; action?:
     { channel: "email", delay_days: 4, template: "Hi {{first_name}}, tried you by phone. Worth a 15-minute chat?" } ] },
 };
 
+const s_has_link = (p: { steps: { template: string }[] }) => p.steps.some((st) => st.template.includes("{{whatsapp_link}}"));
+
 export async function presetSequenceAction(slug: string, fd: FormData) {
   const ctx = await writer(slug);
   const key = z.enum(Object.keys(PRESETS) as [string, ...string[]]).parse(fd.get("preset")); const ch = String(fd.get("ch") ?? "email");
-  const p = PRESETS[key];
+  let p = PRESETS[key];
+  if (s_has_link(p)) {
+    // Put this company's own opt-in link into the wording.
+    const { data: wa } = await ctx.supabase.from("sender_accounts").select("address").eq("channel", "whatsapp").eq("status", "active").or(`organization_id.eq.${ctx.company.id},organization_id.is.null`).order("organization_id", { nullsFirst: false }).limit(1).maybeSingle();
+    if (!wa?.address) back(slug, ch, "Add a WhatsApp number in Settings → Sending accounts first; the emails carry its opt-in link.");
+    const link = waLink(wa!.address as string, ctx.company.name);
+    p = { ...p, steps: p.steps.map((st) => ({ ...st, template: st.template.replaceAll("{{whatsapp_link}}", link) })) };
+  }
   const { error } = await ctx.supabase.from("outreach_sequences").insert({ organization_id: ctx.company.id, name: p.name, steps: p.steps, status: "active", requires_approval: true });
   back(slug, ch, error ? (ctx.can("crm.manage") ? error.message : "Only a sales manager or owner can add sequences.") : `"${p.name}" added. Edit the wording in Outreach → Sequences before enrolling leads.`);
 }

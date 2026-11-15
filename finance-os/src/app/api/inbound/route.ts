@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verify } from "@/integrations/n8n/signing";
+import { isOptIn, isOptOut } from "@/lib/whatsapp-optin";
 
 /**
  * Everything n8n brings in from outside, for one company: new leads (Meta lead forms, website,
@@ -16,7 +17,7 @@ const schema = z.discriminatedUnion("type", [
     company_name: z.string().max(200).optional(), source: z.string().max(80), consent: z.boolean().default(false), basis: z.enum(["legitimate_interest"]).optional(), search_id: z.uuid().optional(), linkedin_url: url.optional(), facebook_url: url.optional(),
     instagram_handle: z.string().regex(/^[A-Za-z0-9._]{1,30}$/).optional(), notes: z.string().max(2000).optional() }),
   z.object({ type: z.literal("message"), organization_id: org, channel: z.enum(["email", "whatsapp", "facebook", "instagram", "linkedin"]),
-    from: z.string().max(200), text: z.string().max(4000), url: url.optional() }),
+    from: z.string().max(200), name: z.string().trim().max(200).optional(), text: z.string().max(4000), url: url.optional() }),
   z.object({ type: z.literal("signal"), organization_id: org, channel: z.enum(["reddit", "facebook", "instagram", "linkedin"]), kind: z.enum(["post", "comment", "message"]).default("post"),
     source_url: url, author: z.string().max(120).optional(), title: z.string().max(500).optional(), snippet: z.string().max(4000).optional(), matched_keyword: z.string().max(80).optional() }),
   z.object({ type: z.literal("post_result"), organization_id: org, post_id: z.uuid(), status: z.enum(["published", "failed"]), external_url: url.optional(), error: z.string().max(1000).optional() }),
@@ -71,14 +72,32 @@ export async function POST(request: NextRequest) {
     let contact = await findContact({ email: isEmail ? m.from : undefined, phone: isPhone ? m.from : undefined, handle: !isEmail && !isPhone ? m.from.replace(/^@/, "") : undefined });
     if (!contact && (isEmail || isPhone)) {
       // Someone wrote to us first: a new enquiry. No marketing consent is assumed.
-      const { data } = await db.from("contacts").insert({ organization_id: m.organization_id, full_name: m.from, email: isEmail ? m.from.toLowerCase() : null,
-        phone_e164: isPhone ? m.from : null, source: `${m.channel} enquiry`, lead_status: "new" }).select("id").single();
+      const { data } = await db.from("contacts").insert({ organization_id: m.organization_id, full_name: m.name || m.from, email: isEmail ? m.from.toLowerCase() : null,
+        phone_e164: isPhone ? m.from : null, source: m.channel === "whatsapp" && isOptIn(m.text) ? "WhatsApp opt-in" : `${m.channel} enquiry`, lead_status: "new" }).select("id").single();
       contact = (data?.id as string | undefined) ?? null;
     }
     if (!contact) {
       await db.from("social_signals").upsert({ organization_id: m.organization_id, channel: m.channel as "facebook" | "instagram" | "linkedin", kind: "message",
         source_url: m.url ?? `https://${m.channel}.com/messages/${encodeURIComponent(m.from)}/${Date.now()}`, author: m.from, snippet: m.text }, { onConflict: "organization_id,source_url", ignoreDuplicates: true });
       return NextResponse.json({ ok: true, unmatched: true });
+    }
+    if (m.channel === "whatsapp" && isPhone && isOptOut(m.text)) {
+      // STOP on WhatsApp: suppress the number for this company at once and end its campaigns.
+      await db.from("suppression_records").upsert({ organization_id: m.organization_id, channel: "whatsapp", value_normalized: m.from, reason: "unsubscribed", note: `WhatsApp: "${m.text.slice(0, 100)}"` },
+        { onConflict: "organization_id,channel,value_normalized", ignoreDuplicates: true });
+      await db.from("outreach_enrollments").update({ status: "stopped_suppressed" }).eq("contact_id", contact).in("status", ["active", "paused"]);
+      await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: contact, kind: "note", notes: `WhatsApp STOP (WhatsApp and calls to this number stopped): ${m.text}`.slice(0, 2000) });
+      return NextResponse.json({ ok: true, contact_id: contact, opted_out: true });
+    }
+    if (m.channel === "whatsapp" && isPhone && isOptIn(m.text)) {
+      // START on WhatsApp: the person asked for WhatsApp updates. Recorded as consent with the evidence.
+      const { data: c } = await db.from("contacts").select("consent_basis, do_not_contact").eq("id", contact).single();
+      if (c && !c.do_not_contact && c.consent_basis !== "consent") {
+        await db.from("contacts").update({ consent_basis: "consent", consent_at: new Date().toISOString(), consent_note: `Opted in on WhatsApp by sending "${m.text.slice(0, 100)}"` }).eq("id", contact);
+      }
+      await db.from("suppression_records").delete().eq("organization_id", m.organization_id).eq("channel", "whatsapp").eq("value_normalized", m.from);
+      await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: contact, kind: "note", notes: `WhatsApp opt-in: ${m.text}`.slice(0, 2000) });
+      return NextResponse.json({ ok: true, contact_id: contact, opted_in: true });
     }
     await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: contact, kind: "reply", notes: `${m.channel}: ${m.text}`.slice(0, 2000) });
     await db.from("outreach_enrollments").update({ status: "stopped_reply" }).eq("contact_id", contact).eq("status", "active");

@@ -20,8 +20,8 @@ export type ChannelKey = (typeof OUTREACH_CHANNELS)[number]["key"];
 export const CHANNEL_RULES: Record<ChannelKey, { status: string; how: string; rules: string[] }> = {
   email: { status: "Needs connection", how: "Sends through your email provider via n8n once connected. Until then, send from your mailbox and log it here.",
     rules: ["Every email carries an unsubscribe link and your business address", "Opted-out and bounced addresses never get another email", "Bulk sends wait for approval", "Daily send limit per mailbox"] },
-  whatsapp: { status: "Needs confirmation", how: "WhatsApp Business API via n8n once your number and templates are approved. Until then, message from the business phone and log it here.",
-    rules: ["Only people who opted in to WhatsApp", "The first message uses an approved template", "Free-form replies only within 24 hours of their last message", "A STOP reply blocks the number for this company"] },
+  whatsapp: { status: "Needs confirmation", how: "WhatsApp Business API (Meta directly or WATI) via n8n once your number and templates are approved. Share the opt-in link or QR below; people who send START can get campaigns.",
+    rules: ["Only people who opted in to WhatsApp (sent START, or consent recorded); bought lists never get WhatsApp", "The first message uses an approved template", "Free-form replies only within 24 hours of their last message", "A STOP reply blocks the number for this company"] },
   linkedin: { status: "Manual by design", how: "LinkedIn does not allow automated messaging. The OS creates the task; you send from your own profile and log it here.",
     rules: ["Personal connection notes, no copy-paste blasts", "Respect LinkedIn's weekly invitation limits", "Move the conversation to email or a call once they reply", "Log every touch so the setter and closer see the history"] },
   calls: { status: "Manual", how: "Call from your phone. Leads you can work appear in the queue; log the outcome after each call.",

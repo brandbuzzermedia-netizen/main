@@ -118,3 +118,21 @@ Enrichment uses Apollo credits: "New leads per day" on each search caps it.
 D7 Lead Finder and other lists: export CSV and upload it in Leads → Import. Duplicates (same email or
 phone in the company) are skipped. Leads with lawful basis "legitimate interest" never get WhatsApp
 steps: WhatsApp needs consent.
+
+## WhatsApp through WATI, and opt-ins (added 15 Nov 2026)
+
+- **Sending through WATI:** payment reminders and campaign WhatsApp steps go through WATI for any account
+  whose key has `DP_WATI_ENDPOINT_<KEY>` and `DP_WATI_TOKEN_<KEY>` set in n8n (or the global
+  `DP_WATI_ENDPOINT` / `DP_WATI_TOKEN`). Otherwise they use the Meta Cloud API as before. WATI
+  template parameters are named `1`, `2`, `3`… in order.
+- **Incoming messages:** import `dp-whatsapp-incoming.json`, set `DP_RELAY_KEY` to a long random value,
+  and register `…/webhook/dp-whatsapp-incoming?org=<company id>&key=<DP_RELAY_KEY>` in WATI
+  (Webhooks → Message received) or in Meta (WhatsApp → Configuration; verify token `DP_META_VERIFY_TOKEN`).
+  - A reply stops that person's campaigns.
+  - **START** records WhatsApp consent, with the message as evidence. New people are added as leads
+    with source "WhatsApp opt-in".
+  - **STOP** (also unsubscribe, opt out, band karo) suppresses the number for WhatsApp and calls in
+    that company at once.
+- **Opt-in link and QR:** Outreach → WhatsApp shows a wa.me link and QR per number, with the START
+  message pre-filled. Use it on the website, in emails, invoices, click-to-WhatsApp ads and in the
+  shop. The "Ask for WhatsApp opt-in (email)" campaign emails leads the link.
