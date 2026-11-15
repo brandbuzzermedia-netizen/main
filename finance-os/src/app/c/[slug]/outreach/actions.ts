@@ -123,7 +123,7 @@ const PRESETS: Record<string, { name: string; steps: { channel: string; action?:
     { channel: "linkedin", action: "follow_up", delay_days: 4, template: "Hi {{first_name}}, sharing a short case study that may help {{company}}. Worth a 15-minute call?" },
     { channel: "linkedin", action: "follow_up", delay_days: 7, template: "Last note from me, {{first_name}}. Happy to help whenever the timing is right." } ] },
   email: { name: "Email outreach", steps: [
-    { channel: "email", delay_days: 0, template: "Hi {{first_name}}, a quick idea for {{company}}: [one-line value]. Open to a 15-minute call this week?" },
+    { channel: "email", delay_days: 0, template: "Hi {{first_name}}, a quick idea for {{company}}: [one-line value]. Open to a 15-minute call this week? Pick a time: {{booking_link}}" },
     { channel: "email", delay_days: 3, template: "Hi {{first_name}}, following up in case this got buried. [short proof point]" },
     { channel: "email", delay_days: 4, template: "Hi {{first_name}}, one example of what this looked like for a similar business: [result]." },
     { channel: "email", delay_days: 7, template: "Hi {{first_name}}, I'll close the loop here. Reply any time if it becomes relevant." } ] },

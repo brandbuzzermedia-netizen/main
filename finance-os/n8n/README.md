@@ -136,3 +136,17 @@ steps: WhatsApp needs consent.
 - **Opt-in link and QR:** Outreach → WhatsApp shows a wa.me link and QR per number, with the START
   message pre-filled. Use it on the website, in emails, invoices, click-to-WhatsApp ads and in the
   shop. The "Ask for WhatsApp opt-in (email)" campaign emails leads the link.
+
+## Lead to delivery (added 15 Nov 2026)
+
+| File | What it does |
+| --- | --- |
+| `dp-email-inbox.json` | Reads one mailbox over IMAP. A reply stops that person's campaigns. "Unsubscribe" or "STOP" opts them out of email for good. A bounce suppresses the address. Out-of-office replies are ignored. Make one copy per sending mailbox: attach its IMAP credential and paste the company id in **Map to OS**. |
+| `dp-bookings.json` | Cal.com (`Booking created`) or Calendly (`invitee.created`) → a meeting in the OS for the lead's owner. The lead becomes qualified and their campaigns stop. Register `…/webhook/dp-bookings?org=<company id>&key=<DP_RELAY_KEY>`. |
+
+Set in each company's Settings → Lead to delivery:
+- **Booking link:** used as `{{booking_link}}` in campaign emails, and passed to AI calls as `booking_url`.
+- **Round-robin routing:** new leads with no owner go to the chosen team members in turn.
+- **Onboarding steps:** created as tasks once, at the first payment (or full payment) on a won deal's invoice.
+
+Reports in each company, and on the group's Reports page, show the funnel from lead to cash.

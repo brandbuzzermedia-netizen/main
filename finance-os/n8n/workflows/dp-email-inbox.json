@@ -1,0 +1,141 @@
+{
+  "name": "Diwani Parivaar OS · Email replies and bounces → OS",
+  "id": "2de288ebe9445cd5",
+  "versionId": "5dddda74-e8e6-5bcc-9083-f36276a39948",
+  "nodes": [
+    {
+      "parameters": {
+        "mailbox": "INBOX",
+        "postProcessAction": "read",
+        "format": "simple",
+        "options": {}
+      },
+      "id": "4a22b922-495b-599a-aaa9-11a7d729a0ae",
+      "name": "New email (IMAP)",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "notes": "Attach the IMAP credential of one sending mailbox. Duplicate this workflow for each mailbox."
+    },
+    {
+      "parameters": {
+        "jsCode": "// The company this mailbox belongs to: paste its id below in each copy (or set DP_INBOX_ORG when there is one mailbox).\nconst ORG = $env.DP_INBOX_ORG || 'PASTE-COMPANY-ID';\nconst out = [];\nfor (const it of $input.all()) {\n  const e = it.json; const from = String(e.from || ''); const subject = String(e.subject || '');\n  const text = String(e.textPlain || e.text || '').replace(/\\r/g, '');\n  const addr = (from.match(/[^\\s<>\"]+@[^\\s<>\"]+\\.[^\\s<>\"]+/) || [''])[0].toLowerCase();\n  const name = from.replace(/<[^>]*>/, '').replace(/\"/g, '').trim();\n  if (/mailer-daemon|postmaster/i.test(addr) || /undeliver|delivery status notification|returned mail|failure notice|delivery has failed|address not found/i.test(subject)) {\n    const m = text.match(/Final-Recipient:[^;]*;\\s*([^\\s<>]+@[^\\s<>]+)/i) || text.match(/(?:to|address)[^@\\n]{0,40}?<?([^\\s<>\"]+@[^\\s<>\"]+\\.[a-z]{2,})>?/i);\n    if (m) out.push({ json: { payload: { type: 'bounce', organization_id: ORG, email: m[1].toLowerCase().replace(/[.,;]+$/, '') } } });\n    continue;\n  }\n  if (!addr || /out of office|automatic reply|auto.?reply|away from/i.test(subject) || /^(no-?reply|noreply)@/.test(addr)) continue; // auto-replies don't stop campaigns\n  const body = text.split(/\\nOn .{0,200}wrote:|\\n-{2,}\\s*Original Message|\\nFrom: /i)[0].split('\\n').filter((l) => !l.startsWith('>')).join('\\n').trim();\n  out.push({ json: { payload: { type: 'message', organization_id: ORG, channel: 'email', from: addr, ...(name && name !== addr ? { name: name.slice(0, 200) } : {}), text: (body || subject).slice(0, 4000) } } });\n}\nreturn out;"
+      },
+      "id": "06addf35-8f82-5441-9b28-854c987ceb4b",
+      "name": "Map to OS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Signs one message for the OS inbound endpoint, exactly as the OS signs its webhooks.\nconst crypto = require('crypto');\nconst body = JSON.stringify($json.payload);\nconst ts = Math.floor(Date.now() / 1000);\nconst nonce = crypto.randomBytes(16).toString('hex');\nconst signature = crypto.createHmac('sha256', $env.DP_SIGNING_SECRET).update(`${ts}.${nonce}.${body}`).digest('hex');\nreturn { json: { body, ts: String(ts), nonce, signature } };\n",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "13d51266-e1b5-5ad6-9d6a-c8f9d6aa9262",
+      "name": "Sign for OS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DP_APP_URL }}/api/inbound",
+        "options": {
+          "timeout": 20000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-dp-timestamp",
+              "value": "={{ $json.ts }}"
+            },
+            {
+              "name": "x-dp-nonce",
+              "value": "={{ $json.nonce }}"
+            },
+            {
+              "name": "x-dp-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}"
+      },
+      "id": "6d8a9a54-62d1-55c7-a1a1-df6a04a5d947",
+      "name": "Send to OS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "New email (IMAP)": {
+      "main": [
+        [
+          {
+            "node": "Map to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map to OS": {
+      "main": [
+        [
+          {
+            "node": "Sign for OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign for OS": {
+      "main": [
+        [
+          {
+            "node": "Send to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "meta": {
+    "templateKey": "email_inbox",
+    "webhookPath": "dp-email-inbox",
+    "relay": true
+  },
+  "tags": []
+}

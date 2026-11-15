@@ -20,6 +20,9 @@ const schema = z.discriminatedUnion("type", [
     from: z.string().max(200), name: z.string().trim().max(200).optional(), text: z.string().max(4000), url: url.optional() }),
   z.object({ type: z.literal("signal"), organization_id: org, channel: z.enum(["reddit", "facebook", "instagram", "linkedin"]), kind: z.enum(["post", "comment", "message"]).default("post"),
     source_url: url, author: z.string().max(120).optional(), title: z.string().max(500).optional(), snippet: z.string().max(4000).optional(), matched_keyword: z.string().max(80).optional() }),
+  z.object({ type: z.literal("bounce"), organization_id: org, email: z.email() }),
+  z.object({ type: z.literal("meeting_booked"), organization_id: org, email: z.email(), name: z.string().trim().max(200).optional(), title: z.string().trim().max(200).optional(),
+    starts_at: z.iso.datetime({ offset: true }), ends_at: z.iso.datetime({ offset: true }).optional(), location: z.string().max(500).optional(), source: z.string().max(80).default("Booking link") }),
   z.object({ type: z.literal("post_result"), organization_id: org, post_id: z.uuid(), status: z.enum(["published", "failed"]), external_url: url.optional(), error: z.string().max(1000).optional() }),
   z.object({ type: z.literal("call_result"), organization_id: org, call_id: z.uuid(), status: z.enum(["calling", "completed", "failed", "no_answer"]),
     outcome: z.enum(["interested", "not_interested", "callback", "meeting_booked", "wrong_number", "do_not_call"]).optional(), summary: z.string().max(4000).optional(), recording_url: url.optional() }),
@@ -81,6 +84,11 @@ export async function POST(request: NextRequest) {
         source_url: m.url ?? `https://${m.channel}.com/messages/${encodeURIComponent(m.from)}/${Date.now()}`, author: m.from, snippet: m.text }, { onConflict: "organization_id,source_url", ignoreDuplicates: true });
       return NextResponse.json({ ok: true, unmatched: true });
     }
+    if (m.channel === "email" && isEmail && isOptOut(m.text)) {
+      // "Unsubscribe" / "STOP" by email: the unsubscribe event suppresses the address and ends every campaign.
+      await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: contact, kind: "unsubscribe", notes: `Email: ${m.text}`.slice(0, 2000) });
+      return NextResponse.json({ ok: true, contact_id: contact, opted_out: true });
+    }
     if (m.channel === "whatsapp" && isPhone && isOptOut(m.text)) {
       // STOP on WhatsApp: suppress the number for this company at once and end its campaigns.
       await db.from("suppression_records").upsert({ organization_id: m.organization_id, channel: "whatsapp", value_normalized: m.from, reason: "unsubscribed", note: `WhatsApp: "${m.text.slice(0, 100)}"` },
@@ -108,6 +116,32 @@ export async function POST(request: NextRequest) {
     const { error } = await db.from("social_signals").upsert({ organization_id: m.organization_id, channel: m.channel, kind: m.kind, source_url: m.source_url, author: m.author ?? null,
       title: m.title ?? null, snippet: m.snippet ?? null, matched_keyword: m.matched_keyword ?? null }, { onConflict: "organization_id,source_url", ignoreDuplicates: true });
     return error ? NextResponse.json({ error: "signal_failed" }, { status: 422 }) : NextResponse.json({ ok: true });
+  }
+  if (m.type === "bounce") {
+    const contact = await findContact({ email: m.email });
+    if (!contact) return NextResponse.json({ ok: true, unmatched: true });
+    // The bounce event suppresses the address; campaigns for this person stop.
+    await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: contact, kind: "bounce", notes: `Bounced: ${m.email}` });
+    await db.from("outreach_enrollments").update({ status: "stopped_suppressed" }).eq("contact_id", contact).in("status", ["active", "paused"]);
+    return NextResponse.json({ ok: true, contact_id: contact });
+  }
+  if (m.type === "meeting_booked") {
+    let contact = await findContact({ email: m.email });
+    if (!contact) {
+      const { data } = await db.from("contacts").insert({ organization_id: m.organization_id, full_name: m.name || m.email, email: m.email.toLowerCase(), source: m.source, lead_status: "qualified" }).select("id").single();
+      contact = (data?.id as string | undefined) ?? null;
+    }
+    if (!contact) return NextResponse.json({ error: "lead_failed" }, { status: 422 });
+    const { data: c } = await db.from("contacts").select("full_name, company_name, owner_id").eq("id", contact).single();
+    const ownerOk = c?.owner_id ? !!(await db.from("memberships").select("user_id").eq("organization_id", m.organization_id).eq("user_id", c.owner_id).maybeSingle()).data : false;
+    const { error } = await db.from("meetings").insert({ organization_id: m.organization_id, title: (m.title || `Meeting with ${c?.full_name ?? m.email}${c?.company_name ? ` (${c.company_name})` : ""}`).slice(0, 200),
+      starts_at: m.starts_at, ends_at: m.ends_at ?? null, location: m.location ?? null, owner_id: ownerOk ? c!.owner_id : null, created_by: null });
+    if (error) return NextResponse.json({ error: "meeting_failed" }, { status: 422 });
+    await db.from("contacts").update({ lead_status: "qualified" }).eq("id", contact).in("lead_status", ["new", "contacted"]);
+    await db.from("outreach_enrollments").update({ status: "stopped_reply" }).eq("contact_id", contact).eq("status", "active");
+    await db.from("outreach_tasks").update({ status: "replied" }).eq("contact_id", contact).eq("status", "open");
+    await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: contact, kind: "note", notes: `Meeting booked for ${m.starts_at} via ${m.source}` });
+    return NextResponse.json({ ok: true, contact_id: contact });
   }
   if (m.type === "post_result") {
     const { error } = await db.from("content_posts").update({ status: m.status, published_at: m.status === "published" ? new Date().toISOString() : null, external_url: m.external_url ?? null, error: m.error ?? null })

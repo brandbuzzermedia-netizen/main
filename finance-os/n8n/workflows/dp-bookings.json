@@ -1,0 +1,141 @@
+{
+  "name": "Diwani Parivaar OS · Booked meetings (Cal.com / Calendly) → OS",
+  "id": "d33c8143b72e5718",
+  "versionId": "2b125f72-3e26-5c30-bdca-3a3d54890d28",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dp-bookings",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "f698ad02-d6fb-5a14-9d94-667916ba677f",
+      "name": "Incoming",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "110f53c9-58d8-5a92-978a-100943b218c0"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Register …/webhook/dp-bookings?org=<company id>&key=<DP_RELAY_KEY> in Cal.com (Settings → Developer → Webhooks, \"Booking created\")\n// or Calendly (webhook subscription, invitee.created).\nconst q = $('Incoming').first().json.query || {}; const org = q.org; const b = $json.body || {};\nif (!$env.DP_RELAY_KEY || q.key !== $env.DP_RELAY_KEY) return [];\nlet p = null;\nif (b.triggerEvent === 'BOOKING_CREATED' && b.payload) {   // Cal.com\n  const x = b.payload; const a = (x.attendees || [])[0] || {};\n  p = { email: a.email, name: a.name, title: x.title, starts_at: x.startTime, ends_at: x.endTime, location: (x.metadata && x.metadata.videoCallUrl) || x.location, source: 'Cal.com booking' };\n} else if (b.event === 'invitee.created' && b.payload) {   // Calendly\n  const x = b.payload; const ev = x.scheduled_event || {};\n  p = { email: x.email, name: x.name, title: ev.name, starts_at: ev.start_time, ends_at: ev.end_time, location: ev.location && (ev.location.join_url || ev.location.location), source: 'Calendly booking' };\n}\nif (!p || !p.email || !p.starts_at) return [];\nfor (const k of Object.keys(p)) if (p[k] == null || p[k] === '') delete p[k];\nif (p.location) p.location = String(p.location).slice(0, 500);\nreturn [{ json: { payload: { type: 'meeting_booked', organization_id: org, ...p } } }];"
+      },
+      "id": "06addf35-8f82-5441-9b28-854c987ceb4b",
+      "name": "Map to OS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Signs one message for the OS inbound endpoint, exactly as the OS signs its webhooks.\nconst crypto = require('crypto');\nconst body = JSON.stringify($json.payload);\nconst ts = Math.floor(Date.now() / 1000);\nconst nonce = crypto.randomBytes(16).toString('hex');\nconst signature = crypto.createHmac('sha256', $env.DP_SIGNING_SECRET).update(`${ts}.${nonce}.${body}`).digest('hex');\nreturn { json: { body, ts: String(ts), nonce, signature } };\n",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "13d51266-e1b5-5ad6-9d6a-c8f9d6aa9262",
+      "name": "Sign for OS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DP_APP_URL }}/api/inbound",
+        "options": {
+          "timeout": 20000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-dp-timestamp",
+              "value": "={{ $json.ts }}"
+            },
+            {
+              "name": "x-dp-nonce",
+              "value": "={{ $json.nonce }}"
+            },
+            {
+              "name": "x-dp-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}"
+      },
+      "id": "6d8a9a54-62d1-55c7-a1a1-df6a04a5d947",
+      "name": "Send to OS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Incoming": {
+      "main": [
+        [
+          {
+            "node": "Map to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map to OS": {
+      "main": [
+        [
+          {
+            "node": "Sign for OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign for OS": {
+      "main": [
+        [
+          {
+            "node": "Send to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "meta": {
+    "templateKey": "bookings",
+    "webhookPath": "dp-bookings",
+    "relay": true
+  },
+  "tags": []
+}

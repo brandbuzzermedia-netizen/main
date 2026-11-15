@@ -39,7 +39,7 @@ function signedRequest(body: string, ts = Math.floor(Date.now() / 1000), nonce =
 
 describe("n8n workflow files", () => {
   it("ship inactive workflows: one per scheduled template, plus the inbound relays", () => {
-    expect(files.sort()).toEqual(["dp-apollo-search.json", "dp-bill-ocr-review.json", "dp-daily-summary.json", "dp-elevenlabs-results.json", "dp-meta-leads.json", "dp-payment-hold-alerts.json", "dp-payment-reminders.json",
+    expect(files.sort()).toEqual(["dp-apollo-search.json", "dp-bill-ocr-review.json", "dp-bookings.json", "dp-daily-summary.json", "dp-elevenlabs-results.json", "dp-email-inbox.json", "dp-meta-leads.json", "dp-payment-hold-alerts.json", "dp-payment-reminders.json",
       "dp-reddit-listen.json", "dp-rent-overdue-escalation.json", "dp-sequence-sends.json", "dp-social-publish.json", "dp-voice-calls.json", "dp-whatsapp-incoming.json"]);
     for (const f of files) {
       const wf = load(f);
@@ -47,7 +47,9 @@ describe("n8n workflow files", () => {
       if (!wf.meta.relay) expect(AUTOMATION_TEMPLATES.some((t) => t.key === wf.meta.templateKey)).toBe(true);
       expect(wf.meta.webhookPath).toBe(`dp-${wf.meta.templateKey.replace(/_/g, "-")}`);
       expect(f).toBe(`${wf.meta.webhookPath}.json`);
-      expect(wf.nodes.find((n) => n.type === "n8n-nodes-base.webhook")!.parameters.path).toBe(wf.meta.webhookPath);
+      const hook = wf.nodes.find((n) => n.type === "n8n-nodes-base.webhook");
+      if (hook) expect(hook.parameters.path).toBe(wf.meta.webhookPath);
+      else expect(wf.nodes.some((n) => n.type === "n8n-nodes-base.emailReadImap")).toBe(true); // the inbox reader is triggered by IMAP
       expect(JSON.stringify(wf)).not.toMatch(/sk-|password|secret"\s*:\s*"[^"]/i); // no credentials inside
     }
   });
@@ -72,7 +74,7 @@ describe("n8n workflow files", () => {
       expect(JSON.parse(out.json.body)).toEqual(payload);
       checked++;
     }
-    expect(checked).toBe(7);
+    expect(checked).toBe(9);
   });
 
   for (const f of files.filter((x) => has(load(x), "Verify signature"))) {
@@ -109,4 +111,31 @@ describe("n8n workflow files", () => {
       });
     });
   }
+
+  it("reads mailbox replies, unsubscribes and bounces, and skips auto-replies", () => {
+    const wf = load("dp-email-inbox.json");
+    const mails = [
+      { from: "Asha Rao <asha@client.in>", subject: "Re: a quick idea", textPlain: "Yes, let's talk Tuesday.\n\nOn Mon, 10 Nov 2026 Sales wrote:\n> Hi Asha" },
+      { from: "Mail Delivery Subsystem <mailer-daemon@googlemail.com>", subject: "Delivery Status Notification (Failure)", textPlain: "Final-Recipient: rfc822; gone@old.in\nStatus: 5.1.1" },
+      { from: "Ravi <ravi@x.in>", subject: "Automatic reply: Out of office", textPlain: "I am away" },
+    ];
+    const src = code(wf, "Map to OS");
+    const out = runInNewContext(`(function(){ ${src} })()`, { JSON, String, $env: { DP_INBOX_ORG: RUN.organization_id }, $input: { all: () => mails.map((json) => ({ json })) } }) as { json: { payload: Record<string, unknown> } }[];
+    expect(out.map((o) => o.json.payload)).toEqual([
+      { type: "message", organization_id: RUN.organization_id, channel: "email", from: "asha@client.in", name: "Asha Rao", text: "Yes, let's talk Tuesday." },
+      { type: "bounce", organization_id: RUN.organization_id, email: "gone@old.in" },
+    ]);
+  });
+
+  it("turns Cal.com and Calendly bookings into meetings, only with the relay key", () => {
+    const wf = load("dp-bookings.json");
+    const src = code(wf, "Map to OS");
+    const go = (body: unknown, key = "k") => runInNewContext(`(function(){ ${src} })()`, { JSON, String, Object, $env: { DP_RELAY_KEY: "k" }, $json: { body },
+      $: () => ({ first: () => ({ json: { query: { org: RUN.organization_id, key } } }) }) }) as { json: { payload: Record<string, unknown> } }[];
+    const cal = { triggerEvent: "BOOKING_CREATED", payload: { title: "Intro call", startTime: "2026-11-20T05:30:00Z", endTime: "2026-11-20T06:00:00Z", attendees: [{ email: "a@b.in", name: "A" }], metadata: { videoCallUrl: "https://meet.google.com/x" } } };
+    expect(go(cal)[0].json.payload).toEqual({ type: "meeting_booked", organization_id: RUN.organization_id, email: "a@b.in", name: "A", title: "Intro call", starts_at: "2026-11-20T05:30:00Z", ends_at: "2026-11-20T06:00:00Z", location: "https://meet.google.com/x", source: "Cal.com booking" });
+    const cly = { event: "invitee.created", payload: { email: "c@d.in", name: "C", scheduled_event: { name: "Demo", start_time: "2026-11-21T05:30:00Z", end_time: "2026-11-21T06:00:00Z" } } };
+    expect(go(cly)[0].json.payload).toMatchObject({ email: "c@d.in", source: "Calendly booking" });
+    expect(go(cal, "wrong")).toEqual([]);
+  });
 });

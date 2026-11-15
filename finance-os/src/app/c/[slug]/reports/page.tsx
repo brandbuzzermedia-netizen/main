@@ -6,11 +6,15 @@ import { financialYear } from "@/domain/periods";
 import { todayInBusinessTz } from "@/domain/dates";
 import { PageHead } from "@/components/dp/shell";
 import { ListView, NOTES } from "@/views/list";
+import { FunnelCard } from "@/components/dp/funnel";
+import { loadFunnel } from "@/lib/funnel";
+import { addDays } from "@/domain/dates";
 
 export const metadata: Metadata = { title: "Reports" };
 
-export default async function ReportsPage({ params }: PageProps<"/c/[slug]/reports">) {
+export default async function ReportsPage({ params, searchParams }: PageProps<"/c/[slug]/reports">) {
   const { slug } = await params;
+  const days = (await searchParams).days === "90" ? 90 : (await searchParams).days === "7" ? 7 : 30;
   const ctx = await getCompanyContext(slug);
   if (!ctx.can("finance.read") && !ctx.can("crm.read_all")) notFound();
   const d = designFor(slug);
@@ -26,9 +30,11 @@ export default async function ReportsPage({ params }: PageProps<"/c/[slug]/repor
     crm && { a: "Leads export (CSV)", b: "All time", c: "Export (logged)", d: "Sales", href: `/c/${slug}/r/contacts/export` },
   ].filter(Boolean) as { a: string; b: string; c: string; d: string; href: string }[];
   const [title, lines] = NOTES.reports;
+  const funnel = crm ? await loadFunnel(ctx.supabase, ctx.company.id, addDays(todayInBusinessTz(), -days), fin) : null;
   return (
     <>
       <PageHead own={d.own} treat={d.treat} title="Reports" />
+      {funnel && <FunnelCard f={funnel} title={`Lead to cash · last ${days} days`} periods={[7, 30, 90].map((n) => ({ l: `${n} days`, href: `/c/${slug}/reports?days=${n}`, on: n === days }))} />}
       <ListView vm={{ chips: [{ l: "Export (logged)" }, { l: "CSV" }, { l: "PDF" }], head: ["REPORT", "PERIOD", "STATUS", "OWNER"], rows, empty: "No reports for your role.", noteTitle: title, noteLines: lines }} />
     </>
   );

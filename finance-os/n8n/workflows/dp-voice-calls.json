@@ -102,7 +102,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const s = $('Verify signature').first().json.input;\nconst h = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false }).format(new Date()));\nif (h < 9 || h >= 21) return [];  // outside 09:00–21:00 IST: nothing is dialled\nreturn (s.calls || []).map((c) => ({ json: { ...c, disclosure: s.disclosure, company_name: s.company } }));"
+        "jsCode": "const s = $('Verify signature').first().json.input;\nconst h = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false }).format(new Date()));\nif (h < 9 || h >= 21) return [];  // outside 09:00–21:00 IST: nothing is dialled\nreturn (s.calls || []).map((c) => ({ json: { ...c, disclosure: s.disclosure, company_name: s.company, booking_url: s.booking_url || '' } }));"
       },
       "id": "25e77b14-c062-5d12-88e5-c756240c8a7f",
       "name": "Calls",
@@ -132,7 +132,7 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({ agent_id: $env.DP_ELEVENLABS_AGENT_ID, agent_phone_number_id: $env.DP_ELEVENLABS_PHONE_ID, to_number: $json.to, conversation_initiation_client_data: { dynamic_variables: { lead_name: $json.name, lead_company: $json.company || '', purpose: $json.purpose, business: $json.company_name, disclosure: $json.disclosure, dp_call_id: $json.call_id }, conversation_config_override: { agent: { first_message: $json.disclosure + ' Am I speaking with ' + $json.name + '?' } } } }) }}",
+        "body": "={{ JSON.stringify({ agent_id: $env.DP_ELEVENLABS_AGENT_ID, agent_phone_number_id: $env.DP_ELEVENLABS_PHONE_ID, to_number: $json.to, conversation_initiation_client_data: { dynamic_variables: { lead_name: $json.name, lead_company: $json.company || '', purpose: $json.purpose, business: $json.company_name, disclosure: $json.disclosure, booking_url: $json.booking_url, dp_call_id: $json.call_id }, conversation_config_override: { agent: { first_message: $json.disclosure + ' Am I speaking with ' + $json.name + '?' } } } }) }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth"
       },
