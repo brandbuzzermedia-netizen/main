@@ -115,6 +115,26 @@ test("reports: the lead-to-cash funnel per company and across the group", async 
   await expect(page.locator("table")).toContainText("COLLECTED");
 });
 
+test("group outreach: every company's campaigns and capacity on one screen; launch a campaign in many companies", async ({ page }) => {
+  await page.goto("/group/outreach");
+  await expect(page.getByRole("heading", { name: "Outreach" })).toBeVisible();
+  await expect(page.getByText("Email capacity today")).toBeVisible();
+  const table = page.locator("table");
+  await expect(table).toContainText("COMPANY");
+  await expect(table.locator("tbody tr")).not.toHaveCount(0);
+  await expect(page.getByText("All campaigns")).toBeVisible();
+  const copy = page.locator("form:has(select[name=sequence_id])");
+  await copy.locator("input[name=org]").first().check();
+  await copy.getByRole("button", { name: "Copy to the ticked companies" }).click();
+  await expect(page.getByRole("status")).toContainText(/Copied to \d compan/);
+  const first = page.locator("div").filter({ has: page.getByRole("button", { name: /^(Pause|Resume|Start)$/ }) }).last();
+  const resume = first.getByRole("button", { name: /^(Resume|Start)$/ });
+  if (await resume.count()) {
+    await resume.click();
+    await expect(page.getByRole("status")).toContainText("Campaign running");
+  }
+});
+
 test("inbound (n8n → OS): signed events drive leads, opt-ins, opt-outs, bounces and bookings", async ({ request }) => {
   const org = await orgId();
   const db = admin();

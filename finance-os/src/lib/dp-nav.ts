@@ -4,7 +4,7 @@ import type { DpNavItem } from "@/components/dp/sidebar";
 
 type CompanyLike = { slug: string; enabled_modules: ModuleKey[] };
 const COMPANY_ORDER: ModuleKey[] = ["home", "leads", "pipeline", "outreach", "meetings", "customers", "operations", "automation", "marketing", "finance", "team", "reports", "vault", "settings"];
-const GROUP_ORDER: ModuleKey[] = ["home", "pipeline", "meetings", "automation", "finance", "rental", "expenses", "tax", "team", "reports", "vault", "settings"];
+const GROUP_ORDER: ModuleKey[] = ["home", "pipeline", "outreach", "meetings", "automation", "finance", "rental", "expenses", "tax", "team", "reports", "vault", "settings"];
 
 /**
  * Company menu in the design's order with the company's own names (e.g. Tan O' Fun "Quotes & orders").
@@ -39,7 +39,7 @@ export function dpCompanyNav(c: CompanyLike, can: (p: string) => boolean, opts: 
 }
 
 export function dpGroupNav(disabled: string[], isOwner: boolean, approvals: number): DpNavItem[] {
-  const href: Partial<Record<ModuleKey, string>> = { home: "/group", pipeline: "/group/pipeline", meetings: "/group/calendar", automation: "/group/automation", finance: "/group/finance",
+  const href: Partial<Record<ModuleKey, string>> = { home: "/group", pipeline: "/group/pipeline", outreach: "/group/outreach", meetings: "/group/calendar", automation: "/group/automation", finance: "/group/finance",
     rental: "/group/rental", expenses: "/group/expenses", tax: "/group/tax", team: "/group/people", reports: "/group/reports", vault: "/group/vault", settings: "/group/settings" };
   return GROUP_ORDER.filter((k) => k === "home" || k === "settings" || !disabled.includes(k))
     .filter((k) => k !== "settings" || isOwner)
