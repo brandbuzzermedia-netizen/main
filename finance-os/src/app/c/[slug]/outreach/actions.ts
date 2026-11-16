@@ -179,6 +179,18 @@ export async function enrollAction(slug: string, fd: FormData) {
 }
 
 /** Start, pause or resume a whole campaign. Paused campaigns send nothing and create no tasks. */
+/** Owner or admin approves a campaign's wording once; its daily sends then go out without per-run approval. */
+export async function approveCampaignAction(slug: string, fd: FormData) {
+  const ctx = await writer(slug);
+  const id = z.uuid().parse(fd.get("sequence_id"));
+  const approve = fd.get("approve") === "true";
+  const ret = String(fd.get("ret") ?? `/c/${slug}/outreach`);
+  const { error } = await ctx.supabase.rpc("approve_campaign", { p_sequence: id, p_approve: approve });
+  const msg = error ? error.message : approve ? "Approved. This campaign now sends every day within the account limits; pause it any time." : "Approval withdrawn. Each run waits for approval again.";
+  revalidatePath(`/c/${slug}/outreach`);
+  redirect(`${ret.startsWith(`/c/${slug}/outreach`) ? ret : `/c/${slug}/outreach`}${ret.includes("?") ? "&" : "?"}note=${encodeURIComponent(msg)}`);
+}
+
 export async function campaignStatusAction(slug: string, fd: FormData) {
   const ctx = await writer(slug);
   const id = z.uuid().parse(fd.get("sequence_id"));

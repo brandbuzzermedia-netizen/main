@@ -150,3 +150,19 @@ Set in each company's Settings → Lead to delivery:
 - **Onboarding steps:** created as tasks once, at the first payment (or full payment) on a won deal's invoice.
 
 Reports in each company, and on the group's Reports page, show the funnel from lead to cash.
+
+## Full automation (added 16 Nov 2026)
+
+- **Approve once:** an owner or company admin approves a campaign's wording once (Outreach → campaign →
+  Approve once). Its daily sends then queue without per-run approval. Editing the steps withdraws the
+  approval; pausing works as before.
+- **AI reply assistant** (Settings → AI reply assistant): when switched on for email and/or WhatsApp,
+  `/api/inbound` answers a lead's message with `auto_reply` (`channel`, `to`, `text`, `subject`).
+  `dp-email-inbox` sends it from the same mailbox in the same thread. `dp-whatsapp-incoming` sends it as
+  a session message through WATI or Meta.
+  - **Its rules:** it uses only the company's "What the assistant may say" text, signs every reply as
+    the company's AI assistant, offers the booking link, and replies at most N times per person per day.
+  - **Hand-overs:** price negotiation, contracts, complaints, refunds and payment questions become an
+    urgent task for the lead's owner.
+  - **What it needs:** `ANTHROPIC_API_KEY` in the OS environment (Vercel) and AI switched on for the
+    company. Without the key it never replies and people answer as before.

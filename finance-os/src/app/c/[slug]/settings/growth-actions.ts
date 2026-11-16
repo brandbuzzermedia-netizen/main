@@ -44,3 +44,16 @@ export async function removeOnboardingStepAction(slug: string, fd: FormData) {
   revalidatePath(`/c/${slug}/settings`);
   go(slug, "Step removed.");
 }
+
+/** AI reply assistant: on/off, channels, what it may say, and replies per person per day. */
+export async function saveAiAssistantAction(slug: string, fd: FormData) {
+  const ctx = await manager(slug);
+  const channels = fd.getAll("ai_reply_channels").map(String).filter((c) => c === "email" || c === "whatsapp");
+  const { error } = await ctx.supabase.from("growth_settings").upsert({
+    organization_id: ctx.company.id, ai_reply_enabled: fd.get("ai_reply_enabled") === "on" && channels.length > 0, ai_reply_channels: channels.length ? channels : ["email", "whatsapp"],
+    ai_knowledge: String(fd.get("ai_knowledge") ?? "").trim().slice(0, 8000) || null,
+    ai_daily_limit: z.coerce.number().int().min(1).max(10).catch(3).parse(fd.get("ai_daily_limit")), updated_at: new Date().toISOString(),
+  });
+  revalidatePath(`/c/${slug}/settings`);
+  redirect(`/c/${slug}/settings?ai=${encodeURIComponent(error ? error.message : "AI reply assistant saved.")}#ai`);
+}

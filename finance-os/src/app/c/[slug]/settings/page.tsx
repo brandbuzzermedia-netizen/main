@@ -11,7 +11,7 @@ import { outreachRulesAction, requireMfaAction, savePaymentRulesAction, toggleMo
 import { AccountsCard, type SenderAccount } from "@/components/dp/accounts-card";
 import { loadMembers } from "@/lib/people";
 import { todayInBusinessTz } from "@/domain/dates";
-import { GrowthCard } from "./growth";
+import { AiAssistantCard, GrowthCard } from "./growth";
 
 export const metadata: Metadata = { title: "Settings" };
 const LIST: ModuleKey[] = ["leads", "pipeline", "outreach", "meetings", "customers", "operations", "automation", "marketing", "finance", "rental", "expenses", "tax", "team", "reports", "vault"];
@@ -72,6 +72,7 @@ export default async function SettingsPage({ params, searchParams }: PageProps<"
             ) : undefined} />
         )}
         {canOutreach && <GrowthCard ctx={ctx} slug={slug} members={members} note={typeof spx.growth === "string" ? spx.growth : undefined} />}
+        {canOutreach && <AiAssistantCard ctx={ctx} slug={slug} note={typeof spx.ai === "string" ? spx.ai : undefined} />}
         {edit && (
           <Card title="Payment rules" aside={<span style={{ fontSize: 12.5, color: C.muted }}>Applies to every client</span>}>
             <form action={savePaymentRulesAction.bind(null, slug)} style={{ display: "flex", flexDirection: "column", gap: 10, borderTop: `1px solid ${C.line2}`, marginTop: 10, paddingTop: 12, fontSize: 14 }}>

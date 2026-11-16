@@ -3,6 +3,9 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { verify } from "@/integrations/n8n/signing";
 import { isOptIn, isOptOut } from "@/lib/whatsapp-optin";
+import { autoReply } from "@/lib/auto-reply";
+
+export const maxDuration = 60;
 
 /**
  * Everything n8n brings in from outside, for one company: new leads (Meta lead forms, website,
@@ -110,7 +113,9 @@ export async function POST(request: NextRequest) {
     await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: contact, kind: "reply", notes: `${m.channel}: ${m.text}`.slice(0, 2000) });
     await db.from("outreach_enrollments").update({ status: "stopped_reply" }).eq("contact_id", contact).eq("status", "active");
     await db.from("outreach_tasks").update({ status: "replied" }).eq("contact_id", contact).eq("status", "open");
-    return NextResponse.json({ ok: true, contact_id: contact });
+    // The AI reply assistant answers when the company switched it on; n8n sends the reply on the same channel.
+    const reply = co.emergency_stop ? null : await autoReply(db, m.organization_id, contact, m.channel, m.text);
+    return NextResponse.json({ ok: true, contact_id: contact, ...(reply ? { auto_reply: reply } : {}) });
   }
   if (m.type === "signal") {
     const { error } = await db.from("social_signals").upsert({ organization_id: m.organization_id, channel: m.channel, kind: m.kind, source_url: m.source_url, author: m.author ?? null,

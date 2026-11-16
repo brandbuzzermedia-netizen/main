@@ -5,7 +5,7 @@ import type { CompanyContext } from "@/lib/workspace";
 import { formatDate, formatDateTime, todayInBusinessTz } from "@/domain/dates";
 import { C } from "@/components/dp/theme";
 import { copyCampaignAction } from "../actions";
-import { campaignStatusAction, enrollmentStatusAction, enrollAction, keywordAction, postDecisionAction, presetSequenceAction, queueCallAction, signalAction, taskOutcomeAction, createPostAction } from "./actions";
+import { approveCampaignAction, campaignStatusAction, enrollmentStatusAction, enrollAction, keywordAction, postDecisionAction, presetSequenceAction, queueCallAction, signalAction, taskOutcomeAction, createPostAction } from "./actions";
 
 const card = { background: "#fff", border: `1px solid ${C.line}`, borderRadius: 16, padding: "22px 26px" } as const;
 const field = { border: `1px solid ${C.btnLine}`, borderRadius: 8, padding: "9px 10px", fontSize: 14, background: "#fff", color: C.ink } as const;
@@ -232,10 +232,11 @@ const CH_LABEL: Record<string, string> = { twitter: "X", email: "Email", whatsap
 export async function CampaignList({ ctx, ret }: { ctx: CompanyContext; ret: string }) {
   const slug = ctx.company.slug;
   const [seqs, ens] = await Promise.all([
-    ctx.supabase.from("outreach_sequences").select("id, name, steps, status, requires_approval").eq("organization_id", ctx.company.id).neq("status", "archived").order("created_at"),
+    ctx.supabase.from("outreach_sequences").select("id, name, steps, status, requires_approval, approved_at").eq("organization_id", ctx.company.id).neq("status", "archived").order("created_at"),
     ctx.supabase.from("outreach_enrollments").select("sequence_id, status").eq("organization_id", ctx.company.id).limit(10000),
   ]);
-  const ss = (seqs.data ?? []) as { id: string; name: string; steps: { channel: string }[]; status: string; requires_approval: boolean }[];
+  const ss = (seqs.data ?? []) as { id: string; name: string; steps: { channel: string }[]; status: string; requires_approval: boolean; approved_at: string | null }[];
+  const owner = ctx.can("dashboard.owner");
   const es = (ens.data ?? []) as { sequence_id: string; status: string }[];
   const manage = ctx.can("crm.manage");
   if (ss.length === 0) return <div style={{ ...row, color: C.muted }}>No campaigns yet. Add one from a channel tab (Email, LinkedIn, WhatsApp…).</div>;
@@ -253,6 +254,14 @@ export async function CampaignList({ ctx, ret }: { ctx: CompanyContext; ret: str
               <div style={{ fontSize: 12.5, color: C.muted }}>{channels} · {q.steps.length} steps · {n((s) => s === "active")} running · {n((s) => s === "paused")} paused · {n((s) => s === "stopped_reply")} replied · {n((s) => s === "completed")} finished</div>
             </div>
             <span style={{ fontSize: 12, fontWeight: 700, background: bg, color: fg, borderRadius: 6, padding: "3px 9px" }}>{q.status === "active" ? "Running" : q.status === "paused" ? "Paused" : "Draft"}</span>
+            <span title={q.approved_at ? "Daily sends go out without asking again. Editing the steps withdraws the approval." : "Each daily run waits for approval in Automation until an owner approves the wording once."}
+              style={{ fontSize: 12, fontWeight: 600, color: q.approved_at ? "#2F5D4C" : "#7a5b00" }}>{q.approved_at ? "✓ Approved: runs on its own" : "Needs approval each run"}</span>
+            {owner && (
+              <form action={approveCampaignAction.bind(null, slug)}>
+                <input type="hidden" name="sequence_id" value={q.id} /><input type="hidden" name="ret" value={ret} /><input type="hidden" name="approve" value={q.approved_at ? "false" : "true"} />
+                <button style={{ ...btn, color: q.approved_at ? C.muted : "#2F5D4C" }}>{q.approved_at ? "Withdraw approval" : "Approve once"}</button>
+              </form>
+            )}
             {manage && (
               <form action={campaignStatusAction.bind(null, slug)} style={{ display: "flex", gap: 6 }}>
                 <input type="hidden" name="sequence_id" value={q.id} /><input type="hidden" name="ret" value={ret} />
@@ -363,6 +372,33 @@ export async function OptInCard({ ctx }: { ctx: CompanyContext }) {
             <a href={a.link} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 600, color: "var(--co-side)", display: "inline-block", marginTop: 6 }}>Test the link →</a>
           </div>
         </div>
+      ))}
+    </div>
+  );
+}
+
+/** What the AI reply assistant did on this channel: answered, or handed to a person. */
+export async function AiRepliesCard({ ctx, channel }: { ctx: CompanyContext; channel: "email" | "whatsapp" }) {
+  if (!ctx.can("crm.read_all")) return null;
+  const { data } = await ctx.supabase.from("ai_replies").select("id, action, inbound_text, reply_text, interest, reason, created_at, contact:contacts(full_name)")
+    .eq("organization_id", ctx.company.id).eq("channel", channel).order("created_at", { ascending: false }).limit(15);
+  const rows = (data ?? []) as unknown as { id: string; action: string; inbound_text: string; reply_text: string | null; interest: string | null; reason: string | null; created_at: string; contact: { full_name: string } | null }[];
+  return (
+    <div style={card}>
+      <Head t="AI conversations" aside={<a href={`/c/${ctx.company.slug}/settings#ai`} style={{ fontSize: 13, fontWeight: 600, color: "var(--co-side)" }}>Settings →</a>} />
+      {rows.length === 0 && <div style={{ ...row, color: C.muted }}>Nothing yet. Switch on the AI reply assistant in Settings; its answers and hand-overs appear here.</div>}
+      {rows.map((r) => (
+        <details key={r.id} style={{ ...row }}>
+          <summary style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", gap: 10 }}>
+            <span><b style={{ fontWeight: 600 }}>{r.contact?.full_name ?? "Lead"}</b> <span style={{ color: C.muted }}>· {formatDateTime(r.created_at)}</span></span>
+            <span style={{ fontWeight: 600, whiteSpace: "nowrap", color: r.action === "replied" ? "#2F5D4C" : "#8C2F39" }}>{r.action === "replied" ? `Answered${r.interest === "hot" ? " · hot lead" : ""}` : "Handed to team"}</span>
+          </summary>
+          <div style={{ fontSize: 13.5, lineHeight: 1.5, marginTop: 8, color: "#3b443f" }}>
+            <div><b style={{ fontWeight: 600 }}>They wrote:</b> {r.inbound_text.slice(0, 600)}</div>
+            {r.reply_text && <div style={{ marginTop: 6 }}><b style={{ fontWeight: 600 }}>AI replied:</b> {r.reply_text}</div>}
+            {r.reason && <div style={{ marginTop: 6, color: C.muted }}>{r.reason}</div>}
+          </div>
+        </details>
       ))}
     </div>
   );

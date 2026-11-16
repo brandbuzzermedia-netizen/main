@@ -138,4 +138,15 @@ describe("n8n workflow files", () => {
     expect(go(cly)[0].json.payload).toMatchObject({ email: "c@d.in", source: "Calendly booking" });
     expect(go(cal, "wrong")).toEqual([]);
   });
+
+  it("sends the AI assistant's reply on the channel it came from", () => {
+    const run2 = (wf: Wf, node: string, inputs: unknown[], named: Record<string, unknown[]>) => runInNewContext(`(function(){ ${code(wf, node)} })()`, { JSON, String,
+      $input: { all: () => inputs.map((json) => ({ json })) }, $: (n: string) => ({ all: () => (named[n] ?? []).map((json) => ({ json })) }) }) as { json: Record<string, unknown> }[];
+    const reply = { channel: "email", to: "asha@client.in", text: "Thanks! — GBS AI assistant", subject: "Re: your message to GBS" };
+    const mail = run2(load("dp-email-inbox.json"), "AI reply?", [{ ok: true, auto_reply: reply }, { ok: true }], { "Map to OS": [{ reply_subject: "Re: Pricing" }, { reply_subject: "Re: Hi" }] });
+    expect(mail).toEqual([{ json: { ...reply, subject: "Re: Pricing" } }]);
+    const wa = run2(load("dp-whatsapp-incoming.json"), "AI reply?", [{ ok: true, auto_reply: { channel: "whatsapp", to: "+919800000011", text: "Hi" } }], { "Map to OS": [{ via: "wati", phone_id: "" }] });
+    expect(wa[0].json).toMatchObject({ to: "+919800000011", via: "wati" });
+  });
 });
+

@@ -22,7 +22,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// The company this mailbox belongs to: paste its id below in each copy (or set DP_INBOX_ORG when there is one mailbox).\nconst ORG = $env.DP_INBOX_ORG || 'PASTE-COMPANY-ID';\nconst out = [];\nfor (const it of $input.all()) {\n  const e = it.json; const from = String(e.from || ''); const subject = String(e.subject || '');\n  const text = String(e.textPlain || e.text || '').replace(/\\r/g, '');\n  const addr = (from.match(/[^\\s<>\"]+@[^\\s<>\"]+\\.[^\\s<>\"]+/) || [''])[0].toLowerCase();\n  const name = from.replace(/<[^>]*>/, '').replace(/\"/g, '').trim();\n  if (/mailer-daemon|postmaster/i.test(addr) || /undeliver|delivery status notification|returned mail|failure notice|delivery has failed|address not found/i.test(subject)) {\n    const m = text.match(/Final-Recipient:[^;]*;\\s*([^\\s<>]+@[^\\s<>]+)/i) || text.match(/(?:to|address)[^@\\n]{0,40}?<?([^\\s<>\"]+@[^\\s<>\"]+\\.[a-z]{2,})>?/i);\n    if (m) out.push({ json: { payload: { type: 'bounce', organization_id: ORG, email: m[1].toLowerCase().replace(/[.,;]+$/, '') } } });\n    continue;\n  }\n  if (!addr || /out of office|automatic reply|auto.?reply|away from/i.test(subject) || /^(no-?reply|noreply)@/.test(addr)) continue; // auto-replies don't stop campaigns\n  const body = text.split(/\\nOn .{0,200}wrote:|\\n-{2,}\\s*Original Message|\\nFrom: /i)[0].split('\\n').filter((l) => !l.startsWith('>')).join('\\n').trim();\n  out.push({ json: { payload: { type: 'message', organization_id: ORG, channel: 'email', from: addr, ...(name && name !== addr ? { name: name.slice(0, 200) } : {}), text: (body || subject).slice(0, 4000) } } });\n}\nreturn out;"
+        "jsCode": "// The company this mailbox belongs to: paste its id below in each copy (or set DP_INBOX_ORG when there is one mailbox).\nconst ORG = $env.DP_INBOX_ORG || 'PASTE-COMPANY-ID';\nconst out = [];\nfor (const it of $input.all()) {\n  const e = it.json; const from = String(e.from || ''); const subject = String(e.subject || '');\n  const text = String(e.textPlain || e.text || '').replace(/\\r/g, '');\n  const addr = (from.match(/[^\\s<>\"]+@[^\\s<>\"]+\\.[^\\s<>\"]+/) || [''])[0].toLowerCase();\n  const name = from.replace(/<[^>]*>/, '').replace(/\"/g, '').trim();\n  if (/mailer-daemon|postmaster/i.test(addr) || /undeliver|delivery status notification|returned mail|failure notice|delivery has failed|address not found/i.test(subject)) {\n    const m = text.match(/Final-Recipient:[^;]*;\\s*([^\\s<>]+@[^\\s<>]+)/i) || text.match(/(?:to|address)[^@\\n]{0,40}?<?([^\\s<>\"]+@[^\\s<>\"]+\\.[a-z]{2,})>?/i);\n    if (m) out.push({ json: { payload: { type: 'bounce', organization_id: ORG, email: m[1].toLowerCase().replace(/[.,;]+$/, '') } } });\n    continue;\n  }\n  if (!addr || /out of office|automatic reply|auto.?reply|away from/i.test(subject) || /^(no-?reply|noreply)@/.test(addr)) continue; // auto-replies don't stop campaigns\n  const body = text.split(/\\nOn .{0,200}wrote:|\\n-{2,}\\s*Original Message|\\nFrom: /i)[0].split('\\n').filter((l) => !l.startsWith('>')).join('\\n').trim();\n  out.push({ json: { reply_subject: /^re:/i.test(subject) ? subject : `Re: ${subject}`.slice(0, 200), payload: { type: 'message', organization_id: ORG, channel: 'email', from: addr, ...(name && name !== addr ? { name: name.slice(0, 200) } : {}), text: (body || subject).slice(0, 4000) } } });\n}\nreturn out;"
       },
       "id": "06addf35-8f82-5441-9b28-854c987ceb4b",
       "name": "Map to OS",
@@ -89,6 +89,41 @@
         300
       ],
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// The OS returns auto_reply when the AI assistant answered; send it from this mailbox, in the same thread.\nconst src = $('Map to OS').all();\nreturn $input.all().map((i, n) => (i.json && i.json.auto_reply ? { json: { ...i.json.auto_reply, subject: (src[n] && src[n].json.reply_subject) || i.json.auto_reply.subject } } : null)).filter(Boolean);"
+      },
+      "id": "b956136d-f57e-5e9d-8222-b7be6e597580",
+      "name": "AI reply?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.DP_FROM_EMAIL }}",
+        "toEmail": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "e7ac956a-2938-5cc5-ba8c-2ef17e9a0e58",
+      "name": "Send AI reply",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1100,
+        300
+      ],
+      "onError": "continueRegularOutput",
+      "notes": "Attach the SMTP credential of the same mailbox and set From to its address."
     }
   ],
   "connections": {
@@ -119,6 +154,28 @@
         [
           {
             "node": "Send to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to OS": {
+      "main": [
+        [
+          {
+            "node": "AI reply?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI reply?": {
+      "main": [
+        [
+          {
+            "node": "Send AI reply",
             "type": "main",
             "index": 0
           }
