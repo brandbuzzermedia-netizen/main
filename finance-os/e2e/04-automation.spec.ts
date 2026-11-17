@@ -179,6 +179,19 @@ test("inbound (n8n → OS): signed events drive leads, opt-ins, opt-outs, bounce
   expect(r4.opted_out).toBe(true);
   expect((await db.from("suppression_records").select("id").eq("organization_id", org).eq("channel", "whatsapp").eq("value_normalized", phone)).data?.length).toBe(1);
 
+  // AI call says "interested": campaign stops and an urgent call-back task appears, once.
+  const { data: hot } = await db.from("contacts").insert({ organization_id: org, full_name: `Hot Caller ${run}`, phone_e164: `+9196${String(run).padStart(8, "0")}`, consent_basis: "legitimate_interest", consent_at: new Date().toISOString() }).select("id").single();
+  await db.from("outreach_enrollments").insert({ organization_id: org, sequence_id: seq!.id, contact_id: hot!.id });
+  const { data: vc } = await db.from("voice_calls").insert({ organization_id: org, contact_id: hot!.id, purpose: "qualify" }).select("id").single();
+  for (let i = 0; i < 2; i++) {
+    expect((await inbound(request, { type: "call_result", organization_id: org, call_id: vc!.id, status: "completed", outcome: "interested", summary: "Wants pricing for 3 clinics" })).status()).toBe(200);
+  }
+  const { data: tasks } = await db.from("tasks").select("priority, details").eq("organization_id", org).eq("title", `Call back now, interested: Hot Caller ${run}`);
+  expect(tasks).toHaveLength(1);
+  expect(tasks![0]).toMatchObject({ priority: "urgent" });
+  expect(tasks![0].details).toContain("Wants pricing for 3 clinics");
+  expect((await db.from("outreach_enrollments").select("status").eq("contact_id", hot!.id).single()).data?.status).toBe("stopped_reply");
+
   // A bounce suppresses the address.
   const bounced = `gone${run}@old.test`;
   await db.from("contacts").insert({ organization_id: org, full_name: "Old address", email: bounced });

@@ -155,8 +155,9 @@ export async function POST(request: NextRequest) {
   }
   // call_result
   const now = new Date().toISOString();
-  const { data: call } = await db.from("voice_calls").select("id, contact_id").eq("id", m.call_id).eq("organization_id", m.organization_id).maybeSingle();
+  const { data: call } = await db.from("voice_calls").select("id, contact_id, status, requested_by").eq("id", m.call_id).eq("organization_id", m.organization_id).maybeSingle();
   if (!call) return NextResponse.json({ error: "unknown_call" }, { status: 404 });
+  const firstResult = call.status === "queued" || call.status === "calling";
   await db.from("voice_calls").update({ status: m.status, outcome: m.outcome ?? null, summary: m.summary ?? null, recording_url: m.recording_url ?? null,
     ...(m.status === "calling" ? { started_at: now } : { ended_at: now }) }).eq("id", call.id);
   if (m.status !== "calling") {
@@ -166,6 +167,18 @@ export async function POST(request: NextRequest) {
       notes: `AI call${m.summary ? `: ${m.summary}` : ""}`.slice(0, 2000) });
     if (m.outcome === "interested" || m.outcome === "meeting_booked") await db.from("contacts").update({ lead_status: "qualified" }).eq("id", call.contact_id);
     if (m.outcome === "do_not_call") await db.from("contacts").update({ do_not_contact: true }).eq("id", call.contact_id);
+    if (firstResult && (m.outcome === "interested" || m.outcome === "callback" || m.outcome === "meeting_booked")) {
+      // A warm lead from an AI call: a person takes over at once. Campaign messages stop; an urgent task goes to the lead's owner.
+      await db.from("outreach_enrollments").update({ status: "stopped_reply" }).eq("contact_id", call.contact_id).eq("status", "active");
+      const { data: c } = await db.from("contacts").select("full_name, company_name, phone_e164, owner_id").eq("id", call.contact_id).single();
+      const member = async (u: string | null) => (u ? !!(await db.from("memberships").select("user_id").eq("organization_id", m.organization_id).eq("user_id", u).maybeSingle()).data : false);
+      const assignee = (await member(c?.owner_id ?? null)) ? c!.owner_id : (await member(call.requested_by)) ? call.requested_by : null;
+      const who = `${c?.full_name ?? "Lead"}${c?.company_name ? ` (${c.company_name})` : ""}`;
+      const title = m.outcome === "meeting_booked" ? `Confirm the meeting the AI booked: ${who}` : m.outcome === "callback" ? `Call back (they asked): ${who}` : `Call back now, interested: ${who}`;
+      await db.from("tasks").insert({ organization_id: m.organization_id, title: title.slice(0, 200), priority: "urgent", assignee_id: assignee, created_by: null,
+        due_on: new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10),
+        details: `${c?.phone_e164 ? `Phone: ${c.phone_e164}\n` : ""}AI call summary: ${m.summary ?? "(none)"}${m.recording_url ? `\nRecording: ${m.recording_url}` : ""}`.slice(0, 4000) });
+    }
   }
   return NextResponse.json({ ok: true });
 }
