@@ -12,7 +12,7 @@ const sub = { fontSize: 13, color: C.muted, lineHeight: 1.5 } as const;
 /** Lead to delivery: meeting booking link, who gets new leads, and what happens after payment. */
 export async function GrowthCard({ ctx, slug, members, note }: { ctx: CompanyContext; slug: string; members: Member[]; note?: string }) {
   const [{ data: g }, { data: steps }] = await Promise.all([
-    ctx.supabase.from("growth_settings").select("booking_url, routing_enabled, routing_members, onboarding_on").eq("organization_id", ctx.company.id).maybeSingle(),
+    ctx.supabase.from("growth_settings").select("booking_url, routing_enabled, routing_members, onboarding_on, record_calls").eq("organization_id", ctx.company.id).maybeSingle(),
     ctx.supabase.from("onboarding_steps").select("id, title, due_after_days, assignee_id").eq("organization_id", ctx.company.id).order("position").order("created_at"),
   ]);
   const edit = ctx.can("crm.manage");
@@ -34,6 +34,10 @@ export async function GrowthCard({ ctx, slug, members, note }: { ctx: CompanyCon
               <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
                 {members.map((m) => <label key={m.user_id} style={{ display: "flex", gap: 6, alignItems: "center" }}><input type="checkbox" name="routing_members" value={m.user_id} defaultChecked={chosen.has(m.user_id)} />{m.name}</label>)}
               </div>
+            </div>
+            <div><b style={{ fontWeight: 600 }}>AI call recordings</b>
+              <label style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6 }}><input type="checkbox" name="record_calls" defaultChecked={Boolean(g?.record_calls)} /> Record AI calls and keep the transcript</label>
+              <div style={sub}>The AI then says at the start of every call that it is recorded. Recordings play in Outreach → AI calls for owners, managers and the lead&apos;s owner. Also switch audio saving on (or off) in your ElevenLabs agent to match.</div>
             </div>
             <label style={{ display: "flex", flexDirection: "column", gap: 6 }}><b style={{ fontWeight: 600 }}>Start client onboarding</b>
               <select name="onboarding_on" defaultValue={g?.onboarding_on ?? "first_payment"} style={field}>

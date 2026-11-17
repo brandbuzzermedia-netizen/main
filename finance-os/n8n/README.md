@@ -166,3 +166,12 @@ Reports in each company, and on the group's Reports page, show the funnel from l
     urgent task for the lead's owner.
   - **What it needs:** `ANTHROPIC_API_KEY` in the OS environment (Vercel) and AI switched on for the
     company. Without the key it never replies and people answer as before.
+
+## AI call recordings (added 17 Nov 2026)
+
+Settings → Lead to delivery → **Record AI calls**. When on, the call's opening line adds "This call is
+recorded for quality and training." `dp-elevenlabs-results` sends the ElevenLabs `conversation_id`
+and the transcript. The OS plays the audio from ElevenLabs on demand (`/c/<company>/calls/<id>/audio`),
+so no recording link is public. Only people who can read every lead, or the lead's owner, can listen.
+This needs `ELEVENLABS_API_KEY` in the OS environment (Vercel). Set audio saving in the ElevenLabs
+agent to match the switch.

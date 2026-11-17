@@ -28,7 +28,8 @@ const schema = z.discriminatedUnion("type", [
     starts_at: z.iso.datetime({ offset: true }), ends_at: z.iso.datetime({ offset: true }).optional(), location: z.string().max(500).optional(), source: z.string().max(80).default("Booking link") }),
   z.object({ type: z.literal("post_result"), organization_id: org, post_id: z.uuid(), status: z.enum(["published", "failed"]), external_url: url.optional(), error: z.string().max(1000).optional() }),
   z.object({ type: z.literal("call_result"), organization_id: org, call_id: z.uuid(), status: z.enum(["calling", "completed", "failed", "no_answer"]),
-    outcome: z.enum(["interested", "not_interested", "callback", "meeting_booked", "wrong_number", "do_not_call"]).optional(), summary: z.string().max(4000).optional(), recording_url: url.optional() }),
+    outcome: z.enum(["interested", "not_interested", "callback", "meeting_booked", "wrong_number", "do_not_call"]).optional(), summary: z.string().max(4000).optional(), recording_url: url.optional(),
+    conversation_id: z.string().regex(/^[A-Za-z0-9_-]{4,128}$/).optional(), transcript: z.string().max(20000).optional() }),
 ]);
 
 export async function POST(request: NextRequest) {
@@ -159,6 +160,7 @@ export async function POST(request: NextRequest) {
   if (!call) return NextResponse.json({ error: "unknown_call" }, { status: 404 });
   const firstResult = call.status === "queued" || call.status === "calling";
   await db.from("voice_calls").update({ status: m.status, outcome: m.outcome ?? null, summary: m.summary ?? null, recording_url: m.recording_url ?? null,
+    ...(m.conversation_id ? { external_id: m.conversation_id } : {}), ...(m.transcript ? { transcript: m.transcript } : {}),
     ...(m.status === "calling" ? { started_at: now } : { ended_at: now }) }).eq("id", call.id);
   if (m.status !== "calling") {
     await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: call.contact_id, kind: "call",

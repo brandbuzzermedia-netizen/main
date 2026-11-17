@@ -20,7 +20,7 @@ export async function saveGrowthAction(slug: string, fd: FormData) {
   const members = fd.getAll("routing_members").map((v) => z.uuid().parse(v));
   const { error } = await ctx.supabase.from("growth_settings").upsert({
     organization_id: ctx.company.id, booking_url: url || null, routing_enabled: fd.get("routing_enabled") === "on" && members.length > 0, routing_members: members,
-    onboarding_on: z.enum(["first_payment", "full_payment"]).parse(fd.get("onboarding_on")), updated_at: new Date().toISOString(),
+    onboarding_on: z.enum(["first_payment", "full_payment"]).parse(fd.get("onboarding_on")), record_calls: fd.get("record_calls") === "on", updated_at: new Date().toISOString(),
   });
   revalidatePath(`/c/${slug}/settings`);
   go(slug, error ? error.message : "Saved.");

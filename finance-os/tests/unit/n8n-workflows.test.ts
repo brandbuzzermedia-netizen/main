@@ -148,5 +148,15 @@ describe("n8n workflow files", () => {
     const wa = run2(load("dp-whatsapp-incoming.json"), "AI reply?", [{ ok: true, auto_reply: { channel: "whatsapp", to: "+919800000011", text: "Hi" } }], { "Map to OS": [{ via: "wati", phone_id: "" }] });
     expect(wa[0].json).toMatchObject({ to: "+919800000011", via: "wati" });
   });
+
+  it("passes the ElevenLabs conversation id and transcript to the OS", () => {
+    const src = code(load("dp-elevenlabs-results.json"), "Map to OS");
+    const body = { data: { conversation_id: "conv_8f2k1", status: "done", conversation_initiation_client_data: { dynamic_variables: { dp_call_id: RUN.run_id } },
+      analysis: { transcript_summary: "Interested", data_collection_results: { outcome: { value: "interested" } } },
+      transcript: [{ role: "agent", message: "Hi, this is an AI assistant. This call is recorded." }, { role: "user", message: "Okay, tell me more" }, { role: "user", message: null }] } };
+    const out = runInNewContext(`(function(){ ${src} })()`, { JSON, String, Array, $json: { body }, $: () => ({ first: () => ({ json: { query: { org: RUN.organization_id } } }) }) }) as { json: { payload: Record<string, unknown> } }[];
+    expect(out[0].json.payload).toMatchObject({ type: "call_result", call_id: RUN.run_id, outcome: "interested", conversation_id: "conv_8f2k1",
+      transcript: "AI: Hi, this is an AI assistant. This call is recorded.\nLead: Okay, tell me more" });
+  });
 });
 

@@ -115,6 +115,26 @@ test("reports: the lead-to-cash funnel per company and across the group", async 
   await expect(page.locator("table")).toContainText("COLLECTED");
 });
 
+test("AI call recordings: switch on in settings; transcript and player in the call list; audio stays private", async ({ page, request }) => {
+  await page.goto("/c/demo-gbs/settings#growth");
+  await page.locator("#growth input[name=record_calls]").check();
+  await page.locator("#growth").getByRole("button", { name: "Save" }).click();
+  await expect(page.locator("#growth [role=status]")).toContainText("Saved.");
+  await expect(page.locator("#growth input[name=record_calls]")).toBeChecked();
+  const org = await orgId(), db = admin();
+  const { data: c } = await db.from("contacts").insert({ organization_id: org, full_name: `Recorded ${run}`, phone_e164: `+9195${String(run).padStart(8, "0")}`, consent_basis: "legitimate_interest", consent_at: new Date().toISOString() }).select("id").single();
+  const { data: vc } = await db.from("voice_calls").insert({ organization_id: org, contact_id: c!.id, purpose: "qualify", status: "completed", outcome: "interested", external_id: `conv_rec_${run}`, transcript: "AI: Hi, this call is recorded.\nLead: Sure" }).select("id").single();
+  await page.goto("/c/demo-gbs/outreach?ch=ai-calls");
+  const item = page.locator("div").filter({ hasText: `Recorded ${run}` }).filter({ has: page.locator("audio") }).last();
+  await expect(item.locator("audio")).toHaveAttribute("src", `/c/demo-gbs/calls/${vc!.id}/audio`);
+  await item.getByText("Transcript").click();
+  await expect(item).toContainText("Lead: Sure");
+  // No voice provider key here: the OS says so instead of exposing anything; signed-out visitors get nothing.
+  expect((await page.request.get(`/c/demo-gbs/calls/${vc!.id}/audio`)).status()).toBe(503);
+  const anon = await request.get(`/c/demo-gbs/calls/${vc!.id}/audio`, { headers: { cookie: "" }, maxRedirects: 0 });
+  expect([307, 401, 404]).toContain(anon.status());
+});
+
 test("group outreach: every company's campaigns and capacity on one screen; launch a campaign in many companies", async ({ page }) => {
   await page.goto("/group/outreach");
   await expect(page.getByRole("heading", { name: "Outreach" })).toBeVisible();
@@ -191,6 +211,10 @@ test("inbound (n8n → OS): signed events drive leads, opt-ins, opt-outs, bounce
   expect(tasks![0]).toMatchObject({ priority: "urgent" });
   expect(tasks![0].details).toContain("Wants pricing for 3 clinics");
   expect((await db.from("outreach_enrollments").select("status").eq("contact_id", hot!.id).single()).data?.status).toBe("stopped_reply");
+
+  // The call's conversation id and transcript are kept for playback in the OS.
+  await inbound(request, { type: "call_result", organization_id: org, call_id: vc!.id, status: "completed", outcome: "interested", conversation_id: `conv_${run}`, transcript: "AI: Hello\nLead: Yes please" });
+  expect((await db.from("voice_calls").select("external_id, transcript").eq("id", vc!.id).single()).data).toEqual({ external_id: `conv_${run}`, transcript: "AI: Hello\nLead: Yes please" });
 
   // A bounce suppresses the address.
   const bounced = `gone${run}@old.test`;

@@ -16,7 +16,8 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SER
 const local = !!url && !!key && /localhost|127\.0\.0\.1/.test(url);
 
 describe.skipIf(!local)("AI reply assistant (local database)", () => {
-  const db = createClient(url!, key!, { auth: { persistSession: false } });
+  // Created only when the suite runs: vitest still reads this block when the suite is skipped.
+  const db = local ? createClient(url!, key!, { auth: { persistSession: false } }) : (null as unknown as ReturnType<typeof createClient>);
   let org = "", contact = "";
   const run = Date.now() % 100000;
   beforeAll(async () => {

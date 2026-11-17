@@ -185,10 +185,11 @@ export async function RedditPanel({ ctx }: { ctx: CompanyContext }) {
 export async function CallsPanel({ ctx }: { ctx: CompanyContext }) {
   const slug = ctx.company.slug;
   const [calls, leads] = await Promise.all([
-    ctx.supabase.from("voice_calls").select("id, purpose, status, outcome, summary, recording_url, scheduled_for, contact:contacts(full_name)").eq("organization_id", ctx.company.id).order("created_at", { ascending: false }).limit(30),
+    ctx.supabase.from("voice_calls").select("id, purpose, status, outcome, summary, recording_url, external_id, transcript, scheduled_for, contact:contacts(full_name, owner_id)").eq("organization_id", ctx.company.id).order("created_at", { ascending: false }).limit(30),
     ctx.supabase.from("contacts").select("id, full_name, company_name").eq("organization_id", ctx.company.id).eq("do_not_contact", false).neq("consent_basis", "none").not("phone_e164", "is", null).order("created_at", { ascending: false }).limit(200),
   ]);
-  const cs = (calls.data ?? []) as unknown as { id: string; purpose: string; status: string; outcome: string | null; summary: string | null; recording_url: string | null; scheduled_for: string; contact: { full_name: string } | null }[];
+  const cs = (calls.data ?? []) as unknown as { id: string; purpose: string; status: string; outcome: string | null; summary: string | null; recording_url: string | null; external_id: string | null; transcript: string | null; scheduled_for: string; contact: { full_name: string; owner_id: string | null } | null }[];
+  const mayListen = (c: { contact: { owner_id: string | null } | null }) => ctx.can("crm.read_all") || c.contact?.owner_id === ctx.userId;
   const ls = (leads.data ?? []) as { id: string; full_name: string; company_name: string | null }[];
   const label = (s: string) => s.replace(/_/g, " ").replace(/^./, (x) => x.toUpperCase());
   return (
@@ -216,7 +217,16 @@ export async function CallsPanel({ ctx }: { ctx: CompanyContext }) {
               <span style={{ fontWeight: 600, fontSize: 13, color: c.outcome === "meeting_booked" || c.outcome === "interested" ? "#2F5D4C" : c.status === "failed" ? C.red : C.muted }}>{c.outcome ? label(c.outcome) : label(c.status)}</span>
             </div>
             {c.summary && <div style={{ color: C.muted, fontSize: 13.5, marginTop: 4, lineHeight: 1.45 }}>{c.summary}</div>}
-            {c.recording_url && <a href={c.recording_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 600, color: "var(--co-side)" }}>Recording ↗</a>}
+            {mayListen(c) && c.external_id && (
+              <audio controls preload="none" src={`/c/${slug}/calls/${c.id}/audio`} aria-label={`Recording of the call with ${c.contact?.full_name ?? "the lead"}`} style={{ width: "100%", marginTop: 8, height: 36 }} />
+            )}
+            {mayListen(c) && !c.external_id && c.recording_url && <a href={c.recording_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 600, color: "var(--co-side)" }}>Recording ↗</a>}
+            {mayListen(c) && c.transcript && (
+              <details style={{ marginTop: 6, fontSize: 13 }}>
+                <summary style={{ cursor: "pointer", fontWeight: 600, color: "var(--co-side)" }}>Transcript</summary>
+                <div style={{ whiteSpace: "pre-wrap", color: "#3b443f", lineHeight: 1.5, marginTop: 6, maxHeight: 260, overflowY: "auto" }}>{c.transcript}</div>
+              </details>
+            )}
             {c.status === "queued" && <form action={queueCallAction.bind(null, slug)} style={{ marginTop: 6 }}><button name="cancel" value={c.id} style={{ ...btn, color: C.red }}>Cancel</button></form>}
           </div>
         ))}
