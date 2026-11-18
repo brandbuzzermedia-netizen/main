@@ -37,13 +37,30 @@ export function dpCompanyNav(c: CompanyLike, can: (p: string) => boolean, opts: 
     vault: can("documents.read") || can("documents.write"),
     settings: can("company.settings") || can("company.emergency_stop"),
   };
-  return COMPANY_ORDER.filter((k) => c.enabled_modules.includes(k) || k === "home" || k === "settings")
+  const items: DpNavItem[] = COMPANY_ORDER.filter((k) => c.enabled_modules.includes(k) || k === "home" || k === "settings")
     .filter((k) => allowed[k])
     .map((k) => ({
-      key: k, label: k === "home" ? "Dashboard" : d.ren[k] ?? moduleInfo(k).label, icon: moduleInfo(k).icon, section: SECTION[k],
+      key: k, label: k === "home" ? "Dashboard" : k === "team" ? "Team & targets" : d.ren[k] ?? moduleInfo(k).label, icon: moduleInfo(k).icon, section: SECTION[k],
       href: k === "home" ? base : `${base}/${k}`,
       badge: k === "automation" && opts.approvals ? String(opts.approvals) : undefined,
     }));
+  // More of Us OS boards and documents, for every company.
+  const after = (key: string, extra: DpNavItem[]) => {
+    const i = items.findIndex((x) => x.key === key);
+    items.splice(i >= 0 ? i + 1 : items.length, 0, ...extra);
+  };
+  const sales = c.enabled_modules.includes("pipeline");
+  if (sales && can("crm.write")) after(items.some((x) => x.key === "meetings") ? "meetings" : "pipeline", [{ key: "research", label: "Research board", icon: "◫", section: "Sales", href: `${base}/research` }]);
+  if (sales && (can("tasks.write") || can("tasks.read_all"))) after(items.some((x) => x.key === "research") ? "research" : "pipeline", [{ key: "followups", label: "Follow-ups", icon: "✓", section: "Sales", href: `${base}/followups` }]);
+  const money: DpNavItem[] = [];
+  if (sales && (can("crm.write") || can("crm.read_all"))) money.push({ key: "proposals", label: "Proposals", icon: "▤", section: can("finance.read") ? "Finance" : "Sales", href: `${base}/proposals` });
+  if (can("finance.read")) money.push({ key: "invoices", label: "Invoices", icon: "▭", section: "Finance", href: `${base}/receivables/invoices` });
+  if (money.length) {
+    const fi = items.findIndex((x) => x.key === "finance");
+    const later = items.findIndex((x) => x.section === "People & insight" || x.section === "System");
+    items.splice(fi >= 0 ? fi : later >= 0 ? later : items.length, 0, ...money);
+  }
+  return items;
 }
 
 export function dpGroupNav(disabled: string[], isOwner: boolean, approvals: number): DpNavItem[] {

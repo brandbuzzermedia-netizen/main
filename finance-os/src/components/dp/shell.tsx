@@ -44,7 +44,7 @@ export function DpShell({ theme, wsId, nav, homeHref, stop, note, switcher, sear
 const mono = "var(--font-mono), ui-monospace, monospace";
 /** More of Us OS headings: section and a two-part title (heavy statement, italic follow-through). */
 const TAGS: [RegExp, string, string][] = [
-  [/import/i, "Sales", "Lists in, in minutes."], [/lead/i, "Sales", "Every one counted."], [/outreach/i, "Sales", "Log everything."],
+  [/import/i, "Sales", "Lists in, in minutes."], [/follow/i, "Sales", "Every time."], [/research/i, "Sales", "Know them first."], [/proposal/i, "Finance", "That close."], [/lead/i, "Sales", "Every one counted."], [/outreach/i, "Sales", "Log everything."],
   [/pipeline|quotes|crm|order board/i, "Sales", "Every deal, one board."], [/meeting|calendar/i, "Sales", "On record."],
   [/customer|client|dealer|buyer/i, "Sales", "For the long run."], [/delivery|catalogue|fulfil|operation/i, "Operations", "On time, every time."],
   [/campaign|marketing/i, "Operations", "Seen everywhere."], [/automation/i, "Operations", "Hands off."], [/invoice|receivable/i, "Finance", "Paid on time."],

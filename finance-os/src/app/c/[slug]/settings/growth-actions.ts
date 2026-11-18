@@ -57,3 +57,27 @@ export async function saveAiAssistantAction(slug: string, fd: FormData) {
   revalidatePath(`/c/${slug}/settings`);
   redirect(`/c/${slug}/settings?ai=${encodeURIComponent(error ? error.message : "AI reply assistant saved.")}#ai`);
 }
+
+/** Company monthly target, default GST, services sold, and each person's monthly target ("Name: amount" per line). */
+export async function saveSalesSettingsAction(slug: string, fd: FormData) {
+  const ctx = await manager(slug);
+  const back = (m: string) => redirect(`/c/${slug}/settings?sales=${encodeURIComponent(m)}#sales`);
+  const target = z.coerce.number().min(0).max(1e10).catch(0).parse(fd.get("monthly_target"));
+  const gst = z.coerce.number().min(0).max(28).catch(18).parse(fd.get("default_gst"));
+  const services = String(fd.get("services") ?? "").split("\n").map((x) => x.trim()).filter(Boolean).slice(0, 40).map((x) => x.slice(0, 80));
+  const { error } = await ctx.supabase.from("company_targets").upsert({ organization_id: ctx.company.id, monthly_target_minor: Math.round(target * 100), default_gst_bp: Math.round(gst * 100), services, updated_at: new Date().toISOString() });
+  if (error) back(error.message);
+  const { data: ms } = await ctx.supabase.from("memberships").select("user_id, user:users(full_name, email)").eq("organization_id", ctx.company.id);
+  const people = ((ms ?? []) as unknown as { user_id: string; user: { full_name: string | null; email: string | null } | null }[]);
+  const unknown: string[] = [];
+  for (const line of String(fd.get("member_targets") ?? "").split("\n").map((x) => x.trim()).filter(Boolean)) {
+    const m = line.match(/^(.+?)\s*[:=-]\s*₹?\s*([\d,.]+)\s*$/);
+    if (!m) { unknown.push(line); continue; }
+    const who = m[1].toLowerCase();
+    const p = people.find((x) => (x.user?.full_name ?? "").toLowerCase() === who || (x.user?.email ?? "").toLowerCase() === who);
+    if (!p) { unknown.push(m[1]); continue; }
+    await ctx.supabase.from("member_targets").upsert({ organization_id: ctx.company.id, user_id: p.user_id, monthly_target_minor: Math.round(Number(m[2].replace(/,/g, "")) * 100) });
+  }
+  revalidatePath(`/c/${slug}`, "layout");
+  back(unknown.length ? `Saved. Not matched to a team member: ${unknown.join(", ")}.` : "Sales settings saved.");
+}

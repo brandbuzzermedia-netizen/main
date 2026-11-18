@@ -4,8 +4,9 @@ import { waLink } from "@/lib/whatsapp-optin";
 import type { CompanyContext } from "@/lib/workspace";
 import { formatDate, formatDateTime, todayInBusinessTz } from "@/domain/dates";
 import { C } from "@/components/dp/theme";
+import { Board, type BoardCard } from "@/components/dp/board";
 import { copyCampaignAction } from "../actions";
-import { approveCampaignAction, campaignStatusAction, enrollmentStatusAction, enrollAction, keywordAction, postDecisionAction, presetSequenceAction, queueCallAction, signalAction, taskOutcomeAction, createPostAction } from "./actions";
+import { moveLeadAction, approveCampaignAction, campaignStatusAction, enrollmentStatusAction, enrollAction, keywordAction, postDecisionAction, presetSequenceAction, queueCallAction, signalAction, taskOutcomeAction, createPostAction } from "./actions";
 
 const card = { background: "#fff", border: `1px solid ${C.line}`, borderRadius: 16, padding: "22px 26px" } as const;
 const field = { border: `1px solid ${C.btnLine}`, borderRadius: 8, padding: "9px 10px", fontSize: 14, background: "#fff", color: C.ink } as const;
@@ -411,5 +412,41 @@ export async function AiRepliesCard({ ctx, channel }: { ctx: CompanyContext; cha
         </details>
       ))}
     </div>
+  );
+}
+
+/** Call list (More of Us OS "Reach out. Log everything."): every lead on one board, by how far they have got. */
+export async function CallListBoard({ ctx }: { ctx: CompanyContext }) {
+  const slug = ctx.company.slug;
+  const [{ data }, { data: ms }] = await Promise.all([
+    ctx.supabase.from("contacts").select("id, full_name, company_name, phone_e164, source, lead_status, owner_id, do_not_contact").eq("organization_id", ctx.company.id)
+      .in("lead_status", ["new", "contacted", "qualified", "customer"]).order("created_at", { ascending: false }).limit(400),
+    ctx.supabase.from("memberships").select("user_id, user:users(full_name, email)").eq("organization_id", ctx.company.id),
+  ]);
+  const people = new Map(((ms ?? []) as unknown as { user_id: string; user: { full_name: string | null; email: string | null } | null }[]).map((m) => [m.user_id, m.user?.full_name || m.user?.email || "?"]));
+  const rows = (data ?? []) as { id: string; full_name: string; company_name: string | null; phone_e164: string | null; source: string | null; lead_status: string; owner_id: string | null; do_not_contact: boolean }[];
+  const ini = (n: string) => n.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((x) => x[0]!.toUpperCase()).join("");
+  const n = (s: string) => rows.filter((r) => r.lead_status === s).length;
+  const cards: BoardCard[] = rows.map((r) => ({ id: r.id, col: r.lead_status, title: r.full_name, sub: [r.company_name, r.phone_e164].filter(Boolean).join(" · ") || undefined,
+    meta: r.source ?? "", badge: r.do_not_contact ? { text: "Do not contact", tone: "red" } : undefined, initials: r.owner_id ? ini(people.get(r.owner_id) ?? "?") : undefined }));
+  return (
+    <section aria-label="Call list" style={{ marginBottom: 22 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
+        <div style={{ fontSize: 14, color: C.body }}>{n("new")} on the list · {n("contacted")} reached out · {n("qualified")} interested · {n("customer")} converted · drag cards between columns</div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <a href={`/c/${slug}/leads/import`} style={{ border: `1px solid ${C.btnLine}`, background: "#fff", borderRadius: 3, padding: "9px 14px", fontWeight: 600, fontSize: 13.5, color: C.ink, textDecoration: "none" }}>Import list</a>
+          <a href={`/c/${slug}/leads?add=1`} style={{ background: "var(--co-btn)", color: "#fff", borderRadius: 3, padding: "9px 14px", fontWeight: 700, fontSize: 13.5, textDecoration: "none" }}>+ Add contact</a>
+        </div>
+      </div>
+      {rows.length === 0 ? (
+        <div style={{ ...card, textAlign: "left" }}>
+          <div style={{ fontFamily: "var(--font-tight)", fontWeight: 800, fontSize: 22, letterSpacing: "-.02em" }}>Your call list is empty.</div>
+          <div style={{ fontSize: 13.5, color: C.muted, lineHeight: 1.5, margin: "8px 0 0", maxWidth: 560 }}>Add people to reach out to one by one, or upload a whole list from Excel or Google Sheets with Import list. Assign each to a teammate, log every call with its outcome, and move interested ones forward.</div>
+        </div>
+      ) : (
+        <Board columns={[{ key: "new", label: "On the list" }, { key: "contacted", label: "Reached out" }, { key: "qualified", label: "Interested" }, { key: "customer", label: "Converted" }]}
+          cards={cards} move={moveLeadAction.bind(null, slug)} />
+      )}
+    </section>
   );
 }

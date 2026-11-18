@@ -32,7 +32,8 @@ export default async function PipelinePage({ params, searchParams }: PageProps<"
     ctx.can("crm.read_all") ? loadMembers(ctx.supabase, ctx.company.id) : Promise.resolve([]),
   ]);
   const stages = (stagesRes.data ?? []) as StageRow[];
-  const all = (dealsRes.data ?? []) as DealRow[];
+  const ownerFilter = typeof sp.owner === "string" && /^[0-9a-f-]{36}$/.test(sp.owner) ? sp.owner : null;
+  const all = ((dealsRes.data ?? []) as DealRow[]).filter((x) => !ownerFilter || x.owner_id === ownerFilter);
   const kind = new Map(stages.map((s) => [s.id, s.kind]));
   const stalledBefore = Date.parse(`${addDays(todayInBusinessTz(), -7)}T00:00:00+05:30`);
   const deals = all.filter((x) => view === "closed" ? !!x.closed_at : !x.closed_at && (view === "all" || (view === "hot" && x.is_hot)

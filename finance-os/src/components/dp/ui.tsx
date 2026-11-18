@@ -93,3 +93,15 @@ export function Note({ children }: { children: ReactNode }) {
 }
 
 export const muted = { color: C.muted };
+
+/** Form field in the More of Us OS style: small mono label over the input. */
+export const inputStyle: CSSProperties = { width: "100%", border: `1px solid ${C.btnLine}`, borderRadius: 3, padding: "10px 12px", fontSize: 14.5, background: "#fff", color: C.ink, fontFamily: "inherit", boxSizing: "border-box" };
+export function Field({ label: l, children, hint }: { label: string; children: ReactNode; hint?: string }) {
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <span style={label}>{l}</span>
+      {children}
+      {hint && <span style={{ fontSize: 12, color: C.faint }}>{hint}</span>}
+    </label>
+  );
+}

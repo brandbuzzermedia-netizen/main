@@ -3,7 +3,7 @@ import type { Member } from "@/lib/people";
 import { addDays, todayInBusinessTz } from "@/domain/dates";
 import { Card } from "@/components/dp/ui";
 import { C } from "@/components/dp/theme";
-import { addOnboardingStepAction, removeOnboardingStepAction, saveAiAssistantAction, saveGrowthAction } from "./growth-actions";
+import { addOnboardingStepAction, removeOnboardingStepAction, saveAiAssistantAction, saveGrowthAction, saveSalesSettingsAction } from "./growth-actions";
 
 const field = { border: `1px solid ${C.btnLine}`, borderRadius: 8, padding: "8px 10px", fontSize: 14, background: "#fff", color: C.ink, fontFamily: "inherit" } as const;
 const btn = { border: `1px solid ${C.btnLine}`, background: "#fff", borderRadius: 8, padding: "7px 14px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" } as const;
@@ -104,6 +104,39 @@ export async function AiAssistantCard({ ctx, slug, note }: { ctx: CompanyContext
             </label>
             <label style={{ display: "flex", gap: 8, alignItems: "center" }}>At most <input type="number" name="ai_daily_limit" min={1} max={10} defaultValue={g?.ai_daily_limit ?? 3} style={{ ...field, width: 64 }} /> AI replies per person per day, then a person takes over</label>
             {edit && <div><button style={btn}>Save</button></div>}
+          </fieldset>
+        </form>
+      </Card>
+    </div>
+  );
+}
+
+/** Sales settings (More of Us OS): company target, GST, services, and personal targets. */
+export async function SalesSettingsCard({ ctx, slug, members, note }: { ctx: CompanyContext; slug: string; members: Member[]; note?: string }) {
+  const [{ data: t }, { data: mt }] = await Promise.all([
+    ctx.supabase.from("company_targets").select("monthly_target_minor, default_gst_bp, services").eq("organization_id", ctx.company.id).maybeSingle(),
+    ctx.supabase.from("member_targets").select("user_id, monthly_target_minor").eq("organization_id", ctx.company.id),
+  ]);
+  const name = new Map(members.map((m) => [m.user_id, m.name]));
+  const edit = ctx.can("crm.manage");
+  return (
+    <div id="sales" style={{ scrollMarginTop: 96 }}>
+      <Card title="Sales settings" aside={<span style={{ fontSize: 12.5, color: C.muted }}>Targets, GST and services</span>}>
+        {note && <div role="status" style={{ fontSize: 13.5, color: "var(--co-btn)", fontWeight: 600, marginTop: 8 }}>{note}</div>}
+        <form action={saveSalesSettingsAction.bind(null, slug)} style={{ display: "flex", flexDirection: "column", gap: 12, borderTop: `1px solid ${C.line2}`, marginTop: 10, paddingTop: 12, fontSize: 14 }}>
+          <fieldset disabled={!edit} style={{ border: 0, padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}><b style={{ fontWeight: 600 }}>Company monthly target (₹)</b>
+                <input name="monthly_target" type="number" min={0} step="1" defaultValue={Number(t?.monthly_target_minor ?? 0) / 100 || ""} style={field} /></label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}><b style={{ fontWeight: 600 }}>Default GST %</b>
+                <input name="default_gst" type="number" min={0} max={28} step="0.01" defaultValue={Number(t?.default_gst_bp ?? 1800) / 100} style={field} /></label>
+            </div>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}><b style={{ fontWeight: 600 }}>Services you sell (one per line)</b>
+              <textarea name="services" rows={6} defaultValue={((t?.services ?? []) as string[]).join("\n")} placeholder={"Strategy & consulting\nWebsite\nPerformance marketing\nSocial media retainer"} style={{ ...field, lineHeight: 1.5 }} /></label>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}><b style={{ fontWeight: 600 }}>Individual monthly targets (&quot;Name: amount&quot;, one per line)</b>
+              <textarea name="member_targets" rows={4} defaultValue={((mt ?? []) as { user_id: string; monthly_target_minor: number }[]).filter((x) => name.has(x.user_id)).map((x) => `${name.get(x.user_id)}: ${Number(x.monthly_target_minor) / 100}`).join("\n")}
+                placeholder={members.slice(0, 3).map((m) => `${m.name}: 1000000`).join("\n")} style={{ ...field, lineHeight: 1.5 }} /></label>
+            {edit && <div><button style={btn}>Save settings</button></div>}
           </fieldset>
         </form>
       </Card>

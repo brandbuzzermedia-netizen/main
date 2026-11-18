@@ -9,6 +9,7 @@ import { C } from "@/components/dp/theme";
 import { ListView, NOTES } from "@/views/list";
 import { formatDate } from "@/domain/dates";
 import { Card } from "@/components/dp/ui";
+import { TeamTargets } from "@/components/dp/targets";
 import { DeactivateForm, MemberForm } from "../forms";
 import { changeRoleAction, reactivateMemberAction, revokeInvitationAction } from "../actions";
 
@@ -38,7 +39,8 @@ export default async function TeamPage({ params, searchParams }: PageProps<"/c/[
   const [title, lines] = NOTES.team;
   return (
     <>
-      <PageHead own={d.own} treat={d.treat} title={d.ren.team ?? "Team"} right={manage ? <Cta href={`${base}?add=1`}>+ Add</Cta> : undefined} />
+      <PageHead own={d.own} treat={d.treat} title="Team" right={manage ? <Cta href={`${base}?add=1`}>+ Add</Cta> : undefined} />
+      <TeamTargets ctx={ctx} members={members} />
       <ListView vm={{
         head: ["PERSON", "ROLE", "SCOPE", "TARGET"],
         rows: members.map((m) => {

@@ -10,7 +10,7 @@ import { C } from "@/components/dp/theme";
 import { Assistant } from "../assistant/forms";
 import { handoverAction, logOutcomeAction } from "./actions";
 import { ChannelSection } from "./channel";
-import { CampaignDetail, CampaignList, Note } from "./systems";
+import { CallListBoard, CampaignDetail, CampaignList, Note } from "./systems";
 import { pauseOutreachAction } from "../actions";
 import { OUTREACH_CHANNELS, OutreachTabs } from "@/views/outreach";
 
@@ -52,10 +52,11 @@ export default async function OutreachPage({ params, searchParams }: PageProps<"
   const aiOn = Boolean(settings.data?.ai_enabled) && !aiConfig().mock;
   return (
     <>
-      <PageHead own={d.own} treat={d.treat} title={d.ren.outreach ?? "Outreach"} right={ctx.can("crm.manage") ? <Cta href={`/c/${slug}/r/sequences`}>+ Add</Cta> : undefined}
+      <PageHead own={d.own} treat={d.treat} title="Reach out" tag="Log everything." right={ctx.can("crm.manage") ? <Cta href={`/c/${slug}/r/sequences`}>+ Add</Cta> : undefined}
         intro="Sequences run in n8n. If a channel is unsupported or consent is missing, the step becomes a human task for you." />
       <OutreachTabs base={`/c/${slug}/outreach`} current="overview" />
       {typeof spAll.note === "string" && <Note text={spAll.note} />}
+      <CallListBoard ctx={ctx} />
       {ctx.can("crm.manage") && (
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginBottom: 12 }}>
           <form action={pauseOutreachAction.bind(null, slug)}><input type="hidden" name="paused" value="true" /><button style={{ border: `1px solid ${C.btnLine}`, background: "#fff", borderRadius: 8, padding: "7px 14px", fontWeight: 600, color: "#7a5b00", cursor: "pointer" }}>Pause all campaigns</button></form>

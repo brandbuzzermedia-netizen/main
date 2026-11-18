@@ -6,7 +6,7 @@ import { financialYear } from "@/domain/periods";
 import { todayInBusinessTz } from "@/domain/dates";
 import { PageHead } from "@/components/dp/shell";
 import { ListView, NOTES } from "@/views/list";
-import { FunnelCard } from "@/components/dp/funnel";
+import { FunnelCard, SourceTable } from "@/components/dp/funnel";
 import { loadFunnel } from "@/lib/funnel";
 import { addDays } from "@/domain/dates";
 
@@ -31,9 +31,20 @@ export default async function ReportsPage({ params, searchParams }: PageProps<"/
   ].filter(Boolean) as { a: string; b: string; c: string; d: string; href: string }[];
   const [title, lines] = NOTES.reports;
   const funnel = crm ? await loadFunnel(ctx.supabase, ctx.company.id, addDays(todayInBusinessTz(), -days), fin) : null;
+  const { data: srcDeals } = crm ? await ctx.supabase.from("deals").select("source, value_minor, closed_at, stage:pipeline_stages(kind)").eq("organization_id", ctx.company.id).limit(10000) : { data: [] };
+  const bySource = new Map<string, { source: string; deals: number; openMinor: number; wonMinor: number }>();
+  for (const x of (srcDeals ?? []) as unknown as { source: string | null; value_minor: number; closed_at: string | null; stage: { kind: string } | null }[]) {
+    const k = x.source?.trim() || "Not recorded";
+    const r = bySource.get(k) ?? { source: k, deals: 0, openMinor: 0, wonMinor: 0 };
+    r.deals++;
+    if (x.stage?.kind === "won") r.wonMinor += Number(x.value_minor); else if (!x.closed_at && x.stage?.kind !== "lost") r.openMinor += Number(x.value_minor);
+    bySource.set(k, r);
+  }
+  const sources = [...bySource.values()].sort((a, b) => b.wonMinor - a.wonMinor || b.deals - a.deals);
   return (
     <>
       <PageHead own={d.own} treat={d.treat} title="Reports" />
+      {crm && <SourceTable rows={sources} />}
       {funnel && <FunnelCard f={funnel} title={`Lead to cash · last ${days} days`} periods={[7, 30, 90].map((n) => ({ l: `${n} days`, href: `/c/${slug}/reports?days=${n}`, on: n === days }))} />}
       <ListView vm={{ chips: [{ l: "Export (logged)" }, { l: "CSV" }, { l: "PDF" }], head: ["REPORT", "PERIOD", "STATUS", "OWNER"], rows, empty: "No reports for your role.", noteTitle: title, noteLines: lines }} />
     </>

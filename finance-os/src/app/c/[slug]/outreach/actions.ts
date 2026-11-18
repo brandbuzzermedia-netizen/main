@@ -211,3 +211,12 @@ export async function enrollmentStatusAction(slug: string, fd: FormData) {
   revalidatePath(`/c/${slug}/outreach`);
   redirect(`/c/${slug}/outreach?campaign=${z.uuid().parse(fd.get("sequence_id"))}`);
 }
+
+/** Call list board: moves a lead between On the list, Reached out, Interested and Converted. */
+export async function moveLeadAction(slug: string, fd: FormData) {
+  const ctx = await writer(slug);
+  const status = z.enum(["new", "contacted", "qualified", "customer"]).parse(fd.get("status"));
+  const { error } = await ctx.supabase.from("contacts").update({ lead_status: status }).eq("id", z.uuid().parse(fd.get("id"))).eq("organization_id", ctx.company.id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/c/${slug}/outreach`);
+}
