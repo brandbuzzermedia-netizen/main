@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Caprasimo, Figtree, Newsreader, Outfit } from "next/font/google";
 import "./globals.css";
+import { AppServiceWorker } from "@/components/dp/app-install";
 
 // The Company OS design's typefaces: Figtree for text, Newsreader for the group, and each
 // company's own display face (Caprasimo for GBS, Outfit for Brightwire and IYP, Baloo 2 for Tan O' Fun).
@@ -29,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&display=swap" />
       </head>
-      <body className="min-h-full font-sans text-[15px]">{children}</body>
+      <body className="min-h-full font-sans text-[15px]">{children}<AppServiceWorker /></body>
     </html>
   );
 }

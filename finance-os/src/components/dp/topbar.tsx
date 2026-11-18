@@ -43,7 +43,7 @@ export function Bell({ href, count, hi }: { href: string; count: number; hi: str
   return (
     <Link href={href} title={count ? `${count} waiting for you` : "Nothing waiting for you"} aria-label={count ? `${count} items waiting for you` : "Notifications"}
       style={{ width: 40, height: 40, borderRadius: 10, border: `1px solid ${C.line}`, background: "#fff", display: "grid", placeItems: "center", position: "relative", color: C.ink, textDecoration: "none", flex: "none" }}>
-      ◔{count > 0 && <span style={{ position: "absolute", top: 8, right: 9, width: 8, height: 8, borderRadius: "50%", background: hi }} />}
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>{count > 0 && <span style={{ position: "absolute", top: 8, right: 9, width: 8, height: 8, borderRadius: "50%", background: hi }} />}
     </Link>
   );
 }
