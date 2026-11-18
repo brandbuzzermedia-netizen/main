@@ -26,10 +26,11 @@ function MoneyCard({ title, rows, footer }: { title: string; rows: GroupHomeVM["
 }
 
 /** Group Command Centre, exactly as the Company OS design. */
-export function GroupHome({ vm }: { vm: GroupHomeVM }) {
+export function GroupHome({ vm, setup }: { vm: GroupHomeVM; setup?: ReactNode }) {
   return (
     <>
       <PageHead own="Group Command Centre" treat="Authorised consolidated view" title={vm.title} right={<Cta href={vm.cta.href}>{vm.cta.label}</Cta>} />
+      {setup}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 14 }}>
         {vm.tiles.map((k) => {
           const body = <><div style={{ fontSize: 13, color: C.muted }}>{k.l}</div><div style={{ fontFamily: font, fontSize: 28, marginTop: 6 }}>{k.v}</div>{k.s && <div style={{ fontSize: 12, color: C.faint, marginTop: 2 }}>{k.s}</div>}</>;

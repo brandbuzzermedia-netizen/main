@@ -18,10 +18,11 @@ const DESK_TONE = [[side, "#fff"], [hi, side], [C.soft, side], [C.soft, side], [
 const SHADES = [side, "#2F5D4C", "#829487", hi, "#D8C490", "#B9B4A3", "#DAD5C3", "#8C2F39"];
 
 /** Company home, exactly as the Company OS design. */
-export function CompanyHome({ vm }: { vm: HomeVM }) {
+export function CompanyHome({ vm, guide }: { vm: HomeVM; guide?: ReactNode }) {
   return (
     <>
       <PageHead own={vm.own} treat={vm.treat} title={vm.title} right={<><Periods current={vm.period} base={vm.base} /><Cta href={vm.cta.href}>{vm.cta.label}</Cta></>} />
+      {guide}
       {vm.empty ? (
         <div style={{ background: "#fff", border: `1px dashed ${C.dashed}`, borderRadius: 16, padding: 36, maxWidth: 720 }}>
           <div style={{ fontFamily: font, fontSize: 28 }}>{vm.empty.title}</div>

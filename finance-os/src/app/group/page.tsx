@@ -7,6 +7,8 @@ import { todayInBusinessTz } from "@/domain/dates";
 import { formatShort } from "@/domain/money";
 import { designFor } from "@/domain/design";
 import { GroupHome } from "@/views/group-home";
+import { loadSetupGuide } from "@/lib/setup-guide";
+import { SetupProgressCard } from "@/components/dp/setup-guide";
 
 const NO = "—";
 
@@ -16,10 +18,13 @@ export default async function CommandCentre() {
   const period = periodRange("month", today, g.group.fy_start_month);
   const fy = financialYear(today, g.group.fy_start_month);
   const opsIds = companiesWith(g, "operations.read").map((c) => c.id);
-  const [{ cards, totals: t }, x, orders] = await Promise.all([
+  const owned = g.registry.filter((c) => g.access.get(c.id)?.permissions.has("dashboard.owner"));
+  const [{ cards, totals: t }, x, orders, guides] = await Promise.all([
     loadGroupDashboard(g, period), loadGroupExtras(g, period, today),
     opsIds.length ? g.supabase.from("orders").select("id", { count: "exact", head: true }).in("organization_id", opsIds).not("status", "in", "(delivered,cancelled,returned)") : Promise.resolve({ count: null }),
+    Promise.all(owned.map(async (c) => ({ c, guide: await loadSetupGuide(g.supabase, c) }))),
   ]);
+  const setupRows = guides.map(({ c, guide }) => ({ name: c.name, slug: c.slug, done: guide.done, total: guide.total, next: guide.steps.find((st) => !st.done)?.title ?? null }));
   const fin = t.includedFinance.length > 0;
   const crm = t.includedPipeline.length > 0;
   const L = x.ledgerSummary;
@@ -41,7 +46,7 @@ export default async function CommandCentre() {
   const rentalUnits = x.rental?.units ?? [];
 
   return (
-    <GroupHome vm={{
+    <GroupHome setup={<SetupProgressCard rows={setupRows} />} vm={{
       title: g.group.name, fyLabel: fy.label, cta: { label: "+ New lead", href: "/group/pipeline?add=1" },
       tiles: [
         { l: "Booked revenue", v: money(won, crm), s: "Accrual · deals won this month", href: "/group/pipeline" },

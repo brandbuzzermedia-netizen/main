@@ -5,6 +5,8 @@ import { parsePeriodKey, periodRange } from "@/domain/periods";
 import { formatDate, formatDayShort, formatTime, todayInBusinessTz } from "@/domain/dates";
 import { designFor } from "@/domain/design";
 import { CompanyHome } from "@/views/company-home";
+import { loadSetupGuide } from "@/lib/setup-guide";
+import { SetupGuideCard } from "@/components/dp/setup-guide";
 import { Cta, PageHead } from "@/components/dp/shell";
 import { Card, Grid, Line, Tile } from "@/components/dp/ui";
 import { C } from "@/components/dp/theme";
@@ -15,7 +17,8 @@ export default async function CompanyHomePage({ params, searchParams }: PageProp
   if (!ctx.can("dashboard.owner")) return <EmployeeHome ctx={ctx} />;
   const key = parsePeriodKey((await searchParams).period);
   const period = periodRange(key, todayInBusinessTz(), ctx.company.fy_start_month);
-  return <CompanyHome vm={await loadHomeVM(ctx, period, key)} />;
+  const [vm, guide] = await Promise.all([loadHomeVM(ctx, period, key), loadSetupGuide(ctx.supabase, ctx.company)]);
+  return <CompanyHome vm={vm} guide={<SetupGuideCard g={guide} />} />;
 }
 
 /** Employee home: only work assigned to this person. No company totals, no finance, no group figures. */
