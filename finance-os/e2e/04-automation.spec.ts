@@ -135,6 +135,19 @@ test("AI call recordings: switch on in settings; transcript and player in the ca
   expect([307, 401, 404]).toContain(anon.status());
 });
 
+test("automation: money workflows switch on (and always need approval) without an error", async ({ page }) => {
+  await page.goto("/c/demo-gbs/automation");
+  for (const name of ["Invoice due → collection task", "Invoice due → payment reminder with pay link"]) {
+    const on = page.getByRole("button", { name: `Turn on ${name}` });
+    if (await on.count()) {
+      await on.click();
+      await expect(page.getByRole("button", { name: `Turn off ${name}` })).toBeVisible();
+    }
+  }
+  const { data } = await admin().from("automation_definitions").select("template_key, is_financial, requires_approval").eq("organization_id", await orgId()).eq("name", "Invoice due → collection task").single();
+  expect(data).toMatchObject({ is_financial: true, requires_approval: true });
+});
+
 test("group outreach: every company's campaigns and capacity on one screen; launch a campaign in many companies", async ({ page }) => {
   await page.goto("/group/outreach");
   await expect(page.getByRole("heading", { name: "Outreach" })).toBeVisible();

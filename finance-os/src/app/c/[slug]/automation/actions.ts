@@ -23,10 +23,13 @@ async function definition(slug: string, name: string) {
   const key = sched ? sched.key : workflowKey(wf.n);
   const { data: existing } = await ctx.supabase.from("automation_definitions").select("id, enabled").eq("organization_id", ctx.company.id).eq("template_key", key).maybeSingle();
   if (existing) return { ctx, id: existing.id as string, wf };
-  const gated = wf.mode !== "Auto";
+  // Scheduled templates carry their own flags; design workflows that touch money always need approval
+  // (the database refuses a money workflow without it).
+  const financial = sched ? sched.isFinancial : /invoice|payment|refund|commission|disbursal/i.test(wf.n);
+  const gated = wf.mode !== "Auto" || financial;
   const { data, error } = await ctx.supabase.from("automation_definitions").insert({
     organization_id: ctx.company.id, template_key: key, name: wf.n, trigger_kind: sched ? sched.trigger : "record_change", trigger_detail: wf.trigger,
-    enabled: false, requires_approval: gated, is_financial: /invoice|payment|refund|commission|disbursal/i.test(wf.n), idempotent: true,
+    enabled: false, requires_approval: gated, is_financial: financial, idempotent: true,
     environment: process.env.N8N_ENVIRONMENT ?? "development",
   }).select("id").single();
   if (error) throw new Error(error.message);

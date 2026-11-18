@@ -15,6 +15,7 @@ export function Assistant({ slug, deals, enabled }: { slug: string; deals: { id:
         <Field label="What is the message for?" name="purpose"><Input name="purpose" required placeholder="Follow up on the proposal sent last week" /></Field>
         {s.error && <Alert tone="warn">{s.error}</Alert>}
         <div><Button variant="company" disabled={drafting || !enabled || deals.length === 0}>{drafting ? "Drafting…" : "Draft with Claude"}</Button></div>
+        {(!enabled || deals.length === 0) && <p className="text-xs text-muted">{!enabled ? "AI is switched off for this company: turn it on in Settings → AI and approvals." : "Add a deal in the pipeline first; drafts are written for a deal."}</p>}
       </form>
       {s.draft && (
         <form action={approve} className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
