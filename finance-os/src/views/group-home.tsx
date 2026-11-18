@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { C } from "@/components/dp/theme";
-import { Cta, PageHead } from "@/components/dp/shell";
+import { Cta, Eyebrow, TwoPartTitle } from "@/components/dp/shell";
+import { greeting } from "./company-home";
 import { font, side } from "@/components/dp/ui";
 
 export type GroupHomeVM = {
@@ -29,7 +30,13 @@ function MoneyCard({ title, rows, footer }: { title: string; rows: GroupHomeVM["
 export function GroupHome({ vm, setup }: { vm: GroupHomeVM; setup?: ReactNode }) {
   return (
     <>
-      <PageHead own="Group Command Centre" treat="Authorised consolidated view" title={vm.title} right={<Cta href={vm.cta.href}>{vm.cta.label}</Cta>} />
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 16, flexWrap: "wrap", marginBottom: 22 }}>
+        <div style={{ flex: 1, minWidth: 260 }}>
+          <Eyebrow>01 — Command Centre · {greeting().day}<span style={{ color: C.faint }}>· Authorised consolidated view</span></Eyebrow>
+          <TwoPartTitle bold={greeting().hello} italic={`${vm.title.replace(/ group$/i, "")}.`} size={50} />
+        </div>
+        <Cta href={vm.cta.href}>{vm.cta.label}</Cta>
+      </div>
       {setup}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 14 }}>
         {vm.tiles.map((k) => {

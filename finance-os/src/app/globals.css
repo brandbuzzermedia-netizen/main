@@ -148,3 +148,18 @@ body {
 .dp-tab[aria-current="page"] { color: var(--co-side); background: #EFE9D9; }
 .dp-tab-ic { font-size: 18px; line-height: 1; }
 .dp-tab-badge { position: absolute; top: 2px; right: 22%; background: var(--co-hi); color: var(--co-side); font-size: 10px; font-weight: 700; border-radius: 8px; padding: 0 5px; }
+
+/* More of Us OS layout, applied to every workspace (each keeps its own logo and colours). */
+.dp-content [style*="border-radius:16px"], .dp-content [style*="border-radius: 16px"],
+.dp-content [style*="border-radius:14px"], .dp-content [style*="border-radius: 14px"],
+.dp-content [style*="border-radius:12px"], .dp-content [style*="border-radius: 12px"] { border-radius: 6px !important; }
+.dp-content button[style*="border-radius:9px"], .dp-content button[style*="border-radius: 9px"],
+.dp-content a[style*="border-radius:9px"], .dp-content a[style*="border-radius: 9px"],
+.dp-content button[style*="border-radius:8px"], .dp-content button[style*="border-radius: 8px"],
+.dp-content a[style*="border-radius:10px"], .dp-content a[style*="border-radius: 10px"] { border-radius: 3px !important; }
+.dp-content [style*="background:#fff;"], .dp-content [style*="background: rgb(255, 255, 255)"] { background-color: #F7F6F3 !important; }
+.dp-content [style*="font-family:var(--co-font)"], .dp-content [style*="font-family: var(--co-font)"] {
+  font-family: var(--font-tight), sans-serif !important; font-weight: 800 !important; letter-spacing: -0.025em;
+}
+.dp-content input:not([type=checkbox]):not([type=radio]), .dp-content select, .dp-content textarea { border-radius: 3px !important; }
+.dp-root .dp-nav:hover { color: #fff !important; }

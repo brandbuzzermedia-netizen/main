@@ -13,7 +13,7 @@ export default async function GroupLayout({ children }: LayoutProps<"/group">) {
   const { data } = await g.supabase.from("family_groups").select("disabled_modules").eq("id", g.group.id).maybeSingle();
   const approvals = await groupApprovals(g);
   return (
-    <DpShell theme={groupTheme(g.group.name)} wsId={`group-${g.group.id}`} homeHref="/group"
+    <DpShell theme={groupTheme(g.group.name)} wsId={`group-${g.group.id}`} homeHref="/group" plusHref="/group/pipeline?add=1"
       nav={dpGroupNav((data?.disabled_modules as string[] | undefined) ?? [], g.group.role === "group_owner", approvals)}
       stop={null}
       note={g.group.is_demo ? "Demo data only. Never mixed with production." : "Totals include only companies you are a member of."}

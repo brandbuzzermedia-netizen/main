@@ -22,7 +22,7 @@ export default async function CompanyLayout({ children, params }: LayoutProps<"/
   const { data: holds } = await ctx.supabase.from("work_holds").select("client:clients(legal_name)").eq("organization_id", c.id).eq("status", "active").limit(20);
   const onHold = ((holds ?? []) as unknown as { client: { legal_name: string } | null }[]).map((h) => h.client?.legal_name ?? "A client");
   return (
-    <DpShell theme={theme} wsId={c.id} homeHref={`/c/${slug}`}
+    <DpShell theme={theme} wsId={c.id} homeHref={`/c/${slug}`} plusHref={ctx.can("crm.write") ? `/c/${slug}/pipeline?add=1` : undefined}
       nav={dpCompanyNav(c, (p) => ctx.can(p as never), { role: ctx.role, approvals: ap.automation })}
       stop={{ slug, on: c.emergency_stop, can: ctx.can("company.emergency_stop"), action: toggleStopAction.bind(null, slug) }}
       note={c.is_demo ? "Demo data only. Never mixed with production." : "Figures come from approved records only."}

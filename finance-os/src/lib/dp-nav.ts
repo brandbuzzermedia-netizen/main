@@ -3,8 +3,16 @@ import { moduleInfo, type ModuleKey } from "@/domain/registry";
 import type { DpNavItem } from "@/components/dp/sidebar";
 
 type CompanyLike = { slug: string; enabled_modules: ModuleKey[] };
-const COMPANY_ORDER: ModuleKey[] = ["home", "leads", "pipeline", "outreach", "meetings", "customers", "operations", "automation", "marketing", "finance", "team", "reports", "vault", "settings"];
-const GROUP_ORDER: ModuleKey[] = ["home", "pipeline", "outreach", "meetings", "automation", "finance", "rental", "expenses", "tax", "team", "reports", "vault", "settings"];
+/** Sidebar sections, in the More of Us OS layout. */
+const SECTION: Partial<Record<ModuleKey, string>> = {
+  home: "Overview", leads: "Sales", outreach: "Sales", pipeline: "Sales", meetings: "Sales", customers: "Sales",
+  operations: "Operations", marketing: "Operations", automation: "Operations",
+  finance: "Finance", rental: "Finance", expenses: "Finance", tax: "Finance",
+  team: "People & insight", reports: "People & insight", vault: "System", settings: "System",
+};
+const GROUP_SECTION: Partial<Record<ModuleKey, string>> = { ...SECTION, automation: "System" };
+const COMPANY_ORDER: ModuleKey[] = ["home", "outreach", "leads", "pipeline", "meetings", "customers", "operations", "marketing", "automation", "finance", "team", "reports", "vault", "settings"];
+const GROUP_ORDER: ModuleKey[] = ["home", "pipeline", "outreach", "meetings", "finance", "rental", "expenses", "tax", "team", "reports", "automation", "vault", "settings"];
 
 /**
  * Company menu in the design's order with the company's own names (e.g. Tan O' Fun "Quotes & orders").
@@ -32,7 +40,7 @@ export function dpCompanyNav(c: CompanyLike, can: (p: string) => boolean, opts: 
   return COMPANY_ORDER.filter((k) => c.enabled_modules.includes(k) || k === "home" || k === "settings")
     .filter((k) => allowed[k])
     .map((k) => ({
-      key: k, label: d.ren[k] ?? moduleInfo(k).label, icon: moduleInfo(k).icon,
+      key: k, label: k === "home" ? "Dashboard" : d.ren[k] ?? moduleInfo(k).label, icon: moduleInfo(k).icon, section: SECTION[k],
       href: k === "home" ? base : `${base}/${k}`,
       badge: k === "automation" && opts.approvals ? String(opts.approvals) : undefined,
     }));
@@ -43,5 +51,5 @@ export function dpGroupNav(disabled: string[], isOwner: boolean, approvals: numb
     rental: "/group/rental", expenses: "/group/expenses", tax: "/group/tax", team: "/group/people", reports: "/group/reports", vault: "/group/vault", settings: "/group/settings" };
   return GROUP_ORDER.filter((k) => k === "home" || k === "settings" || !disabled.includes(k))
     .filter((k) => k !== "settings" || isOwner)
-    .map((k) => ({ key: k, label: GROUP_DESIGN.ren[k] ?? moduleInfo(k).label, icon: moduleInfo(k).icon, href: href[k]!, badge: k === "automation" && approvals ? String(approvals) : undefined }));
+    .map((k) => ({ key: k, label: k === "home" ? "Command Centre" : GROUP_DESIGN.ren[k] ?? moduleInfo(k).label, icon: moduleInfo(k).icon, section: GROUP_SECTION[k], href: href[k]!, badge: k === "automation" && approvals ? String(approvals) : undefined }));
 }
