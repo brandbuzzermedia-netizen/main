@@ -5,11 +5,14 @@ import { financialYear } from "@/domain/periods";
 import { formatShort } from "@/domain/money";
 import { C } from "./theme";
 import { label } from "./ui";
+import { BadgeRow } from "./activity";
+import { badgesFor, loadPersonStats } from "@/lib/activity";
 
 const initials = (n: string) => n.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((x) => x[0]!.toUpperCase()).join("");
 
 /** One team, one goal (More of Us OS): each person's month against their target, and how they are working. */
 export async function TeamTargets({ ctx, members }: { ctx: CompanyContext; members: Member[] }) {
+  const personStats = await loadPersonStats(ctx.supabase, [ctx.company.id], members.map((m) => m.user_id), ctx.company.fy_start_month);
   const today = todayInBusinessTz();
   const month = `${today.slice(0, 7)}-01T00:00:00+05:30`;
   const fy = financialYear(today, ctx.company.fy_start_month);
@@ -54,6 +57,7 @@ export async function TeamTargets({ ctx, members }: { ctx: CompanyContext; membe
                 {stat("Open", formatShort(sum(open)))}{stat("Win rate", fyWon.length + fyLost.length ? `${Math.round((fyWon.length / (fyWon.length + fyLost.length)) * 100)}%` : "—")}{stat("FY won", formatShort(sum(fyWon)))}
                 {stat("Deals", open.length)}{stat("Mtgs / wk", ((meets ?? []) as { owner_id: string | null }[]).filter((x) => x.owner_id === m.user_id).length)}{stat("Follow-ups", ((tasks ?? []) as { assignee_id: string | null }[]).filter((x) => x.assignee_id === m.user_id).length)}
               </div>
+              <div style={{ marginTop: 14 }}><BadgeRow badges={badgesFor(personStats.get(m.user_id)!)} compact /></div>
               <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
                 <a href={`/c/${ctx.company.slug}/pipeline?owner=${m.user_id}`} style={{ border: `1px solid ${C.btnLine}`, borderRadius: 3, padding: "7px 12px", fontSize: 13, fontWeight: 600, color: C.ink, textDecoration: "none", background: "#fff" }}>Their pipeline</a>
                 <a href={`/c/${ctx.company.slug}/followups?owner=${m.user_id === ctx.userId ? "me" : "all"}`} style={{ border: `1px solid ${C.btnLine}`, borderRadius: 3, padding: "7px 12px", fontSize: 13, fontWeight: 600, color: C.ink, textDecoration: "none", background: "#fff" }}>Their follow-ups</a>

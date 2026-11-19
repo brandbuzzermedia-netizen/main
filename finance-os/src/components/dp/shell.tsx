@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Sidebar, type DpNavItem, type StopControl } from "./sidebar";
-import { Bell, Me, MenuButton, Search, Switcher, type WsOption } from "./topbar";
+import { Bell, Me, MenuButton, Search, Switcher, type BellItem, type WsOption } from "./topbar";
+import { markActivitySeenAction } from "@/app/activity-actions";
 import { WorkspaceLoader } from "./loader";
 import { TabBar } from "./tabbar";
 import { InstallButton } from "./app-install";
@@ -10,7 +11,7 @@ import { C, type Theme } from "./theme";
 export function DpShell({ theme, wsId, nav, homeHref, stop, note, switcher, search, bell, user, banner, children, plusHref }: {
   theme: Theme; wsId: string; nav: DpNavItem[]; homeHref: string; stop: StopControl; note: string;
   switcher: { options: WsOption[]; current: string }; search: { placeholder: string; action: string };
-  bell: { href: string; count: number }; user: { initials: string; name: string; role: string };
+  bell: { href: string; count: number; items?: BellItem[]; unread?: number; allHref?: string }; user: { initials: string; name: string; role: string };
   banner?: ReactNode; children: ReactNode; plusHref?: string;
 }) {
   const vars = { "--co-side": theme.side, "--co-hi": theme.hi, "--co-acc": theme.acc, "--co-font": theme.font, "--co-btn": theme.btn } as CSSProperties;
@@ -25,7 +26,7 @@ export function DpShell({ theme, wsId, nav, homeHref, stop, note, switcher, sear
           <Switcher options={switcher.options} current={switcher.current} acc={theme.btn} />
           <div className="dp-spacer" style={{ flex: 1 }} />
           <InstallButton />
-          <Bell href={bell.href} count={bell.count} hi={theme.btn} />
+          <Bell href={bell.href} count={bell.count} hi={theme.btn} items={bell.items} unread={bell.unread} allHref={bell.allHref} markSeen={markActivitySeenAction} />
           <Me initials={user.initials} name={user.name} role={user.role} side={C.ink} />
           {plusHref && (
             <a href={plusHref} aria-label="New" title="New" style={{ width: 40, height: 40, borderRadius: "50%", background: theme.btn, color: "#fff", display: "grid", placeItems: "center", fontSize: 22, fontWeight: 400, textDecoration: "none", flex: "none" }}>+</a>

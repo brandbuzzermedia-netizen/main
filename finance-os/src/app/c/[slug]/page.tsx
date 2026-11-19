@@ -7,6 +7,7 @@ import { designFor } from "@/domain/design";
 import { CompanyHome } from "@/views/company-home";
 import { loadSetupGuide } from "@/lib/setup-guide";
 import { SetupGuideCard } from "@/components/dp/setup-guide";
+import { TeamPulse } from "@/components/dp/team-pulse";
 import { Cta, PageHead } from "@/components/dp/shell";
 import { Card, Grid, Line, Tile } from "@/components/dp/ui";
 import { C } from "@/components/dp/theme";
@@ -18,7 +19,12 @@ export default async function CompanyHomePage({ params, searchParams }: PageProp
   const key = parsePeriodKey((await searchParams).period);
   const period = periodRange(key, todayInBusinessTz(), ctx.company.fy_start_month);
   const [vm, guide] = await Promise.all([loadHomeVM(ctx, period, key), loadSetupGuide(ctx.supabase, ctx.company)]);
-  return <CompanyHome vm={vm} guide={<SetupGuideCard g={guide} />} />;
+  return (
+    <>
+      <CompanyHome vm={vm} guide={<SetupGuideCard g={guide} />} />
+      <TeamPulse db={ctx.supabase} orgs={[{ id: ctx.company.id, name: ctx.company.name }]} userId={ctx.userId} fyStartMonth={ctx.company.fy_start_month} />
+    </>
+  );
 }
 
 /** Employee home: only work assigned to this person. No company totals, no finance, no group figures. */
@@ -51,6 +57,7 @@ async function EmployeeHome({ ctx }: { ctx: CompanyContext }) {
             : w.meetings.map((m) => <Line key={m.id} left={m.title} right={`${formatDayShort(m.starts_at)} ${formatTime(m.starts_at)}`} strong={false} />)}
         </Card>
       </Grid>
+      <TeamPulse db={ctx.supabase} orgs={[{ id: ctx.company.id, name: ctx.company.name }]} userId={ctx.userId} fyStartMonth={ctx.company.fy_start_month} />
     </>
   );
 }

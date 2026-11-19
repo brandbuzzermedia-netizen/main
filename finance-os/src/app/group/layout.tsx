@@ -4,6 +4,8 @@ import { dpGroupNav } from "@/lib/dp-nav";
 import { groupApprovals, wsOptions } from "@/lib/dp-chrome";
 import { groupTheme } from "@/components/dp/theme";
 import { DpShell } from "@/components/dp/shell";
+import { loadActivity, unreadActivity } from "@/lib/activity";
+import { toBellItems } from "@/components/dp/activity";
 
 export const metadata: Metadata = { title: { default: "Command Centre", template: "%s · Diwani Parivaar OS" } };
 
@@ -11,7 +13,8 @@ export const metadata: Metadata = { title: { default: "Command Centre", template
 export default async function GroupLayout({ children }: LayoutProps<"/group">) {
   const g = await getGroupContext();
   const { data } = await g.supabase.from("family_groups").select("disabled_modules").eq("id", g.group.id).maybeSingle();
-  const approvals = await groupApprovals(g);
+  const orgs = g.registry.filter((c) => g.access.has(c.id)).map((c) => ({ id: c.id, name: c.name }));
+  const [approvals, activity, unread] = await Promise.all([groupApprovals(g), loadActivity(g.supabase, orgs, 10), unreadActivity(g.supabase, orgs.map((o) => o.id), g.userId)]);
   return (
     <DpShell theme={groupTheme(g.group.name)} wsId={`group-${g.group.id}`} homeHref="/group" plusHref="/group/pipeline?add=1"
       nav={dpGroupNav((data?.disabled_modules as string[] | undefined) ?? [], g.group.role === "group_owner", approvals)}
@@ -19,7 +22,7 @@ export default async function GroupLayout({ children }: LayoutProps<"/group">) {
       note={g.group.is_demo ? "Demo data only. Never mixed with production." : "Totals include only companies you are a member of."}
       switcher={{ options: wsOptions(g.group.name, g.memberships), current: "group" }}
       search={{ placeholder: `Search in ${g.group.name} only…`, action: "/group/search" }}
-      bell={{ href: "/group/automation", count: approvals }}
+      bell={{ href: "/group/automation", count: approvals, items: toBellItems(activity, true), unread, allHref: "/group#activity" }}
       user={{ initials: g.initials, name: g.displayName, role: g.group.role === "group_owner" ? "Company owner" : ROLE_LABELS[g.group.role] }}
       >
       {children}

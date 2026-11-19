@@ -4,6 +4,8 @@ import { dpCompanyNav } from "@/lib/dp-nav";
 import { companyApprovals, wsOptions } from "@/lib/dp-chrome";
 import { companyTheme } from "@/components/dp/theme";
 import { DpShell, HoldBanner, StopBanner } from "@/components/dp/shell";
+import { loadActivity, unreadActivity } from "@/lib/activity";
+import { toBellItems } from "@/components/dp/activity";
 import { toggleStopAction } from "./actions";
 
 export async function generateMetadata({ params }: LayoutProps<"/c/[slug]">): Promise<Metadata> {
@@ -18,7 +20,7 @@ export default async function CompanyLayout({ children, params }: LayoutProps<"/
   const ctx = await getCompanyContext(slug);
   const c = ctx.company;
   const theme = companyTheme(c);
-  const ap = await companyApprovals(ctx);
+  const [ap, activity, unread] = await Promise.all([companyApprovals(ctx), loadActivity(ctx.supabase, [{ id: c.id, name: c.name }], 10), unreadActivity(ctx.supabase, [c.id], ctx.userId)]);
   const { data: holds } = await ctx.supabase.from("work_holds").select("client:clients(legal_name)").eq("organization_id", c.id).eq("status", "active").limit(20);
   const onHold = ((holds ?? []) as unknown as { client: { legal_name: string } | null }[]).map((h) => h.client?.legal_name ?? "A client");
   return (
@@ -28,7 +30,7 @@ export default async function CompanyLayout({ children, params }: LayoutProps<"/
       note={c.is_demo ? "Demo data only. Never mixed with production." : "Figures come from approved records only."}
       switcher={{ options: wsOptions(ctx.group?.name ?? null, ctx.memberships), current: slug }}
       search={{ placeholder: `Search in ${c.name} only…`, action: `/c/${slug}/search` }}
-      bell={{ href: ap.automation ? `/c/${slug}/automation` : `/c/${slug}/finance/ledger`, count: ap.automation + ap.ledger }}
+      bell={{ href: ap.automation ? `/c/${slug}/automation` : `/c/${slug}/finance/ledger`, count: ap.automation + ap.ledger, items: toBellItems(activity), unread, allHref: `/c/${slug}#activity` }}
       user={{ initials: ctx.initials, name: ctx.displayName, role: ROLE_LABELS[ctx.role] ?? ctx.role }}
       banner={<>{c.emergency_stop && <StopBanner name={c.name} />}{onHold.length > 0 && <HoldBanner slug={slug} clients={onHold} />}</>}>
       {children}

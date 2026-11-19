@@ -39,12 +39,51 @@ export function Search({ placeholder, action }: { placeholder: string; action: s
   );
 }
 
-export function Bell({ href, count, hi }: { href: string; count: number; hi: string }) {
+export type BellItem = { id: string; actor: string; title: string; amount?: string; when: string; org?: string; icon: string };
+
+/** Notifications: what is waiting for you, and the team's latest activity. Opening marks it read. */
+export function Bell({ href, count, hi, items = [], unread = 0, allHref, markSeen }: {
+  href: string; count: number; hi: string; items?: BellItem[]; unread?: number; allHref?: string; markSeen?: () => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [badge, setBadge] = useState(unread + count);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [open]);
+  const toggle = () => {
+    setOpen((o) => !o);
+    if (!open && unread && markSeen) { setBadge(count); void markSeen(); }
+  };
   return (
-    <Link href={href} title={count ? `${count} waiting for you` : "Nothing waiting for you"} aria-label={count ? `${count} items waiting for you` : "Notifications"}
-      style={{ width: 40, height: 40, borderRadius: 10, border: `1px solid ${C.line}`, background: "#fff", display: "grid", placeItems: "center", position: "relative", color: C.ink, textDecoration: "none", flex: "none" }}>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>{count > 0 && <span style={{ position: "absolute", top: 8, right: 9, width: 8, height: 8, borderRadius: "50%", background: hi }} />}
-    </Link>
+    <div ref={ref} style={{ position: "relative", flex: "none" }}>
+      <button type="button" onClick={toggle} aria-expanded={open} aria-label={badge ? `${badge} new notifications` : "Notifications"} title="Notifications"
+        style={{ width: 40, height: 40, borderRadius: 10, border: `1px solid ${C.line}`, background: "#fff", display: "grid", placeItems: "center", position: "relative", color: C.ink, cursor: "pointer" }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+        {badge > 0 && <span style={{ position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, background: hi, color: "#fff", fontSize: 10.5, fontWeight: 700, display: "grid", placeItems: "center", padding: "0 4px" }}>{badge > 99 ? "99+" : badge}</span>}
+      </button>
+      {open && (
+        <div role="dialog" aria-label="Notifications" style={{ position: "absolute", right: 0, top: 48, width: "min(380px, calc(100vw - 32px))", maxHeight: 480, overflowY: "auto", background: "#fff", border: `1px solid ${C.line}`, borderRadius: 6, boxShadow: "0 14px 40px rgba(0,0,0,.14)", zIndex: 40 }}>
+          {count > 0 && (
+            <Link href={href} onClick={() => setOpen(false)} style={{ display: "flex", justifyContent: "space-between", padding: "12px 14px", background: "#141414", color: "#fff", textDecoration: "none", fontSize: 13.5, fontWeight: 600 }}>
+              <span>{count} waiting for your approval</span><span>Review →</span>
+            </Link>
+          )}
+          <div style={{ fontFamily: "var(--font-mono), monospace", fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", color: C.muted, padding: "12px 14px 4px" }}>Team activity</div>
+          {items.length === 0 && <div style={{ padding: "10px 14px 16px", fontSize: 13.5, color: C.muted }}>Nothing new yet.</div>}
+          {items.map((a) => (
+            <div key={a.id} style={{ display: "flex", gap: 10, padding: "10px 14px", borderTop: `1px solid ${C.line2}`, fontSize: 13.5, lineHeight: 1.4 }}>
+              <span aria-hidden style={{ width: 24, textAlign: "center" }}>{a.icon}</span>
+              <span style={{ flex: 1 }}><b>{a.actor}</b> {a.title}{a.amount ? <b> · {a.amount}</b> : null}<span style={{ display: "block", fontSize: 11.5, color: C.faint }}>{a.org ? `${a.org} · ` : ""}{a.when}</span></span>
+            </div>
+          ))}
+          {allHref && <Link href={allHref} onClick={() => setOpen(false)} style={{ display: "block", textAlign: "center", padding: "11px", borderTop: `1px solid ${C.line2}`, fontSize: 13, fontWeight: 600, color: C.ink, textDecoration: "none" }}>See all activity →</Link>}
+        </div>
+      )}
+    </div>
   );
 }
 
