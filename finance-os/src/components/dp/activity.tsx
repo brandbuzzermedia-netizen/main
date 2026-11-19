@@ -3,8 +3,9 @@ import { formatShort } from "@/domain/money";
 import type { ActivityItem, Badge } from "@/lib/activity";
 import { C } from "./theme";
 import { label } from "./ui";
+import { Glyph, KIND_GLYPH } from "./icons";
 
-export const KIND_ICON: Record<string, string> = { deal_won: "🏆", deal_created: "＋", proposal_sent: "✉", proposal_accepted: "✓", meeting_booked: "◷", task_done: "☑", positive_reply: "★", payment_received: "₹", member_joined: "👋" };
+export const KIND_ICON = KIND_GLYPH;
 const box = { background: C.card, border: `1px solid ${C.line}`, borderRadius: 6, padding: "20px 22px" } as const;
 const head = (t: string, it: string) => (
   <div style={{ fontFamily: "var(--font-tight), sans-serif", fontWeight: 800, fontSize: 22, letterSpacing: "-.02em", marginBottom: 6 }}>
@@ -15,7 +16,7 @@ const head = (t: string, it: string) => (
 export function ActivityLine({ a, showOrg }: { a: ActivityItem; showOrg?: boolean }) {
   return (
     <div style={{ display: "flex", gap: 10, padding: "10px 0", borderTop: `1px solid ${C.line2}`, fontSize: 13.5, lineHeight: 1.4 }}>
-      <span aria-hidden style={{ width: 26, height: 26, flex: "none", borderRadius: "50%", background: a.kind === "deal_won" ? "var(--co-btn)" : C.soft, color: a.kind === "deal_won" ? "#fff" : C.ink, display: "grid", placeItems: "center", fontSize: 12 }}>{KIND_ICON[a.kind] ?? "•"}</span>
+      <span aria-hidden style={{ width: 26, height: 26, flex: "none", borderRadius: "50%", background: a.kind === "deal_won" ? "var(--co-btn)" : C.soft, color: a.kind === "deal_won" ? "#fff" : C.ink, display: "grid", placeItems: "center", fontSize: 12 }}><Glyph name={KIND_GLYPH[a.kind] ?? "plus"} size={14} /></span>
       <span style={{ flex: 1, minWidth: 0 }}>
         <b>{a.actor}</b> {a.title}{a.amountMinor ? <b> · {formatShort(a.amountMinor)}</b> : null}
         <span style={{ display: "block", fontSize: 11.5, color: C.faint, marginTop: 1 }}>{showOrg && a.orgName ? `${a.orgName} · ` : ""}{formatDateTime(a.at)}</span>
@@ -59,7 +60,7 @@ export function BadgeRow({ badges, compact }: { badges: Badge[]; compact?: boole
     <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
       {badges.filter((b) => !compact || b.earned).map((b) => (
         <div key={b.key} title={b.detail} style={{ border: `1px solid ${b.earned ? "transparent" : C.line}`, background: b.earned ? C.ink : "#fff", color: b.earned ? "#fff" : C.muted, borderRadius: 3, padding: compact ? "4px 8px" : "8px 10px", minWidth: compact ? 0 : 140 }}>
-          <div style={{ fontSize: compact ? 11.5 : 13, fontWeight: 700 }}>{b.earned ? "★ " : ""}{b.label}</div>
+          <div style={{ fontSize: compact ? 11.5 : 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 5 }}>{b.earned && <Glyph name="star" size={compact ? 11 : 13} />}{b.label}</div>
           {!compact && (
             <>
               <div style={{ fontSize: 11.5, marginTop: 3, color: b.earned ? "rgba(255,255,255,.7)" : C.faint }}>{b.detail}</div>
@@ -86,5 +87,5 @@ export function AchievementsCard({ badges, title = "My achievements" }: { badges
 
 /** Notification rows for the top-bar bell. */
 export function toBellItems(items: ActivityItem[], showOrg = false) {
-  return items.map((a) => ({ id: a.id, actor: a.actor, title: a.title, amount: a.amountMinor ? formatShort(a.amountMinor) : undefined, when: formatDateTime(a.at), org: showOrg ? a.orgName : undefined, icon: KIND_ICON[a.kind] ?? "•" }));
+  return items.map((a) => ({ id: a.id, actor: a.actor, title: a.title, amount: a.amountMinor ? formatShort(a.amountMinor) : undefined, when: formatDateTime(a.at), org: showOrg ? a.orgName : undefined, icon: KIND_GLYPH[a.kind] ?? "plus" }));
 }

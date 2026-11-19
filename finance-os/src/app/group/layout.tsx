@@ -23,7 +23,7 @@ export default async function GroupLayout({ children }: LayoutProps<"/group">) {
       switcher={{ options: wsOptions(g.group.name, g.memberships), current: "group" }}
       search={{ placeholder: `Search in ${g.group.name} only…`, action: "/group/search" }}
       bell={{ href: "/group/automation", count: approvals, items: toBellItems(activity, true), unread, allHref: "/group#activity" }}
-      user={{ initials: g.initials, name: g.displayName, role: g.group.role === "group_owner" ? "Company owner" : ROLE_LABELS[g.group.role] }}
+      user={{ initials: g.initials, name: g.displayName, role: g.group.role === "group_owner" ? "Super admin · Diwani Parivaar" : ROLE_LABELS[g.group.role] }}
       >
       {children}
     </DpShell>

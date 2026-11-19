@@ -44,7 +44,7 @@ test.describe("owner", () => {
     const { data: seen } = await db.from("activity_seen").select("seen_at").eq("user_id", me!.user_id).single();
     expect(Date.parse(seen!.seen_at)).toBeGreaterThan(Date.now() - 120_000);
     await page.goto("/c/demo-gbs/team");
-    await expect(page.locator("article").first()).toContainText(/★|No badges yet/);
+    await expect(page.locator("article").first()).toContainText(/Five wins|First win|No badges yet/);
     await page.goto("/group#activity");
     await expect(page.getByRole("dialog", { name: "Team activity" })).toContainText("Get Bee Seen");
   });

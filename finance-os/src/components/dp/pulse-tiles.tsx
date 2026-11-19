@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
-import type { ActivityItem, Badge, MonthAchievement } from "@/lib/activity";
-import { fetchActivityAction } from "@/app/activity-actions";
+import type { ActivityItem, Badge, Celebration, MonthAchievement } from "@/lib/activity";
+import { fetchActivityAction, giveKudosAction } from "@/app/activity-actions";
+import { Celebrate } from "./celebrate";
+import { Glyph, KIND_GLYPH } from "./icons";
 
-const ICON: Record<string, string> = { deal_won: "🏆", deal_created: "＋", proposal_sent: "✉", proposal_accepted: "✓", meeting_booked: "◷", task_done: "☑", positive_reply: "★", payment_received: "₹", member_joined: "👋" };
+const CHEER = new Set(["deal_won", "proposal_accepted", "positive_reply", "meeting_booked", "task_done", "member_joined"]);
+
 const inr = (m: number) => { const r = m / 100; return r >= 1e7 ? `₹${(r / 1e7).toFixed(1)} Cr` : r >= 1e5 ? `₹${(r / 1e5).toFixed(1)} L` : `₹${Math.round(r).toLocaleString("en-IN")}`; };
 const when = (iso: string) => new Date(iso).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 const todayIST = () => new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10);
@@ -38,11 +41,20 @@ function Modal({ label, onClose, style, children }: { label: string; onClose: ()
 }
 
 /** Team activity (live) and Achievements as two brand-coloured tiles; each opens its own pop-up. */
-export function PulseTiles({ orgs, initial, showOrg, month, badges, board, meId }: {
+export function PulseTiles({ orgs, initial, showOrg, month, badges, board, meId, celebrations, firstName }: {
   orgs: { id: string; name: string }[]; initial: ActivityItem[]; showOrg?: boolean; month: MonthAchievement[]; badges: Badge[];
-  board: { actorId: string; name: string; wonMinor: number; wins: number }[]; meId: string;
+  board: { actorId: string; name: string; wonMinor: number; wins: number }[]; meId: string; celebrations: Celebration[]; firstName: string;
 }) {
   const [items, setItems] = useState(initial);
+  const [sent, setSent] = useState<Record<string, string>>({});
+  const cheer = async (key: string, org: string, to: string) => {
+    setSent((x) => ({ ...x, [key]: "Sending…" }));
+    const r = await giveKudosAction(org, to);
+    setSent((x) => ({ ...x, [key]: "error" in r ? String(r.error) : "Congratulated" }));
+  };
+  const cheerBtn = (key: string, org: string, to: string, onDark = true) => sent[key]
+    ? <span style={{ fontSize: 12, color: onDark ? "rgba(255,255,255,.75)" : "inherit", whiteSpace: "nowrap" }}>{sent[key]}</span>
+    : <button type="button" onClick={() => void cheer(key, org, to)} style={{ background: "rgba(255,255,255,.12)", border: "1px solid rgba(255,255,255,.2)", color: "#fff", borderRadius: 999, padding: "5px 10px", fontSize: 12.5, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 6 }}><Glyph name="clap" size={14} />Congratulate</button>;
   const [open, setOpen] = useState<"activity" | "achievements" | null>(null);
   useEffect(() => {
     const t = window.setInterval(async () => { try { setItems(await fetchActivityAction(orgs)); } catch { /* offline: keep the last list */ } }, 30_000);
@@ -66,6 +78,7 @@ export function PulseTiles({ orgs, initial, showOrg, month, badges, board, meId 
   );
   return (
     <>
+      <Celebrate items={celebrations} firstName={firstName} />
       <div id="activity" style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 20, scrollMarginTop: 96 }}>
         {tile("activity", person, <>Team activity <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, color: "#9BE3A0" }}><span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4CAF50" }} />Live</span></>,
           today.length ? `${today.length} update${today.length === 1 ? "" : "s"} today · ${latest.actor} ${latest.title}` : "Quiet so far today")}
@@ -83,11 +96,12 @@ export function PulseTiles({ orgs, initial, showOrg, month, badges, board, meId 
             {items.length === 0 && <div style={{ textAlign: "center", color: "rgba(255,255,255,.6)", padding: "26px 0 10px" }}>No activity yet.</div>}
             {items.map((a) => (
               <div key={a.id} style={{ display: "flex", gap: 12, padding: "12px 0", borderTop: "1px solid rgba(255,255,255,.08)", fontSize: 14, lineHeight: 1.45 }}>
-                {iconDot(a.kind === "deal_won" ? "var(--co-btn)" : "rgba(255,255,255,.08)", <span style={{ fontSize: 14 }}>{ICON[a.kind] ?? "•"}</span>, 32)}
+                {iconDot(a.kind === "deal_won" ? "var(--co-btn)" : "rgba(255,255,255,.08)", <Glyph name={KIND_GLYPH[a.kind] ?? "plus"} size={15} />, 32)}
                 <span style={{ flex: 1 }}>
                   <b>{a.actor}</b> <span style={{ color: "rgba(255,255,255,.85)" }}>{a.title}</span>{a.amountMinor ? <b> · {inr(a.amountMinor)}</b> : null}
                   <span style={{ display: "block", fontSize: 12, color: "rgba(255,255,255,.5)" }}>{showOrg && a.orgName ? `${a.orgName} · ` : ""}{when(a.at)}</span>
                 </span>
+                {a.actorId && a.actorId !== meId && CHEER.has(a.kind) && <span style={{ alignSelf: "center" }}>{cheerBtn(`a:${a.id}`, a.org, a.actorId)}</span>}
               </div>
             ))}
           </div>
@@ -106,7 +120,7 @@ export function PulseTiles({ orgs, initial, showOrg, month, badges, board, meId 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(170px,1fr))", gap: 10, marginTop: 20, position: "relative" }}>
             {month.map((m) => (
               <div key={m.key} style={{ borderRadius: 14, padding: "10px 12px", background: m.earned ? "rgba(255,255,255,.16)" : "rgba(0,0,0,.18)", border: `1px solid rgba(255,255,255,${m.earned ? ".3" : ".08"})`, opacity: m.earned ? 1 : 0.75 }}>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>{m.icon} {m.label}</div>
+                <div style={{ fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", gap: 7 }}><Glyph name={m.icon} size={15} />{m.label}</div>
                 <div style={{ fontSize: 12, color: "rgba(255,255,255,.7)", marginTop: 2 }}>{m.earned ? "Unlocked · " : ""}{m.detail}</div>
               </div>
             ))}
@@ -117,6 +131,7 @@ export function PulseTiles({ orgs, initial, showOrg, month, badges, board, meId 
               {board.slice(0, 5).map((r, i) => (
                 <div key={r.actorId} style={{ display: "flex", gap: 10, padding: "7px 0", borderTop: "1px solid rgba(255,255,255,.1)", fontSize: 14, fontWeight: r.actorId === meId ? 700 : 500 }}>
                   <span style={{ width: 20 }}>{i + 1}</span><span style={{ flex: 1 }}>{r.name}{r.actorId === meId ? " (you)" : ""}</span><span>{r.wins} win{r.wins === 1 ? "" : "s"} · {inr(r.wonMinor)}</span>
+                  {r.actorId !== meId && orgs.length === 1 && cheerBtn(`l:${r.actorId}`, orgs[0].id, r.actorId)}
                 </div>
               ))}
             </div>

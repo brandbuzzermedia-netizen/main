@@ -10,7 +10,7 @@ const nameOf = (u: { full_name: string | null; email: string | null } | null) =>
 export async function loadActivity(db: SupabaseClient, orgs: { id: string; name: string }[], limit = 15): Promise<ActivityItem[]> {
   if (!orgs.length) return [];
   const names = new Map(orgs.map((o) => [o.id, o.name]));
-  const { data } = await db.from("activity_feed").select("id, organization_id, actor_id, kind, title, amount_minor, created_at, actor:users(full_name, email)")
+  const { data } = await db.from("activity_feed").select("id, organization_id, actor_id, kind, title, amount_minor, created_at, actor:users!activity_feed_actor_id_fkey(full_name, email)")
     .in("organization_id", orgs.map((o) => o.id)).order("created_at", { ascending: false }).limit(limit);
   return ((data ?? []) as unknown as { id: string; organization_id: string; actor_id: string | null; kind: string; title: string; amount_minor: number | null; created_at: string; actor: { full_name: string | null; email: string | null } | null }[])
     .map((r) => ({ id: r.id, org: r.organization_id, orgName: names.get(r.organization_id) ?? "", actor: nameOf(r.actor), actorId: r.actor_id, kind: r.kind, title: r.title, amountMinor: r.amount_minor === null ? null : Number(r.amount_minor), at: r.created_at }));
@@ -29,7 +29,7 @@ export async function unreadActivity(db: SupabaseClient, orgIds: string[], userI
 export async function loadLeaderboard(db: SupabaseClient, orgIds: string[]): Promise<{ actorId: string; name: string; wonMinor: number; wins: number }[]> {
   if (!orgIds.length) return [];
   const month = `${todayInBusinessTz().slice(0, 7)}-01T00:00:00+05:30`;
-  const { data } = await db.from("activity_feed").select("actor_id, amount_minor, actor:users(full_name, email)").in("organization_id", orgIds).eq("kind", "deal_won").gte("created_at", month).limit(5000);
+  const { data } = await db.from("activity_feed").select("actor_id, amount_minor, actor:users!activity_feed_actor_id_fkey(full_name, email)").in("organization_id", orgIds).eq("kind", "deal_won").gte("created_at", month).limit(5000);
   const by = new Map<string, { actorId: string; name: string; wonMinor: number; wins: number }>();
   for (const r of (data ?? []) as unknown as { actor_id: string | null; amount_minor: number | null; actor: { full_name: string | null; email: string | null } | null }[]) {
     if (!r.actor_id) continue;
@@ -99,13 +99,33 @@ export type MonthAchievement = { key: string; icon: string; label: string; detai
 export function monthAchievements(s: PersonStats): MonthAchievement[] {
   const pct = s.targetMinor ? Math.round((s.wonMonthMinor / s.targetMinor) * 100) : 0;
   return [
-    { key: "win", icon: "🏆", label: "First win of the month", detail: s.winsMonth ? `${s.winsMonth} deal${s.winsMonth === 1 ? "" : "s"} won` : "Win a deal", earned: s.winsMonth >= 1 },
-    { key: "hat", icon: "🎩", label: "Hat-trick", detail: `${Math.min(s.winsMonth, 3)} / 3 wins`, earned: s.winsMonth >= 3 },
-    ...(s.targetMinor ? [{ key: "target", icon: "🎯", label: "Target hit", detail: `${pct}% of this month's target`, earned: pct >= 100 }] : []),
-    { key: "proposal", icon: "✍", label: "Proposal accepted", detail: s.proposalsMonth ? `${s.proposalsMonth} accepted` : "Get a proposal accepted", earned: s.proposalsMonth >= 1 },
-    { key: "meetings", icon: "📅", label: "5 meetings", detail: `${Math.min(s.meetingsMonth, 5)} / 5 meetings`, earned: s.meetingsMonth >= 5 },
-    { key: "touches", icon: "📞", label: "50 calls & messages", detail: `${Math.min(s.touchesMonth, 50)} / 50 logged`, earned: s.touchesMonth >= 50 },
-    { key: "followups", icon: "✅", label: "10 follow-ups done", detail: `${Math.min(s.doneMonth, 10)} / 10 done`, earned: s.doneMonth >= 10 },
-    { key: "clean", icon: "✨", label: "Clean slate", detail: s.overdue ? `${s.overdue} overdue` : "Nothing overdue", earned: s.overdue === 0 && s.doneMonth > 0 },
+    { key: "win", icon: "trophy", label: "First win of the month", detail: s.winsMonth ? `${s.winsMonth} deal${s.winsMonth === 1 ? "" : "s"} won` : "Win a deal", earned: s.winsMonth >= 1 },
+    { key: "hat", icon: "layers", label: "Hat-trick", detail: `${Math.min(s.winsMonth, 3)} / 3 wins`, earned: s.winsMonth >= 3 },
+    ...(s.targetMinor ? [{ key: "target", icon: "target", label: "Target hit", detail: `${pct}% of this month's target`, earned: pct >= 100 }] : []),
+    { key: "proposal", icon: "proposals", label: "Proposal accepted", detail: s.proposalsMonth ? `${s.proposalsMonth} accepted` : "Get a proposal accepted", earned: s.proposalsMonth >= 1 },
+    { key: "meetings", icon: "meetings", label: "5 meetings", detail: `${Math.min(s.meetingsMonth, 5)} / 5 meetings`, earned: s.meetingsMonth >= 5 },
+    { key: "touches", icon: "phone", label: "50 calls & messages", detail: `${Math.min(s.touchesMonth, 50)} / 50 logged`, earned: s.touchesMonth >= 50 },
+    { key: "followups", icon: "followups", label: "10 follow-ups done", detail: `${Math.min(s.doneMonth, 10)} / 10 done`, earned: s.doneMonth >= 10 },
+    { key: "clean", icon: "sparkle", label: "Clean slate", detail: s.overdue ? `${s.overdue} overdue` : "Nothing overdue", earned: s.overdue === 0 && s.doneMonth > 0 },
   ];
+}
+
+export type Celebration = { key: string; kind: "achievement" | "kudos"; icon: string; label: string; detail: string };
+/** Achievements unlocked this month and congratulations received, not yet celebrated by this person. */
+export async function loadCelebrations(db: SupabaseClient, orgIds: string[], userId: string, month: MonthAchievement[]): Promise<Celebration[]> {
+  const ym = todayInBusinessTz().slice(0, 7);
+  const [{ data: seen }, { data: kudos }] = await Promise.all([
+    db.from("activity_seen").select("celebrated").eq("user_id", userId).maybeSingle(),
+    orgIds.length ? db.from("activity_feed").select("id, title, created_at, actor:users!activity_feed_actor_id_fkey(full_name, email)").in("organization_id", orgIds).eq("kind", "kudos").eq("target_id", userId)
+      .gte("created_at", new Date(Date.now() - 14 * 86_400_000).toISOString()).order("created_at", { ascending: false }).limit(10) : Promise.resolve({ data: [] }),
+  ]);
+  const done = new Set((seen?.celebrated as string[] | undefined) ?? []);
+  const out: Celebration[] = [];
+  for (const k of (kudos ?? []) as unknown as { id: string; title: string; actor: { full_name: string | null; email: string | null } | null }[]) {
+    if (done.has(`kudos:${k.id}`)) continue;
+    const msg = k.title.match(/: "(.*)"$/)?.[1];
+    out.push({ key: `kudos:${k.id}`, kind: "kudos", icon: "heart", label: `${nameOf(k.actor)} congratulated you`, detail: msg ?? "Well done!" });
+  }
+  for (const m of month) if (m.earned && !done.has(`${ym}:${m.key}`)) out.push({ key: `${ym}:${m.key}`, kind: "achievement", icon: m.icon, label: m.label, detail: m.detail });
+  return out;
 }

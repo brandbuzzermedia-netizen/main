@@ -86,15 +86,15 @@ export async function loadCompanyDashboard(ctx: CompanyContext, period: Period) 
 }
 
 /** Assigned work for an employee: only rows they own or are assigned, never company totals. */
-export async function loadMyWork(ctx: CompanyContext) {
+export async function loadMyWork(ctx: CompanyContext, userId = ctx.userId) {
   const today = todayInBusinessTz();
   const id = ctx.company.id;
   const [tasks, deals, meetings, stages] = await Promise.all([
-    ctx.supabase.from("tasks").select(TASK_COLS).eq("organization_id", id).eq("assignee_id", ctx.userId)
+    ctx.supabase.from("tasks").select(TASK_COLS).eq("organization_id", id).eq("assignee_id", userId)
       .in("status", ["open", "in_progress"]).order("due_on", { ascending: true, nullsFirst: false }).limit(200),
-    ctx.supabase.from("deals").select(DEAL_COLS).eq("organization_id", id).eq("owner_id", ctx.userId).is("closed_at", null)
+    ctx.supabase.from("deals").select(DEAL_COLS).eq("organization_id", id).eq("owner_id", userId).is("closed_at", null)
       .order("next_action_on", { ascending: true, nullsFirst: false }).limit(200),
-    ctx.supabase.from("meetings").select(MEETING_COLS).eq("organization_id", id).eq("owner_id", ctx.userId).eq("status", "scheduled")
+    ctx.supabase.from("meetings").select(MEETING_COLS).eq("organization_id", id).eq("owner_id", userId).eq("status", "scheduled")
       .gte("starts_at", `${today}T00:00:00+05:30`).order("starts_at").limit(50),
     ctx.supabase.from("pipeline_stages").select("id, organization_id, name, position, kind, probability_pct").eq("organization_id", id),
   ]);

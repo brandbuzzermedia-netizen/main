@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { DpNavItem } from "./sidebar";
+import { Glyph, hasGlyph } from "./icons";
 
 /** Phone-only bottom tabs: the four places used most, plus More (opens the full menu). */
 export function TabBar({ nav }: { nav: DpNavItem[] }) {
@@ -14,7 +15,7 @@ export function TabBar({ nav }: { nav: DpNavItem[] }) {
     <nav className="dp-tabbar" aria-label="Quick navigation">
       {items.map((n) => (
         <Link key={n.key} href={n.href} aria-current={active(n) ? "page" : undefined} className="dp-tab">
-          <span aria-hidden className="dp-tab-ic">{n.icon}</span>
+          <span aria-hidden className="dp-tab-ic">{hasGlyph(n.key) ? <Glyph name={n.key} size={19} /> : n.icon}</span>
           <span>{n.key === "home" ? "Home" : n.label}</span>
           {n.badge && <span className="dp-tab-badge">{n.badge}</span>}
         </Link>

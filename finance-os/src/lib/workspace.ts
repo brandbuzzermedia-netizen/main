@@ -158,3 +158,9 @@ export const getGroupContext = cache(async (): Promise<GroupContext> => {
   });
   return { ...u, group, registry, access };
 });
+
+/** Access tier shown next to the person's name: Super admin (group owner), Admin (company owner or admin), Employee. */
+export function tierLabel(role: string, groupOwner = false): string {
+  if (groupOwner) return "Super admin";
+  return role === "owner" || role === "company_admin" ? "Admin" : "Employee";
+}

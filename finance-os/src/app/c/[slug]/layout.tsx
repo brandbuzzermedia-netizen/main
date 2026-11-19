@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getCompanyContext, ROLE_LABELS } from "@/lib/workspace";
+import { getCompanyContext, ROLE_LABELS, tierLabel } from "@/lib/workspace";
 import { dpCompanyNav } from "@/lib/dp-nav";
 import { companyApprovals, wsOptions } from "@/lib/dp-chrome";
 import { companyTheme } from "@/components/dp/theme";
@@ -31,7 +31,7 @@ export default async function CompanyLayout({ children, params }: LayoutProps<"/
       switcher={{ options: wsOptions(ctx.group?.name ?? null, ctx.memberships), current: slug }}
       search={{ placeholder: `Search in ${c.name} only…`, action: `/c/${slug}/search` }}
       bell={{ href: ap.automation ? `/c/${slug}/automation` : `/c/${slug}/finance/ledger`, count: ap.automation + ap.ledger, items: toBellItems(activity), unread, allHref: `/c/${slug}#activity` }}
-      user={{ initials: ctx.initials, name: ctx.displayName, role: ROLE_LABELS[ctx.role] ?? ctx.role }}
+      user={{ initials: ctx.initials, name: ctx.displayName, role: `${tierLabel(ctx.role, ctx.group?.role === "group_owner")} · ${ROLE_LABELS[ctx.role] ?? ctx.role}` }}
       banner={<>{c.emergency_stop && <StopBanner name={c.name} />}{onHold.length > 0 && <HoldBanner slug={slug} clients={onHold} />}</>}>
       {children}
     </DpShell>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useTransition, type CSSProperties } from "react";
 import { C, type Theme } from "./theme";
+import { Glyph, hasGlyph } from "./icons";
 
 export type DpNavItem = { key: string; label: string; icon: string; href: string; badge?: string; section?: string };
 export type StopControl = { slug: string; on: boolean; can: boolean; action: (fd: FormData) => Promise<void> } | null;
@@ -84,7 +85,7 @@ export function Sidebar({ theme, nav, homeHref, stop, note, plusHref }: { theme:
                   style={{ display: "flex", alignItems: "center", gap: 11, padding: "10px 16px", fontSize: 14, whiteSpace: "nowrap", textDecoration: "none", position: "relative",
                     background: a ? "rgba(255,255,255,.08)" : "transparent", color: a ? "#fff" : C.navInk, borderLeft: `3px solid ${a ? bar : "transparent"}` }}>
                   {open && <span style={{ fontFamily: mono, fontSize: 10, color: a ? bar : "rgba(255,255,255,.4)", width: 16 }}>{String(i).padStart(2, "0")}</span>}
-                  <span style={{ width: 18, flex: "none", textAlign: "center", fontSize: 14, color: a ? "#fff" : "rgba(255,255,255,.6)" }} aria-hidden>{n.icon}</span>
+                  <span style={{ width: 18, flex: "none", textAlign: "center", fontSize: 14, color: a ? "#fff" : "rgba(255,255,255,.6)", display: "grid", placeItems: "center" }} aria-hidden>{hasGlyph(n.key) ? <Glyph name={n.key} size={17} /> : n.icon}</span>
                   {open && <span style={{ flex: 1, fontWeight: a ? 600 : 500 }}>{n.label}</span>}
                   {n.badge && <span style={{ fontFamily: mono, background: "rgba(255,255,255,.12)", color: "#fff", fontSize: 10.5, borderRadius: 3, padding: "1px 6px" }}>{n.badge}</span>}
                 </Link>

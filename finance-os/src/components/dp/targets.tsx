@@ -6,6 +6,8 @@ import { formatShort } from "@/domain/money";
 import { C } from "./theme";
 import { label } from "./ui";
 import { BadgeRow } from "./activity";
+import { KudosButton } from "./kudos-button";
+import { Glyph } from "./icons";
 import { badgesFor, loadPersonStats } from "@/lib/activity";
 
 const initials = (n: string) => n.split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((x) => x[0]!.toUpperCase()).join("");
@@ -58,9 +60,11 @@ export async function TeamTargets({ ctx, members }: { ctx: CompanyContext; membe
                 {stat("Deals", open.length)}{stat("Mtgs / wk", ((meets ?? []) as { owner_id: string | null }[]).filter((x) => x.owner_id === m.user_id).length)}{stat("Follow-ups", ((tasks ?? []) as { assignee_id: string | null }[]).filter((x) => x.assignee_id === m.user_id).length)}
               </div>
               <div style={{ marginTop: 14 }}><BadgeRow badges={badgesFor(personStats.get(m.user_id)!)} compact /></div>
-              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+              <div style={{ display: "flex", gap: 8, marginTop: 16, flexWrap: "wrap" }}>
                 <a href={`/c/${ctx.company.slug}/pipeline?owner=${m.user_id}`} style={{ border: `1px solid ${C.btnLine}`, borderRadius: 3, padding: "7px 12px", fontSize: 13, fontWeight: 600, color: C.ink, textDecoration: "none", background: "#fff" }}>Their pipeline</a>
                 <a href={`/c/${ctx.company.slug}/followups?owner=${m.user_id === ctx.userId ? "me" : "all"}`} style={{ border: `1px solid ${C.btnLine}`, borderRadius: 3, padding: "7px 12px", fontSize: 13, fontWeight: 600, color: C.ink, textDecoration: "none", background: "#fff" }}>Their follow-ups</a>
+                <a href={`/c/${ctx.company.slug}?as=${m.user_id === ctx.userId ? "me" : m.user_id}`} style={{ border: `1px solid ${C.btnLine}`, borderRadius: 3, padding: "7px 12px", fontSize: 13, fontWeight: 600, color: C.ink, textDecoration: "none", background: "#fff", display: "inline-flex", alignItems: "center", gap: 6 }}><Glyph name="eye" size={14} />Employee view</a>
+                {m.user_id !== ctx.userId && <KudosButton orgId={ctx.company.id} toId={m.user_id} name={m.name} />}
               </div>
             </article>
           );

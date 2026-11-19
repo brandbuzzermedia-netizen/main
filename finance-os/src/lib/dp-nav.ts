@@ -68,5 +68,6 @@ export function dpGroupNav(disabled: string[], isOwner: boolean, approvals: numb
     rental: "/group/rental", expenses: "/group/expenses", tax: "/group/tax", team: "/group/people", reports: "/group/reports", vault: "/group/vault", settings: "/group/settings" };
   return GROUP_ORDER.filter((k) => k === "home" || k === "settings" || !disabled.includes(k))
     .filter((k) => k !== "settings" || isOwner)
-    .map((k) => ({ key: k, label: k === "home" ? "Command Centre" : GROUP_DESIGN.ren[k] ?? moduleInfo(k).label, icon: moduleInfo(k).icon, section: GROUP_SECTION[k], href: href[k]!, badge: k === "automation" && approvals ? String(approvals) : undefined }));
+    .map((k) => ({ key: k, label: k === "home" ? "Command Centre" : GROUP_DESIGN.ren[k] ?? moduleInfo(k).label, icon: moduleInfo(k).icon, section: GROUP_SECTION[k], href: href[k]!, badge: k === "automation" && approvals ? String(approvals) : undefined } as DpNavItem))
+    .concat(isOwner ? [{ key: "admin", label: "Admin console", icon: "⛨", section: "System", href: "/group/admin" }] : []);
 }

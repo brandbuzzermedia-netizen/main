@@ -1,0 +1,22 @@
+begin;
+\ir 00_helpers.sql.inc
+select pg_temp.login('00000000-0000-0000-0000-00000000000a');
+create temp table t as select public.create_family_group('G') as grp;
+grant all on t to authenticated, service_role;
+alter table t add column org uuid;
+update t set org = public.create_company(grp, '{"name":"GBS","slug":"gbs-kudos"}');
+insert into public.memberships (organization_id, user_id, role) select org, '00000000-0000-0000-0000-00000000000c'::uuid, 'sales_rep' from t;
+select public.give_kudos((select org from t), '00000000-0000-0000-0000-00000000000c', 'Great close on Acme!');
+select pg_temp.assert((select target_id from public.activity_feed where kind = 'kudos') = '00000000-0000-0000-0000-00000000000c', 'kudos lands with the teammate');
+select pg_temp.assert_raises($$select public.give_kudos((select org from t), '00000000-0000-0000-0000-00000000000a', null)$$, 'yourself', 'cannot congratulate yourself');
+select pg_temp.assert_raises($$select public.give_kudos((select org from t), '00000000-0000-0000-0000-00000000000d', null)$$, 'not in this company', 'only teammates');
+select pg_temp.logout();
+select pg_temp.login('00000000-0000-0000-0000-00000000000c');
+select pg_temp.assert((select title from public.activity_feed where kind = 'kudos') like 'congratulated % "Great close on Acme!"', 'the rep sees it, with the message');
+select public.give_kudos((select org from t), '00000000-0000-0000-0000-00000000000a', null);
+select pg_temp.assert((select count(*) from public.activity_feed where kind = 'kudos') = 2, 'employees can congratulate their admin too');
+select pg_temp.logout();
+select pg_temp.login('00000000-0000-0000-0000-00000000000d');
+select pg_temp.assert_raises($$select public.give_kudos((select org from t), '00000000-0000-0000-0000-00000000000c', null)$$, 'Not a member', 'outsiders cannot');
+select pg_temp.logout();
+rollback;

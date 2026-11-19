@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { C } from "./theme";
+import { Glyph } from "./icons";
 
 export type WsOption = { value: string; label: string };
 
@@ -76,7 +77,7 @@ export function Bell({ href, count, hi, items = [], unread = 0, allHref, markSee
           {items.length === 0 && <div style={{ padding: "10px 14px 16px", fontSize: 13.5, color: C.muted }}>Nothing new yet.</div>}
           {items.map((a) => (
             <div key={a.id} style={{ display: "flex", gap: 10, padding: "10px 14px", borderTop: `1px solid ${C.line2}`, fontSize: 13.5, lineHeight: 1.4 }}>
-              <span aria-hidden style={{ width: 24, textAlign: "center" }}>{a.icon}</span>
+              <span aria-hidden style={{ width: 24, display: "grid", placeItems: "center", color: C.muted }}><Glyph name={a.icon} size={16} /></span>
               <span style={{ flex: 1 }}><b>{a.actor}</b> {a.title}{a.amount ? <b> · {a.amount}</b> : null}<span style={{ display: "block", fontSize: 11.5, color: C.faint }}>{a.org ? `${a.org} · ` : ""}{a.when}</span></span>
             </div>
           ))}
