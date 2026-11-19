@@ -65,3 +65,26 @@ test.describe("employee", () => {
     await expect(page.getByRole("dialog", { name: "Achievements" })).toContainText("this month");
   });
 });
+
+test.describe("brand", () => {
+  test.use({ storageState: OWNER_STATE });
+  test.beforeEach(async ({ page }) => skipLoader(page));
+
+  test("any company can set its own logo and colours, used across its OS", async ({ page }) => {
+    // A 1×1 PNG stands in for a logo.
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+    await page.goto("/c/demo-la-pinoz/settings#brand");
+    const f = page.locator("#brand form");
+    await f.locator("input[name=brand_custom]").check();
+    await f.locator("input[name=sidebar_color]").fill("#c8102e");
+    await f.locator("input[name=accent_color]").fill("#ffd200");
+    await f.locator("input[name=logo]").setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: png });
+    await f.getByRole("button", { name: "Save brand" }).click();
+    await expect(page.locator("#brand [role=status]")).toContainText("Brand saved");
+    await page.goto("/c/demo-la-pinoz");
+    await expect(page.locator("aside")).toHaveCSS("background-color", "rgb(200, 16, 46)");
+    const tile = await page.locator("aside button").first().evaluate((el) => getComputedStyle(el).backgroundImage);
+    expect(tile).toContain("/storage/v1/object/public/brand/");
+    await expect(page.getByRole("button", { name: /Team activity/ })).toBeVisible();
+  });
+});

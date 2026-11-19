@@ -24,6 +24,8 @@ const nextConfig: NextConfig = {
   // shells, cached reads) stays off. Every page here is dynamic and authenticated.
   cacheComponents: false,
   poweredByHeader: false,
+  // Logos, bills and vault documents are uploaded through server actions (Vercel allows up to 4.5 MB per request).
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   turbopack: {
     rules: {
       "*.css": {

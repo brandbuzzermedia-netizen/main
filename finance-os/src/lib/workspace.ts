@@ -14,7 +14,7 @@ import type { BusinessModel, Consolidation, Lifecycle, LogoKey, ModuleKey, Owner
 
 export const COMPANY_COLUMNS =
   "id, name, slug, short_name, family_group_id, ownership_type, owner_label, consolidation, business_model, lifecycle_status, " +
-  "enabled_modules, sidebar_color, accent_color, logo_key, is_demo, base_currency, timezone, fy_start_month, " +
+  "enabled_modules, sidebar_color, accent_color, logo_key, brand_custom, logo_url, logo_bg, is_demo, base_currency, timezone, fy_start_month, " +
   "emergency_stop, emergency_stop_at, emergency_stop_reason, require_mfa";
 
 export type Company = {
@@ -30,6 +30,9 @@ export type Company = {
   lifecycle_status: Lifecycle;
   enabled_modules: ModuleKey[];
   sidebar_color: string | null;
+  brand_custom?: boolean;
+  logo_url?: string | null;
+  logo_bg?: string | null;
   accent_color: string | null;
   logo_key: LogoKey | null;
   is_demo: boolean;

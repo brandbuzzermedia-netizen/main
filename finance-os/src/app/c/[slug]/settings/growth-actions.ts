@@ -81,3 +81,27 @@ export async function saveSalesSettingsAction(slug: string, fd: FormData) {
   revalidatePath(`/c/${slug}`, "layout");
   back(unknown.length ? `Saved. Not matched to a team member: ${unknown.join(", ")}.` : "Sales settings saved.");
 }
+
+/** Company brand: logo and colours for the whole OS of this company (owners and admins). */
+export async function saveBrandAction(slug: string, fd: FormData) {
+  const ctx = await getCompanyContext(slug);
+  const back = (m: string) => redirect(`/c/${slug}/settings?brand=${encodeURIComponent(m)}#brand`);
+  if (!ctx.can("company.settings")) back("Only an owner or company admin can change the brand.");
+  const hex = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
+  const v = z.object({ sidebar_color: hex, accent_color: hex, logo_bg: hex }).safeParse({ sidebar_color: fd.get("sidebar_color"), accent_color: fd.get("accent_color"), logo_bg: fd.get("logo_bg") });
+  if (!v.success) back("Pick the colours again.");
+  let logo_url: string | null | undefined;
+  const file = fd.get("logo");
+  if (file instanceof File && file.size > 0) {
+    const ext = { "image/png": "png", "image/jpeg": "jpg", "image/webp": "webp" }[file.type];
+    if (!ext) back("The logo must be a PNG, JPG or WebP image.");
+    if (file.size > 1_048_576) back("The logo must be 1 MB or smaller.");
+    const path = `${ctx.company.id}/logo-${Date.now()}.${ext}`;
+    const up = await ctx.supabase.storage.from("brand").upload(path, new Uint8Array(await file.arrayBuffer()), { contentType: file.type, upsert: false });
+    if (up.error) back(`Logo upload failed: ${up.error.message}`);
+    logo_url = ctx.supabase.storage.from("brand").getPublicUrl(path).data.publicUrl;
+  } else if (fd.get("remove_logo") === "on") logo_url = null;
+  const { error } = await ctx.supabase.from("organizations").update({ ...v.data!, brand_custom: fd.get("brand_custom") === "on", ...(logo_url !== undefined ? { logo_url } : {}) }).eq("id", ctx.company.id);
+  revalidatePath(`/c/${slug}`, "layout");
+  back(error ? error.message : "Brand saved. Your sidebar, buttons and tiles now use it.");
+}

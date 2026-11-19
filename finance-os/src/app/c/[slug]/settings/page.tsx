@@ -11,7 +11,8 @@ import { outreachRulesAction, requireMfaAction, savePaymentRulesAction, toggleMo
 import { AccountsCard, type SenderAccount } from "@/components/dp/accounts-card";
 import { loadMembers } from "@/lib/people";
 import { todayInBusinessTz } from "@/domain/dates";
-import { AiAssistantCard, GrowthCard, SalesSettingsCard } from "./growth";
+import { AiAssistantCard, BrandCard, GrowthCard, SalesSettingsCard } from "./growth";
+import { companyTheme } from "@/components/dp/theme";
 
 export const metadata: Metadata = { title: "Settings" };
 const LIST: ModuleKey[] = ["leads", "pipeline", "outreach", "meetings", "customers", "operations", "automation", "marketing", "finance", "rental", "expenses", "tax", "team", "reports", "vault"];
@@ -58,6 +59,7 @@ export default async function SettingsPage({ params, searchParams }: PageProps<"
         ))}
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 620, marginTop: 20 }}>
+        {edit && <BrandCard ctx={ctx} slug={slug} theme={companyTheme({ ...c, brand_custom: false })} note={typeof spx.brand === "string" ? spx.brand : undefined} />}
         {canOutreach && <SalesSettingsCard ctx={ctx} slug={slug} members={members} note={typeof spx.sales === "string" ? spx.sales : undefined} />}
         {app && <Card title="AI and approvals"><div style={{ marginTop: 10 }}><AiSettingsForm slug={slug} enabled={Boolean(app.ai_enabled)} limit={Number(app.ai_monthly_token_limit)} selfLimit={(Number(app.self_approval_limit_minor) / 100).toFixed(2)} /></div></Card>}
         {canOutreach && (

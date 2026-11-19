@@ -3,7 +3,7 @@ import type { Member } from "@/lib/people";
 import { addDays, todayInBusinessTz } from "@/domain/dates";
 import { Card } from "@/components/dp/ui";
 import { C } from "@/components/dp/theme";
-import { addOnboardingStepAction, removeOnboardingStepAction, saveAiAssistantAction, saveGrowthAction, saveSalesSettingsAction } from "./growth-actions";
+import { addOnboardingStepAction, removeOnboardingStepAction, saveAiAssistantAction, saveGrowthAction, saveSalesSettingsAction, saveBrandAction } from "./growth-actions";
 
 const field = { border: `1px solid ${C.btnLine}`, borderRadius: 8, padding: "8px 10px", fontSize: 14, background: "#fff", color: C.ink, fontFamily: "inherit" } as const;
 const btn = { border: `1px solid ${C.btnLine}`, background: "#fff", borderRadius: 8, padding: "7px 14px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit" } as const;
@@ -137,6 +137,42 @@ export async function SalesSettingsCard({ ctx, slug, members, note }: { ctx: Com
               <textarea name="member_targets" rows={4} defaultValue={((mt ?? []) as { user_id: string; monthly_target_minor: number }[]).filter((x) => name.has(x.user_id)).map((x) => `${name.get(x.user_id)}: ${Number(x.monthly_target_minor) / 100}`).join("\n")}
                 placeholder={members.slice(0, 3).map((m) => `${m.name}: 1000000`).join("\n")} style={{ ...field, lineHeight: 1.5 }} /></label>
             {edit && <div><button style={btn}>Save settings</button></div>}
+          </fieldset>
+        </form>
+      </Card>
+    </div>
+  );
+}
+
+/** Brand: this company's logo and colours, used across its whole OS. */
+export function BrandCard({ ctx, slug, theme, note }: { ctx: CompanyContext; slug: string; theme: { side: string; hi: string }; note?: string }) {
+  const c = ctx.company as typeof ctx.company & { brand_custom?: boolean; logo_url?: string | null; logo_bg?: string | null };
+  const edit = ctx.can("company.settings");
+  const side = c.brand_custom && c.sidebar_color ? c.sidebar_color : theme.side;
+  const hi = c.brand_custom && c.accent_color ? c.accent_color : theme.hi;
+  const color = { width: 54, height: 38, border: `1px solid ${C.btnLine}`, borderRadius: 3, padding: 2, background: "#fff", cursor: "pointer" } as const;
+  return (
+    <div id="brand" style={{ scrollMarginTop: 96 }}>
+      <Card title="Brand" aside={<span style={{ fontSize: 12.5, color: C.muted }}>Logo and colours for this company&apos;s OS</span>}>
+        {note && <div role="status" style={{ fontSize: 13.5, color: "var(--co-btn)", fontWeight: 600, marginTop: 8 }}>{note}</div>}
+        <div aria-hidden style={{ display: "flex", gap: 12, alignItems: "center", margin: "12px 0", padding: 12, borderRadius: 14, background: `linear-gradient(135deg, ${side}, color-mix(in srgb, ${side} 60%, #000))`, color: "#fff" }}>
+          <span style={{ width: 54, height: 54, borderRadius: 10, background: c.logo_url ? `${c.logo_bg ?? "#FFFFFF"} url(${c.logo_url}) center/78% no-repeat` : "rgba(255,255,255,.15)", flex: "none" }} />
+          <span style={{ flex: 1 }}><b style={{ fontSize: 16 }}>{c.name}</b><span style={{ display: "block", fontSize: 12.5, opacity: 0.8 }}>Preview of your sidebar and tiles</span></span>
+          <span style={{ background: hi, color: "#111", borderRadius: 999, padding: "6px 12px", fontSize: 12.5, fontWeight: 700 }}>Highlight</span>
+        </div>
+        <form action={saveBrandAction.bind(null, slug)} encType="multipart/form-data" style={{ display: "flex", flexDirection: "column", gap: 12, borderTop: `1px solid ${C.line2}`, paddingTop: 12, fontSize: 14 }}>
+          <fieldset disabled={!edit} style={{ border: 0, padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+            <label style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" name="brand_custom" defaultChecked={Boolean(c.brand_custom)} /> <b style={{ fontWeight: 600 }}>Use our own brand (logo and colours below)</b></label>
+            <div style={{ display: "flex", gap: 18, flexWrap: "wrap" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>Main colour (sidebar, buttons)<input type="color" name="sidebar_color" defaultValue={side} style={color} /></label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>Highlight colour<input type="color" name="accent_color" defaultValue={hi} style={color} /></label>
+              <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>Logo background<input type="color" name="logo_bg" defaultValue={c.logo_bg ?? "#FFFFFF"} style={color} /></label>
+            </div>
+            <label style={{ display: "flex", flexDirection: "column", gap: 6 }}><b style={{ fontWeight: 600 }}>Logo</b>
+              <span style={sub}>PNG, JPG or WebP, up to 1 MB. A wide logo on a plain background works best.</span>
+              <input type="file" name="logo" accept="image/png,image/jpeg,image/webp" style={field} /></label>
+            {c.logo_url && <label style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" name="remove_logo" /> Remove the current logo</label>}
+            {edit && <div><button style={btn}>Save brand</button></div>}
           </fieldset>
         </form>
       </Card>
