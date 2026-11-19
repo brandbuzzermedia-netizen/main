@@ -6,7 +6,7 @@ import { formatDate, formatDateTime, todayInBusinessTz } from "@/domain/dates";
 import { C } from "@/components/dp/theme";
 import { Board, type BoardCard } from "@/components/dp/board";
 import { copyCampaignAction } from "../actions";
-import { moveLeadAction, approveCampaignAction, campaignStatusAction, enrollmentStatusAction, enrollAction, keywordAction, postDecisionAction, presetSequenceAction, queueCallAction, signalAction, taskOutcomeAction, createPostAction } from "./actions";
+import { moveLeadAction, saveOutreachAutomationAction, sourceRuleAction, approveCampaignAction, campaignStatusAction, enrollmentStatusAction, enrollAction, keywordAction, postDecisionAction, presetSequenceAction, queueCallAction, signalAction, taskOutcomeAction, createPostAction } from "./actions";
 
 const card = { background: "#fff", border: `1px solid ${C.line}`, borderRadius: 16, padding: "22px 26px" } as const;
 const field = { border: `1px solid ${C.btnLine}`, borderRadius: 8, padding: "9px 10px", fontSize: 14, background: "#fff", color: C.ink } as const;
@@ -447,6 +447,82 @@ export async function CallListBoard({ ctx }: { ctx: CompanyContext }) {
         <Board columns={[{ key: "new", label: "On the list" }, { key: "contacted", label: "Reached out" }, { key: "qualified", label: "Interested" }, { key: "customer", label: "Converted" }]}
           cards={cards} move={moveLeadAction.bind(null, slug)} />
       )}
+    </section>
+  );
+}
+
+const RULE_LABEL: Record<string, string> = { followup: "Follow-up", interested_deal: "Deal created", converted_client: "Client created", source_campaign: "Joined campaign", stale: "Reminder" };
+
+/** Outreach automations: switches for the rules that keep every lead moving, and what they did recently. */
+export async function OutreachAutomationsCard({ ctx }: { ctx: CompanyContext }) {
+  const slug = ctx.company.slug;
+  const [{ data: a }, { data: rules }, { data: seqs }, { data: log }] = await Promise.all([
+    ctx.supabase.from("outreach_automation").select("followup_on, followup_days, interested_deal, converted_client, stale_on, stale_days").eq("organization_id", ctx.company.id).maybeSingle(),
+    ctx.supabase.from("outreach_source_rules").select("id, source_match, sequence_id").eq("organization_id", ctx.company.id).eq("active", true).order("created_at"),
+    ctx.supabase.from("outreach_sequences").select("id, name").eq("organization_id", ctx.company.id).neq("status", "archived").order("created_at"),
+    ctx.supabase.from("outreach_rule_log").select("id, rule, detail, created_at, contact:contacts(full_name)").eq("organization_id", ctx.company.id).order("created_at", { ascending: false }).limit(8),
+  ]);
+  const s = { followup_on: true, followup_days: 2, interested_deal: true, converted_client: true, stale_on: true, stale_days: 7, ...(a ?? {}) };
+  const edit = ctx.can("crm.manage");
+  const seqName = new Map(((seqs ?? []) as { id: string; name: string }[]).map((q) => [q.id, q.name]));
+  const num = { width: 56, border: `1px solid ${C.btnLine}`, borderRadius: 3, padding: "5px 6px", fontSize: 13.5, margin: "0 4px" } as const;
+  const rowS = { display: "flex", gap: 12, alignItems: "flex-start", padding: "12px 0", borderTop: `1px solid ${C.line2}` } as const;
+  const sub = { fontSize: 12.5, color: C.muted, marginTop: 2, lineHeight: 1.45 } as const;
+  return (
+    <section id="automations" aria-label="Outreach automations" style={{ ...card, marginBottom: 22, scrollMarginTop: 96 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 }}>
+        <div style={{ fontFamily: "var(--font-tight)", fontWeight: 800, fontSize: 24, letterSpacing: "-.02em" }}>Automations. <span style={{ fontFamily: "var(--font-newsreader)", fontStyle: "italic", fontWeight: 400 }}>Nothing slips.</span></div>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", color: C.muted }}>{edit ? "Owners & sales managers can change these" : "Read only"}</span>
+      </div>
+      <div className="dp-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)", gap: 28, marginTop: 8 }}>
+        <div>
+          <form action={saveOutreachAutomationAction.bind(null, slug)}>
+            <fieldset disabled={!edit} style={{ border: 0, padding: 0, margin: 0 }}>
+              <label style={rowS}><input type="checkbox" name="followup_on" defaultChecked={s.followup_on} style={{ marginTop: 3 }} />
+                <span><b>Follow up when nobody answers</b><span style={sub}> — no answer, voicemail, not now or out of office creates a follow-up task in<input type="number" name="followup_days" min={1} max={30} defaultValue={s.followup_days} style={num} aria-label="Days until the follow-up" />days, for the lead&apos;s owner.</span></span></label>
+              <label style={rowS}><input type="checkbox" name="interested_deal" defaultChecked={s.interested_deal} style={{ marginTop: 3 }} />
+                <span><b>Interested → deal in the pipeline</b><span style={sub}> — moving a lead to Interested (or a positive reply, AI call or booking) creates the deal and a &quot;Book a meeting&quot; task for tomorrow.</span></span></label>
+              <label style={rowS}><input type="checkbox" name="converted_client" defaultChecked={s.converted_client} style={{ marginTop: 3 }} />
+                <span><b>Converted → client ready to invoice</b><span style={sub}> — moving a lead to Converted creates the client record and links it to the deal.</span></span></label>
+              <label style={rowS}><input type="checkbox" name="stale_on" defaultChecked={s.stale_on} style={{ marginTop: 3 }} />
+                <span><b>Nudge forgotten leads</b><span style={sub}> — a lead left on the list with no touch for<input type="number" name="stale_days" min={2} max={60} defaultValue={s.stale_days} style={num} aria-label="Days before a reminder" />days gives its owner a reminder (checked every morning).</span></span></label>
+              {edit && <div style={{ paddingTop: 10 }}><button style={{ background: "var(--co-btn)", color: "#fff", border: 0, borderRadius: 3, padding: "9px 16px", fontWeight: 700, cursor: "pointer" }}>Save automations</button></div>}
+            </fieldset>
+          </form>
+          <div style={{ ...rowS, flexDirection: "column", gap: 8, marginTop: 12 }}>
+            <b>New leads from a source → a campaign</b>
+            <span style={sub}>Leads with a lawful basis whose source contains the text join that campaign automatically (consent, opt-outs and sending limits still apply).</span>
+            {((rules ?? []) as { id: string; source_match: string; sequence_id: string }[]).map((r) => (
+              <form key={r.id} action={sourceRuleAction.bind(null, slug)} style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 13.5 }}>
+                <span style={{ flex: 1 }}>Source contains <b>&quot;{r.source_match}&quot;</b> → {seqName.get(r.sequence_id) ?? "campaign"}</span>
+                {edit && <button name="remove" value={r.id} style={{ ...btn, color: C.red }}>Remove</button>}
+              </form>
+            ))}
+            {edit && (seqs ?? []).length > 0 && (
+              <form action={sourceRuleAction.bind(null, slug)} style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <input name="source_match" required minLength={2} maxLength={80} placeholder="e.g. Apollo, D7, Referral" aria-label="Source contains" style={{ ...field, flex: 1, minWidth: 140 }} />
+                <select name="sequence_id" aria-label="Campaign" style={field}>{((seqs ?? []) as { id: string; name: string }[]).map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}</select>
+                <button style={btn}>Add rule</button>
+              </form>
+            )}
+            {(seqs ?? []).length === 0 && <span style={sub}>Create a campaign first (Email or LinkedIn tab), then add a rule here.</span>}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", color: C.muted, margin: "12px 0 4px" }}>Recently done for you</div>
+          {(log ?? []).length === 0 && <div style={{ fontSize: 13.5, color: C.muted, padding: "8px 0" }}>Nothing yet. Actions appear here as the rules run.</div>}
+          {((log ?? []) as unknown as { id: string; rule: string; detail: string | null; created_at: string; contact: { full_name: string } | null }[]).map((l) => (
+            <div key={l.id} style={{ padding: "9px 0", borderTop: `1px solid ${C.line2}`, fontSize: 13.5 }}>
+              <b>{RULE_LABEL[l.rule] ?? l.rule}</b> · {l.contact?.full_name ?? "Lead"}<div style={sub}>{l.detail} · {formatDateTime(l.created_at)}</div>
+            </div>
+          ))}
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10.5, letterSpacing: ".12em", textTransform: "uppercase", color: C.muted, margin: "18px 0 4px" }}>Also running automatically</div>
+          {[["Campaigns send daily once approved", `/c/${slug}/outreach`], ["AI answers email & WhatsApp replies", `/c/${slug}/settings#ai`], ["New leads shared in turn · booking link", `/c/${slug}/settings#growth`],
+            ["Replies stop campaigns · STOP opts out · bounces blocked", `/c/${slug}/outreach?ch=email`], ["AI call interested → urgent call-back task", `/c/${slug}/outreach?ch=ai-calls`]].map(([t, h]) => (
+            <a key={t} href={h} style={{ display: "block", padding: "8px 0", borderTop: `1px solid ${C.line2}`, fontSize: 13.5, color: C.ink, textDecoration: "none" }}>✓ {t}</a>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

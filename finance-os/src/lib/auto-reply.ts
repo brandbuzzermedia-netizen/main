@@ -33,7 +33,7 @@ export async function autoReply(db: SupabaseClient, org: string, contactId: stri
   const [{ data: used }, { count: today }, { data: hist }] = await Promise.all([
     db.from("ai_usage_log").select("input_tokens, output_tokens").eq("organization_id", org).gte("created_at", monthStart.toISOString()).limit(20000),
     db.from("ai_replies").select("id", { count: "exact", head: true }).eq("contact_id", contactId).eq("action", "replied").gte("created_at", since),
-    db.from("outreach_events").select("kind, notes, created_at").eq("contact_id", contactId).order("created_at", { ascending: false }).limit(8),
+    db.from("outreach_events").select("kind, notes, occurred_at").eq("contact_id", contactId).order("occurred_at", { ascending: false }).limit(8),
   ]);
   const spent = (used ?? []).reduce((s, r) => s + Number(r.input_tokens) + Number(r.output_tokens), 0);
 

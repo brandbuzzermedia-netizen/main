@@ -36,7 +36,7 @@ export default async function GroupOutreach({ searchParams }: PageProps<"/group/
     g.supabase.from("outreach_enrollments").select("organization_id").in("organization_id", ids.length ? ids : none).eq("status", "active").limit(50000),
     g.supabase.from("sender_accounts").select("id, channel, daily_limit, status, warmup_started, organization_id").or(`organization_id.in.(${(ids.length ? ids : none).join(",")}),family_group_id.eq.${g.group.id}`),
     g.supabase.from("outreach_send_log").select("organization_id, sender_account_id").in("organization_id", ids.length ? ids : none).eq("sent_on", today).limit(50000),
-    g.supabase.from("outreach_events").select("organization_id").in("organization_id", ids.length ? ids : none).eq("kind", "reply").gte("created_at", week).limit(50000),
+    g.supabase.from("outreach_events").select("organization_id").in("organization_id", ids.length ? ids : none).eq("kind", "reply").gte("occurred_at", week).limit(50000),
     g.supabase.from("meetings").select("organization_id").in("organization_id", ids.length ? ids : none).gte("created_at", week).limit(50000),
   ]);
   const S = (seqs.data ?? []) as Seq[];

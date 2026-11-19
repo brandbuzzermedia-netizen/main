@@ -220,3 +220,28 @@ export async function moveLeadAction(slug: string, fd: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath(`/c/${slug}/outreach`);
 }
+
+/** Outreach automations: switches and day counts. */
+export async function saveOutreachAutomationAction(slug: string, fd: FormData) {
+  const ctx = await getCompanyContext(slug);
+  if (!ctx.can("crm.manage")) back(slug, "overview", "Only a sales manager or owner can change outreach automations.");
+  const on = (k: string) => fd.get(k) === "on";
+  const { error } = await ctx.supabase.from("outreach_automation").upsert({
+    organization_id: ctx.company.id, followup_on: on("followup_on"), interested_deal: on("interested_deal"), converted_client: on("converted_client"), stale_on: on("stale_on"),
+    followup_days: z.coerce.number().int().min(1).max(30).catch(2).parse(fd.get("followup_days")), stale_days: z.coerce.number().int().min(2).max(60).catch(7).parse(fd.get("stale_days")),
+    updated_at: new Date().toISOString(),
+  });
+  revalidatePath(`/c/${slug}/outreach`);
+  redirect(`/c/${slug}/outreach?note=${encodeURIComponent(error ? error.message : "Outreach automations saved.")}#automations`);
+}
+
+export async function sourceRuleAction(slug: string, fd: FormData) {
+  const ctx = await getCompanyContext(slug);
+  if (!ctx.can("crm.manage")) back(slug, "overview", "Only a sales manager or owner can change outreach automations.");
+  const remove = fd.get("remove");
+  const { error } = remove
+    ? await ctx.supabase.from("outreach_source_rules").delete().eq("id", z.uuid().parse(remove)).eq("organization_id", ctx.company.id)
+    : await ctx.supabase.from("outreach_source_rules").insert({ organization_id: ctx.company.id, source_match: z.string().trim().min(2).max(80).parse(fd.get("source_match")), sequence_id: z.uuid().parse(fd.get("sequence_id")) });
+  revalidatePath(`/c/${slug}/outreach`);
+  redirect(`/c/${slug}/outreach?note=${encodeURIComponent(error ? error.message : remove ? "Rule removed." : "Rule added: new leads from that source join the campaign.")}#automations`);
+}

@@ -19,7 +19,9 @@ export async function GET(request: NextRequest) {
   // Payment discipline runs every day, with or without n8n: warnings, work holds, team tasks.
   const holds = await db.rpc("evaluate_payment_holds", { p_today: todayInBusinessTz() });
   if (holds.error) return NextResponse.json({ error: "holds_failed" }, { status: 500 });
-  if (n8nConfig().mock) return NextResponse.json({ ok: true, holds: holds.data ?? 0, dispatched: 0, note: "n8n not configured (mock mode)" });
+  // Outreach reminders for leads left on the list also run without n8n (they only create tasks).
+  const stale = await db.rpc("run_outreach_rules", { p_today: todayInBusinessTz() });
+  if (n8nConfig().mock) return NextResponse.json({ ok: true, holds: holds.data ?? 0, outreach: stale.data ?? 0, dispatched: 0, note: "n8n not configured (mock mode)" });
   await db.rpc("enqueue_hold_alerts", { p_today: todayInBusinessTz() });
   // Today's scheduled runs (daily summary, bill review reminder, rent overdue). Idempotent per day.
   const queued = await db.rpc("enqueue_scheduled_runs", { p_today: todayInBusinessTz() });

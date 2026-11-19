@@ -95,3 +95,27 @@ test("outreach: the call list board moves a lead forward", async ({ page }) => {
   await page.reload();
   await expect(page.locator("section[aria-label='Reached out']")).toContainText(`Caller ${run}`);
 });
+
+test("outreach automations: rules switch on, interested makes a deal, no answer makes a follow-up", async ({ page }) => {
+  const db = admin();
+  const { data: org } = await db.from("organizations").select("id").eq("slug", "demo-gbs").single();
+  await page.goto("/c/demo-gbs/outreach#automations");
+  const panel = page.locator("#automations");
+  await expect(panel).toContainText("Nothing slips.");
+  await panel.locator("input[name=followup_days]").fill("3");
+  await panel.getByRole("button", { name: "Save automations" }).click();
+  await expect(page.getByText("Outreach automations saved.")).toBeVisible();
+  await expect(page.locator("#automations input[name=followup_days]")).toHaveValue("3");
+  const { data: lead } = await db.from("contacts").insert({ organization_id: org!.id, full_name: `Auto ${run}`, company_name: `Auto Co ${run}`, source: "Referral" }).select("id").single();
+  // No answer on a call -> follow-up task in 3 days.
+  await db.from("outreach_events").insert({ organization_id: org!.id, contact_id: lead!.id, kind: "call", outcome: "no_answer" });
+  expect((await db.from("tasks").select("id").eq("title", `Follow up: Auto ${run} (call)`)).data).toHaveLength(1);
+  // Moving the lead to Interested on the board creates the deal.
+  await page.goto("/c/demo-gbs/outreach");
+  const saved = page.waitForResponse((r) => r.request().method() === "POST");
+  await page.locator("article").filter({ hasText: `Auto ${run}` }).getByLabel(`Move Auto ${run} to`).selectOption("qualified");
+  await saved;
+  expect((await db.from("deals").select("id").eq("title", `Auto ${run} · Auto Co ${run}`)).data).toHaveLength(1);
+  await page.reload();
+  await expect(page.locator("#automations")).toContainText("Deal created");
+});
