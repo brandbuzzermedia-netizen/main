@@ -21,8 +21,7 @@ export default async function CompanyHomePage({ params, searchParams }: PageProp
   const [vm, guide] = await Promise.all([loadHomeVM(ctx, period, key), loadSetupGuide(ctx.supabase, ctx.company)]);
   return (
     <>
-      <CompanyHome vm={vm} guide={<SetupGuideCard g={guide} />} />
-      <TeamPulse db={ctx.supabase} orgs={[{ id: ctx.company.id, name: ctx.company.name }]} userId={ctx.userId} fyStartMonth={ctx.company.fy_start_month} />
+      <CompanyHome vm={vm} guide={<><TeamPulse db={ctx.supabase} orgs={[{ id: ctx.company.id, name: ctx.company.name }]} userId={ctx.userId} fyStartMonth={ctx.company.fy_start_month} /><SetupGuideCard g={guide} /></>} />
     </>
   );
 }
@@ -37,6 +36,7 @@ async function EmployeeHome({ ctx }: { ctx: CompanyContext }) {
   return (
     <>
       <PageHead own={d.own} treat="Your assigned work only" title={`Hello, ${ctx.displayName.split(/[\s@]/)[0]}`} right={ctx.can("tasks.write") ? <Cta href={`${base}/meetings?add=task`}>+ Add</Cta> : undefined} />
+      <TeamPulse db={ctx.supabase} orgs={[{ id: ctx.company.id, name: ctx.company.name }]} userId={ctx.userId} fyStartMonth={ctx.company.fy_start_month} />
       <Grid cols="repeat(auto-fit,minmax(200px,1fr))" gap={14} style={{ marginBottom: 20 }}>
         <Tile l="Overdue tasks" v={overdue.length} s="Past due date" />
         <Tile l="Due today" v={w.tasks.filter((t) => t.due_on === w.today).length} />
@@ -57,7 +57,6 @@ async function EmployeeHome({ ctx }: { ctx: CompanyContext }) {
             : w.meetings.map((m) => <Line key={m.id} left={m.title} right={`${formatDayShort(m.starts_at)} ${formatTime(m.starts_at)}`} strong={false} />)}
         </Card>
       </Grid>
-      <TeamPulse db={ctx.supabase} orgs={[{ id: ctx.company.id, name: ctx.company.name }]} userId={ctx.userId} fyStartMonth={ctx.company.fy_start_month} />
     </>
   );
 }

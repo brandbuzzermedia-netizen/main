@@ -48,7 +48,7 @@ export default async function CommandCentre() {
 
   return (
     <>
-    <GroupHome setup={<SetupProgressCard rows={setupRows} />} vm={{
+    <GroupHome setup={<><TeamPulse db={g.supabase} orgs={g.registry.filter((c) => g.access.has(c.id)).map((c) => ({ id: c.id, name: c.name }))} userId={g.userId} fyStartMonth={g.group.fy_start_month} showOrg /><SetupProgressCard rows={setupRows} /></>} vm={{
       title: g.group.name, fyLabel: fy.label, cta: { label: "+ New lead", href: "/group/pipeline?add=1" },
       tiles: [
         { l: "Booked revenue", v: money(won, crm), s: "Accrual · deals won this month", href: "/group/pipeline" },
@@ -85,7 +85,6 @@ export default async function CommandCentre() {
       portfolio,
       addHref: g.group.role === "group_owner" ? "/group/settings#add" : null,
     }} />
-    <TeamPulse db={g.supabase} orgs={g.registry.filter((c) => g.access.has(c.id)).map((c) => ({ id: c.id, name: c.name }))} userId={g.userId} fyStartMonth={g.group.fy_start_month} showOrg />
     </>
   );
 }

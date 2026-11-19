@@ -41,7 +41,8 @@ export async function loadLeaderboard(db: SupabaseClient, orgIds: string[]): Pro
 }
 
 export type Badge = { key: string; label: string; detail: string; earned: boolean; progress: number };
-export type PersonStats = { wins: number; wonFyMinor: number; wonMonthMinor: number; targetMinor: number; touches: number; meetings: number; proposalsAccepted: number; overdue: number; done: number };
+export type PersonStats = { wins: number; wonFyMinor: number; wonMonthMinor: number; targetMinor: number; touches: number; meetings: number; proposalsAccepted: number; overdue: number; done: number;
+  winsMonth: number; touchesMonth: number; meetingsMonth: number; proposalsMonth: number; doneMonth: number };
 
 /** Achievements from a person's real work. Each tier shows progress toward the next. */
 export function badgesFor(s: PersonStats): Badge[] {
@@ -65,30 +66,46 @@ export function badgesFor(s: PersonStats): Badge[] {
 
 /** Stats for the given people across the given companies (rows the viewer cannot read are not counted). */
 export async function loadPersonStats(db: SupabaseClient, orgIds: string[], userIds: string[], fyStartMonth = 4): Promise<Map<string, PersonStats>> {
-  const out = new Map<string, PersonStats>(userIds.map((u) => [u, { wins: 0, wonFyMinor: 0, wonMonthMinor: 0, targetMinor: 0, touches: 0, meetings: 0, proposalsAccepted: 0, overdue: 0, done: 0 }]));
+  const out = new Map<string, PersonStats>(userIds.map((u) => [u, { wins: 0, wonFyMinor: 0, wonMonthMinor: 0, targetMinor: 0, touches: 0, meetings: 0, proposalsAccepted: 0, overdue: 0, done: 0, winsMonth: 0, touchesMonth: 0, meetingsMonth: 0, proposalsMonth: 0, doneMonth: 0 }]));
   if (!orgIds.length || !userIds.length) return out;
   const today = todayInBusinessTz();
   const fy = `${financialYear(today, fyStartMonth).start}T00:00:00+05:30`;
   const month = `${today.slice(0, 7)}-01T00:00:00+05:30`;
   const [deals, events, meets, props, tasks, targets] = await Promise.all([
     db.from("deals").select("owner_id, value_minor, closed_at, stage:pipeline_stages(kind)").in("organization_id", orgIds).in("owner_id", userIds).not("closed_at", "is", null).limit(20000),
-    db.from("outreach_events").select("created_by").in("organization_id", orgIds).in("created_by", userIds).in("kind", ["call", "email", "whatsapp", "linkedin", "facebook", "instagram", "twitter"]).limit(50000),
-    db.from("meetings").select("owner_id").in("organization_id", orgIds).in("owner_id", userIds).lt("starts_at", new Date().toISOString()).neq("status", "cancelled").limit(20000),
-    db.from("proposals").select("owner_id").in("organization_id", orgIds).in("owner_id", userIds).eq("status", "accepted").limit(10000),
-    db.from("tasks").select("assignee_id, status, due_on").in("organization_id", orgIds).in("assignee_id", userIds).in("status", ["open", "in_progress", "done"]).limit(50000),
+    db.from("outreach_events").select("created_by, occurred_at").in("organization_id", orgIds).in("created_by", userIds).in("kind", ["call", "email", "whatsapp", "linkedin", "facebook", "instagram", "twitter"]).limit(50000),
+    db.from("meetings").select("owner_id, starts_at").in("organization_id", orgIds).in("owner_id", userIds).lt("starts_at", new Date().toISOString()).neq("status", "cancelled").limit(20000),
+    db.from("proposals").select("owner_id, decided_on").in("organization_id", orgIds).in("owner_id", userIds).eq("status", "accepted").limit(10000),
+    db.from("tasks").select("assignee_id, status, due_on, completed_at").in("organization_id", orgIds).in("assignee_id", userIds).in("status", ["open", "in_progress", "done"]).limit(50000),
     db.from("member_targets").select("user_id, monthly_target_minor").in("organization_id", orgIds).in("user_id", userIds),
   ]);
   for (const d of (deals.data ?? []) as unknown as { owner_id: string; value_minor: number; closed_at: string; stage: { kind: string } | null }[]) {
     const s = out.get(d.owner_id); if (!s || d.stage?.kind !== "won") continue;
-    s.wins++; if (d.closed_at >= fy) s.wonFyMinor += Number(d.value_minor); if (d.closed_at >= month) s.wonMonthMinor += Number(d.value_minor);
+    s.wins++; if (d.closed_at >= fy) s.wonFyMinor += Number(d.value_minor); if (d.closed_at >= month) { s.wonMonthMinor += Number(d.value_minor); s.winsMonth++; }
   }
-  for (const e of (events.data ?? []) as { created_by: string }[]) { const s = out.get(e.created_by); if (s) s.touches++; }
-  for (const m of (meets.data ?? []) as { owner_id: string }[]) { const s = out.get(m.owner_id); if (s) s.meetings++; }
-  for (const p of (props.data ?? []) as { owner_id: string }[]) { const s = out.get(p.owner_id); if (s) s.proposalsAccepted++; }
-  for (const t of (tasks.data ?? []) as { assignee_id: string; status: string; due_on: string | null }[]) {
+  for (const e of (events.data ?? []) as { created_by: string; occurred_at: string }[]) { const s = out.get(e.created_by); if (s) { s.touches++; if (e.occurred_at >= month) s.touchesMonth++; } }
+  for (const m of (meets.data ?? []) as { owner_id: string; starts_at: string }[]) { const s = out.get(m.owner_id); if (s) { s.meetings++; if (m.starts_at >= month) s.meetingsMonth++; } }
+  for (const p of (props.data ?? []) as { owner_id: string; decided_on: string | null }[]) { const s = out.get(p.owner_id); if (s) { s.proposalsAccepted++; if ((p.decided_on ?? "") >= today.slice(0, 7)) s.proposalsMonth++; } }
+  for (const t of (tasks.data ?? []) as { assignee_id: string; status: string; due_on: string | null; completed_at: string | null }[]) {
     const s = out.get(t.assignee_id); if (!s) continue;
-    if (t.status === "done") s.done++; else if (t.due_on && t.due_on < today) s.overdue++;
+    if (t.status === "done") { s.done++; if ((t.completed_at ?? "") >= month) s.doneMonth++; } else if (t.due_on && t.due_on < today) s.overdue++;
   }
   for (const t of (targets.data ?? []) as { user_id: string; monthly_target_minor: number }[]) { const s = out.get(t.user_id); if (s) s.targetMinor += Number(t.monthly_target_minor); }
   return out;
+}
+
+export type MonthAchievement = { key: string; icon: string; label: string; detail: string; earned: boolean };
+/** This month's achievements: what was earned since the 1st, and what is within reach. */
+export function monthAchievements(s: PersonStats): MonthAchievement[] {
+  const pct = s.targetMinor ? Math.round((s.wonMonthMinor / s.targetMinor) * 100) : 0;
+  return [
+    { key: "win", icon: "🏆", label: "First win of the month", detail: s.winsMonth ? `${s.winsMonth} deal${s.winsMonth === 1 ? "" : "s"} won` : "Win a deal", earned: s.winsMonth >= 1 },
+    { key: "hat", icon: "🎩", label: "Hat-trick", detail: `${Math.min(s.winsMonth, 3)} / 3 wins`, earned: s.winsMonth >= 3 },
+    ...(s.targetMinor ? [{ key: "target", icon: "🎯", label: "Target hit", detail: `${pct}% of this month's target`, earned: pct >= 100 }] : []),
+    { key: "proposal", icon: "✍", label: "Proposal accepted", detail: s.proposalsMonth ? `${s.proposalsMonth} accepted` : "Get a proposal accepted", earned: s.proposalsMonth >= 1 },
+    { key: "meetings", icon: "📅", label: "5 meetings", detail: `${Math.min(s.meetingsMonth, 5)} / 5 meetings`, earned: s.meetingsMonth >= 5 },
+    { key: "touches", icon: "📞", label: "50 calls & messages", detail: `${Math.min(s.touchesMonth, 50)} / 50 logged`, earned: s.touchesMonth >= 50 },
+    { key: "followups", icon: "✅", label: "10 follow-ups done", detail: `${Math.min(s.doneMonth, 10)} / 10 done`, earned: s.doneMonth >= 10 },
+    { key: "clean", icon: "✨", label: "Clean slate", detail: s.overdue ? `${s.overdue} overdue` : "Nothing overdue", earned: s.overdue === 0 && s.doneMonth > 0 },
+  ];
 }

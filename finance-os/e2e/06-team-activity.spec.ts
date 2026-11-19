@@ -22,11 +22,19 @@ test.describe("owner", () => {
     await expect(page).not.toHaveURL(/add=1/);
     await db.from("deals").update({ stage_id: won!.id, value_minor: 25000000, owner_id: me!.user_id }).eq("title", `Activity deal ${run}`);
     await page.goto("/c/demo-gbs");
-    const feed = page.locator("#activity");
+    await expect(page.getByRole("button", { name: /Team activity/ })).toContainText("Live");
+    await page.getByRole("button", { name: /Team activity/ }).click();
+    const feed = page.getByRole("dialog", { name: "Team activity" });
     await expect(feed).toContainText(`added a deal: Activity deal ${run}`);
     await expect(feed).toContainText("won a deal");
-    await expect(page.getByRole("region", { name: "Leaderboard" })).toContainText("(you)");
-    await expect(page.getByRole("region", { name: "My achievements" })).toContainText("First win");
+    await feed.getByRole("button", { name: "Close" }).click();
+    await page.getByRole("button", { name: /Achievements/ }).click();
+    const ach = page.getByRole("dialog", { name: "Achievements" });
+    await expect(ach).toContainText(/achievements? this month/);
+    await expect(ach).toContainText("Unlocked · ");
+    await expect(ach).toContainText("(you)");
+    await ach.getByRole("button", { name: "Keep going" }).click();
+    await expect(ach).toBeHidden();
     // The bell shows the news and clears once opened.
     const bell = page.getByRole("button", { name: /notifications/i });
     await bell.click();
@@ -37,8 +45,8 @@ test.describe("owner", () => {
     expect(Date.parse(seen!.seen_at)).toBeGreaterThan(Date.now() - 120_000);
     await page.goto("/c/demo-gbs/team");
     await expect(page.locator("article").first()).toContainText(/★|No badges yet/);
-    await page.goto("/group");
-    await expect(page.locator("#activity")).toContainText("Get Bee Seen");
+    await page.goto("/group#activity");
+    await expect(page.getByRole("dialog", { name: "Team activity" })).toContainText("Get Bee Seen");
   });
 });
 
@@ -48,9 +56,12 @@ test.describe("employee", () => {
 
   test("a sales rep sees team wins without client names, and their own achievements", async ({ page }) => {
     await page.goto("/c/demo-gbs");
-    await expect(page.locator("#activity")).toContainText("won a deal");
-    await expect(page.locator("#activity")).not.toContainText(`Activity deal ${run}`);
-    await expect(page.getByRole("region", { name: "My achievements" })).toBeVisible();
-    await expect(page.getByRole("region", { name: "Leaderboard" })).toBeVisible();
+    await page.getByRole("button", { name: /Team activity/ }).click();
+    const feed = page.getByRole("dialog", { name: "Team activity" });
+    await expect(feed).toContainText("won a deal");
+    await expect(feed).not.toContainText(`Activity deal ${run}`);
+    await feed.getByRole("button", { name: "Close" }).click();
+    await page.getByRole("button", { name: /Achievements/ }).click();
+    await expect(page.getByRole("dialog", { name: "Achievements" })).toContainText("this month");
   });
 });
