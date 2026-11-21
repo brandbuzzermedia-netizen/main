@@ -131,7 +131,9 @@ export const originalBox = { background: "repeating-linear-gradient(135deg,#F1EC
 
 export type RentalVM = {
   none?: boolean; kpis: { l: string; v: ReactNode; s: string }[];
-  units: { name: string; state: string; ok: boolean; fields: [string, string | null][] }[];
+  units: { id?: string; org?: string; name: string; state: string; ok: boolean; fields: [string, string | null][]; href?: string }[];
+  /** Where "+ Add unit" goes, for people who can change rental records. */
+  addHref?: string;
   schedule: ReactNode; deposits?: ReactNode;
 };
 const RRULES = ["Refundable deposits sit as liabilities unless lawfully appropriated", "Billed rent is never counted as received", "Each unit has its own owner, tenant, rent, due date and expenses", "More units can be added beyond Salon and Tower"];
@@ -141,7 +143,8 @@ export function FinanceRental({ vm }: { vm: RentalVM }) {
     return (
       <div style={{ background: "#fff", border: `1px dashed ${C.dashed}`, borderRadius: 16, padding: 32, maxWidth: 640 }}>
         <div style={{ fontFamily: font, fontSize: 22, fontWeight: 500 }}>No rental units assigned to this entity</div>
-        <div style={{ color: C.body, marginTop: 8, lineHeight: 1.5 }}>Rental units are assigned to an owning entity in the Group workspace. Nothing is assumed.</div>
+        <div style={{ color: C.body, marginTop: 8, lineHeight: 1.5 }}>Add a unit such as Salon or Tower with its owner, tenant and rent. Nothing is assumed from the name.</div>
+        {vm.addHref && <a href={vm.addHref} style={{ display: "inline-block", marginTop: 14, background: "var(--co-side)", color: "#fff", borderRadius: 8, padding: "9px 16px", fontWeight: 600, fontSize: 13.5, textDecoration: "none" }}>+ Add a rental unit</a>}
       </div>
     );
   }
@@ -155,12 +158,16 @@ export function FinanceRental({ vm }: { vm: RentalVM }) {
           <div key={u.name} style={card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ fontFamily: font, fontSize: 26, fontWeight: 500 }}>{u.name}</div>
-              <span style={{ fontSize: 12, background: u.ok ? C.soft : C.warnBg, color: u.ok ? "var(--co-side)" : C.warnFg2, borderRadius: 6, padding: "3px 9px", fontWeight: 600 }}>{u.state}</span>
+              <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ fontSize: 12, background: u.ok ? C.soft : C.warnBg, color: u.ok ? "var(--co-side)" : C.warnFg2, borderRadius: 6, padding: "3px 9px", fontWeight: 600 }}>{u.state}</span>
+                {u.href && <a href={u.href} aria-label={`Edit ${u.name}`} style={{ fontSize: 12.5, fontWeight: 700, color: "#fff", background: "var(--co-side)", borderRadius: 6, padding: "4px 11px", textDecoration: "none" }}>Edit</a>}
+              </span>
             </div>
             {u.fields.map(([k, v]) => <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 10, padding: "8px 0", borderTop: `1px solid ${C.line2}`, fontSize: 13.5 }}><span style={{ color: C.muted }}>{k}</span><span style={{ color: v ? C.ink : C.faint, textAlign: "right" }}>{v ?? "Not set"}</span></div>)}
           </div>
         ))}
       </div>
+      {vm.addHref && <div style={{ marginTop: 12 }}><a href={vm.addHref} style={{ fontSize: 13.5, fontWeight: 600, color: "var(--co-side)" }}>+ Add another rental unit</a></div>}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(320px,100%),1fr))", gap: 20, marginTop: 20 }}>
         <div style={card}>{h("Rent schedule & collections")}<div style={{ fontSize: 13.5, color: C.body, lineHeight: 1.5 }}>Monthly dues, invoices and receipts, part-payments, late payments, arrears, payment method, reconciliation. Billed is never counted as received.</div>{vm.schedule}</div>
         <div style={card}>{h("Deposits & rules")}{RRULES.map((r) => <div key={r} style={{ padding: "9px 0", borderTop: `1px solid ${C.line2}`, fontSize: 14, lineHeight: 1.45 }}>{r}</div>)}{vm.deposits}</div>

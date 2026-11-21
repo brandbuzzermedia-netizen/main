@@ -76,8 +76,12 @@ export async function GroupFinance({ tab, tabs, add, co }: { tab: Tab; tabs: boo
     const rc = companiesWith(g, "rental.read");
     const r = rc.length ? await loadRental(g.supabase, rc.map((c) => c.id), { start: fy.start, end: fy.end }, today) : null;
     const placeholder = { kpis: [["Rent billed", "Accrual"], ["Rent collected", "Cash"], ["Overdue", "—"], ["Arrears", "—"], ["Security deposits", "Liability, not income"], ["Occupancy", "Needs units"], ["Rental expenses", "—"], ["Net rental cashflow", "—"]].map(([l, s]) => ({ l, v: "₹0", s })),
-      units: ["Salon", "Tower"].map((name) => ({ name, ok: false, state: "Needs setup", fields: UNIT_FIELDS.map((f) => [f, null] as [string, null]) })) };
-    const vm = r && !r.vm.none ? r.vm : placeholder;
+      units: ["Salon", "Tower"].map((name) => ({ name, ok: false, state: "Needs setup", href: rentCos.length ? "/group/rental?add=1" : undefined, fields: UNIT_FIELDS.map((f) => [f, null] as [string, null]) })) };
+    const slugOf = new Map(rc.map((c) => [c.id, c.slug]));
+    const writable = new Set(rentCos.map((c) => c.id));
+    const vm = r && !r.vm.none
+      ? { ...r.vm, units: r.vm.units.map((u) => ({ ...u, href: u.org && writable.has(u.org) ? go(slugOf.get(u.org)!, `/c/${slugOf.get(u.org)}/rental/${u.id}`) : undefined })), addHref: rentCos.length ? "/group/rental?add=1" : undefined }
+      : placeholder;
     body = <FinanceRental vm={{ ...vm, none: false, schedule: <div style={{ marginTop: 12, fontSize: 13, color: C.muted }}>{r && r.unpaid.length ? `${r.unpaid.length} rent charge(s) unpaid across units. Record receipts in the owning business's Finance → Rental income.` : "No dues yet. Add tenant and rent to generate a schedule."}</div> }} />;
   } else {
     const pick = fin.find((c) => c.slug === co) ?? fin[0];
@@ -119,7 +123,7 @@ export async function GroupFinance({ tab, tabs, add, co }: { tab: Tab; tabs: boo
       {tabs && <FinanceTabs current={tab} base="/group/finance" />}
       {body}
       {add && tab === "expenses" && <Modal title="Upload to which business?" closeHref="/group/expenses">{docCos.map((c) => <a key={c.id} href={go(c.slug, `/c/${c.slug}/finance?tab=expenses`)} style={{ display: "flex", justifyContent: "space-between", padding: "11px 0", borderTop: `1px solid ${C.line2}`, color: C.ink, textDecoration: "none" }}><span>{c.name}</span><span style={{ color: C.faint }}>→</span></a>)}</Modal>}
-      {add && tab === "rental" && <Modal title="Which entity owns the unit?" closeHref="/group/rental"><p style={{ fontSize: 13.5, color: C.body, marginTop: 0 }}>A unit belongs to a business and its legal entity. Nothing about owner or tax treatment is assumed from the label.</p>{rentCos.map((c) => <a key={c.id} href={go(c.slug, `/c/${c.slug}/r/rental_units`)} style={{ display: "flex", justifyContent: "space-between", padding: "11px 0", borderTop: `1px solid ${C.line2}`, color: C.ink, textDecoration: "none" }}><span>{c.name}</span><span style={{ color: C.faint }}>→</span></a>)}</Modal>}
+      {add && tab === "rental" && <Modal title="Which business owns the unit?" closeHref="/group/rental"><p style={{ fontSize: 13.5, color: C.body, marginTop: 0 }}>A unit belongs to a business and its legal entity. Pick the owner, then fill in the unit, tenant and rent on one page. Nothing about owner or tax treatment is assumed from the label.</p>{rentCos.map((c) => <a key={c.id} href={go(c.slug, `/c/${c.slug}/rental/new`)} style={{ display: "flex", justifyContent: "space-between", padding: "11px 0", borderTop: `1px solid ${C.line2}`, color: C.ink, textDecoration: "none" }}><span>{c.name}</span><span style={{ color: C.faint }}>→</span></a>)}</Modal>}
     </>
   );
 }

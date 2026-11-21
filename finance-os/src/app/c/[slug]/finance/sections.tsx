@@ -106,6 +106,8 @@ export async function RentalSection({ ctx }: { ctx: CompanyContext }) {
   return (
     <FinanceRental vm={{
       ...vm,
+      units: vm.units.map((u) => ({ ...u, href: w ? `/c/${slug}/rental/${u.id}` : undefined })),
+      addHref: w ? `/c/${slug}/rental/new` : undefined,
       schedule: (
         <div style={{ marginTop: 12, fontSize: 13 }}>
           {charges.length === 0 ? <div style={{ color: C.muted }}>{leases.length ? "No dues outstanding." : "No dues yet. Add tenant and rent to generate a schedule."}</div> : charges.map((c) => (
@@ -124,7 +126,7 @@ export async function RentalSection({ ctx }: { ctx: CompanyContext }) {
             </div>
           ))}
           {w && <form action={generateChargesAction.bind(null, slug)} style={{ marginTop: 12 }}><button style={{ ...billBtn, padding: "7px 12px" }}>Generate rent due this month</button></form>}
-          {w && <div style={{ marginTop: 10 }}><a href={`/c/${slug}/r/leases`} style={{ color: "var(--co-side)", fontWeight: 600 }}>Tenants and leases →</a></div>}
+          {w && <div style={{ marginTop: 10 }}><a href={`/c/${slug}/r/leases`} style={{ color: "var(--co-side)", fontWeight: 600 }}>All leases →</a></div>}
         </div>
       ),
       deposits: w && leases.length ? (

@@ -89,6 +89,7 @@ test("outreach: the call list board moves a lead forward", async ({ page }) => {
   await page.goto("/c/demo-gbs/outreach");
   await expect(page.locator("h1")).toContainText("Reach out.");
   const card = page.locator("article").filter({ hasText: `Caller ${run}` });
+  await page.waitForLoadState("networkidle"); // the board must be hydrated before its menu reacts
   const saved = page.waitForResponse((r) => r.request().method() === "POST");
   await card.getByLabel(`Move Caller ${run} to`).selectOption("contacted");
   await saved;
@@ -112,6 +113,7 @@ test("outreach automations: rules switch on, interested makes a deal, no answer 
   expect((await db.from("tasks").select("id").eq("title", `Follow up: Auto ${run} (call)`)).data).toHaveLength(1);
   // Moving the lead to Interested on the board creates the deal.
   await page.goto("/c/demo-gbs/outreach");
+  await page.waitForLoadState("networkidle");
   const saved = page.waitForResponse((r) => r.request().method() === "POST");
   await page.locator("article").filter({ hasText: `Auto ${run}` }).getByLabel(`Move Auto ${run} to`).selectOption("qualified");
   await saved;

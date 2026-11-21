@@ -103,13 +103,13 @@ export async function loadOverview(sb: SupabaseClient, orgIds: string[], today: 
   };
 }
 
-type Unit = { id: string; label: string; address: string | null; use_type: string | null; co_owners: string | null; legal_entity: { name: string } | null };
+type Unit = { id: string; organization_id: string; label: string; address: string | null; use_type: string | null; co_owners: string | null; legal_entity: { name: string } | null };
 type Lease = { id: string; unit_id: string; status: string; rent_minor: number; due_day: number; frequency: string; start_date: string; end_date: string | null; deposit_minor: number; escalation_pct: number | null; escalation_every_months: number | null; lock_in_months: number | null; notice_days: number | null; document_id: string | null; tenant: { name: string } | null };
 
 /** Rental tab for one or more companies. */
 export async function loadRental(sb: SupabaseClient, orgIds: string[], period: { start: string; end: string }, today: string) {
   const [units, leases, charges, receipts, deposits, expenses] = await Promise.all([
-    sb.from("rental_units").select("id, label, address, use_type, co_owners, legal_entity:legal_entities(name)").in("organization_id", orgIds).order("label"),
+    sb.from("rental_units").select("id, organization_id, label, address, use_type, co_owners, legal_entity:legal_entities(name)").in("organization_id", orgIds).order("label"),
     sb.from("leases").select("id, unit_id, status, rent_minor, due_day, frequency, start_date, end_date, deposit_minor, escalation_pct, escalation_every_months, lock_in_months, notice_days, document_id, tenant:tenants(name)").in("organization_id", orgIds),
     sb.from("rent_charges").select("id, lease_id, due_on, amount_minor, received_minor, status").in("organization_id", orgIds).limit(10000),
     sb.from("rent_receipts").select("charge_id, amount_minor, received_on").in("organization_id", orgIds).limit(20000),
@@ -146,7 +146,7 @@ export async function loadRental(sb: SupabaseClient, orgIds: string[], period: {
         ["Notice / lock-in", l && (l.notice_days || l.lock_in_months) ? `${l.notice_days ?? 0} days / ${l.lock_in_months ?? 0} months` : null], ["Documents", l?.document_id ? "On file" : null],
       ];
       const ok = fields.filter(([, v]) => v).length >= 8;
-      return { name: x.label, ok, state: ok ? (l ? "Let" : "Vacant") : "Needs setup", fields };
+      return { id: x.id, org: x.organization_id, name: x.label, ok, state: ok ? (l ? "Let" : "Vacant") : "Needs setup", fields };
     }),
   };
   const unpaid = ch.filter((c) => c.status === "open" || c.status === "partially_paid").sort((a, b) => a.due_on.localeCompare(b.due_on));
