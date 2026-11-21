@@ -1,0 +1,405 @@
+{
+  "name": "Diwani Parivaar OS · Apollo searches → new leads (verified emails only)",
+  "id": "f85ba3367f39543d",
+  "versionId": "66ace3b1-5fe1-5715-8a13-432f0d0653c9",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dp-apollo-search",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "84743e6d-78e7-5a59-911c-95ddb3d6fecb",
+      "name": "Webhook from OS",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "f877b9c4-01a9-5e12-baa1-64712e79fba5"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verifies the OS signature: HMAC-SHA256(secret, `${timestamp}.${nonce}.${body}`), max 5 minutes old.\n// Needs NODE_FUNCTION_ALLOW_BUILTIN=crypto and DP_SIGNING_SECRET (same value as N8N_SIGNING_SECRET in the OS).\nconst crypto = require('crypto');\nconst item = $input.first();\nconst h = item.json.headers || {};\nconst secret = $env.DP_SIGNING_SECRET || '';\nconst raw = item.binary && item.binary.data ? Buffer.from(item.binary.data.data, 'base64').toString('utf8') : JSON.stringify(item.json.body);\nconst ts = String(h['x-dp-timestamp'] || ''), nonce = String(h['x-dp-nonce'] || ''), sig = String(h['x-dp-signature'] || '');\nlet ok = Boolean(secret) && /^\\d{9,11}$/.test(ts) && nonce.length >= 16 && nonce.length <= 128 && /^[0-9a-f]{64}$/.test(sig)\n  && Math.abs(Math.floor(Date.now() / 1000) - Number(ts)) <= 300;\nif (ok) {\n  const expected = crypto.createHmac('sha256', secret).update(`${ts}.${nonce}.${raw}`).digest();\n  const given = Buffer.from(sig, 'hex');\n  ok = given.length === expected.length && crypto.timingSafeEqual(given, expected);\n}\nlet payload = {};\ntry { payload = JSON.parse(raw); } catch (e) { ok = false; }\nconst runOk = ok && /^[0-9a-f-]{36}$/.test(String(payload.run_id || '')) && /^[0-9a-f-]{36}$/.test(String(payload.organization_id || ''));\nreturn [{ json: { ok: runOk, run_id: payload.run_id, organization_id: payload.organization_id, input: payload.input || {} } }];\n"
+      },
+      "id": "86644186-a347-552f-923f-6e8e714f114f",
+      "name": "Verify signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "ok",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      },
+      "id": "16cde70f-2946-50da-9755-299a964e601b",
+      "name": "Signed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: 'bad_signature' } }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "d0492321-8456-5f4a-8a80-927509259a1e",
+      "name": "Reject",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { accepted: true, executionId: String($execution.id) } }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "fb063065-1181-5f56-a8b2-755eeae1be27",
+      "name": "Accept",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $('Verify signature').first().json.input; const org = $('Verify signature').first().json.organization_id;\nconst headers = { 'x-api-key': $env.DP_APOLLO_API_KEY, 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' };\nconst page = (Math.floor(Date.now() / 86400000) % 20) + 1; // a different page each day; duplicates are skipped by the OS anyway\nconst out = [];\nfor (const q of s.searches || []) {\n  const body = { per_page: Math.min(q.per_run || 25, 100), page, person_titles: q.titles || [], person_locations: q.locations || [],\n    organization_num_employees_ranges: q.employee_ranges || [], ...(q.keywords ? { q_keywords: q.keywords } : {}) };\n  let found = await this.helpers.httpRequest({ method: 'POST', url: 'https://api.apollo.io/api/v1/mixed_people/api_search', headers, body, json: true });\n  if (!(found.people || []).length && page > 1) found = await this.helpers.httpRequest({ method: 'POST', url: 'https://api.apollo.io/api/v1/mixed_people/api_search', headers, body: { ...body, page: 1 }, json: true });\n  const ids = (found.people || []).map((p) => p.id).filter(Boolean);\n  for (let i = 0; i < ids.length; i += 10) {\n    const m = await this.helpers.httpRequest({ method: 'POST', url: 'https://api.apollo.io/api/v1/people/bulk_match', headers, json: true,\n      body: { details: ids.slice(i, i + 10).map((id) => ({ id })), reveal_personal_emails: false, reveal_phone_number: false } });\n    for (const p of m.matches || []) {\n      if (!p || !p.email || p.email_status !== 'verified') continue; // never send to guessed or unverified addresses\n      const name = p.name || [p.first_name, p.last_name].filter(Boolean).join(' ');\n      if (!name) continue;\n      out.push({ json: { payload: { type: 'lead', organization_id: org, full_name: name.slice(0, 200), email: p.email,\n        ...(p.organization && p.organization.name ? { company_name: String(p.organization.name).slice(0, 200) } : {}),\n        ...(p.linkedin_url && p.linkedin_url.startsWith('http') ? { linkedin_url: p.linkedin_url.replace(/^http:/, 'https:') } : {}),\n        source: `Apollo: ${q.name}`.slice(0, 80), basis: 'legitimate_interest', search_id: q.search_id,\n        notes: [p.title, p.city, p.country].filter(Boolean).join(' · ').slice(0, 2000) } } });\n    }\n  }\n}\nreturn out.length ? out : [{ json: { payload: null } }];"
+      },
+      "id": "d344affa-6014-54c5-9c53-7af19c5107dc",
+      "name": "Search Apollo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "p",
+              "leftValue": "={{ $json.payload }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      },
+      "id": "516fe4c2-25ff-51ee-91eb-a9af9518c40e",
+      "name": "Anything found?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        200
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Signs one message for the OS inbound endpoint, exactly as the OS signs its webhooks.\nconst crypto = require('crypto');\nconst body = JSON.stringify($json.payload);\nconst ts = Math.floor(Date.now() / 1000);\nconst nonce = crypto.randomBytes(16).toString('hex');\nconst signature = crypto.createHmac('sha256', $env.DP_SIGNING_SECRET).update(`${ts}.${nonce}.${body}`).digest('hex');\nreturn { json: { body, ts: String(ts), nonce, signature } };\n",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "ba14a76f-3db7-51d1-be48-6d2270fd9ea2",
+      "name": "Sign for OS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DP_APP_URL }}/api/inbound",
+        "options": {
+          "timeout": 20000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-dp-timestamp",
+              "value": "={{ $json.ts }}"
+            },
+            {
+              "name": "x-dp-nonce",
+              "value": "={{ $json.nonce }}"
+            },
+            {
+              "name": "x-dp-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}"
+      },
+      "id": "b89d8972-d29e-504a-ad7a-bab460cb654e",
+      "name": "Lead to OS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        200
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// One result for the whole run: failed if any send failed.\nconst items = $input.all();\nconst failed = items.filter((i) => i.json && i.json.error);\nreturn [{ json: failed.length ? { error: { message: `${failed.length} of ${items.length} failed: ${String(failed[0].json.error.message || failed[0].json.error).slice(0, 300)}` } } : { sent: items.length } }];\n"
+      },
+      "id": "c59b736a-47fe-560a-ba1c-3bf09531322b",
+      "name": "Collect results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Signs the result for the OS callback exactly as the OS signs its webhooks.\nconst crypto = require('crypto');\nconst run = $('Verify signature').first().json;\nconst failed = $input.first().json.error;\nconst body = JSON.stringify({\n  run_id: run.run_id,\n  organization_id: run.organization_id,\n  status: failed ? 'failed' : 'succeeded',\n  execution_id: String($execution.id),\n  ...(failed ? { error: String(failed.message || failed).slice(0, 1900) } : {}),\n});\nconst ts = Math.floor(Date.now() / 1000);\nconst nonce = crypto.randomBytes(16).toString('hex');\nconst signature = crypto.createHmac('sha256', $env.DP_SIGNING_SECRET).update(`${ts}.${nonce}.${body}`).digest('hex');\nreturn [{ json: { body, ts: String(ts), nonce, signature } }];\n"
+      },
+      "id": "d6fe6236-c54f-58ed-9dec-cd56934423c8",
+      "name": "Sign result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DP_APP_URL }}/api/automation/callback",
+        "options": {
+          "timeout": 20000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-dp-timestamp",
+              "value": "={{ $json.ts }}"
+            },
+            {
+              "name": "x-dp-nonce",
+              "value": "={{ $json.nonce }}"
+            },
+            {
+              "name": "x-dp-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}"
+      },
+      "id": "06b3ffea-52b8-54c8-be9f-51da4be31591",
+      "name": "Report to OS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3080,
+        260
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Webhook from OS": {
+      "main": [
+        [
+          {
+            "node": "Verify signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify signature": {
+      "main": [
+        [
+          {
+            "node": "Signed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signed?": {
+      "main": [
+        [
+          {
+            "node": "Accept",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accept": {
+      "main": [
+        [
+          {
+            "node": "Search Apollo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Apollo": {
+      "main": [
+        [
+          {
+            "node": "Anything found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anything found?": {
+      "main": [
+        [
+          {
+            "node": "Sign for OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign for OS": {
+      "main": [
+        [
+          {
+            "node": "Lead to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead to OS": {
+      "main": [
+        [
+          {
+            "node": "Collect results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect results": {
+      "main": [
+        [
+          {
+            "node": "Sign result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign result": {
+      "main": [
+        [
+          {
+            "node": "Report to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "meta": {
+    "templateKey": "apollo_search",
+    "webhookPath": "dp-apollo-search"
+  },
+  "tags": []
+}

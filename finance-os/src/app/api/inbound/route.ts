@@ -1,0 +1,186 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { z } from "zod";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { verify } from "@/integrations/n8n/signing";
+import { isOptIn, isOptOut } from "@/lib/whatsapp-optin";
+import { autoReply } from "@/lib/auto-reply";
+
+export const maxDuration = 60;
+
+/**
+ * Everything n8n brings in from outside, for one company: new leads (Meta lead forms, website,
+ * WhatsApp, Instagram, Facebook, LinkedIn), incoming messages, Reddit conversations, post
+ * results and AI call results. Signed like the callback (HMAC + timestamp + single-use nonce)
+ * and schema-checked; the company must exist and not be under emergency stop for new outreach.
+ */
+const org = z.uuid();
+const url = z.string().url().startsWith("https://").max(2000);
+const schema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("lead"), organization_id: org, full_name: z.string().trim().min(1).max(200), email: z.email().optional(), phone_e164: z.string().regex(/^\+[1-9][0-9]{7,14}$/).optional(),
+    company_name: z.string().max(200).optional(), source: z.string().max(80), consent: z.boolean().default(false), basis: z.enum(["legitimate_interest"]).optional(), search_id: z.uuid().optional(), linkedin_url: url.optional(), facebook_url: url.optional(),
+    instagram_handle: z.string().regex(/^[A-Za-z0-9._]{1,30}$/).optional(), notes: z.string().max(2000).optional() }),
+  z.object({ type: z.literal("message"), organization_id: org, channel: z.enum(["email", "whatsapp", "facebook", "instagram", "linkedin"]),
+    from: z.string().max(200), name: z.string().trim().max(200).optional(), text: z.string().max(4000), url: url.optional() }),
+  z.object({ type: z.literal("signal"), organization_id: org, channel: z.enum(["reddit", "facebook", "instagram", "linkedin"]), kind: z.enum(["post", "comment", "message"]).default("post"),
+    source_url: url, author: z.string().max(120).optional(), title: z.string().max(500).optional(), snippet: z.string().max(4000).optional(), matched_keyword: z.string().max(80).optional() }),
+  z.object({ type: z.literal("bounce"), organization_id: org, email: z.email() }),
+  z.object({ type: z.literal("meeting_booked"), organization_id: org, email: z.email(), name: z.string().trim().max(200).optional(), title: z.string().trim().max(200).optional(),
+    starts_at: z.iso.datetime({ offset: true }), ends_at: z.iso.datetime({ offset: true }).optional(), location: z.string().max(500).optional(), source: z.string().max(80).default("Booking link") }),
+  z.object({ type: z.literal("post_result"), organization_id: org, post_id: z.uuid(), status: z.enum(["published", "failed"]), external_url: url.optional(), error: z.string().max(1000).optional() }),
+  z.object({ type: z.literal("call_result"), organization_id: org, call_id: z.uuid(), status: z.enum(["calling", "completed", "failed", "no_answer"]),
+    outcome: z.enum(["interested", "not_interested", "callback", "meeting_booked", "wrong_number", "do_not_call"]).optional(), summary: z.string().max(4000).optional(), recording_url: url.optional(),
+    conversation_id: z.string().regex(/^[A-Za-z0-9_-]{4,128}$/).optional(), transcript: z.string().max(20000).optional() }),
+]);
+
+export async function POST(request: NextRequest) {
+  const body = await request.text();
+  if (body.length > 64_000) return NextResponse.json({ error: "too_large" }, { status: 413 });
+  const h = request.headers;
+  const check = verify(process.env.N8N_SIGNING_SECRET ?? "", { timestamp: h.get("x-dp-timestamp"), nonce: h.get("x-dp-nonce"), signature: h.get("x-dp-signature") }, body);
+  if (!check.ok) return NextResponse.json({ error: check.reason }, { status: 401 });
+  let m: z.infer<typeof schema>;
+  try { m = schema.parse(JSON.parse(body)); } catch { return NextResponse.json({ error: "invalid_payload" }, { status: 400 }); }
+  const db = createAdminClient();
+  if ((await db.from("webhook_nonces").insert({ nonce: h.get("x-dp-nonce") })).error) return NextResponse.json({ error: "replayed" }, { status: 409 });
+  const { data: co } = await db.from("organizations").select("id, emergency_stop").eq("id", m.organization_id).maybeSingle();
+  if (!co) return NextResponse.json({ error: "unknown_company" }, { status: 404 });
+
+  /** Matches an existing lead by email, phone or social handle so the same person is never added twice. */
+  const findContact = async (key: { email?: string; phone?: string; handle?: string; url?: string }) => {
+    const ors = [key.email && `email.eq.${key.email.toLowerCase()}`, key.phone && `phone_e164.eq.${key.phone}`, key.handle && `instagram_handle.eq.${key.handle}`,
+      key.url && `linkedin_url.eq.${key.url}`, key.url && `facebook_url.eq.${key.url}`].filter(Boolean).join(",");
+    if (!ors) return null;
+    const { data } = await db.from("contacts").select("id").eq("organization_id", m.organization_id).or(ors).limit(1).maybeSingle();
+    return (data?.id as string | undefined) ?? null;
+  };
+
+  if (m.type === "lead") {
+    const existing = await findContact({ email: m.email, phone: m.phone_e164, handle: m.instagram_handle, url: m.linkedin_url ?? m.facebook_url });
+    if (existing) {
+      await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: existing, kind: "note", notes: `New enquiry via ${m.source}${m.notes ? `: ${m.notes}` : ""}` });
+      return NextResponse.json({ ok: true, contact_id: existing, duplicate: true });
+    }
+    const { data, error } = await db.from("contacts").insert({
+      organization_id: m.organization_id, full_name: m.full_name, email: m.email?.toLowerCase() ?? null, phone_e164: m.phone_e164 ?? null, company_name: m.company_name ?? null,
+      source: m.source, lead_status: "new", consent_basis: m.consent ? "consent" : m.basis ?? "none", consent_at: m.consent || m.basis ? new Date().toISOString() : null,
+      consent_note: m.basis ? `Bought data (${m.source}); legitimate interest, B2B. Email/LinkedIn/calls only, never WhatsApp.` : null,
+      linkedin_url: m.linkedin_url ?? null, facebook_url: m.facebook_url ?? null, instagram_handle: m.instagram_handle ?? null,
+    }).select("id").single();
+    if (error) return NextResponse.json({ error: "lead_failed" }, { status: 422 });
+    if (m.search_id) {
+      // Saved search with a campaign: enrol the new lead straight away (sends still respect account limits and the weekly cap).
+      const { data: ls } = await db.from("lead_searches").select("enroll_sequence_id").eq("id", m.search_id).eq("organization_id", m.organization_id).maybeSingle();
+      if (ls?.enroll_sequence_id) await db.from("outreach_enrollments").insert({ organization_id: m.organization_id, sequence_id: ls.enroll_sequence_id, contact_id: data.id });
+    }
+    return NextResponse.json({ ok: true, contact_id: data.id });
+  }
+  if (m.type === "message") {
+    const isEmail = m.from.includes("@"); const isPhone = /^\+[1-9][0-9]{7,14}$/.test(m.from);
+    let contact = await findContact({ email: isEmail ? m.from : undefined, phone: isPhone ? m.from : undefined, handle: !isEmail && !isPhone ? m.from.replace(/^@/, "") : undefined });
+    if (!contact && (isEmail || isPhone)) {
+      // Someone wrote to us first: a new enquiry. No marketing consent is assumed.
+      const { data } = await db.from("contacts").insert({ organization_id: m.organization_id, full_name: m.name || m.from, email: isEmail ? m.from.toLowerCase() : null,
+        phone_e164: isPhone ? m.from : null, source: m.channel === "whatsapp" && isOptIn(m.text) ? "WhatsApp opt-in" : `${m.channel} enquiry`, lead_status: "new" }).select("id").single();
+      contact = (data?.id as string | undefined) ?? null;
+    }
+    if (!contact) {
+      await db.from("social_signals").upsert({ organization_id: m.organization_id, channel: m.channel as "facebook" | "instagram" | "linkedin", kind: "message",
+        source_url: m.url ?? `https://${m.channel}.com/messages/${encodeURIComponent(m.from)}/${Date.now()}`, author: m.from, snippet: m.text }, { onConflict: "organization_id,source_url", ignoreDuplicates: true });
+      return NextResponse.json({ ok: true, unmatched: true });
+    }
+    if (m.channel === "email" && isEmail && isOptOut(m.text)) {
+      // "Unsubscribe" / "STOP" by email: the unsubscribe event suppresses the address and ends every campaign.
+      await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: contact, kind: "unsubscribe", notes: `Email: ${m.text}`.slice(0, 2000) });
+      return NextResponse.json({ ok: true, contact_id: contact, opted_out: true });
+    }
+    if (m.channel === "whatsapp" && isPhone && isOptOut(m.text)) {
+      // STOP on WhatsApp: suppress the number for this company at once and end its campaigns.
+      await db.from("suppression_records").upsert({ organization_id: m.organization_id, channel: "whatsapp", value_normalized: m.from, reason: "unsubscribed", note: `WhatsApp: "${m.text.slice(0, 100)}"` },
+        { onConflict: "organization_id,channel,value_normalized", ignoreDuplicates: true });
+      await db.from("outreach_enrollments").update({ status: "stopped_suppressed" }).eq("contact_id", contact).in("status", ["active", "paused"]);
+      await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: contact, kind: "note", notes: `WhatsApp STOP (WhatsApp and calls to this number stopped): ${m.text}`.slice(0, 2000) });
+      return NextResponse.json({ ok: true, contact_id: contact, opted_out: true });
+    }
+    if (m.channel === "whatsapp" && isPhone && isOptIn(m.text)) {
+      // START on WhatsApp: the person asked for WhatsApp updates. Recorded as consent with the evidence.
+      const { data: c } = await db.from("contacts").select("consent_basis, do_not_contact").eq("id", contact).single();
+      if (c && !c.do_not_contact && c.consent_basis !== "consent") {
+        await db.from("contacts").update({ consent_basis: "consent", consent_at: new Date().toISOString(), consent_note: `Opted in on WhatsApp by sending "${m.text.slice(0, 100)}"` }).eq("id", contact);
+      }
+      await db.from("suppression_records").delete().eq("organization_id", m.organization_id).eq("channel", "whatsapp").eq("value_normalized", m.from);
+      await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: contact, kind: "note", notes: `WhatsApp opt-in: ${m.text}`.slice(0, 2000) });
+      return NextResponse.json({ ok: true, contact_id: contact, opted_in: true });
+    }
+    await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: contact, kind: "reply", notes: `${m.channel}: ${m.text}`.slice(0, 2000) });
+    await db.from("outreach_enrollments").update({ status: "stopped_reply" }).eq("contact_id", contact).eq("status", "active");
+    await db.from("outreach_tasks").update({ status: "replied" }).eq("contact_id", contact).eq("status", "open");
+    // The AI reply assistant answers when the company switched it on; n8n sends the reply on the same channel.
+    const reply = co.emergency_stop ? null : await autoReply(db, m.organization_id, contact, m.channel, m.text);
+    return NextResponse.json({ ok: true, contact_id: contact, ...(reply ? { auto_reply: reply } : {}) });
+  }
+  if (m.type === "signal") {
+    const { error } = await db.from("social_signals").upsert({ organization_id: m.organization_id, channel: m.channel, kind: m.kind, source_url: m.source_url, author: m.author ?? null,
+      title: m.title ?? null, snippet: m.snippet ?? null, matched_keyword: m.matched_keyword ?? null }, { onConflict: "organization_id,source_url", ignoreDuplicates: true });
+    return error ? NextResponse.json({ error: "signal_failed" }, { status: 422 }) : NextResponse.json({ ok: true });
+  }
+  if (m.type === "bounce") {
+    const contact = await findContact({ email: m.email });
+    if (!contact) return NextResponse.json({ ok: true, unmatched: true });
+    // The bounce event suppresses the address; campaigns for this person stop.
+    await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: contact, kind: "bounce", notes: `Bounced: ${m.email}` });
+    await db.from("outreach_enrollments").update({ status: "stopped_suppressed" }).eq("contact_id", contact).in("status", ["active", "paused"]);
+    return NextResponse.json({ ok: true, contact_id: contact });
+  }
+  if (m.type === "meeting_booked") {
+    let contact = await findContact({ email: m.email });
+    if (!contact) {
+      const { data } = await db.from("contacts").insert({ organization_id: m.organization_id, full_name: m.name || m.email, email: m.email.toLowerCase(), source: m.source, lead_status: "qualified" }).select("id").single();
+      contact = (data?.id as string | undefined) ?? null;
+    }
+    if (!contact) return NextResponse.json({ error: "lead_failed" }, { status: 422 });
+    const { data: c } = await db.from("contacts").select("full_name, company_name, owner_id").eq("id", contact).single();
+    const ownerOk = c?.owner_id ? !!(await db.from("memberships").select("user_id").eq("organization_id", m.organization_id).eq("user_id", c.owner_id).maybeSingle()).data : false;
+    const { error } = await db.from("meetings").insert({ organization_id: m.organization_id, title: (m.title || `Meeting with ${c?.full_name ?? m.email}${c?.company_name ? ` (${c.company_name})` : ""}`).slice(0, 200),
+      starts_at: m.starts_at, ends_at: m.ends_at ?? null, location: m.location ?? null, owner_id: ownerOk ? c!.owner_id : null, created_by: null });
+    if (error) return NextResponse.json({ error: "meeting_failed" }, { status: 422 });
+    await db.from("contacts").update({ lead_status: "qualified" }).eq("id", contact).in("lead_status", ["new", "contacted"]);
+    await db.from("outreach_enrollments").update({ status: "stopped_reply" }).eq("contact_id", contact).eq("status", "active");
+    await db.from("outreach_tasks").update({ status: "replied" }).eq("contact_id", contact).eq("status", "open");
+    await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: contact, kind: "note", notes: `Meeting booked for ${m.starts_at} via ${m.source}` });
+    return NextResponse.json({ ok: true, contact_id: contact });
+  }
+  if (m.type === "post_result") {
+    const { error } = await db.from("content_posts").update({ status: m.status, published_at: m.status === "published" ? new Date().toISOString() : null, external_url: m.external_url ?? null, error: m.error ?? null })
+      .eq("id", m.post_id).eq("organization_id", m.organization_id).eq("status", "approved");
+    return error ? NextResponse.json({ error: "post_failed" }, { status: 422 }) : NextResponse.json({ ok: true });
+  }
+  // call_result
+  const now = new Date().toISOString();
+  const { data: call } = await db.from("voice_calls").select("id, contact_id, status, requested_by").eq("id", m.call_id).eq("organization_id", m.organization_id).maybeSingle();
+  if (!call) return NextResponse.json({ error: "unknown_call" }, { status: 404 });
+  const firstResult = call.status === "queued" || call.status === "calling";
+  await db.from("voice_calls").update({ status: m.status, outcome: m.outcome ?? null, summary: m.summary ?? null, recording_url: m.recording_url ?? null,
+    ...(m.conversation_id ? { external_id: m.conversation_id } : {}), ...(m.transcript ? { transcript: m.transcript } : {}),
+    ...(m.status === "calling" ? { started_at: now } : { ended_at: now }) }).eq("id", call.id);
+  if (m.status !== "calling") {
+    await db.from("outreach_events").insert({ organization_id: m.organization_id, contact_id: call.contact_id, kind: "call",
+      outcome: m.outcome === "interested" || m.outcome === "meeting_booked" ? "positive" : m.outcome === "not_interested" ? "objection" : m.outcome === "callback" ? "not_now"
+        : m.outcome === "wrong_number" ? "wrong_contact" : m.status === "no_answer" ? "no_answer" : "other",
+      notes: `AI call${m.summary ? `: ${m.summary}` : ""}`.slice(0, 2000) });
+    if (m.outcome === "interested" || m.outcome === "meeting_booked") await db.from("contacts").update({ lead_status: "qualified" }).eq("id", call.contact_id);
+    if (m.outcome === "do_not_call") await db.from("contacts").update({ do_not_contact: true }).eq("id", call.contact_id);
+    if (firstResult && (m.outcome === "interested" || m.outcome === "callback" || m.outcome === "meeting_booked")) {
+      // A warm lead from an AI call: a person takes over at once. Campaign messages stop; an urgent task goes to the lead's owner.
+      await db.from("outreach_enrollments").update({ status: "stopped_reply" }).eq("contact_id", call.contact_id).eq("status", "active");
+      const { data: c } = await db.from("contacts").select("full_name, company_name, phone_e164, owner_id").eq("id", call.contact_id).single();
+      const member = async (u: string | null) => (u ? !!(await db.from("memberships").select("user_id").eq("organization_id", m.organization_id).eq("user_id", u).maybeSingle()).data : false);
+      const assignee = (await member(c?.owner_id ?? null)) ? c!.owner_id : (await member(call.requested_by)) ? call.requested_by : null;
+      const who = `${c?.full_name ?? "Lead"}${c?.company_name ? ` (${c.company_name})` : ""}`;
+      const title = m.outcome === "meeting_booked" ? `Confirm the meeting the AI booked: ${who}` : m.outcome === "callback" ? `Call back (they asked): ${who}` : `Call back now, interested: ${who}`;
+      await db.from("tasks").insert({ organization_id: m.organization_id, title: title.slice(0, 200), priority: "urgent", assignee_id: assignee, created_by: null,
+        due_on: new Date(Date.now() + 5.5 * 3_600_000).toISOString().slice(0, 10),
+        details: `${c?.phone_e164 ? `Phone: ${c.phone_e164}\n` : ""}AI call summary: ${m.summary ?? "(none)"}${m.recording_url ? `\nRecording: ${m.recording_url}` : ""}`.slice(0, 4000) });
+    }
+  }
+  return NextResponse.json({ ok: true });
+}

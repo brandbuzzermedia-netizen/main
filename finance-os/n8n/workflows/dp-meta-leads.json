@@ -1,0 +1,184 @@
+{
+  "name": "Diwani Parivaar OS · Meta lead forms → Leads",
+  "id": "f41932340c335f2f",
+  "versionId": "ada080d6-71f3-5e17-b84e-39517ad6c30b",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dp-meta-leads",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "f698ad02-d6fb-5a14-9d94-667916ba677f",
+      "name": "Incoming",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "23f2a7f0-272f-5658-b2f0-0b5c1e71369b"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Meta sends a leadgen id; fetch the answers with the Page token and send the lead to the right company.\n// Register the webhook URL as …/webhook/dp-meta-leads?org=<company id> for each company.\nconst org = $('Incoming').first().json.query.org; const out = [];\nfor (const e of ($json.body.entry || [])) for (const ch of (e.changes || [])) {\n  if (ch.field !== 'leadgen') continue;\n  const lead = await this.helpers.httpRequest({ url: `https://graph.facebook.com/v21.0/${ch.value.leadgen_id}`, qs: { access_token: $env.DP_FB_PAGE_TOKEN }, json: true });\n  const f = Object.fromEntries((lead.field_data || []).map((x) => [x.name, (x.values || [])[0]]));\n  const phone = String(f.phone_number || '').replace(/[^+0-9]/g, '');\n  out.push({ json: { payload: { type: 'lead', organization_id: org, full_name: f.full_name || [f.first_name, f.last_name].filter(Boolean).join(' ') || 'Meta lead',\n    ...(f.email ? { email: f.email } : {}), ...(/^\\+[1-9][0-9]{7,14}$/.test(phone) ? { phone_e164: phone } : {}), ...(f.company_name ? { company_name: f.company_name } : {}),\n    source: 'Meta lead form', consent: true, notes: `Form ${ch.value.form_id}` } } });\n}\nreturn out;"
+      },
+      "id": "06addf35-8f82-5441-9b28-854c987ceb4b",
+      "name": "Map to OS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Signs one message for the OS inbound endpoint, exactly as the OS signs its webhooks.\nconst crypto = require('crypto');\nconst body = JSON.stringify($json.payload);\nconst ts = Math.floor(Date.now() / 1000);\nconst nonce = crypto.randomBytes(16).toString('hex');\nconst signature = crypto.createHmac('sha256', $env.DP_SIGNING_SECRET).update(`${ts}.${nonce}.${body}`).digest('hex');\nreturn { json: { body, ts: String(ts), nonce, signature } };\n",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "13d51266-e1b5-5ad6-9d6a-c8f9d6aa9262",
+      "name": "Sign for OS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DP_APP_URL }}/api/inbound",
+        "options": {
+          "timeout": 20000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-dp-timestamp",
+              "value": "={{ $json.ts }}"
+            },
+            {
+              "name": "x-dp-nonce",
+              "value": "={{ $json.nonce }}"
+            },
+            {
+              "name": "x-dp-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}"
+      },
+      "id": "6d8a9a54-62d1-55c7-a1a1-df6a04a5d947",
+      "name": "Send to OS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "dp-meta-leads",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "38d3ae3c-2925-5c44-b50b-95a23bb390c3",
+      "name": "Meta verification",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        520
+      ],
+      "webhookId": "1415a42b-76ef-5c27-b41f-4b9be2157132"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.verify_token'] === $env.DP_META_VERIFY_TOKEN ? $json.query['hub.challenge'] : 'forbidden' }}",
+        "options": {}
+      },
+      "id": "14270b7d-d00b-51bf-ae18-ce2baf9d8fea",
+      "name": "Answer challenge",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        520
+      ]
+    }
+  ],
+  "connections": {
+    "Incoming": {
+      "main": [
+        [
+          {
+            "node": "Map to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map to OS": {
+      "main": [
+        [
+          {
+            "node": "Sign for OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign for OS": {
+      "main": [
+        [
+          {
+            "node": "Send to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meta verification": {
+      "main": [
+        [
+          {
+            "node": "Answer challenge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "meta": {
+    "templateKey": "meta_leads",
+    "webhookPath": "dp-meta-leads",
+    "relay": true
+  },
+  "tags": []
+}

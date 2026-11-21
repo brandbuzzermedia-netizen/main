@@ -1,19 +1,39 @@
-import type { Metadata } from "next";
-import { Archivo } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Caprasimo, Figtree, Inter_Tight, JetBrains_Mono, Newsreader, Outfit } from "next/font/google";
 import "./globals.css";
+import { AppServiceWorker } from "@/components/dp/app-install";
 
-const archivo = Archivo({ variable: "--font-archivo", subsets: ["latin"] });
+// The Company OS design's typefaces: Figtree for text, Newsreader for the group, and each
+// company's own display face (Caprasimo for GBS, Outfit for Brightwire and IYP, Baloo 2 for Tan O' Fun).
+const figtree = Figtree({ variable: "--font-figtree", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
+const newsreader = Newsreader({ variable: "--font-newsreader", subsets: ["latin"], weight: ["400", "500", "600"], style: ["normal", "italic"] });
+const caprasimo = Caprasimo({ variable: "--font-caprasimo", subsets: ["latin"], weight: "400" });
+const outfit = Outfit({ variable: "--font-outfit", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
+// The More of Us OS layout: Inter Tight for heavy headings, JetBrains Mono for small labels, Newsreader italic for the second half of titles.
+const tight = Inter_Tight({ variable: "--font-tight", subsets: ["latin"], weight: ["600", "700", "800"] });
+const mono = JetBrains_Mono({ variable: "--font-mono", subsets: ["latin"], weight: ["400", "500"] });
+// Baloo 2 is loaded by stylesheet: Turbopack's next/font build fails on it (Webpack builds it fine).
 
 export const metadata: Metadata = {
-  title: { default: "GBS Finance OS", template: "%s · GBS Finance OS" },
-  description: "Collections, billing follow-ups and cash flow for Get Bee Seen.",
+  title: { default: "Diwani Parivaar OS", template: "%s · Diwani Parivaar OS" },
+  description: "Private operating system for the Diwani Parivaar family business group.",
   robots: { index: false, follow: false },
+  appleWebApp: { capable: true, title: "Diwani OS", statusBarStyle: "default" },
+  icons: { apple: "/apple-touch-icon.png" },
 };
+
+export const viewport: Viewport = { themeColor: "#173F32", width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-IN" className={`${archivo.variable} h-full antialiased`}>
-      <body className="min-h-full font-sans text-[15px]">{children}</body>
+    <html lang="en-IN" className={`${figtree.variable} ${tight.variable} ${mono.variable} ${newsreader.variable} ${caprasimo.variable} ${outfit.variable} h-full antialiased`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" />
+      </head>
+      <body className="min-h-full font-sans text-[15px]">{children}<AppServiceWorker /></body>
     </html>
   );
 }

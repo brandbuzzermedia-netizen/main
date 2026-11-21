@@ -68,6 +68,20 @@ export function formatMoney(minor: Minor, currency = "INR", { compact = false } 
 }
 
 /** Minor units → plain decimal string for form inputs, e.g. 590000 → "5900.00". */
+/**
+ * Short Indian notation for dashboard tiles: ₹85,000 · ₹1.5 L · ₹2.4 Cr. Exact values
+ * stay one click away in the ledger. Non-INR falls back to compact formatting.
+ */
+export function formatShort(minor: Minor, currency = "INR"): string {
+  if (currency !== "INR") return formatMoney(minor, currency, { compact: true });
+  const sign = minor < 0 ? "−" : "";
+  const rupees = Math.abs(minor) / 100;
+  const trim = (n: number) => (Math.round(n * 10) / 10).toFixed(1).replace(/\.0$/, "");
+  if (rupees >= 1e7) return `${sign}₹${trim(rupees / 1e7)} Cr`;
+  if (rupees >= 1e5) return `${sign}₹${trim(rupees / 1e5)} L`;
+  return `${sign}${formatMoney(Math.abs(minor), "INR", { compact: true })}`;
+}
+
 export function minorToInput(minor: Minor | null | undefined): string {
   if (minor === null || minor === undefined) return "";
   const sign = minor < 0 ? "-" : "";

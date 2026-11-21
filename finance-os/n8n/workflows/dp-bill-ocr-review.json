@@ -1,0 +1,298 @@
+{
+  "name": "Diwani Parivaar OS · New bill uploaded → OCR → review queue",
+  "id": "2e0c47543eed5eab",
+  "versionId": "b071ed84-72e3-5bd8-95f9-c7ba17e75182",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dp-bill-ocr-review",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "84743e6d-78e7-5a59-911c-95ddb3d6fecb",
+      "name": "Webhook from OS",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "8ab6a5e3-d9a8-575a-b974-f5f103359d7c"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verifies the OS signature: HMAC-SHA256(secret, `${timestamp}.${nonce}.${body}`), max 5 minutes old.\n// Needs NODE_FUNCTION_ALLOW_BUILTIN=crypto and DP_SIGNING_SECRET (same value as N8N_SIGNING_SECRET in the OS).\nconst crypto = require('crypto');\nconst item = $input.first();\nconst h = item.json.headers || {};\nconst secret = $env.DP_SIGNING_SECRET || '';\nconst raw = item.binary && item.binary.data ? Buffer.from(item.binary.data.data, 'base64').toString('utf8') : JSON.stringify(item.json.body);\nconst ts = String(h['x-dp-timestamp'] || ''), nonce = String(h['x-dp-nonce'] || ''), sig = String(h['x-dp-signature'] || '');\nlet ok = Boolean(secret) && /^\\d{9,11}$/.test(ts) && nonce.length >= 16 && nonce.length <= 128 && /^[0-9a-f]{64}$/.test(sig)\n  && Math.abs(Math.floor(Date.now() / 1000) - Number(ts)) <= 300;\nif (ok) {\n  const expected = crypto.createHmac('sha256', secret).update(`${ts}.${nonce}.${raw}`).digest();\n  const given = Buffer.from(sig, 'hex');\n  ok = given.length === expected.length && crypto.timingSafeEqual(given, expected);\n}\nlet payload = {};\ntry { payload = JSON.parse(raw); } catch (e) { ok = false; }\nconst runOk = ok && /^[0-9a-f-]{36}$/.test(String(payload.run_id || '')) && /^[0-9a-f-]{36}$/.test(String(payload.organization_id || ''));\nreturn [{ json: { ok: runOk, run_id: payload.run_id, organization_id: payload.organization_id, input: payload.input || {} } }];\n"
+      },
+      "id": "86644186-a347-552f-923f-6e8e714f114f",
+      "name": "Verify signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "ok",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      },
+      "id": "16cde70f-2946-50da-9755-299a964e601b",
+      "name": "Signed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: 'bad_signature' } }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "d0492321-8456-5f4a-8a80-927509259a1e",
+      "name": "Reject",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { accepted: true, executionId: String($execution.id) } }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "fb063065-1181-5f56-a8b2-755eeae1be27",
+      "name": "Accept",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $('Verify signature').first().json.input;\nreturn [{ json: { subject: `${s.company}: ${s.bills_awaiting_review} bill(s) waiting for review`,\n  text: `${s.bills_awaiting_review} uploaded bill(s) are waiting for a person to check the extracted fields (oldest: ${s.oldest_waiting_days} day(s)).\\nNothing is posted to the ledger until someone reviews and approves it in Finance → Expenses & bills.` } }];\n"
+      },
+      "id": "dfac3565-2b3d-59e2-964c-191e7bcff197",
+      "name": "Compose message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.DP_FROM_EMAIL }}",
+        "toEmail": "={{ $env.DP_OWNER_EMAIL }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "6c22373f-cd42-5a81-a26d-148b6b589c58",
+      "name": "Email the owner",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1100,
+        200
+      ],
+      "onError": "continueErrorOutput",
+      "notes": "Configure an SMTP credential before activating."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Signs the result for the OS callback exactly as the OS signs its webhooks.\nconst crypto = require('crypto');\nconst run = $('Verify signature').first().json;\nconst failed = $input.first().json.error;\nconst body = JSON.stringify({\n  run_id: run.run_id,\n  organization_id: run.organization_id,\n  status: failed ? 'failed' : 'succeeded',\n  execution_id: String($execution.id),\n  ...(failed ? { error: String(failed.message || failed).slice(0, 1900) } : {}),\n});\nconst ts = Math.floor(Date.now() / 1000);\nconst nonce = crypto.randomBytes(16).toString('hex');\nconst signature = crypto.createHmac('sha256', $env.DP_SIGNING_SECRET).update(`${ts}.${nonce}.${body}`).digest('hex');\nreturn [{ json: { body, ts: String(ts), nonce, signature } }];\n"
+      },
+      "id": "dafe8043-d51f-514d-9b19-6a4b38e72ea5",
+      "name": "Sign result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DP_APP_URL }}/api/automation/callback",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-dp-timestamp",
+              "value": "={{ $json.ts }}"
+            },
+            {
+              "name": "x-dp-nonce",
+              "value": "={{ $json.nonce }}"
+            },
+            {
+              "name": "x-dp-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "8b73657f-9148-5a35-9cca-4d26ff131617",
+      "name": "Report to OS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        260
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook from OS": {
+      "main": [
+        [
+          {
+            "node": "Verify signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify signature": {
+      "main": [
+        [
+          {
+            "node": "Signed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signed?": {
+      "main": [
+        [
+          {
+            "node": "Accept",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accept": {
+      "main": [
+        [
+          {
+            "node": "Compose message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Compose message": {
+      "main": [
+        [
+          {
+            "node": "Email the owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email the owner": {
+      "main": [
+        [
+          {
+            "node": "Sign result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sign result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign result": {
+      "main": [
+        [
+          {
+            "node": "Report to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "meta": {
+    "templateKey": "bill_ocr_review",
+    "webhookPath": "dp-bill-ocr-review"
+  },
+  "tags": []
+}

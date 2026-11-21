@@ -3,18 +3,26 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { appUrl } from "@/lib/env";
 
 export type LoginState = { error?: string; sent?: boolean; email?: string };
 
 const emailSchema = z.string().trim().toLowerCase().email("Enter a valid email address");
 
-function allowed(email: string): boolean {
+/** Allowed when there is no allowlist, the email is on it, or an owner has an open invitation for it. */
+async function allowed(email: string): Promise<boolean> {
   const list = (process.env.AUTH_ALLOWED_EMAILS ?? "")
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
-  return list.length === 0 || list.includes(email);
+  if (list.length === 0 || list.includes(email)) return true;
+  try {
+    const { data } = await createAdminClient().rpc("invitation_open", { p_email: email });
+    return data === true;
+  } catch {
+    return false;
+  }
 }
 
 function safeNext(next: FormDataEntryValue | null): string {
@@ -36,7 +44,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     redirect(next);
   }
 
-  if (!allowed(email)) {
+  if (!(await allowed(email))) {
     // Same response as success, so the form doesn't reveal which emails are allowed.
     return { sent: true, email };
   }
