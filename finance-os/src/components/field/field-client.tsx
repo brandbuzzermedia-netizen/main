@@ -9,7 +9,7 @@ import { BENGALURU, getPosition, hasMapsKey, loadMaps, type Fix, type GoogleNS }
 
 export type FieldLead = {
   id: string; company_name: string | null; full_name: string; phone_e164: string | null; whatsapp_e164: string | null; area: string | null; address: string | null;
-  field_status: FieldStatus; field_segment: Segment | null; lat: number | null; lng: number | null; place_id: string | null; next_follow_up_on: string | null; owner_back_at: string | null;
+  field_status: FieldStatus; field_segment: Segment | null; lat: number | null; lng: number | null; place_id: string | null; next_follow_up_on: string | null; owner_back_at: string | null; needs_confirm?: boolean;
 };
 
 const ink = "#141414", muted = "#6B6B6B", line = "#E4E0D6";
@@ -22,6 +22,37 @@ export function StatusChip({ s }: { s: FieldStatus }) {
   return <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, fontWeight: 700, color: STATUS_COLOUR[s] }}><span style={{ width: 9, height: 9, borderRadius: "50%", background: STATUS_COLOUR[s] }} />{STATUS_LABEL[s]}</span>;
 }
 const name = (l: FieldLead) => l.company_name || l.full_name;
+
+// ---- Live details from Google (shown, never stored) ----
+
+export type LivePlace = { name: string; address: string | null; phone: string | null; lat: number | null; lng: number | null };
+const liveCache = new Map<string, Promise<LivePlace | null>>();
+/** Name, address and phone of a Google place, fetched live for display. Google's terms do not allow storing them. */
+export function livePlace(placeId: string): Promise<LivePlace | null> {
+  if (!hasMapsKey()) return Promise.resolve(null);
+  if (!liveCache.has(placeId)) {
+    liveCache.set(placeId, loadMaps().then(async (google: GoogleNS) => {
+      const { Place } = await google.maps.importLibrary("places");
+      const p = new Place({ id: placeId });
+      await p.fetchFields({ fields: ["displayName", "formattedAddress", "nationalPhoneNumber", "location"] });
+      return { name: String(p.displayName ?? ""), address: p.formattedAddress ?? null, phone: p.nationalPhoneNumber ?? null, lat: p.location?.lat() ?? null, lng: p.location?.lng() ?? null };
+    }).catch(() => null));
+  }
+  return liveCache.get(placeId)!;
+}
+
+/** A lead's name; for places added from Google and not yet confirmed, the live Google name. */
+export function LeadName({ l }: { l: FieldLead }) {
+  const [live, setLive] = useState<string | null>(null);
+  useEffect(() => {
+    if (!l.needs_confirm || !l.place_id) return;
+    let on = true;
+    void livePlace(l.place_id).then((p) => { if (on && p?.name) setLive(p.name); });
+    return () => { on = false; };
+  }, [l.needs_confirm, l.place_id]);
+  if (!l.needs_confirm) return <>{name(l)}</>;
+  return <>{live ?? "Google place"}<span style={{ fontSize: 11.5, fontWeight: 600, color: "#B06000", marginLeft: 6 }}>to confirm</span></>;
+}
 
 // ---- Check-in ----
 
@@ -69,7 +100,7 @@ export function LeadRow({ l, slug, km }: { l: FieldLead; slug: string; km?: numb
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 0", borderTop: `1px solid ${line}` }}>
       <a href={`/c/${slug}/field/leads/${l.id}`} style={{ flex: 1, minWidth: 0, color: ink, textDecoration: "none", minHeight: 44 }}>
-        <div style={{ fontWeight: 700, fontSize: 15.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name(l)}</div>
+        <div style={{ fontWeight: 700, fontSize: 15.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}><LeadName l={l} /></div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 3, fontSize: 13, color: muted }}>
           <StatusChip s={l.field_status} />{l.area && <span>{l.area}</span>}{km !== undefined && <b style={{ color: ink }}>{formatKm(km)}</b>}
           {l.next_follow_up_on && <span>Follow up {l.next_follow_up_on.slice(8, 10)}/{l.next_follow_up_on.slice(5, 7)}</span>}
@@ -111,6 +142,16 @@ export function AddressField({ address, area, lat, lng, placeId, readLink }: { a
   const [ar, setAr] = useState(area);
   const [pt, setPt] = useState<Point | null>(lat !== null && lng !== null ? { lat, lng } : null);
   const [pid, setPid] = useState(placeId);
+  const [src, setSrc] = useState<"keep" | "google" | "own">("keep");
+  useEffect(() => {
+    const fill = (e: Event) => {
+      const d = (e as CustomEvent<LivePlace>).detail;
+      if (d.address) setAddr(d.address);
+      if (d.lat !== null && d.lng !== null) { setPt({ lat: d.lat, lng: d.lng }); setSrc("google"); }
+    };
+    window.addEventListener("dp-fill-from-google", fill);
+    return () => window.removeEventListener("dp-fill-from-google", fill);
+  }, []);
   const [msg, setMsg] = useState("");
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -128,6 +169,7 @@ export function AddressField({ address, area, lat, lng, placeId, readLink }: { a
         setAddr(place.formattedAddress ?? "");
         setPt({ lat: place.location.lat(), lng: place.location.lng() });
         setPid(place.id ?? "");
+        setSrc("google");
         const comp = (place.addressComponents ?? []) as { types: string[]; longText: string }[];
         const sub = comp.find((c) => c.types.includes("sublocality_level_1")) ?? comp.find((c) => c.types.includes("sublocality")) ?? comp.find((c) => c.types.includes("neighborhood"));
         if (sub) setAr(sub.longText);
@@ -148,7 +190,7 @@ export function AddressField({ address, area, lat, lng, placeId, readLink }: { a
             setLinkBusy(true); setMsg("");
             readLink(link).then((r) => {
               if ("error" in r) { setMsg(r.error); return; }
-              if (r.lat !== null && r.lng !== null) { setPt({ lat: r.lat, lng: r.lng }); setPid(""); }
+              if (r.lat !== null && r.lng !== null) { setPt({ lat: r.lat, lng: r.lng }); setPid(""); setSrc("own"); }
               if (r.query && /,/.test(r.query) && !addr) setAddr(r.query);
               const company = document.querySelector<HTMLInputElement>("input[name=company_name]");
               if (company && !company.value && r.name) company.value = r.name;
@@ -162,10 +204,10 @@ export function AddressField({ address, area, lat, lng, placeId, readLink }: { a
       {msg && <div style={{ fontSize: 13, color: muted }}>{msg}</div>}
       <label style={{ fontSize: 13, color: muted }}>Address<textarea name="address" rows={2} maxLength={500} value={addr} onChange={(e) => setAddr(e.target.value)} style={{ ...field, minHeight: 64 }} /></label>
       <label style={{ fontSize: 13, color: muted }}>Area / locality<input name="area" maxLength={120} value={ar} onChange={(e) => setAr(e.target.value)} placeholder="e.g. HSR Layout" style={field} /></label>
-      <input type="hidden" name="lat" value={pt?.lat ?? ""} /><input type="hidden" name="lng" value={pt?.lng ?? ""} /><input type="hidden" name="place_id" value={pt ? pid : ""} />
+      <input type="hidden" name="lat" value={pt?.lat ?? ""} /><input type="hidden" name="lng" value={pt?.lng ?? ""} /><input type="hidden" name="place_id" value={pid} /><input type="hidden" name="coords_source" value={src} />
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", fontSize: 13.5 }}>
-        <button type="button" onClick={() => { setMsg(""); getPosition().then((f) => { setPt({ lat: f.lat, lng: f.lng }); setPid(""); }).catch((e: Error) => setMsg(e.message)); }} style={{ ...big, minHeight: 44 }}>Use my location</button>
-        {pt ? <span>Pin set: {pt.lat.toFixed(5)}, {pt.lng.toFixed(5)} · <button type="button" onClick={() => { setPt(null); setPid(""); }} style={{ border: 0, background: "none", color: "#B42318", cursor: "pointer", padding: 0, fontSize: 13.5 }}>Remove</button></span> : <span style={{ color: muted }}>No pin yet</span>}
+        <button type="button" onClick={() => { setMsg(""); getPosition().then((f) => { setPt({ lat: f.lat, lng: f.lng }); setSrc("own"); }).catch((e: Error) => setMsg(e.message)); }} style={{ ...big, minHeight: 44 }}>Use my location</button>
+        {pt ? <span>Pin set: {pt.lat.toFixed(5)}, {pt.lng.toFixed(5)} · <button type="button" onClick={() => { setPt(null); setSrc("own"); }} style={{ border: 0, background: "none", color: "#B42318", cursor: "pointer", padding: 0, fontSize: 13.5 }}>Remove</button></span> : <span style={{ color: muted }}>No pin yet</span>}
       </div>
     </div>
   );
@@ -197,7 +239,7 @@ export function RouteBuilder({ slug, leads, initial, today, save }: { slug: stri
             <li key={l.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderTop: `1px solid ${line}` }}>
               <span style={{ width: 28, height: 28, borderRadius: "50%", background: STATUS_COLOUR[l.field_status], color: "#fff", display: "grid", placeItems: "center", fontWeight: 800, fontSize: 13, flex: "none" }}>{i + 1}</span>
               <a href={`/c/${slug}/field/leads/${l.id}`} style={{ flex: 1, minWidth: 0, color: ink, textDecoration: "none" }}>
-                <div style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name(l)}</div>
+                <div style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}><LeadName l={l} /></div>
                 <div style={{ fontSize: 12.5, color: muted }}>{[l.area, here && hasPoint(l) ? formatKm(distanceKm(here, toPoint(l)!)) : null, !hasPoint(l) ? "no pin" : null].filter(Boolean).join(" · ")}</div>
               </a>
               <a href={navigateUrl(l)} target="_blank" rel="noopener noreferrer" aria-label={`Navigate to ${name(l)}`} style={{ ...big, minWidth: 48, padding: "0 12px" }}>Go</a>
@@ -335,5 +377,38 @@ export function QuickAdd({ action }: { action: (fd: FormData) => Promise<void> }
       <button type="button" onClick={submit} disabled={busy} style={{ ...bigPrimary, minHeight: 58, fontSize: 17 }}>{busy ? msg : "Save here"}</button>
       <div style={{ fontSize: 12.5, color: muted }}>Saves the pin where you are standing. Add the owner, address and notes later from the lead.</div>
     </form>
+  );
+}
+
+// ---- Confirm a place found on Google ----
+
+/** Shows the place's details live from Google. "Use these details" fills the form; saving it is the person confirming them. */
+export function ConfirmFromGoogle({ placeId, pending }: { placeId: string; pending: boolean }) {
+  const [p, setP] = useState<LivePlace | null>(null);
+  const [state, setState] = useState(hasMapsKey() ? "loading" : "nokey");
+  useEffect(() => { void livePlace(placeId).then((x) => { setP(x); setState(x ? "ready" : "failed"); }); }, [placeId]);
+  const use = () => {
+    if (!p) return;
+    const set = (n: string, v: string | null) => { const el = document.querySelector<HTMLInputElement>(`input[name=${n}]`); if (el && v) el.value = v; };
+    set("company_name", p.name);
+    set("phone", p.phone);
+    window.dispatchEvent(new CustomEvent<LivePlace>("dp-fill-from-google", { detail: p }));
+    document.querySelector("input[name=company_name]")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setState("filled");
+  };
+  return (
+    <div style={{ display: "grid", gap: 8, fontSize: 14 }}>
+      {pending && <div style={{ color: "#B06000", fontWeight: 600 }}>Added from Google Maps. Check the details at the shop and save them as yours.</div>}
+      {state === "nokey" && <div style={{ color: muted }}>Live Google details need the Maps key. Type the details yourself and save.</div>}
+      {state === "loading" && <div style={{ color: muted }}>Loading the details from Google…</div>}
+      {state === "failed" && <div style={{ color: muted }}>Google did not return details for this place. Type them yourself and save.</div>}
+      {p && (
+        <>
+          <div><b>{p.name}</b>{p.phone && <div>{p.phone}</div>}{p.address && <div style={{ color: muted }}>{p.address}</div>}</div>
+          <button type="button" onClick={use} style={{ ...bigPrimary, width: "100%" }}>{state === "filled" ? "Filled below: check and tap Save changes" : "Use these details"}</button>
+          <div style={{ fontSize: 12.5, color: muted }}>Shown live from Google and not stored until you save the form.</div>
+        </>
+      )}
+    </div>
   );
 }

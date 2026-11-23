@@ -20,7 +20,8 @@ const field: CSSProperties = { width: "100%", minHeight: 48, border: `1px solid 
 /**
  * Google-Maps-style finder: search a place or a kind of business, search the area on screen or near you,
  * see results on the map with rating and reviews, then add the ones you want as leads (and optionally to
- * the field visit list). Results are only shown; only the businesses you add are saved.
+ * the field visit list). Results are only shown. Adding a business keeps only Google's place ID and the pin (Google
+ * Maps Platform terms); its details stay live from Google until a person confirms them on the lead.
  */
 export function MapsFinder({ known, add, defaultToField = true }: { known: string[]; add: AddFn; defaultToField?: boolean }) {
   const knownSet = useMemo(() => new Set(known), [known]);
@@ -110,9 +111,10 @@ export function MapsFinder({ known, add, defaultToField = true }: { known: strin
   };
   const save = (rows: Result[]) => {
     setBusy(true);
-    add(rows.map((r) => ({ name: r.name, address: r.address, lat: r.lat, lng: r.lng, place_id: r.place_id, phone: r.phone, rating: r.rating, reviews: r.reviews, website: r.website })), seg, "", toField)
+    // Only the place ID and the pin are saved (Google's terms); the name, phone and address are confirmed later on the lead.
+    add(rows.filter((r) => r.place_id).map((r) => ({ place_id: r.place_id, lat: r.lat, lng: r.lng })), seg, "", toField)
       .then((res) => {
-        setMsg(res.error ? `Not saved: ${res.error}` : `Added ${res.added} lead(s)${res.skipped ? `; ${res.skipped} were already in the OS` : ""}.${toField && res.added ? " They are on your field visit list." : ""}`);
+        setMsg(res.error ? `Not saved: ${res.error}` : `Added ${res.added} lead(s)${res.skipped ? `; ${res.skipped} were already in the OS` : ""}.${toField && res.added ? " They are on your field visit list." : ""}${res.added ? " Confirm each one's details at the shop." : ""}`);
         if (!res.error) { setAdded((cur) => new Set([...cur, ...rows.map((r) => r.place_id).filter(Boolean) as string[]])); setPick(new Set()); }
       }).finally(() => setBusy(false));
   };
@@ -173,7 +175,7 @@ export function MapsFinder({ known, add, defaultToField = true }: { known: strin
           );
         })}
       </div>
-      {results.length > 0 && <div style={{ fontSize: 12.5, color: muted }}>Results are shown live from Google and are not saved. Only the businesses you add become leads.</div>}
+      {results.length > 0 && <div style={{ fontSize: 12.5, color: muted }}>Shown live from Google. Adding saves only the Google place ID and the pin (kept 30 days, then replaced by your check-in location); the name, phone and address are shown live until you confirm them on the lead.</div>}
       {chosen.length > 0 && (
         <div style={{ position: "fixed", left: 0, right: 0, bottom: "calc(64px + env(safe-area-inset-bottom, 0px))", zIndex: 30, background: "#fff", borderTop: `1px solid ${line}`, padding: "10px 16px", display: "grid", gap: 8, boxShadow: "0 -4px 16px rgba(0,0,0,.08)" }}>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", fontSize: 13.5 }}>

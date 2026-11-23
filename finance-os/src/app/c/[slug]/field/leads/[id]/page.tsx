@@ -4,7 +4,7 @@ import { getCompanyContext } from "@/lib/workspace";
 import { formatMoney } from "@/domain/money";
 import { designFor } from "@/domain/design";
 import { PageHead } from "@/components/dp/shell";
-import { AddressField, big, bigPrimary, CheckIn, StatusChip, type FieldLead } from "@/components/field/field-client";
+import { AddressField, big, bigPrimary, CheckIn, ConfirmFromGoogle, StatusChip, type FieldLead } from "@/components/field/field-client";
 import { FIELD_STATUSES, navigateUrl, OUTCOME_LABEL, placeUrl, SEGMENT_LABEL, SEGMENTS, SOURCES, STATUS_LABEL, toPoint, type Outcome } from "@/lib/field-sales";
 import { LEAD_COLUMNS } from "@/lib/field-data";
 import { loadMembers } from "@/lib/people";
@@ -38,13 +38,13 @@ export default async function FieldLeadPage({ params, searchParams }: PageProps<
   const l = (row ?? null) as (FieldLead & { source: string | null; notes: string | null; lost_reason: string | null; owner_id: string | null }) | null;
   const lat = l?.lat == null ? null : Number(l.lat), lng = l?.lng == null ? null : Number(l.lng);
   const d = designFor(slug);
-  const title = isNew ? "New lead" : l!.company_name || l!.full_name;
+  const title = isNew ? "New lead" : l!.needs_confirm ? "Place to confirm" : l!.company_name || l!.full_name;
   const digits = (p: string | null) => (p ?? "").replace(/\D/g, "");
   const time = (iso: string) => new Date(iso).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" });
   const edit = (
     <form action={saveLeadAction.bind(null, slug, id)} style={{ display: "grid", gap: 12 }}>
       <label style={lbl}>Business name *<input name="company_name" required maxLength={200} defaultValue={l?.company_name ?? ""} style={fieldStyle} /></label>
-      <label style={lbl}>Owner name<input name="owner_name" maxLength={200} defaultValue={l && l.full_name !== l.company_name ? l.full_name : ""} style={fieldStyle} /></label>
+      <label style={lbl}>Owner name<input name="owner_name" maxLength={200} defaultValue={l && !l.needs_confirm && l.full_name !== l.company_name ? l.full_name : ""} style={fieldStyle} /></label>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         <label style={lbl}>Phone<input name="phone" type="tel" inputMode="tel" defaultValue={l?.phone_e164 ?? ""} placeholder="98xxxxxxxx" style={fieldStyle} /></label>
         <label style={lbl}>WhatsApp<input name="whatsapp" type="tel" inputMode="tel" defaultValue={l?.whatsapp_e164 && l.whatsapp_e164 !== l.phone_e164 ? l.whatsapp_e164 : ""} placeholder="Same as phone" style={fieldStyle} /></label>
@@ -83,6 +83,7 @@ export default async function FieldLeadPage({ params, searchParams }: PageProps<
         {lead.owner_back_at && <span>Owner back <b>{time(lead.owner_back_at)}</b></span>}
         {lead.field_status === "lost" && lead.lost_reason && <span style={{ color: "#B42318" }}>Lost: {lead.lost_reason}</span>}
       </div>
+      {lead.place_id && lead.needs_confirm && <Box title="Details from Google"><ConfirmFromGoogle placeId={lead.place_id} pending /></Box>}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 12 }}>
         {lead.phone_e164 ? <a href={`tel:${lead.phone_e164}`} style={big}>Call</a> : <span style={{ ...big, color: "#AAA" }}>No phone</span>}
         {lead.whatsapp_e164 ? <a href={`https://wa.me/${digits(lead.whatsapp_e164)}`} target="_blank" rel="noopener noreferrer" style={big}>WhatsApp</a> : <span style={{ ...big, color: "#AAA" }}>No WhatsApp</span>}

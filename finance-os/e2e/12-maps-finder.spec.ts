@@ -18,9 +18,12 @@ const STUB = `
   window.google = { maps: {
     Map: class extends Base { fitBounds() {} panTo() {} getBounds() { return null; } setCenter() {} setZoom() {} },
     Marker: class extends Base {}, InfoWindow: class extends Base {}, LatLngBounds: class { extend() {} getCenter() {} }, SymbolPath: { CIRCLE: 0 },
-    importLibrary: async () => ({ Place: { searchByText: async (req) => { window.__searches.push(req); return { places: [
+    importLibrary: async () => ({ Place: Object.assign(class { constructor(o) { this.id = o.id; }
+      async fetchFields() { const p = window.__byId[this.id]; Object.assign(this, p); } }, { searchByText: async (req) => { window.__searches.push(req); return { places: [
       place("pA${run}", "Gloss Garage ${run}", 12.912, 77.648, 4.7, 312, "098450 ${String(run).padStart(5, "0")}"),
-      place("pB${run}", "Shine Studio ${run}", 12.92, 77.64, 4.1, 45, null) ] }; } } }) } };
+      place("pB${run}", "Shine Studio ${run}", 12.92, 77.64, 4.1, 45, null) ] }; } }) }) } };
+  window.__byId = { "pA${run}": place("pA${run}", "Gloss Garage ${run}", 12.912, 77.648, 4.7, 312, "098450 ${String(run).padStart(5, "0")}"),
+                    "pB${run}": place("pB${run}", "Shine Studio ${run}", 12.92, 77.64, 4.1, 45, null) };
   window.__dpMapsReady && window.__dpMapsReady();`;
 
 test("find on Google Maps: search, see ratings, add one, add the rest from the selection bar", async ({ page }) => {
@@ -43,7 +46,7 @@ test("find on Google Maps: search, see ratings, add one, add the rest from the s
 
   // One tap adds a lead (and puts it on the field list).
   await page.locator(`#res-0`).getByRole("button", { name: "Add lead" }).click();
-  await expect(page.getByRole("status")).toContainText("Added 1 lead(s). They are on your field visit list.");
+  await expect(page.getByRole("status")).toContainText("Added 1 lead(s). They are on your field visit list. Confirm each one's details at the shop.");
   await expect(page.locator(`#res-0`).getByText("Added")).toBeVisible();
 
   // Tick the other one and add it from the bottom bar.
@@ -52,13 +55,26 @@ test("find on Google Maps: search, see ratings, add one, add the rest from the s
   await expect(page.locator("#res-1").getByText("Added")).toBeVisible();
 
   const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
-  const { data } = await db.from("contacts").select("company_name, place_id, field_status, source, phone_e164, notes, lat").in("place_id", [`pA${run}`, `pB${run}`]).order("company_name");
+  // Only Google's place ID and the pin are stored; the name, phone and address are not.
+  const { data } = await db.from("contacts").select("id, company_name, full_name, place_id, field_status, source, phone_e164, address, notes, lat, needs_confirm, coords_fetched_at").in("place_id", [`pA${run}`, `pB${run}`]).order("place_id");
   expect(data).toHaveLength(2);
-  expect(data![0]).toMatchObject({ company_name: `Gloss Garage ${run}`, field_status: "to_visit", source: "Google Maps", phone_e164: `+9198450${String(run).padStart(5, "0")}`, lat: 12.912 });
-  expect(data![0].notes).toContain("Google rating 4.7 (312 reviews)");
+  expect(data![0]).toMatchObject({ company_name: null, full_name: "Unconfirmed place", field_status: "to_visit", source: "Google Maps", phone_e164: null, address: null, notes: null, lat: 12.912, needs_confirm: true });
+  expect(data![0].coords_fetched_at).not.toBeNull();
+
+  // On the lead, the details come live from Google; "Use these details" + Save makes them the person's own.
+  await page.goto(`/c/demo-gbs/field/leads/${data![0].id}`);
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByText(`Gloss Garage ${run}`).first()).toBeVisible();
+  await page.getByRole("button", { name: "Use these details" }).click();
+  await expect(page.locator("input[name=company_name]")).toHaveValue(`Gloss Garage ${run}`);
+  await page.getByRole("button", { name: "Save changes", exact: true }).click();
+  await expect(page.getByRole("status").first()).toHaveText("Saved.");
+  const { data: saved } = await db.from("contacts").select("company_name, phone_e164, address, needs_confirm, coords_fetched_at").eq("id", data![0].id).single();
+  expect(saved).toMatchObject({ company_name: `Gloss Garage ${run}`, phone_e164: `+9198450${String(run).padStart(5, "0")}`, address: `Gloss Garage ${run}, HSR Layout, Bengaluru`, needs_confirm: false });
+  expect(saved!.coords_fetched_at).not.toBeNull(); // the pin is still Google's until a check-in replaces it
+  await page.goto("/c/demo-gbs/leads/find");
 
   // Searching again marks both as already added.
-  await page.reload();
   await page.waitForLoadState("networkidle");
   await page.getByRole("button", { name: "Car detailing" }).first().click();
   await expect(page.locator("#res-0").getByText("Added")).toBeVisible();

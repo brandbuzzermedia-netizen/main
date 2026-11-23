@@ -43,8 +43,11 @@ export async function saveLeadAction(slug: string, id: string, fd: FormData) {
     const lead = {
       company_name: company, full_name: opt(fd.get("owner_name"), 200) ?? company, phone_e164: phone, whatsapp_e164: wa ?? phone, field_segment: segment, source,
       address: opt(fd.get("address"), 500), area: opt(fd.get("area"), 120), lat: lat !== null && lng !== null ? lat : null, lng: lat !== null && lng !== null ? lng : null,
-      place_id: lat !== null && lng !== null ? opt(fd.get("place_id"), 300) : null,
+      place_id: opt(fd.get("place_id"), 300),
       next_follow_up_on: z.iso.date().nullable().catch(null).parse(opt(fd.get("next_follow_up_on"), 10)), notes: opt(fd.get("notes"), 4000),
+      // Saving the form is the person confirming these details. A pin from Google search may be kept 30 days; the person's own pin has no limit.
+      needs_confirm: false,
+      ...(fd.get("coords_source") === "google" && lat !== null ? { coords_fetched_at: new Date().toISOString() } : fd.get("coords_source") === "own" || lat === null ? { coords_fetched_at: null } : {}),
       ...(ownerId && ctx.can("crm.manage") ? { owner_id: ownerId } : {}),
     };
     if (isNew) {
@@ -269,37 +272,32 @@ export async function readMapsLinkAction(raw: string): Promise<MapsLinkInfo | { 
   return parseMapsUrl(url) ?? { error: "No place or pin found in that link. Open the shop in Google Maps, tap Share, then Copy link." };
 }
 
-const FoundRow = z.object({
-  name: z.string().trim().min(1).max(200), address: z.string().trim().max(500).nullable(), lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180),
-  place_id: z.string().trim().max(300).nullable(), phone: z.string().trim().max(40).nullable(),
-  rating: z.number().min(0).max(5).nullable().optional(), reviews: z.number().int().min(0).nullable().optional(), website: z.string().trim().max(300).nullable().optional(),
-});
-/** Adds the shops picked from a Google Maps search. Only the picked shops are stored; shops already added (same place or phone) are skipped. */
+const FoundRow = z.object({ lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180), place_id: z.string().trim().min(1).max(300) });
+/**
+ * Adds places picked in Find on Google Maps. Google's terms allow keeping only the place ID (and the pin for
+ * up to 30 days), so nothing else is stored: the name, phone and address are shown live from Google until a
+ * person confirms them on the lead. Places already in the OS are skipped.
+ */
 export async function addFoundLeadsAction(slug: string, rows: unknown, segment: string, area: string, toField = true): Promise<{ added: number; skipped: number; error?: string }> {
   const ctx = await writer(slug);
   const parsed = z.array(FoundRow).max(60).safeParse(rows);
-  if (!parsed.success) return { added: 0, skipped: 0, error: "Could not read the picked shops." };
+  if (!parsed.success) return { added: 0, skipped: 0, error: "Could not read the picked places." };
   const seg = z.enum(SEGMENTS).catch("other").parse(segment);
-  const list = parsed.data.map((r) => ({ ...r, phone_e164: r.phone ? toE164(r.phone) : null }));
-  const pids = list.map((r) => r.place_id).filter(Boolean) as string[];
-  const phones = list.map((r) => r.phone_e164).filter(Boolean) as string[];
-  const [{ data: byPlace }, { data: byPhone }] = await Promise.all([
-    pids.length ? ctx.supabase.from("contacts").select("place_id").eq("organization_id", ctx.company.id).in("place_id", pids) : Promise.resolve({ data: [] }),
-    phones.length ? ctx.supabase.from("contacts").select("phone_e164").eq("organization_id", ctx.company.id).in("phone_e164", phones) : Promise.resolve({ data: [] }),
-  ]);
-  const seenPlace = new Set((byPlace ?? []).map((r) => r.place_id as string)), seenPhone = new Set((byPhone ?? []).map((r) => r.phone_e164 as string));
-  const fresh = list.filter((r) => !(r.place_id && seenPlace.has(r.place_id)) && !(r.phone_e164 && seenPhone.has(r.phone_e164)));
+  const pids = [...new Set(parsed.data.map((r) => r.place_id))];
+  const { data: have } = await ctx.supabase.from("contacts").select("place_id").eq("organization_id", ctx.company.id).in("place_id", pids);
+  const seen = new Set((have ?? []).map((r) => r.place_id as string));
+  const fresh = parsed.data.filter((r, i, all) => !seen.has(r.place_id) && all.findIndex((x) => x.place_id === r.place_id) === i);
   if (fresh.length) {
+    const now = new Date().toISOString();
     const { error } = await ctx.supabase.from("contacts").insert(fresh.map((r) => ({
       organization_id: ctx.company.id, owner_id: ctx.userId, field_status: toField ? "to_visit" : null, field_segment: seg, source: "Google Maps",
-      notes: [r.rating ? `Google rating ${r.rating} (${r.reviews ?? 0} reviews)` : null, r.website ? `Website: ${r.website}` : null].filter(Boolean).join("\n") || null,
-      company_name: r.name, full_name: r.name, phone_e164: r.phone_e164, whatsapp_e164: r.phone_e164, address: r.address, area: area.trim().slice(0, 120) || null,
-      lat: Number(r.lat.toFixed(6)), lng: Number(r.lng.toFixed(6)), place_id: r.place_id,
+      full_name: "Unconfirmed place", company_name: null, area: area.trim().slice(0, 120) || null, needs_confirm: true,
+      place_id: r.place_id, lat: Number(r.lat.toFixed(6)), lng: Number(r.lng.toFixed(6)), coords_fetched_at: now,
     })));
-    if (error) return { added: 0, skipped: list.length - fresh.length, error: error.message };
+    if (error) return { added: 0, skipped: parsed.data.length - fresh.length, error: error.message };
   }
   revalidatePath(`/c/${slug}`, "layout");
-  return { added: fresh.length, skipped: list.length - fresh.length };
+  return { added: fresh.length, skipped: parsed.data.length - fresh.length };
 }
 
 /** Puts existing leads (from Apollo, CSV imports or outreach) on the field list as "To visit". */
