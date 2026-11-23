@@ -13,9 +13,9 @@ describe("dpCompanyNav (Company OS design menu)", () => {
   it("gives owners and employees different menus", () => {
     const owner = dpCompanyNav(gbs, OWNER).map((i) => i.key);
     const rep = dpCompanyNav(gbs, REP).map((i) => i.key);
-    expect(owner).toEqual(["home", "outreach", "leads", "pipeline", "meetings", "research", "followups", "customers", "operations", "marketing", "automation", "proposals", "invoices", "finance", "team", "reports", "vault", "settings"]);
+    expect(owner).toEqual(["home", "outreach", "field", "leads", "pipeline", "meetings", "research", "followups", "customers", "operations", "marketing", "automation", "proposals", "invoices", "finance", "team", "reports", "vault", "settings"]);
     for (const k of ["finance", "automation", "settings", "team", "vault", "reports", "operations"]) expect(rep).not.toContain(k);
-    expect(rep).toEqual(expect.arrayContaining(["home", "leads", "pipeline", "outreach", "meetings"]));
+    expect(rep).toEqual(expect.arrayContaining(["home", "leads", "pipeline", "outreach", "meetings", "field"]));
   });
   it("uses each company's own names from the design", () => {
     const labels = (slug: string) => dpCompanyNav({ slug, enabled_modules: COMPANY_MODULES }, OWNER).map((i) => i.label);

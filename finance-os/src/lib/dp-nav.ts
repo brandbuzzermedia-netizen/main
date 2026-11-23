@@ -51,6 +51,8 @@ export function dpCompanyNav(c: CompanyLike, can: (p: string) => boolean, opts: 
   };
   const sales = c.enabled_modules.includes("pipeline");
   if (sales && can("crm.write")) after(items.some((x) => x.key === "meetings") ? "meetings" : "pipeline", [{ key: "research", label: "Research board", icon: "◫", section: "Sales", href: `${base}/research` }]);
+  // Field sales: plan, navigate and log in-person visits (every company with sales).
+  if (sales && can("crm.write")) after(items.some((x) => x.key === "outreach") ? "outreach" : "pipeline", [{ key: "field", label: "Field sales", icon: "◎", section: "Sales", href: `${base}/field` }]);
   if (sales && (can("tasks.write") || can("tasks.read_all"))) after(items.some((x) => x.key === "research") ? "research" : "pipeline", [{ key: "followups", label: "Follow-ups", icon: "✓", section: "Sales", href: `${base}/followups` }]);
   const money: DpNavItem[] = [];
   if (sales && (can("crm.write") || can("crm.read_all"))) money.push({ key: "proposals", label: "Proposals", icon: "▤", section: can("finance.read") ? "Finance" : "Sales", href: `${base}/proposals` });

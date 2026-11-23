@@ -25,6 +25,11 @@ const P: Record<string, string> = {
   rental: "M3 21h18M5 21V8l7-5 7 5v13M10 21v-6h4v6",
   expenses: "M2 6h20v12H2zM2 10h20M6 15h4",
   tax: "M19 5 5 19M7 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM17 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z",
+  field: "M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12ZM12 11.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z",
+  navigate: "M3 11 21 3l-8 18-2-8-8-2Z",
+  route: "M6 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM18 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM6 15V9a4 4 0 0 1 4-4h6M18 9v6a4 4 0 0 1-4 4H8",
+  whatsapp: "M4 20l1.3-4A8 8 0 1 1 8 18.7L4 20ZM9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8a4 4 0 0 1-1.8-1.8l.8-1-1-2L9 9.5Z",
+  upload: "M12 16V4M7 9l5-5 5 5M4 20h16",
   admin: "M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3ZM9 12l2 2 4-4",
   // Activity and achievements
   trophy: "M8 4h8v5a4 4 0 0 1-8 0V4ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6",
@@ -44,7 +49,7 @@ const P: Record<string, string> = {
 };
 /** Activity kinds → icons. */
 export const KIND_GLYPH: Record<string, string> = { deal_won: "trophy", deal_created: "plus", proposal_sent: "mail", proposal_accepted: "check", meeting_booked: "meetings",
-  task_done: "followups", positive_reply: "star", payment_received: "rupee", member_joined: "userPlus", kudos: "heart" };
+  task_done: "followups", positive_reply: "star", payment_received: "rupee", member_joined: "userPlus", kudos: "heart", delivery_handoff: "layers" };
 
 export function Glyph({ name, size = 18, stroke = 1.8, title }: { name: string; size?: number; stroke?: number; title?: string }) {
   const d = P[name] ?? P[name.replace(/s$/, "")];

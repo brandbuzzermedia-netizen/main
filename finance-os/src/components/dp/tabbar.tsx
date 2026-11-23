@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import type { DpNavItem } from "./sidebar";
 import { Glyph, hasGlyph } from "./icons";
 
-/** Phone-only bottom tabs: the four places used most, plus More (opens the full menu). */
+/** Phone-only bottom tabs: the four places used most (Field sales first for people in the field), plus More (opens the full menu). */
 export function TabBar({ nav }: { nav: DpNavItem[] }) {
   const path = usePathname();
-  const pick = ["home", "pipeline", "outreach", "finance"].map((k) => nav.find((n) => n.key === k)).filter(Boolean) as DpNavItem[];
+  const pick = (["home", "field", "pipeline", "outreach", "finance"].map((k) => nav.find((n) => n.key === k)).filter(Boolean) as DpNavItem[]).slice(0, 4);
   const items = pick.length >= 3 ? pick : nav.slice(0, 4);
   const active = (n: DpNavItem) => (n.key === "home" ? path === n.href : path === n.href || path.startsWith(`${n.href}/`) || path.startsWith(`${n.href}?`));
   return (

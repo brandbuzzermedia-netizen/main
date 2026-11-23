@@ -1,17 +1,19 @@
 import type { NextConfig } from "next";
 
-// Supabase is the only third-party origin the browser talks to (auth, signed document links).
+// Third-party origins the browser talks to: Supabase (auth, signed document links) and Google Maps
+// (Field Sales map and address search; loaded only when NEXT_PUBLIC_GOOGLE_MAPS_KEY is set).
 const supabaseOrigin = (() => {
   try { return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").origin; } catch { return ""; }
 })();
 const csp = [
   "default-src 'self'",
-  // Next.js inlines its bootstrap scripts; no third-party script hosts are allowed.
-  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`,
+  // Next.js inlines its bootstrap scripts; the only third-party scripts are Google Maps'.
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://maps.googleapis.com https://maps.gstatic.com`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  `img-src 'self' data: blob: ${supabaseOrigin}`,
+  `img-src 'self' data: blob: ${supabaseOrigin} https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.googleusercontent.com`,
   "font-src 'self' data: https://fonts.gstatic.com",
-  `connect-src 'self' ${supabaseOrigin}`,
+  `connect-src 'self' ${supabaseOrigin} https://*.googleapis.com https://*.gstatic.com https://*.google.com`,
+  "worker-src 'self' blob:",
   `frame-src ${supabaseOrigin || "'none'"}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
@@ -44,7 +46,7 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
+          { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(self)" },
         ],
       },
     ];
