@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-const TABS = [["", "Today"], ["/leads", "Leads"], ["/map", "Map"], ["/leads/new", "+ Add"], ["/import", "Bulk add"], ["/handoffs", "Handoffs"]] as const;
+const TABS = [["", "Today"], ["/leads", "Leads"], ["/map", "Map"], ["/add", "+ Add"], ["/handoffs", "Handoffs"]] as const;
 
 /** Field Sales sub-menu: big, scrollable chips that work one-handed. */
 export function FieldTabs({ slug, current, note }: { slug: string; current: string; note?: string | string[] }) {

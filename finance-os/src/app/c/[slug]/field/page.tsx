@@ -24,10 +24,12 @@ export default async function FieldToday({ params, searchParams }: PageProps<"/c
   const team = sp.who === "team" && ctx.can("crm.read_all");
   let visitsQ = ctx.supabase.from("field_visits").select("outcome, amount_minor, visited_at").eq("organization_id", ctx.company.id).gte("visited_at", `${monday}T00:00:00+05:30`);
   if (!team) visitsQ = visitsQ.eq("created_by", ctx.userId);
-  const [leads, { data: plan }, { data: visits }] = await Promise.all([
+  const [leads, { data: plan }, { data: visits }, { data: meets }] = await Promise.all([
     loadFieldLeads(ctx),
     ctx.supabase.from("field_route_plans").select("contact_ids").eq("organization_id", ctx.company.id).eq("user_id", ctx.userId).eq("plan_date", today).maybeSingle(),
     visitsQ.limit(5000),
+    ctx.supabase.from("meetings").select("id, title, starts_at, meet_url, contact_id, kind").eq("organization_id", ctx.company.id).eq("owner_id", ctx.userId).eq("status", "scheduled")
+      .gte("starts_at", `${today}T00:00:00+05:30`).lte("starts_at", `${today}T23:59:59+05:30`).order("starts_at"),
   ]);
   const vs = (visits ?? []) as { outcome: string; amount_minor: number | null; visited_at: string }[];
   const istDay = (iso: string) => new Date(new Date(iso).getTime() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -47,6 +49,18 @@ export default async function FieldToday({ params, searchParams }: PageProps<"/c
       <Box title="Today's route" aside={<span style={{ fontSize: 13, color: "#6B6B6B" }}>up to 9 stops</span>}>
         <RouteBuilder slug={slug} leads={leads} initial={(plan?.contact_ids as string[] | undefined) ?? []} today={today} save={saveRouteAction.bind(null, slug)} />
       </Box>
+      {(meets ?? []).length > 0 && (
+        <Box title="Meetings today">
+          {(meets ?? []).map((m) => (
+            <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderTop: "1px solid #EFEBE1" }}>
+              <a href={m.contact_id ? `/c/${slug}/field/leads/${m.contact_id}` : `/c/${slug}/meetings`} style={{ flex: 1, minWidth: 0, color: "#141414", textDecoration: "none" }}>
+                <b style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.title}</b><span style={{ fontSize: 13, color: "#6B6B6B" }}>{time(m.starts_at)}</span>
+              </a>
+              {m.meet_url && <a href={m.meet_url} target="_blank" rel="noopener noreferrer" style={{ background: "var(--co-btn)", color: "#fff", borderRadius: 10, padding: "12px 14px", fontWeight: 700, textDecoration: "none" }}>Join Meet</a>}
+            </div>
+          ))}
+        </Box>
+      )}
       {back.length > 0 && (
         <Box title="Owners back today">
           {back.map((l) => <div key={l.id}><div style={{ fontSize: 13, fontWeight: 700, color: "#D97706", paddingTop: 8 }}>Back at {time(l.owner_back_at!)}</div><LeadRow l={l} slug={slug} /></div>)}

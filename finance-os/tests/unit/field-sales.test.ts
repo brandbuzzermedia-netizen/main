@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { autoPick, distanceKm, formatKm, funnel, MAX_ROUTE_STOPS, navigateUrl, nearestNext, planFieldImport, routeUrl, segmentOf } from "@/lib/field-sales";
+import { autoPick, distanceKm, formatKm, funnel, MAX_ROUTE_STOPS, navigateUrl, nearestNext, parseMapsUrl, planFieldImport, routeUrl, segmentOf } from "@/lib/field-sales";
 
 // Bengaluru points
 const HSR = { lat: 12.9116, lng: 77.6474 };
@@ -97,5 +97,24 @@ describe("bulk add", () => {
     expect(segmentOf("Used cars")).toBe("used_car_dealer");
     expect(segmentOf("Tyre and alignment")).toBe("garage");
     expect(segmentOf("Cafe")).toBe("other");
+  });
+});
+
+describe("Google Maps share links", () => {
+  it("reads the place name and the precise pin from a place link", () => {
+    const u = "https://www.google.com/maps/place/Shine+Car+Detailing/@12.9120,77.6400,17z/data=!3m1!4b1!4m6!3m5!1s0x3bae1:0x9!8m2!3d12.9116!4d77.6474!16s%2Fg%2F11";
+    expect(parseMapsUrl(u)).toEqual({ name: "Shine Car Detailing", lat: 12.9116, lng: 77.6474, query: null });
+  });
+  it("falls back to the map centre, a q= point, or a text query", () => {
+    expect(parseMapsUrl("https://www.google.com/maps/place/Anil+Motors/@12.9352,77.6245,15z")).toMatchObject({ name: "Anil Motors", lat: 12.9352, lng: 77.6245 });
+    expect(parseMapsUrl("https://maps.google.com/?q=12.9784,77.6408")).toMatchObject({ lat: 12.9784, lng: 77.6408, name: null });
+    expect(parseMapsUrl("https://www.google.com/maps/search/?api=1&query=City+Garage,+BTM+Layout")).toMatchObject({ name: "City Garage", query: "City Garage, BTM Layout", lat: null });
+    expect(parseMapsUrl("https://consent.google.com/m?continue=https%3A%2F%2Fwww.google.com%2Fmaps%2Fplace%2FX%2F%4012.9%2C77.6%2C15z")).toMatchObject({ name: "X", lat: 12.9, lng: 77.6 });
+  });
+  it("refuses links that are not Google Maps, and short links before they are expanded", () => {
+    expect(parseMapsUrl("https://evil.example/maps/place/X/@12.9,77.6")).toBeNull();
+    expect(parseMapsUrl("https://maps.app.goo.gl/AbCdEf")).toBeNull();
+    expect(parseMapsUrl("not a link")).toBeNull();
+    expect(parseMapsUrl("https://www.google.com/maps/@91.5,77.6,15z")).toBeNull();
   });
 });

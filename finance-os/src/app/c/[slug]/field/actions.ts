@@ -7,7 +7,10 @@ import { getCompanyContext } from "@/lib/workspace";
 import { todayInBusinessTz } from "@/domain/dates";
 import { parseMoneyToMinor } from "@/domain/money";
 import { toE164 } from "@/lib/lead-import";
-import { FIELD_STATUSES, MAX_ROUTE_STOPS, OUTCOMES, planFieldImport, SEGMENTS, SOURCES } from "@/lib/field-sales";
+import { accessToken, createEvent, disconnect } from "@/integrations/google/calendar";
+import { endOf } from "@/integrations/google/event";
+import { FIELD_STATUSES, isGoogleMapsUrl, isShortMapsLink, MAX_ROUTE_STOPS, OUTCOMES, parseMapsUrl, planFieldImport, SEGMENTS, SOURCES, type MapsLinkInfo } from "@/lib/field-sales";
+import { getUser } from "@/lib/auth";
 
 async function writer(slug: string) {
   const ctx = await getCompanyContext(slug);
@@ -196,4 +199,115 @@ export async function saveFieldSettingsAction(slug: string, fd: FormData) {
     delivery_assignee_id: z.uuid().safeParse(fd.get("delivery_assignee_id")).data ?? null, handoff_days: days >= 1 && days <= 60 ? days : 7 });
   revalidatePath(`/c/${slug}/field`);
   return go(slug, "/handoffs", error ? `Not saved: ${error.message}` : "Delivery settings saved.");
+}
+
+// ---- Meetings with Google Calendar and Meet ----
+
+/**
+ * Books a demo or meeting with a lead: an OS meeting, plus a Google Calendar event with a Meet link
+ * when the person has connected Google. The guest gets Google's invite email when an email is given.
+ */
+export async function bookMeetingAction(slug: string, contactId: string, fd: FormData) {
+  const ctx = await writer(slug);
+  const back = `/leads/${contactId}`;
+  const { data: lead } = await ctx.supabase.from("contacts").select("full_name, company_name, address, phone_e164, auto_deal_id").eq("id", contactId).eq("organization_id", ctx.company.id).maybeSingle();
+  if (!lead) return go(slug, "/leads", "Lead not found.");
+  const date = String(fd.get("date") ?? ""), time = String(fd.get("time") ?? "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return go(slug, back, "Not booked: pick a date and time.");
+  const start = new Date(`${date}T${time}:00+05:30`).toISOString();
+  if (new Date(start).getTime() < Date.now() - 3600_000) return go(slug, back, "Not booked: that time has passed.");
+  const minutes = [15, 30, 45, 60, 90].includes(Number(fd.get("minutes"))) ? Number(fd.get("minutes")) : 30;
+  const kind = z.enum(["meet", "in_person", "call"]).catch("meet").parse(fd.get("kind"));
+  const email = opt(fd.get("email"), 320);
+  if (email && !z.email().safeParse(email).success) return go(slug, back, "Not booked: the client's email looks wrong.");
+  const name = lead.company_name || lead.full_name;
+  const title = opt(fd.get("title"), 200) ?? `${kind === "in_person" ? "Visit" : "Demo"}: ${name}`;
+  const location = kind === "in_person" ? lead.address ?? null : kind === "call" ? lead.phone_e164 ?? null : null;
+  const description = [opt(fd.get("notes"), 2000), lead.phone_e164 ? `Phone: ${lead.phone_e164}` : null, "Booked from Diwani OS Field sales."].filter(Boolean).join("\n");
+  const { data: m, error } = await ctx.supabase.from("meetings").insert({
+    organization_id: ctx.company.id, title, starts_at: start, ends_at: endOf(start, minutes), owner_id: ctx.userId, location, kind,
+    contact_id: contactId, attendee_email: email, deal_id: lead.auto_deal_id,
+  }).select("id").single();
+  if (error) return go(slug, back, `Not booked: ${error.message}`);
+  await ctx.supabase.from("contacts").update({ next_follow_up_on: date }).eq("id", contactId);
+  revalidatePath(`/c/${slug}`, "layout");
+  const token = await accessToken(ctx.supabase, ctx.userId);
+  if (!token) return go(slug, back, "Meeting saved in the OS. Connect Google to add it to your calendar with a Meet link automatically, or use Add to Google Calendar.");
+  try {
+    const ev = await createEvent(token, { title, start, minutes, kind, attendeeEmail: email, location, description, requestId: m.id });
+    await ctx.supabase.from("meetings").update({ google_event_id: ev.id, meet_url: ev.meetUrl, calendar_url: ev.htmlLink.startsWith("https://www.google.com/calendar/") ? ev.htmlLink : null }).eq("id", m.id);
+    return go(slug, back, `Booked and added to Google Calendar${ev.meetUrl ? " with a Meet link" : ""}${email ? `. Invite sent to ${email}` : ""}.`);
+  } catch (e) {
+    if (isNext(e)) throw e;
+    return go(slug, back, `Meeting saved in the OS, but Google Calendar did not accept it (${e instanceof Error ? e.message.slice(0, 120) : "error"}). Use Add to Google Calendar.`);
+  }
+}
+
+export async function disconnectGoogleAction(slug: string) {
+  const ctx = await getCompanyContext(slug);
+  await disconnect(ctx.supabase, ctx.userId);
+  return go(slug, "", "Google disconnected. Meetings stay in the OS; new ones are not added to Google Calendar.");
+}
+
+// ---- More ways to add leads ----
+
+/** Expands a Google Maps share link (maps.app.goo.gl) on the server and reads the name and pin. Only Google hosts are followed. */
+export async function readMapsLinkAction(raw: string): Promise<MapsLinkInfo | { error: string }> {
+  await getUser();
+  let u: URL;
+  try { u = new URL(raw.trim()); } catch { return { error: "That is not a link. In Google Maps tap Share, then Copy link." }; }
+  if (!isGoogleMapsUrl(u) && u.hostname !== "consent.google.com") return { error: "Paste a Google Maps link (maps.app.goo.gl or google.com/maps)." };
+  let url = u.toString();
+  for (let hop = 0; hop < 4 && isShortMapsLink(new URL(url)); hop++) {
+    const res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(8000) }).catch(() => null);
+    const next = res?.headers.get("location");
+    if (!next) return { error: "Could not open that link. Try copying it again from Google Maps." };
+    const n = new URL(next, url);
+    if (!isGoogleMapsUrl(n) && n.hostname !== "consent.google.com") return { error: "That link does not lead to Google Maps." };
+    url = n.toString();
+  }
+  return parseMapsUrl(url) ?? { error: "No place or pin found in that link. Open the shop in Google Maps, tap Share, then Copy link." };
+}
+
+const FoundRow = z.object({
+  name: z.string().trim().min(1).max(200), address: z.string().trim().max(500).nullable(), lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180),
+  place_id: z.string().trim().max(300).nullable(), phone: z.string().trim().max(40).nullable(),
+});
+/** Adds the shops picked from a Google Maps search. Only the picked shops are stored; shops already added (same place or phone) are skipped. */
+export async function addFoundLeadsAction(slug: string, rows: unknown, segment: string, area: string): Promise<{ added: number; skipped: number; error?: string }> {
+  const ctx = await writer(slug);
+  const parsed = z.array(FoundRow).max(60).safeParse(rows);
+  if (!parsed.success) return { added: 0, skipped: 0, error: "Could not read the picked shops." };
+  const seg = z.enum(SEGMENTS).catch("other").parse(segment);
+  const list = parsed.data.map((r) => ({ ...r, phone_e164: r.phone ? toE164(r.phone) : null }));
+  const pids = list.map((r) => r.place_id).filter(Boolean) as string[];
+  const phones = list.map((r) => r.phone_e164).filter(Boolean) as string[];
+  const [{ data: byPlace }, { data: byPhone }] = await Promise.all([
+    pids.length ? ctx.supabase.from("contacts").select("place_id").eq("organization_id", ctx.company.id).in("place_id", pids) : Promise.resolve({ data: [] }),
+    phones.length ? ctx.supabase.from("contacts").select("phone_e164").eq("organization_id", ctx.company.id).in("phone_e164", phones) : Promise.resolve({ data: [] }),
+  ]);
+  const seenPlace = new Set((byPlace ?? []).map((r) => r.place_id as string)), seenPhone = new Set((byPhone ?? []).map((r) => r.phone_e164 as string));
+  const fresh = list.filter((r) => !(r.place_id && seenPlace.has(r.place_id)) && !(r.phone_e164 && seenPhone.has(r.phone_e164)));
+  if (fresh.length) {
+    const { error } = await ctx.supabase.from("contacts").insert(fresh.map((r) => ({
+      organization_id: ctx.company.id, owner_id: ctx.userId, field_status: "to_visit", field_segment: seg, source: "Google Maps",
+      company_name: r.name, full_name: r.name, phone_e164: r.phone_e164, whatsapp_e164: r.phone_e164, address: r.address, area: area.trim().slice(0, 120) || null,
+      lat: Number(r.lat.toFixed(6)), lng: Number(r.lng.toFixed(6)), place_id: r.place_id,
+    })));
+    if (error) return { added: 0, skipped: list.length - fresh.length, error: error.message };
+  }
+  revalidatePath(`/c/${slug}`, "layout");
+  return { added: fresh.length, skipped: list.length - fresh.length };
+}
+
+/** Puts existing leads (from Apollo, CSV imports or outreach) on the field list as "To visit". */
+export async function addExistingToFieldAction(slug: string, fd: FormData) {
+  const ctx = await writer(slug);
+  const ids = fd.getAll("id").map(String).filter((x) => z.uuid().safeParse(x).success).slice(0, 500);
+  if (!ids.length) return go(slug, "/from-leads", "Tick at least one lead.");
+  const seg = z.enum(SEGMENTS).catch("other").parse(fd.get("segment"));
+  const { data, error } = await ctx.supabase.from("contacts").update({ field_status: "to_visit", field_segment: seg })
+    .eq("organization_id", ctx.company.id).in("id", ids).is("field_status", null).select("id");
+  revalidatePath(`/c/${slug}`, "layout");
+  return go(slug, "/leads", error ? `Not saved: ${error.message}` : `${data?.length ?? 0} lead(s) added to your field list.`);
 }

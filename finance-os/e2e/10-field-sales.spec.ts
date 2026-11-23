@@ -17,6 +17,7 @@ test("field sales: add at the shop, check in, advance paid hands off to delivery
 
   // Add a lead standing at the shop: the pin comes from the phone's location.
   await page.getByRole("link", { name: "+ Add" }).click();
+  await page.getByRole("link", { name: /Full form/ }).click();
   await page.fill("input[name=company_name]", shop);
   await page.fill("input[name=owner_name]", "Ravi");
   await page.fill("input[name=phone]", phone);

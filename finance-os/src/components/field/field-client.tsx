@@ -103,7 +103,10 @@ export function NearMeList({ leads, slug, empty }: { leads: FieldLead[]; slug: s
 // ---- Address with Google Places autocomplete ----
 
 /** Address, area and the map pin. With a Maps key, a Google search box fills them; without one, type the address and tap "Use my location" at the shop. */
-export function AddressField({ address, area, lat, lng, placeId }: { address: string; area: string; lat: number | null; lng: number | null; placeId: string }) {
+export function AddressField({ address, area, lat, lng, placeId, readLink }: { address: string; area: string; lat: number | null; lng: number | null; placeId: string;
+  readLink?: (url: string) => Promise<{ name: string | null; lat: number | null; lng: number | null; query: string | null } | { error: string }> }) {
+  const [link, setLink] = useState("");
+  const [linkBusy, setLinkBusy] = useState(false);
   const [addr, setAddr] = useState(address);
   const [ar, setAr] = useState(area);
   const [pt, setPt] = useState<Point | null>(lat !== null && lng !== null ? { lat, lng } : null);
@@ -138,6 +141,23 @@ export function AddressField({ address, area, lat, lng, placeId }: { address: st
   }, []);
   return (
     <div style={{ display: "grid", gap: 10 }}>
+      {readLink && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8 }}>
+          <input value={link} onChange={(e) => setLink(e.target.value)} placeholder="Paste a Google Maps link" aria-label="Google Maps link" inputMode="url" style={field} />
+          <button type="button" disabled={!link.trim() || linkBusy} style={{ ...big, minHeight: 46 }} onClick={() => {
+            setLinkBusy(true); setMsg("");
+            readLink(link).then((r) => {
+              if ("error" in r) { setMsg(r.error); return; }
+              if (r.lat !== null && r.lng !== null) { setPt({ lat: r.lat, lng: r.lng }); setPid(""); }
+              if (r.query && /,/.test(r.query) && !addr) setAddr(r.query);
+              const company = document.querySelector<HTMLInputElement>("input[name=company_name]");
+              if (company && !company.value && r.name) company.value = r.name;
+              setMsg(r.lat !== null ? `Filled from the link${r.name ? `: ${r.name}` : ""}.` : "Name filled. The link had no pin: tap Use my location at the shop.");
+              setLink("");
+            }).catch(() => setMsg("Could not read that link.")).finally(() => setLinkBusy(false));
+          }}>{linkBusy ? "Reading…" : "Fill"}</button>
+        </div>
+      )}
       {hasMapsKey() && <div ref={box} aria-label="Search Google Maps" />}
       {msg && <div style={{ fontSize: 13, color: muted }}>{msg}</div>}
       <label style={{ fontSize: 13, color: muted }}>Address<textarea name="address" rows={2} maxLength={500} value={addr} onChange={(e) => setAddr(e.target.value)} style={{ ...field, minHeight: 64 }} /></label>
@@ -280,6 +300,106 @@ export function FieldMap({ slug, leads, today, areas }: { slug: string; leads: F
         </div>
       )}
       <NearMeList leads={shown} slug={slug} empty={<div style={{ padding: "16px 0", color: muted }}>No leads match these filters.</div>} />
+    </div>
+  );
+}
+
+// ---- Quick add ----
+
+/** Name, phone, segment: one tap saves it with the pin where you are standing. Details can be added later. */
+export function QuickAdd({ action }: { action: (fd: FormData) => Promise<void> }) {
+  const form = useRef<HTMLFormElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [seg, setSeg] = useState<Segment>("car_detailing");
+  const [msg, setMsg] = useState("");
+  const submit = () => {
+    if (!form.current?.reportValidity()) return;
+    setBusy(true); setMsg("Getting your location…");
+    const f = form.current;
+    getPosition().then((p) => { f.lat.value = String(p.lat); f.lng.value = String(p.lng); })
+      .catch(() => { f.lat.value = ""; f.lng.value = ""; })
+      .finally(() => { setMsg("Saving…"); f.requestSubmit(); });
+  };
+  return (
+    <form ref={form} action={action} style={{ display: "grid", gap: 10 }}>
+      <input name="company_name" required maxLength={200} placeholder="Business name" aria-label="Business name" style={{ ...field, fontSize: 17 }} />
+      <input name="phone" type="tel" inputMode="tel" placeholder="Phone (98xxxxxxxx)" aria-label="Phone" style={{ ...field, fontSize: 17 }} />
+      <div role="radiogroup" aria-label="Segment" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        {SEGMENTS.map((s) => (
+          <button key={s} type="button" role="radio" aria-checked={seg === s} onClick={() => setSeg(s)}
+            style={{ ...big, minHeight: 46, background: seg === s ? "var(--co-btn)" : "#fff", color: seg === s ? "#fff" : ink }}>{SEGMENT_LABEL[s]}</button>
+        ))}
+      </div>
+      <input type="hidden" name="segment" value={seg} /><input type="hidden" name="source" value="Walk-in" />
+      <input type="hidden" name="lat" /><input type="hidden" name="lng" />
+      <button type="button" onClick={submit} disabled={busy} style={{ ...bigPrimary, minHeight: 58, fontSize: 17 }}>{busy ? msg : "Save here"}</button>
+      <div style={{ fontSize: 12.5, color: muted }}>Saves the pin where you are standing. Add the owner, address and notes later from the lead.</div>
+    </form>
+  );
+}
+
+// ---- Area search on Google Maps ----
+
+type Found = { name: string; address: string | null; lat: number; lng: number; place_id: string | null; phone: string | null; known: boolean };
+
+/** Searches Google Maps (e.g. "car detailing in HSR Layout"); only the shops you tick are saved. */
+export function AreaSearch({ known, add }: { known: string[]; add: (rows: unknown, segment: string, area: string) => Promise<{ added: number; skipped: number; error?: string }> }) {
+  const knownSet = useMemo(() => new Set(known), [known]);
+  const [seg, setSeg] = useState<Segment>("car_detailing");
+  const [area, setArea] = useState("");
+  const [text, setText] = useState("");
+  const [here, setHere] = useState<Point | null>(null);
+  const [rows, setRows] = useState<Found[]>([]);
+  const [pick, setPick] = useState<Set<number>>(new Set());
+  const [msg, setMsg] = useState(hasMapsKey() ? "" : "Area search needs the Google Maps key (NEXT_PUBLIC_GOOGLE_MAPS_KEY). Use Paste a Google Maps link instead.");
+  const [busy, setBusy] = useState(false);
+  const words: Record<Segment, string> = { car_detailing: "car detailing", used_car_dealer: "used car dealer", garage: "car service garage", other: "" };
+  const search = () => {
+    const q = text.trim() || `${words[seg]} in ${area.trim() || "Bengaluru"}${area && !/bengaluru|bangalore/i.test(area) ? ", Bengaluru" : ""}`;
+    setBusy(true); setMsg(""); setRows([]); setPick(new Set());
+    loadMaps().then(async (google: GoogleNS) => {
+      const { Place } = await google.maps.importLibrary("places");
+      const { places } = await Place.searchByText({ textQuery: q, fields: ["id", "displayName", "formattedAddress", "location", "nationalPhoneNumber"],
+        locationBias: { center: here ?? BENGALURU, radius: here ? 5000 : 30000 }, maxResultCount: 20, region: "in", language: "en" });
+      const found: Found[] = (places ?? []).filter((p: GoogleNS) => p.location).map((p: GoogleNS) => ({
+        name: String(p.displayName ?? "").slice(0, 200), address: p.formattedAddress ?? null, lat: p.location.lat(), lng: p.location.lng(),
+        place_id: p.id ?? null, phone: p.nationalPhoneNumber ?? null, known: Boolean(p.id && knownSet.has(p.id)),
+      }));
+      setRows(found);
+      setMsg(found.length ? `${found.length} found for "${q}". Tick the ones to visit.` : `Nothing found for "${q}".`);
+    }).catch(() => setMsg("Google Maps search is not available right now.")).finally(() => setBusy(false));
+  };
+  const save = () => {
+    const chosen = rows.filter((_, i) => pick.has(i)).map(({ known: _k, ...r }) => r); // eslint-disable-line @typescript-eslint/no-unused-vars
+    setBusy(true);
+    add(chosen, seg, area).then((r) => {
+      setMsg(r.error ? `Not saved: ${r.error}` : `Added ${r.added} lead(s)${r.skipped ? `; ${r.skipped} were already in the OS` : ""}.`);
+      if (!r.error) { setRows((cur) => cur.map((x, i) => (pick.has(i) ? { ...x, known: true } : x))); setPick(new Set()); }
+    }).finally(() => setBusy(false));
+  };
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      <div role="radiogroup" aria-label="Segment" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        {SEGMENTS.map((s) => <button key={s} type="button" role="radio" aria-checked={seg === s} onClick={() => setSeg(s)} style={{ ...big, minHeight: 44, background: seg === s ? "var(--co-btn)" : "#fff", color: seg === s ? "#fff" : ink }}>{SEGMENT_LABEL[s]}</button>)}
+      </div>
+      <input value={area} onChange={(e) => setArea(e.target.value)} placeholder="Area, e.g. HSR Layout" aria-label="Area" style={field} />
+      <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Or type your own search (optional)" aria-label="Search text" style={field} />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <button type="button" disabled={busy || !hasMapsKey()} onClick={search} style={bigPrimary}>{busy ? "Searching…" : "Search"}</button>
+        <button type="button" disabled={busy} onClick={() => getPosition().then((f) => { setHere(f); setMsg("Searching near you."); }).catch((e: Error) => setMsg(e.message))} style={big}>{here ? "Near me: on" : "Near me"}</button>
+      </div>
+      {msg && <div role="status" style={{ fontSize: 13.5, color: msg.startsWith("Not saved") ? "#B42318" : muted }}>{msg}</div>}
+      {rows.map((r, i) => (
+        <label key={`${r.place_id}-${i}`} style={{ display: "flex", gap: 10, alignItems: "flex-start", padding: "10px 0", borderTop: `1px solid ${line}`, opacity: r.known ? 0.55 : 1 }}>
+          <input type="checkbox" disabled={r.known} checked={pick.has(i)} onChange={(e) => setPick((cur) => { const n = new Set(cur); if (e.target.checked) n.add(i); else n.delete(i); return n; })} style={{ width: 24, height: 24, marginTop: 2 }} />
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <b style={{ display: "block" }}>{r.name}</b>
+            <span style={{ fontSize: 13, color: muted }}>{[r.phone, r.address].filter(Boolean).join(" · ")}{here ? ` · ${formatKm(distanceKm(here, r))}` : ""}{r.known ? " · already added" : ""}</span>
+          </span>
+        </label>
+      ))}
+      {rows.length > 0 && <button type="button" disabled={busy || pick.size === 0} onClick={save} style={{ ...bigPrimary, minHeight: 56 }}>Add {pick.size} selected</button>}
+      <div style={{ fontSize: 12.5, color: muted }}>Results are only shown, not saved. Only the shops you tick are added as leads, with their pin and Google place ID.</div>
     </div>
   );
 }

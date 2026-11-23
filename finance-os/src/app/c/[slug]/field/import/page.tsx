@@ -18,7 +18,7 @@ export default async function FieldImport({ params, searchParams }: PageProps<"/
   return (
     <>
       <PageHead own={designFor(slug).own} treat="Field sales" title="Bulk add" tag="Paste or upload." />
-      <FieldTabs slug={slug} current="/import" note={sp.note} />
+      <FieldTabs slug={slug} current="/add" note={sp.note} />
       <Box title="Add many leads at once">
         <form action={importFieldLeadsAction.bind(null, slug)} style={{ display: "grid", gap: 12 }}>
           <div style={{ fontSize: 14, lineHeight: 1.5, color: "#444" }}>

@@ -172,3 +172,35 @@ export function planFieldImport(text: string, maxRows = 2000): FieldImportPlan {
   }
   return { rows, total: Math.min(body.length, maxRows), invalid, duplicatesInFile: dup, mapped };
 }
+
+// ---- Google Maps links ----
+
+export type MapsLinkInfo = { name: string | null; lat: number | null; lng: number | null; query: string | null };
+const GOOGLE_HOST = /^(www\.|maps\.)?google\.(com|co\.in)$/;
+export const isShortMapsLink = (u: URL) => u.hostname === "maps.app.goo.gl" || (u.hostname === "goo.gl" && u.pathname.startsWith("/maps"));
+export const isGoogleMapsUrl = (u: URL) => u.protocol === "https:" && (isShortMapsLink(u) || (GOOGLE_HOST.test(u.hostname) && (u.pathname.startsWith("/maps") || u.hostname.startsWith("maps."))));
+
+/** Reads the place name and pin from a full Google Maps link (the "Share" link, once expanded). */
+export function parseMapsUrl(raw: string): MapsLinkInfo | null {
+  let u: URL;
+  try { u = new URL(raw.trim()); } catch { return null; }
+  if (u.hostname === "consent.google.com" && u.searchParams.get("continue")) return parseMapsUrl(u.searchParams.get("continue")!);
+  if (!isGoogleMapsUrl(u) || isShortMapsLink(u)) return null;
+  const path = decodeURIComponent(u.pathname.replace(/\+/g, " "));
+  const okLat = (n: number) => Number.isFinite(n) && Math.abs(n) <= 90, okLng = (n: number) => Number.isFinite(n) && Math.abs(n) <= 180;
+  let lat: number | null = null, lng: number | null = null;
+  const precise = /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/.exec(u.pathname + u.search);
+  const at = /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/.exec(path);
+  const q = u.searchParams.get("q") ?? u.searchParams.get("query") ?? u.searchParams.get("ll") ?? u.searchParams.get("destination");
+  const qPoint = q ? /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/.exec(q) : null;
+  for (const m of [precise, qPoint, at]) {
+    if (m && okLat(Number(m[1])) && okLng(Number(m[2]))) { lat = Number(Number(m[1]).toFixed(6)); lng = Number(Number(m[2]).toFixed(6)); break; }
+  }
+  const place = /\/maps\/place\/([^/@]+)/.exec(path)?.[1]?.trim() ?? null;
+  const search = /\/maps\/search\/([^/@]+)/.exec(path)?.[1]?.trim() ?? null;
+  const textQ = q && !qPoint ? q.trim() : null;
+  const name = place && !/^-?\d/.test(place) ? place.slice(0, 200) : null;
+  const query = (search ?? textQ)?.slice(0, 300) ?? null;
+  if (lat === null && !name && !query) return null;
+  return { name: name ?? (query ? query.split(",")[0].trim().slice(0, 200) : null), lat, lng, query };
+}
