@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import { getCompanyContext } from "@/lib/workspace";
 import { designFor } from "@/domain/design";
 import { PageHead } from "@/components/dp/shell";
-import { AreaSearch } from "@/components/field/field-client";
+import { MapsFinder } from "@/components/field/maps-finder";
 import { addFoundLeadsAction } from "../actions";
-import { Box, FieldTabs } from "../tabs";
+import { FieldTabs } from "../tabs";
 
 export const metadata: Metadata = { title: "Search Google Maps" };
 
@@ -19,7 +19,7 @@ export default async function SearchPage({ params, searchParams }: PageProps<"/c
     <>
       <PageHead own={designFor(slug).own} treat="Field sales" title="Search Google Maps" tag="Pick and add." />
       <FieldTabs slug={slug} current="/add" note={sp.note} />
-      <Box title="Find shops by area"><AreaSearch known={(data ?? []).map((r) => r.place_id as string)} add={addFoundLeadsAction.bind(null, slug)} /></Box>
+      <MapsFinder known={(data ?? []).map((r) => r.place_id as string)} add={addFoundLeadsAction.bind(null, slug)} />
     </>
   );
 }

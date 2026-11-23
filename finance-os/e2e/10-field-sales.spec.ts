@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
 import { expectHealthy, OWNER_STATE, skipLoader } from "./helpers";
 
@@ -64,6 +65,13 @@ test("field sales: add at the shop, check in, advance paid hands off to delivery
   await page.getByRole("button", { name: "Paid advance" }).click();
   await expect(page.getByRole("status").first()).toContainText("Advance logged");
   await expect(page.getByText("Collected ₹7,500.00")).toBeVisible();
+
+  // The lead moved through the pipeline on its own: a deal now sits in the Won stage.
+  const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
+  const { data: c } = await db.from("contacts").select("auto_deal_id, lead_status").eq("company_name", shop).single();
+  expect(c?.lead_status).toBe("customer");
+  const { data: deal } = await db.from("deals").select("stage:pipeline_stages(kind)").eq("id", c!.auto_deal_id).single();
+  expect((deal?.stage as unknown as { kind: string }).kind).toBe("won");
 
   // Handoff to the delivery team: due in 7 days, brand details and a logo.
   await page.getByRole("link", { name: /Open handoff/ }).click();

@@ -46,7 +46,7 @@ test("add options: hub, quick add with location, Google Maps link, from your lea
 
   // Area search explains it needs the Maps key when there is none.
   await page.goto("/c/demo-gbs/field/search");
-  await expect(page.getByText(/Area search needs the Google Maps key|found for/)).toBeVisible();
+  await expect(page.getByText(/Google Maps is not switched on yet|places for/)).toBeVisible();
 });
 
 test("meetings: booked in the OS, with Add to Google Calendar when Google is not connected", async ({ page }) => {

@@ -27,7 +27,7 @@ export default async function LeadsPage({ params, searchParams }: PageProps<"/c/
   const [title, lines] = NOTES.leads;
   return (
     <>
-      <PageHead own={d.own} treat={d.treat} title={d.ren.leads ?? "Leads"} right={ctx.can("crm.write") ? <span style={{ display: "flex", gap: 8 }}><Cta href={`${base}/import`}>Import</Cta><Cta href={`${base}?add=1`}>+ Add</Cta></span> : undefined} />
+      <PageHead own={d.own} treat={d.treat} title={d.ren.leads ?? "Leads"} right={ctx.can("crm.write") ? <span style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><Cta href={`${base}/find`}>Find on Google Maps</Cta><Cta href={`${base}/import`}>Import</Cta><Cta href={`${base}?add=1`}>+ Add</Cta></span> : undefined} />
       <ListView vm={{
         chips: CHIPS.map(([l]) => ({ l, href: src?.[0] === l ? base : `${base}?source=${encodeURIComponent(l)}`, on: src?.[0] === l })),
         head: ["LEAD", "SOURCE", "SCORE", "OWNER"],

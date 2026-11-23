@@ -272,9 +272,10 @@ export async function readMapsLinkAction(raw: string): Promise<MapsLinkInfo | { 
 const FoundRow = z.object({
   name: z.string().trim().min(1).max(200), address: z.string().trim().max(500).nullable(), lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180),
   place_id: z.string().trim().max(300).nullable(), phone: z.string().trim().max(40).nullable(),
+  rating: z.number().min(0).max(5).nullable().optional(), reviews: z.number().int().min(0).nullable().optional(), website: z.string().trim().max(300).nullable().optional(),
 });
 /** Adds the shops picked from a Google Maps search. Only the picked shops are stored; shops already added (same place or phone) are skipped. */
-export async function addFoundLeadsAction(slug: string, rows: unknown, segment: string, area: string): Promise<{ added: number; skipped: number; error?: string }> {
+export async function addFoundLeadsAction(slug: string, rows: unknown, segment: string, area: string, toField = true): Promise<{ added: number; skipped: number; error?: string }> {
   const ctx = await writer(slug);
   const parsed = z.array(FoundRow).max(60).safeParse(rows);
   if (!parsed.success) return { added: 0, skipped: 0, error: "Could not read the picked shops." };
@@ -290,7 +291,8 @@ export async function addFoundLeadsAction(slug: string, rows: unknown, segment: 
   const fresh = list.filter((r) => !(r.place_id && seenPlace.has(r.place_id)) && !(r.phone_e164 && seenPhone.has(r.phone_e164)));
   if (fresh.length) {
     const { error } = await ctx.supabase.from("contacts").insert(fresh.map((r) => ({
-      organization_id: ctx.company.id, owner_id: ctx.userId, field_status: "to_visit", field_segment: seg, source: "Google Maps",
+      organization_id: ctx.company.id, owner_id: ctx.userId, field_status: toField ? "to_visit" : null, field_segment: seg, source: "Google Maps",
+      notes: [r.rating ? `Google rating ${r.rating} (${r.reviews ?? 0} reviews)` : null, r.website ? `Website: ${r.website}` : null].filter(Boolean).join("\n") || null,
       company_name: r.name, full_name: r.name, phone_e164: r.phone_e164, whatsapp_e164: r.phone_e164, address: r.address, area: area.trim().slice(0, 120) || null,
       lat: Number(r.lat.toFixed(6)), lng: Number(r.lng.toFixed(6)), place_id: r.place_id,
     })));
