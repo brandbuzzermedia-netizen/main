@@ -1,0 +1,5 @@
+<h2>Welcome to Diwani OS: your sign-in code</h2>
+<p>Type this code on the sign-in page (works in Safari and in the app on your home screen):</p>
+<p style="font-size:30px;font-weight:700;letter-spacing:6px;margin:16px 0">{{ .Token }}</p>
+<p>Or tap this link on the same device: <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email">Sign in to Diwani OS</a></p>
+<p style="color:#666">The code and the link work once and expire in one hour. If you did not ask to sign in, ignore this email.</p>

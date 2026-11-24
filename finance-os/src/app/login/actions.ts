@@ -52,6 +52,24 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     email,
     options: { emailRedirectTo: `${appUrl()}/auth/callback?next=${encodeURIComponent(next)}` },
   });
-  if (error) return { error: `Could not send the sign-in link: ${error.message}`, email };
+  if (error) return { error: /rate limit|security purposes/i.test(error.message)
+    ? "Too many sign-in emails were sent in the last hour. Use the code from an email you already have, sign in with a password, or try again in an hour."
+    : `Could not send the sign-in email: ${error.message}`, email };
   return { sent: true, email };
+}
+
+export type CodeState = { error?: string };
+
+/**
+ * Signs in with the code from the sign-in email. Works in any browser and in the installed iPhone app,
+ * because nothing has to be opened from the email.
+ */
+export async function verifyCode(_prev: CodeState, formData: FormData): Promise<CodeState> {
+  const parsed = emailSchema.safeParse(formData.get("email"));
+  const token = String(formData.get("code") ?? "").replace(/\D/g, "");
+  if (!parsed.success || token.length < 6 || token.length > 10) return { error: "Enter the code from the email." };
+  const supabase = await createClient();
+  const { error } = await supabase.auth.verifyOtp({ email: parsed.data, token, type: "email" });
+  if (error) return { error: "That code is wrong or has expired. Use the code from the latest email, or send a new one." };
+  redirect(safeNext(formData.get("next")));
 }
