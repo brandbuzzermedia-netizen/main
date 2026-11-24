@@ -24,7 +24,7 @@ test("sign in with the emailed code; a wrong code is refused", async ({ page }) 
   await skipLoader(page);
   await page.goto("/login");
   await page.fill("input[name=email]", email);
-  await page.getByRole("button", { name: "Email me a sign-in code" }).click();
+  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
   await expect(page.getByText("Check your inbox")).toBeVisible();
   const code = await latestCode(email);
   expect(code).toMatch(/^\d{8}$/);

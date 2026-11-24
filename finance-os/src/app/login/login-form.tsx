@@ -15,7 +15,7 @@ export function LoginForm({ next }: { next: string }) {
       <form action={codeAction} className="flex flex-col gap-4">
         {state.sent && (
           <Alert tone="ok" title="Check your inbox">
-            If {state.email} has access, an email with a sign-in code is on its way. Type the code here (best on iPhone), or tap the link in the email.
+            If {state.email} has access, a sign-in email is on its way. Open its link on this device, or type its code here if the email shows one. On iPhone, signing in with a password is easiest.
           </Alert>
         )}
         <input type="hidden" name="next" value={next} />
@@ -47,7 +47,7 @@ export function LoginForm({ next }: { next: string }) {
       )}
       {state.error && <Alert tone="danger">{state.error}</Alert>}
       <Button type="submit" disabled={pending}>
-        {pending ? "Please wait…" : withPassword ? "Sign in" : "Email me a sign-in code"}
+        {pending ? "Please wait…" : withPassword ? "Sign in" : "Email me a sign-in link"}
       </Button>
       <button type="button" className="text-sm text-muted underline-offset-2 hover:underline" onClick={() => setWithPassword((v) => !v)}>
         {withPassword ? "Use an email code instead" : "Sign in with a password"}
