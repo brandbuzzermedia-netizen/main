@@ -1,0 +1,405 @@
+{
+  "name": "Diwani Parivaar OS · Reddit listening",
+  "id": "b84a161e09a45043",
+  "versionId": "a000739a-3628-581c-b62f-3fdb4d9b0940",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dp-reddit-listen",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "id": "84743e6d-78e7-5a59-911c-95ddb3d6fecb",
+      "name": "Webhook from OS",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "dd43e3c2-aff0-5ac7-9c64-74d0695a32d3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verifies the OS signature: HMAC-SHA256(secret, `${timestamp}.${nonce}.${body}`), max 5 minutes old.\n// Needs NODE_FUNCTION_ALLOW_BUILTIN=crypto and DP_SIGNING_SECRET (same value as N8N_SIGNING_SECRET in the OS).\nconst crypto = require('crypto');\nconst item = $input.first();\nconst h = item.json.headers || {};\nconst secret = $env.DP_SIGNING_SECRET || '';\nconst raw = item.binary && item.binary.data ? Buffer.from(item.binary.data.data, 'base64').toString('utf8') : JSON.stringify(item.json.body);\nconst ts = String(h['x-dp-timestamp'] || ''), nonce = String(h['x-dp-nonce'] || ''), sig = String(h['x-dp-signature'] || '');\nlet ok = Boolean(secret) && /^\\d{9,11}$/.test(ts) && nonce.length >= 16 && nonce.length <= 128 && /^[0-9a-f]{64}$/.test(sig)\n  && Math.abs(Math.floor(Date.now() / 1000) - Number(ts)) <= 300;\nif (ok) {\n  const expected = crypto.createHmac('sha256', secret).update(`${ts}.${nonce}.${raw}`).digest();\n  const given = Buffer.from(sig, 'hex');\n  ok = given.length === expected.length && crypto.timingSafeEqual(given, expected);\n}\nlet payload = {};\ntry { payload = JSON.parse(raw); } catch (e) { ok = false; }\nconst runOk = ok && /^[0-9a-f-]{36}$/.test(String(payload.run_id || '')) && /^[0-9a-f-]{36}$/.test(String(payload.organization_id || ''));\nreturn [{ json: { ok: runOk, run_id: payload.run_id, organization_id: payload.organization_id, input: payload.input || {} } }];\n"
+      },
+      "id": "86644186-a347-552f-923f-6e8e714f114f",
+      "name": "Verify signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "ok",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      },
+      "id": "16cde70f-2946-50da-9755-299a964e601b",
+      "name": "Signed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: 'bad_signature' } }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "d0492321-8456-5f4a-8a80-927509259a1e",
+      "name": "Reject",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { accepted: true, executionId: String($execution.id) } }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "id": "fb063065-1181-5f56-a8b2-755eeae1be27",
+      "name": "Accept",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const s = $('Verify signature').first().json.input; const org = $('Verify signature').first().json.organization_id;\nconst tok = await this.helpers.httpRequest({ method: 'POST', url: 'https://www.reddit.com/api/v1/access_token', body: 'grant_type=client_credentials',\n  headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': $env.DP_REDDIT_USER_AGENT || 'dp-os-listener/1.0',\n    Authorization: 'Basic ' + Buffer.from(`${$env.DP_REDDIT_CLIENT_ID}:${$env.DP_REDDIT_CLIENT_SECRET}`).toString('base64') }, json: true });\nconst out = [];\nfor (const k of s.keywords || []) {\n  const base = k.subreddit ? `https://oauth.reddit.com/r/${k.subreddit}/search` : 'https://oauth.reddit.com/search';\n  const r = await this.helpers.httpRequest({ url: base, qs: { q: k.keyword, sort: 'new', t: 'day', limit: 15, restrict_sr: k.subreddit ? 'true' : 'false' }, json: true,\n    headers: { Authorization: `Bearer ${tok.access_token}`, 'User-Agent': $env.DP_REDDIT_USER_AGENT || 'dp-os-listener/1.0' } });\n  for (const c of (r.data && r.data.children) || []) {\n    const p = c.data; if (!p || p.over_18) continue;\n    out.push({ json: { payload: { type: 'signal', organization_id: org, channel: 'reddit', kind: 'post', source_url: `https://www.reddit.com${p.permalink}`, author: p.author, title: String(p.title || '').slice(0, 500), snippet: String(p.selftext || '').slice(0, 4000), matched_keyword: k.keyword } } });\n  }\n}\nreturn out.length ? out : [{ json: { payload: null } }];"
+      },
+      "id": "2f85128f-b8b5-567d-93c4-e551fb0d1b08",
+      "name": "Search Reddit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "p",
+              "leftValue": "={{ $json.payload }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ]
+        }
+      },
+      "id": "516fe4c2-25ff-51ee-91eb-a9af9518c40e",
+      "name": "Anything found?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        200
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Signs one message for the OS inbound endpoint, exactly as the OS signs its webhooks.\nconst crypto = require('crypto');\nconst body = JSON.stringify($json.payload);\nconst ts = Math.floor(Date.now() / 1000);\nconst nonce = crypto.randomBytes(16).toString('hex');\nconst signature = crypto.createHmac('sha256', $env.DP_SIGNING_SECRET).update(`${ts}.${nonce}.${body}`).digest('hex');\nreturn { json: { body, ts: String(ts), nonce, signature } };\n",
+        "mode": "runOnceForEachItem"
+      },
+      "id": "ba14a76f-3db7-51d1-be48-6d2270fd9ea2",
+      "name": "Sign for OS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DP_APP_URL }}/api/inbound",
+        "options": {
+          "timeout": 20000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-dp-timestamp",
+              "value": "={{ $json.ts }}"
+            },
+            {
+              "name": "x-dp-nonce",
+              "value": "={{ $json.nonce }}"
+            },
+            {
+              "name": "x-dp-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}"
+      },
+      "id": "8cb6f9c4-f8dd-5ec4-a838-7c79ffdd441c",
+      "name": "Signal to OS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        200
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// One result for the whole run: failed if any send failed.\nconst items = $input.all();\nconst failed = items.filter((i) => i.json && i.json.error);\nreturn [{ json: failed.length ? { error: { message: `${failed.length} of ${items.length} failed: ${String(failed[0].json.error.message || failed[0].json.error).slice(0, 300)}` } } : { sent: items.length } }];\n"
+      },
+      "id": "c59b736a-47fe-560a-ba1c-3bf09531322b",
+      "name": "Collect results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Signs the result for the OS callback exactly as the OS signs its webhooks.\nconst crypto = require('crypto');\nconst run = $('Verify signature').first().json;\nconst failed = $input.first().json.error;\nconst body = JSON.stringify({\n  run_id: run.run_id,\n  organization_id: run.organization_id,\n  status: failed ? 'failed' : 'succeeded',\n  execution_id: String($execution.id),\n  ...(failed ? { error: String(failed.message || failed).slice(0, 1900) } : {}),\n});\nconst ts = Math.floor(Date.now() / 1000);\nconst nonce = crypto.randomBytes(16).toString('hex');\nconst signature = crypto.createHmac('sha256', $env.DP_SIGNING_SECRET).update(`${ts}.${nonce}.${body}`).digest('hex');\nreturn [{ json: { body, ts: String(ts), nonce, signature } }];\n"
+      },
+      "id": "d6fe6236-c54f-58ed-9dec-cd56934423c8",
+      "name": "Sign result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.DP_APP_URL }}/api/automation/callback",
+        "options": {
+          "timeout": 20000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-dp-timestamp",
+              "value": "={{ $json.ts }}"
+            },
+            {
+              "name": "x-dp-nonce",
+              "value": "={{ $json.nonce }}"
+            },
+            {
+              "name": "x-dp-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}"
+      },
+      "id": "06b3ffea-52b8-54c8-be9f-51da4be31591",
+      "name": "Report to OS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3080,
+        260
+      ],
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Webhook from OS": {
+      "main": [
+        [
+          {
+            "node": "Verify signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify signature": {
+      "main": [
+        [
+          {
+            "node": "Signed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signed?": {
+      "main": [
+        [
+          {
+            "node": "Accept",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reject",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accept": {
+      "main": [
+        [
+          {
+            "node": "Search Reddit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Reddit": {
+      "main": [
+        [
+          {
+            "node": "Anything found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anything found?": {
+      "main": [
+        [
+          {
+            "node": "Sign for OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign for OS": {
+      "main": [
+        [
+          {
+            "node": "Signal to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Signal to OS": {
+      "main": [
+        [
+          {
+            "node": "Collect results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect results": {
+      "main": [
+        [
+          {
+            "node": "Sign result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign result": {
+      "main": [
+        [
+          {
+            "node": "Report to OS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none"
+  },
+  "meta": {
+    "templateKey": "reddit_listen",
+    "webhookPath": "dp-reddit-listen"
+  },
+  "tags": []
+}
