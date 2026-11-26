@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { expectHealthy, OWNER_STATE, skipLoader } from "./helpers";
 
+/** Clients, invoices and payments are phase 2: their tests run only when the dev server has NEXT_PUBLIC_PHASE2_RECEIVABLES=true. */
+const PHASE2 = process.env.NEXT_PUBLIC_PHASE2_RECEIVABLES === "true";
+
 test.use({ storageState: OWNER_STATE });
 test.beforeEach(async ({ page }) => skipLoader(page));
 
@@ -82,6 +85,7 @@ test("the emergency stop needs a reason and can be resumed", async ({ page }) =>
 });
 
 test("receivables live under the company's own address, and old links still work", async ({ page }) => {
+  test.skip(!PHASE2, "clients and invoices are phase 2");
   for (const p of ["", "/clients", "/invoices", "/payments", "/tasks", "/integrations", "/invoices/new", "/payments/new", "/invoices/import", "/payments/import"]) {
     const res = await page.goto(`/c/demo-gbs/receivables${p}`);
     expect(res?.status(), p).toBe(200);
@@ -102,6 +106,7 @@ test("receivables live under the company's own address, and old links still work
 });
 
 test("a client created in receivables opens on its own page", async ({ page }) => {
+  test.skip(!PHASE2, "clients and invoices are phase 2");
   const code = `E2E${Date.now() % 100000}`;
   await page.goto("/c/demo-gbs/receivables/clients/new");
   await page.fill("input[name=client_code]", code);
@@ -157,7 +162,8 @@ test("growth systems: LinkedIn steps and posts, Reddit keywords, AI calls, and i
   await page.goto("/c/demo-gbs/outreach?ch=ai-calls");
   await expect(page.getByText("Every call says it is an AI assistant at the start")).toBeVisible();
 
-  // Won deal → invoice.
+  // Won deal → invoice (phase 2).
+  if (!PHASE2) return;
   await page.goto("/c/demo-gbs/pipeline?add=1");
   const title = `E2E won ${Date.now()}`;
   await page.fill("input[name=title]", title);
@@ -175,6 +181,15 @@ test("growth systems: LinkedIn steps and posts, Reddit keywords, AI calls, and i
   await page.getByRole("button", { name: "Create invoice and payment link" }).click();
   await expect(page).toHaveURL(/\/receivables\/invoices\/[0-9a-f-]{36}/);
   await expect(page.locator("body")).toContainText("59,000");
+});
+
+test("phase 1: clients and invoices are hidden, nothing deleted", async ({ page }) => {
+  test.skip(PHASE2, "only when phase 2 is off");
+  await page.goto("/c/demo-gbs/receivables/invoices");
+  await expect(page.getByText("Clients and invoices come in phase 2")).toBeVisible();
+  await page.goto("/c/demo-gbs");
+  await expect(page.locator("nav")).not.toContainText("Invoices");
+  await expect(page.getByText("Add clients who owe you money")).toHaveCount(0);
 });
 
 test("payment rules: an owner sets when work stops for late payers", async ({ page }) => {

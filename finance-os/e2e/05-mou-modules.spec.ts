@@ -11,7 +11,7 @@ const run = Date.now() % 100000;
 test("the menu has the More of Us OS sections and modules", async ({ page }) => {
   await page.goto("/c/demo-gbs");
   const nav = page.locator("aside nav");
-  for (const t of ["Overview", "Sales", "Finance", "Dashboard", "Research board", "Follow-ups", "Proposals", "Invoices", "Team & targets"]) await expect(nav).toContainText(t);
+  for (const t of ["Overview", "Sales", "Finance", "Dashboard", "Research board", "Follow-ups", "Proposals", ...(process.env.NEXT_PUBLIC_PHASE2_RECEIVABLES === "true" ? ["Invoices"] : []), "Team & targets"]) await expect(nav).toContainText(t);
   await expect(page.locator("h1")).toContainText(/Good (morning|afternoon|evening),/);
 });
 

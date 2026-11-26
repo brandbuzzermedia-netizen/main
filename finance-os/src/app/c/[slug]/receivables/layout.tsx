@@ -2,6 +2,7 @@ import { getContext } from "@/lib/auth";
 import { getCompanyContext } from "@/lib/workspace";
 import { Dashed } from "@/components/dp/ui";
 import { FinanceTabs } from "@/components/shell/finance-tabs";
+import { receivablesOn } from "@/lib/phases";
 
 /**
  * Receivables (invoices, payments, clients) for the company in the URL. The company frame comes
@@ -10,6 +11,9 @@ import { FinanceTabs } from "@/components/shell/finance-tabs";
 export default async function ReceivablesLayout({ children, params }: LayoutProps<"/c/[slug]/receivables">) {
   const { slug } = await params;
   const [ctx, fin] = await Promise.all([getCompanyContext(slug), getContext()]);
+  if (!receivablesOn()) {
+    return <Dashed title="Clients and invoices come in phase 2" msg="This part of the OS is switched off for now. Nothing has been deleted; it comes back when phase 2 starts." />;
+  }
   if (!ctx.can("finance.read")) {
     return <Dashed title="No finance access" msg={`Your role in ${ctx.company.name} does not include finance. Ask the company owner if you need it.`} />;
   }

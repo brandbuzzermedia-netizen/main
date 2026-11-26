@@ -12,6 +12,7 @@ import { ReviewForm, UploadBox, type ReviewField } from "../bills/forms";
 import { rejectBillAction, rescanAction } from "../bills/actions";
 import { depositAction, generateChargesAction, receiptAction } from "../rental/actions";
 import { recordFilingAction } from "./tax/actions";
+import { receivablesOn } from "@/lib/phases";
 
 const small = { border: `1px solid ${C.btnLine}`, borderRadius: 7, padding: "5px 8px", fontSize: 12.5, background: "#fff" } as const;
 type Ex = { id: string; status: string; is_mock: boolean; error: string | null; fields: BillExtraction; created_at: string; document: { id: string; file_name: string; storage_path: string; mime_type: string } };
@@ -192,7 +193,7 @@ export async function TaxSection({ ctx }: { ctx: CompanyContext }) {
       ledgers: [
         { l: "Income / sales", href: ex("income") }, { l: "Rent", href: `/c/${slug}/finance?tab=rental` }, { l: "Purchases & expenses", href: ex("expense") }, { l: "GST summary", href: ex("gst") },
         { l: "TDS references" }, { l: "Fixed assets & depreciation" }, { l: "Receivables / payables", href: `/c/${slug}/finance/ledger` },
-        { l: "Bank reconciliation vs statement", href: `/c/${slug}/receivables/payments/import` }, { l: "Source-document index", href: `/c/${slug}/vault` },
+        { l: "Bank reconciliation vs statement", href: receivablesOn() ? `/c/${slug}/receivables/payments/import` : undefined }, { l: "Source-document index", href: `/c/${slug}/vault` },
       ],
     }} />
   );

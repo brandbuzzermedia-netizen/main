@@ -13,7 +13,7 @@ describe("dpCompanyNav (Company OS design menu)", () => {
   it("gives owners and employees different menus", () => {
     const owner = dpCompanyNav(gbs, OWNER).map((i) => i.key);
     const rep = dpCompanyNav(gbs, REP).map((i) => i.key);
-    expect(owner).toEqual(["home", "outreach", "field", "leads", "pipeline", "meetings", "research", "followups", "customers", "operations", "marketing", "automation", "proposals", "invoices", "finance", "team", "reports", "vault", "settings"]);
+    expect(owner).toEqual(["home", "outreach", "field", "leads", "pipeline", "meetings", "research", "followups", "customers", "operations", "marketing", "automation", "proposals", "finance", "team", "reports", "vault", "settings"]);
     for (const k of ["finance", "automation", "settings", "team", "vault", "reports", "operations"]) expect(rep).not.toContain(k);
     expect(rep).toEqual(expect.arrayContaining(["home", "leads", "pipeline", "outreach", "meetings", "field"]));
   });
@@ -29,8 +29,11 @@ describe("dpCompanyNav (Company OS design menu)", () => {
     expect(items.find((i) => i.key === "automation")?.badge).toBe("2");
   });
   it("hides switched-off modules and shows Finance to an accountant", () => {
-    // No pipeline module: no sales boards or proposals; Invoices stays for people who read finance.
+    // No pipeline module: no sales boards or proposals. Invoices are phase 2: shown only when that phase is on.
+    expect(dpCompanyNav({ slug: "gbs", enabled_modules: ["home", "leads", "settings"] }, OWNER).map((i) => i.key)).toEqual(["home", "leads", "settings"]);
+    process.env.NEXT_PUBLIC_PHASE2_RECEIVABLES = "true";
     expect(dpCompanyNav({ slug: "gbs", enabled_modules: ["home", "leads", "settings"] }, OWNER).map((i) => i.key)).toEqual(["home", "leads", "invoices", "settings"]);
+    delete process.env.NEXT_PUBLIC_PHASE2_RECEIVABLES;
     expect(dpCompanyNav(gbs, perms("company.view"), { role: "accountant" }).map((i) => i.key)).toContain("finance");
   });
 });

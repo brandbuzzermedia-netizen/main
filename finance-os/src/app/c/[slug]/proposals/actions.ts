@@ -8,6 +8,7 @@ import { addDays, todayInBusinessTz } from "@/domain/dates";
 import { fetchWebsite, findInOs, normaliseUrl } from "@/lib/company-research";
 import { researchAndDraftProposal } from "@/integrations/ai/claude";
 import { lines, mergeAiDraft, parsePriceLines, ProposalDocSchema, SERVICE_KEYS, SERVICES, templateDoc, totals, type ProposalDoc, type Research } from "@/lib/gbs-proposal";
+import { receivablesOn } from "@/lib/phases";
 
 const back = (slug: string, note: string) => redirect(`/c/${slug}/proposals?note=${encodeURIComponent(note)}`);
 const rupees = z.coerce.number().min(0).max(1e10);
@@ -65,7 +66,7 @@ export async function proposalStatusAction(slug: string, fd: FormData) {
   const { error } = await ctx.supabase.from("proposals").update(patch).eq("id", id);
   if (!error) await moveDeal(ctx, p!.deal_id as string | null, status === "accepted" ? "won" : "proposal");
   revalidatePath(`/c/${slug}`, "layout");
-  back(slug, error ? error.message : status === "accepted" ? "Accepted: the deal is marked Won. Raise the invoice from the pipeline." : status === "sent" ? "Marked sent; follow-up due in 3 days." : "Marked not accepted.");
+  back(slug, error ? error.message : status === "accepted" ? (receivablesOn() ? "Accepted: the deal is marked Won. Raise the invoice from the pipeline." : "Accepted: the deal is marked Won.") : status === "sent" ? "Marked sent; follow-up due in 3 days." : "Marked not accepted.");
 }
 
 // ---- Branded proposals (Get Bee Seen format) ----
