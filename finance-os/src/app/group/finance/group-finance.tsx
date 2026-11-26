@@ -13,7 +13,6 @@ import { CoSelect } from "@/components/dp/co-select";
 import { billFields } from "@/lib/bill-fields";
 import { originalBox } from "@/views/finance";
 import { FinanceExpenses, FinanceOverview, FinanceRental, FinanceTabs, FinanceTax } from "@/views/finance";
-import { receivablesOn } from "@/lib/phases";
 
 type Tab = "overview" | "expenses" | "rental" | "tax";
 const TITLE: Record<Tab, string> = { overview: "Finance", expenses: "Expenses & bills", rental: "Rental income", tax: "Tax & GST" };
@@ -113,7 +112,7 @@ export async function GroupFinance({ tab, tabs, add, co }: { tab: Tab; tabs: boo
       ledgers: [
         { l: "Income / sales", href: ex("income") }, { l: "Rent", href: to("@/finance?tab=rental") }, { l: "Purchases & expenses", href: ex("expense") }, { l: "GST summary", href: ex("gst") },
         { l: "TDS references" }, { l: "Fixed assets & depreciation" }, { l: "Receivables / payables", href: to("@/finance/ledger") },
-        { l: "Bank reconciliation vs statement", href: receivablesOn() ? to("@/receivables/payments/import") : undefined }, { l: "Source-document index", href: to("@/vault") },
+        { l: "Bank reconciliation vs statement", href: to("@/receivables/payments/import") }, { l: "Source-document index", href: to("@/vault") },
       ],
     }} />;
     if (fin.length > 1) taxPicker = <CoSelect options={fin.map((c) => ({ slug: c.slug, name: c.name }))} value={pick.slug} />;

@@ -9,7 +9,6 @@ import { ListView, NOTES } from "@/views/list";
 import { FunnelCard, SourceTable } from "@/components/dp/funnel";
 import { loadFunnel } from "@/lib/funnel";
 import { addDays } from "@/domain/dates";
-import { receivablesOn } from "@/lib/phases";
 
 export const metadata: Metadata = { title: "Reports" };
 
@@ -24,7 +23,7 @@ export default async function ReportsPage({ params, searchParams }: PageProps<"/
   const rows = [
     fin && { a: "Monthly summary", b: "Month", c: "Ready", d: "Finance", href: `/c/${slug}/finance/ledger` },
     fin && { a: "FY performance", b: fy.label, c: "Ready", d: "Finance", href: `/c/${slug}/finance/ledger?period=fy` },
-    fin && receivablesOn() && { a: "Receivables ageing", b: "Today", c: "Ready", d: "Finance", href: `/c/${slug}/receivables/invoices` },
+    fin && { a: "Receivables ageing", b: "Today", c: "Ready", d: "Finance", href: `/c/${slug}/receivables/invoices` },
     fin && { a: "Accountant pack (CSV)", b: fy.label, c: "Export (logged)", d: "Finance", href: `/c/${slug}/finance/tax/export?register=pack&fy=${fy.startYear}` },
     fin && { a: "GST summary (CSV)", b: fy.label, c: "Export (logged)", d: "Finance", href: `/c/${slug}/finance/tax/export?register=gst&fy=${fy.startYear}` },
     crm && { a: "Pipeline by stage", b: "Live", c: "Ready", d: "Sales", href: `/c/${slug}/pipeline` },

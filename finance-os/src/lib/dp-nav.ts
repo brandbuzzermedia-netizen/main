@@ -1,7 +1,6 @@
 import { designFor, GROUP_DESIGN } from "@/domain/design";
 import { moduleInfo, type ModuleKey } from "@/domain/registry";
 import type { DpNavItem } from "@/components/dp/sidebar";
-import { receivablesOn } from "@/lib/phases";
 
 type CompanyLike = { slug: string; enabled_modules: ModuleKey[] };
 /** Sidebar sections, in the More of Us OS layout. */
@@ -57,7 +56,7 @@ export function dpCompanyNav(c: CompanyLike, can: (p: string) => boolean, opts: 
   if (sales && (can("tasks.write") || can("tasks.read_all"))) after(items.some((x) => x.key === "research") ? "research" : "pipeline", [{ key: "followups", label: "Follow-ups", icon: "✓", section: "Sales", href: `${base}/followups` }]);
   const money: DpNavItem[] = [];
   if (sales && (can("crm.write") || can("crm.read_all"))) money.push({ key: "proposals", label: "Proposals", icon: "▤", section: can("finance.read") ? "Finance" : "Sales", href: `${base}/proposals` });
-  if (can("finance.read") && receivablesOn()) money.push({ key: "invoices", label: "Invoices", icon: "▭", section: "Finance", href: `${base}/receivables/invoices` });
+  if (can("finance.read")) money.push({ key: "invoices", label: "Invoices", icon: "▭", section: "Finance", href: `${base}/receivables/invoices` });
   if (money.length) {
     const fi = items.findIndex((x) => x.key === "finance");
     const later = items.findIndex((x) => x.section === "People & insight" || x.section === "System");

@@ -8,7 +8,6 @@ import { Cta, PageHead } from "@/components/dp/shell";
 import { FinanceOverview, FinanceTabs } from "@/views/finance";
 import { ExpensesSection, RentalSection, TaxSection } from "./sections";
 import { HoldsCard } from "./holds";
-import { receivablesOn } from "@/lib/phases";
 
 export const metadata: Metadata = { title: "Finance" };
 
@@ -29,7 +28,7 @@ export default async function FinancePage({ params, searchParams }: PageProps<"/
       {(canFin || ctx.can("company.settings")) && <HoldsCard ctx={ctx} error={typeof sp.hold_error === "string" ? sp.hold_error : undefined} />}
       <FinanceTabs current={tab} base={base} hide={(["rental", "expenses", "tax"] as const).filter((k) => !ctx.company.enabled_modules.includes(k))} />
       {tab === "overview" && (canFin ? <FinanceOverview vm={await loadOverview(ctx.supabase, [ctx.company.id], todayInBusinessTz(), ctx.company.fy_start_month, d.kpis,
-        [link(`${base}/ledger`, "Open ledger & approvals"), ...(receivablesOn() ? [link(`/c/${slug}/receivables/invoices`, "Invoices & receivables"), link(`/c/${slug}/receivables/payments`, "Payments & bank import")] : [])], true)} />
+        [link(`${base}/ledger`, "Open ledger & approvals"), link(`/c/${slug}/receivables/invoices`, "Invoices & receivables"), link(`/c/${slug}/receivables/payments`, "Payments & bank import")], true)} />
         : <div style={{ color: "#55605a" }}>Your role does not include the finance ledger.</div>)}
       {tab === "expenses" && <ExpensesSection ctx={ctx} bill={typeof sp.bill === "string" ? sp.bill : undefined} edit={sp.edit === "1"} />}
       {tab === "rental" && (ctx.can("rental.read") ? <RentalSection ctx={ctx} /> : <div style={{ color: "#55605a" }}>Your role does not include rental records.</div>)}

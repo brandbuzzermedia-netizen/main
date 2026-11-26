@@ -12,7 +12,6 @@ import { C } from "@/components/dp/theme";
 import { Kanban } from "@/views/kanban";
 import { DealForm } from "../forms";
 import { invoiceWonDealAction, moveDealAction, toggleHotAction } from "../actions";
-import { receivablesOn } from "@/lib/phases";
 
 export const metadata: Metadata = { title: "Pipeline" };
 const VIEWS = { all: "All open", hot: "Hot", proposals: "Proposals", stalled: "Stalled", closed: "Closed" } as const;
@@ -87,7 +86,7 @@ export default async function PipelinePage({ params, searchParams }: PageProps<"
               <a href={`/c/${slug}/outreach?deal=${open.id}#draft`} style={{ fontSize: 13.5, color: "var(--co-side)", fontWeight: 600 }}>Draft a follow-up →</a>
             </div>
           ) : <div style={{ fontSize: 13, color: C.muted }}>View only for your role.</div>}
-          {kind.get(open.stage_id) === "won" && ctx.can("finance.write") && receivablesOn() && (
+          {kind.get(open.stage_id) === "won" && ctx.can("finance.write") && (
             <div style={{ borderTop: `1px solid ${C.line2}`, marginTop: 18, paddingTop: 16 }}>
               {(open as DealRow & { invoice_id?: string | null }).invoice_id ? (
                 <a href={`/c/${slug}/receivables/invoices/${(open as DealRow & { invoice_id?: string | null }).invoice_id}`} style={{ fontWeight: 600, color: "var(--co-side)" }}>Open the invoice and payment link →</a>

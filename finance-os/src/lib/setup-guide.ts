@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { receivablesOn } from "@/lib/phases";
 
 /**
  * The "Get started" guide for one company: what to do first, worked out from the company's own
@@ -39,11 +38,6 @@ export async function loadSetupGuide(db: SupabaseClient, org: { id: string; slug
     { key: "mailboxes", title: "Sending mailboxes", why: "Warm-up takes 2–3 weeks, so add them as soon as you can.", href: `${base}/settings#accounts`, done: accounts > 0, detail: accounts ? `${accounts} accounts` : undefined },
     { key: "ai", title: "AI replies and AI calls", why: "Anthropic key for replies; ElevenLabs for calls and recordings.", href: `${base}/settings#ai`, done: Boolean(env.ANTHROPIC_API_KEY) },
   ];
-  // Clients, invoices and payment links come in phase 2.
-  if (!receivablesOn()) {
-    for (const k of ["clients", "invoices"]) { const i = steps.findIndex((x) => x.key === k); if (i >= 0) steps.splice(i, 1); }
-    const r = connections.findIndex((x) => x.key === "razorpay"); if (r >= 0) connections.splice(r, 1);
-  }
   const done = steps.filter((s) => s.done).length;
   return { steps, connections, done, total: steps.length };
 }
